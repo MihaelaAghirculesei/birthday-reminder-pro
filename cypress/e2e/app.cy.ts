@@ -1,0 +1,29 @@
+describe('Birthday Reminder App', () => {
+  beforeEach(() => {
+    cy.clearIndexedDB();
+    cy.visit('/');
+    cy.get('.app-header').should('be.visible'); 
+  });
+
+  it('should display the app title', () => {
+    cy.contains('Birthday Memories').should('be.visible');
+  });
+
+  it('should display empty state when no birthdays', () => {
+    cy.contains('Want to explore the app?').should('be.visible');
+    cy.contains('Show Demo').should('be.visible');
+  });
+
+  it('should display add birthday form', () => {
+    cy.contains('Add New Birthday').should('be.visible');
+  });
+
+  it('should load dashboard after adding test data', () => {
+    cy.contains('Show Demo').click();
+
+    cy.wait(1500);
+
+    cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
+    cy.contains('Dashboard & Statistics').should('be.visible');
+  });
+});
