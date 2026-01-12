@@ -33,11 +33,16 @@ testem.log
 .DS_Store
 Thumbs.db
 
-# Environment & Secrets
 .env
 .env.local
 .env.*.local
 /src/environments/environment.ts
 /src/environments/environment.prod.ts
 /src/environments/environment.development.ts
-bundle-report.html 
+bundle-report.html
+
+cypress/videos
+cypress/screenshots
+cypress/downloads
+
+.lighthouseci
