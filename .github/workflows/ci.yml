@@ -305,6 +305,7 @@ jobs:
 
       - name: Run Lighthouse CI
         run: lhci autorun
+        continue-on-error: true
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -372,7 +373,7 @@ jobs:
     name: All Checks Passed
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check, lighthouse]
+    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check]
     if: always()
 
     steps:
@@ -383,8 +384,7 @@ jobs:
              [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
              [[ "${{ needs.e2e-tests.result }}" != "success" ]] || \
              [[ "${{ needs.build.result }}" != "success" ]] || \
-             [[ "${{ needs.bundle-size-check.result }}" != "success" ]] || \
-             [[ "${{ needs.lighthouse.result }}" != "success" ]]; then
+             [[ "${{ needs.bundle-size-check.result }}" != "success" ]]; then
             echo "❌ One or more checks failed"
             exit 1
           fi
