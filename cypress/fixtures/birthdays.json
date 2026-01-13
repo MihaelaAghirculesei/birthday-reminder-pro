@@ -1,0 +1,18 @@
+[
+  {
+    "id": "test-1",
+    "name": "John Doe",
+    "birthDate": "1990-05-15",
+    "zodiacSign": "Taurus",
+    "reminderDays": 7,
+    "category": "family"
+  },
+  {
+    "id": "test-2",
+    "name": "Jane Smith",
+    "birthDate": "1985-12-25",
+    "zodiacSign": "Capricorn",
+    "reminderDays": 14,
+    "category": "friends"
+  }
+]
