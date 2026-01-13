@@ -11,7 +11,71 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: TypeScript type check (production)
+        run: npx tsc --noEmit --strict --skipLibCheck -p tsconfig.app.json
+
+      - name: TypeScript type check (tests)
+        run: npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --production --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for critical vulnerabilities
+        run: |
+          CRITICAL=$(npm audit --json | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(npm audit --json | jq '.metadata.vulnerabilities.high // 0')
+
+          echo "Critical vulnerabilities: $CRITICAL"
+          echo "High vulnerabilities: $HIGH"
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical vulnerabilities"
+            exit 1
+          fi
+
+          if [ "$HIGH" -gt 50 ]; then
+            echo "⚠️  Found $HIGH high vulnerabilities (threshold: 50)"
+            exit 1
+          fi
+
+          echo "✅ Security audit passed"
+
+  unit-tests:
+    name: Unit Tests & Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -20,7 +84,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install Chrome dependencies
@@ -30,9 +94,298 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run lint
+      - name: Run unit tests with coverage
+        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
 
-      - name: Run tests
-        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadless
+      - name: Check coverage thresholds
+        run: |
+          STATEMENTS=$(cat coverage/lcov-report/index.html | grep -oP 'statements.*?\K\d+\.\d+' | head -1 || echo "0")
+          BRANCHES=$(cat coverage/lcov-report/index.html | grep -oP 'branches.*?\K\d+\.\d+' | head -1 || echo "0")
+          FUNCTIONS=$(cat coverage/lcov-report/index.html | grep -oP 'functions.*?\K\d+\.\d+' | head -1 || echo "0")
 
-      - run: npm run build
+          echo "Coverage: Statements=$STATEMENTS%, Branches=$BRANCHES%, Functions=$FUNCTIONS%"
+
+          if (( $(echo "$STATEMENTS < 85" | bc -l) )); then
+            echo "❌ Statement coverage ($STATEMENTS%) is below 85%"
+            exit 1
+          fi
+
+          if (( $(echo "$FUNCTIONS < 85" | bc -l) )); then
+            echo "❌ Function coverage ($FUNCTIONS%) is below 85%"
+            exit 1
+          fi
+
+          echo "✅ Coverage thresholds met!"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: false
+
+  e2e-tests:
+    name: E2E Tests (Cypress)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run Cypress E2E tests
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm start
+          wait-on: 'http://localhost:4200'
+          wait-on-timeout: 120
+          browser: chrome
+          record: false
+
+      - name: Upload Cypress screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          retention-days: 7
+
+  build:
+    name: Build Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [lint-and-typecheck, unit-tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build production
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: dist/birthday-reminder-app
+          retention-days: 7
+
+  bundle-size-check:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: dist/birthday-reminder-app
+
+      - name: Analyze bundle size
+        run: |
+          echo "📦 Bundle Size Report"
+          echo "===================="
+
+          find dist/birthday-reminder-app -name "*.js" -type f -exec ls -lh {} \; | awk '{print $9 " - " $5}'
+
+          MAIN_JS_BYTES=$(find dist/birthday-reminder-app -name "main*.js" -type f -exec ls -l {} \; | awk '{print $5}' | head -1 || echo "0")
+
+          if [ "$MAIN_JS_BYTES" -gt 0 ]; then
+            MAIN_JS_KB=$((MAIN_JS_BYTES / 1024))
+            echo ""
+            echo "Main bundle size: ${MAIN_JS_KB}KB"
+
+            MAX_SIZE_KB=500
+            if [ "$MAIN_JS_KB" -gt "$MAX_SIZE_KB" ]; then
+              echo "❌ Main bundle (${MAIN_JS_KB}KB) exceeds limit (${MAX_SIZE_KB}KB)"
+              echo "Consider code splitting or lazy loading"
+              exit 1
+            fi
+
+            echo "✅ Bundle size is acceptable"
+          else
+            echo "⚠️  Could not determine main bundle size"
+          fi
+
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const distPath = 'dist/birthday-reminder-app';
+
+            if (!fs.existsSync(distPath)) {
+              console.log('Build directory not found');
+              return;
+            }
+
+            const files = fs.readdirSync(distPath, { recursive: true })
+              .filter(f => f.endsWith('.js'));
+
+            let comment = '## 📦 Bundle Size Report\n\n';
+            comment += '| File | Size |\n';
+            comment += '|------|------|\n';
+
+            files.forEach(file => {
+              const fullPath = path.join(distPath, file);
+              if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+                const stats = fs.statSync(fullPath);
+                const size = (stats.size / 1024).toFixed(2);
+                comment += `| ${file} | ${size} KB |\n`;
+              }
+            });
+
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Could not create comment:', error.message);
+            }
+
+  lighthouse:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: dist/birthday-reminder-app
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+
+      - name: Run Lighthouse CI
+        run: lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results
+          path: .lighthouseci
+          retention-days: 30
+
+      - name: Comment Lighthouse score on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const manifestPath = '.lighthouseci/manifest.json';
+            if (!fs.existsSync(manifestPath)) {
+              console.log('Lighthouse manifest not found');
+              return;
+            }
+
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const results = manifest[0];
+
+            if (!results || !results.summary) {
+              console.log('No Lighthouse results found');
+              return;
+            }
+
+            const scores = results.summary;
+            const formatScore = (score) => {
+              const percentage = Math.round(score * 100);
+              if (percentage >= 90) return `🟢 ${percentage}`;
+              if (percentage >= 50) return `🟡 ${percentage}`;
+              return `🔴 ${percentage}`;
+            };
+
+            let comment = '## ⚡ Lighthouse Performance Report\n\n';
+            comment += '| Category | Score |\n';
+            comment += '|----------|-------|\n';
+            comment += `| Performance | ${formatScore(scores.performance)} |\n`;
+            comment += `| Accessibility | ${formatScore(scores.accessibility)} |\n`;
+            comment += `| Best Practices | ${formatScore(scores['best-practices'])} |\n`;
+            comment += `| SEO | ${formatScore(scores.seo)} |\n`;
+            comment += `| PWA | ${formatScore(scores.pwa)} |\n`;
+            comment += '\n';
+            comment += `[View detailed report](${results.url})`;
+
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Could not create comment:', error.message);
+            }
+
+  status-check:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check, lighthouse]
+    if: always()
+
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [[ "${{ needs.lint-and-typecheck.result }}" != "success" ]] || \
+             [[ "${{ needs.security-audit.result }}" != "success" ]] || \
+             [[ "${{ needs.unit-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.e2e-tests.result }}" != "success" ]] || \
+             [[ "${{ needs.build.result }}" != "success" ]] || \
+             [[ "${{ needs.bundle-size-check.result }}" != "success" ]] || \
+             [[ "${{ needs.lighthouse.result }}" != "success" ]]; then
+            echo "❌ One or more checks failed"
+            exit 1
+          fi
+          echo "✅ All checks passed!"
