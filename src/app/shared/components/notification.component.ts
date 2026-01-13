@@ -22,10 +22,11 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
           (keydown.enter)="close(notification.id)"
           (keydown.space)="close(notification.id)"
           tabindex="0"
-          role="button">
+          role="button"
+          data-testid="notification">
           <mat-icon class="notification-icon">{{ getIcon(notification.type) }}</mat-icon>
           <span class="notification-message">{{ notification.message }}</span>
-          <button mat-icon-button class="close-btn" (click)="close(notification.id)">
+          <button mat-icon-button class="close-btn" (click)="close(notification.id)" data-testid="close-notification">
             <mat-icon>close</mat-icon>
           </button>
         </div>

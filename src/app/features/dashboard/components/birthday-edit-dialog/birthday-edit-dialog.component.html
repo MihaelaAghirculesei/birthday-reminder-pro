@@ -13,6 +13,7 @@
           [(ngModel)]="editingData.name"
           placeholder="Enter name"
           required
+          data-testid="birthday-name-input"
           />
         <mat-icon matPrefix>person</mat-icon>
       </mat-form-field>
@@ -95,7 +96,7 @@
       <mat-icon>close</mat-icon>
       Cancel
     </button>
-    <button mat-raised-button (click)="onSave()" color="primary">
+    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button">
       <mat-icon>check</mat-icon>
       Save Changes
     </button>

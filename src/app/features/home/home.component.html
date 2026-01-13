@@ -26,6 +26,7 @@
 <div class="content-sections">
   <mat-card class="add-birthday-card">
     <mat-card-header class="collapsible-header"
+      data-testid="add-birthday-button"
       (click)="toggleAddBirthdaySection()"
       [title]="isAddBirthdayExpanded ? 'Click to close form' : 'Click to add new birthday'">
       <mat-card-title>✨ Add New Birthday</mat-card-title>
@@ -43,12 +44,12 @@
           </app-photo-upload>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. John Doe">
+            <input matInput formControlName="name" placeholder="e.g. John Doe" data-testid="birthday-name-input">
             <mat-icon matSuffix>person</mat-icon>
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Birth Date</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="birthDate">
+            <input matInput [matDatepicker]="picker" formControlName="birthDate" data-testid="birthday-date-input">
             <mat-hint>Click the icon to open calendar</mat-hint>
             @if (birthdayForm.get('birthDate')?.hasError('required')) {
               <mat-error>
@@ -65,7 +66,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Category</mat-label>
-            <mat-select formControlName="category">
+            <mat-select formControlName="category" data-testid="category-select">
               @for (category of categories(); track category.id) {
                 <mat-option [value]="category.id">
                   <div class="category-option">
@@ -84,7 +85,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Reminder Days</mat-label>
-            <input matInput type="number" formControlName="reminderDays" min="1" max="365">
+            <input matInput type="number" formControlName="reminderDays" min="1" max="365" data-testid="reminder-days-input">
             <mat-hint>How many days before do you want to be reminded?</mat-hint>
             <mat-icon matSuffix>notifications</mat-icon>
           </mat-form-field>
@@ -94,7 +95,8 @@
               color="primary"
               type="submit"
               [disabled]="birthdayForm.invalid"
-              class="submit-button">
+              class="submit-button"
+              data-testid="save-birthday-button">
               <mat-icon>add</mat-icon>
               Add Birthday
             </button>

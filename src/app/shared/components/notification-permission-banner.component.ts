@@ -13,7 +13,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (shouldShow) {
-      <div class="notification-banner">
+      <div class="notification-banner" data-testid="notification-banner">
         <mat-card class="permission-card">
           <mat-card-content>
             <div class="banner-content">
@@ -38,6 +38,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
                   mat-button
                   (click)="dismiss()"
                   [disabled]="isRequesting"
+                  data-testid="dismiss-notification-banner"
                   >
                   Maybe Later
                 </button>

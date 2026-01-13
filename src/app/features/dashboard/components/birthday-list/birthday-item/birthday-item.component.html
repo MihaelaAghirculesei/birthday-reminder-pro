@@ -5,6 +5,8 @@
         [src]="birthday.photo"
         [alt]="birthday.name"
         class="dashboard-photo"
+        loading="lazy"
+        decoding="async"
         />
     </div>
   }
@@ -67,6 +69,7 @@
           class="edit-button-circle"
           matTooltip="Edit birthday"
           [attr.aria-label]="'Edit ' + birthday.name + ' birthday'"
+          data-testid="edit-birthday-button"
           >
           <mat-icon class="edit-icon">edit</mat-icon>
         </button>
@@ -77,6 +80,7 @@
           class="delete-button-circle"
           matTooltip="Delete birthday"
           [attr.aria-label]="'Delete ' + birthday.name + ' birthday'"
+          data-testid="delete-birthday-button"
           >
           <img
             src="assets/icons/delete-button.png"

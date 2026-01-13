@@ -24,6 +24,7 @@
           placeholder="Type to search..."
           (input)="onSearchChange($event)"
           [value]="searchTerm"
+          data-testid="search-input"
           />
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
@@ -31,18 +32,18 @@
   </mat-card-header>
   <mat-card-content>
     @if (enrichedBirthdays.length > 0) {
-      <div
+      <cdk-virtual-scroll-viewport
+        itemSize="120"
         class="dashboard-birthday-list scrollable"
         >
-        @for (birthday of enrichedBirthdays; track birthday.id) {
-          <app-birthday-item
-            [birthday]="birthday"
-            [daysUntilBirthday]="birthday.daysUntilBirthday"
-            (edit)="editBirthday($event)"
-            (deleted)="deleteBirthday($event)"
-          ></app-birthday-item>
-        }
-      </div>
+        <app-birthday-item
+          *cdkVirtualFor="let birthday of enrichedBirthdays; trackBy: trackByBirthday"
+          [birthday]="birthday"
+          [daysUntilBirthday]="birthday.daysUntilBirthday"
+          (edit)="editBirthday($event)"
+          (deleted)="deleteBirthday($event)"
+        ></app-birthday-item>
+      </cdk-virtual-scroll-viewport>
     }
 
     @if (birthdays.length === 0 && searchTerm) {

@@ -18,6 +18,7 @@
           (click)="clearFilter()"
           matTooltip="Clear all filters"
           aria-label="Clear category filter"
+          data-testid="clear-filter-button"
           >
           <mat-icon>clear_all</mat-icon>
         </button>
@@ -33,6 +34,7 @@
           tabindex="0"
           [attr.aria-label]="'Filter by ' + categoryStats.name + ' category, ' + categoryStats.count + ' ' + (categoryStats.count === 1 ? 'person' : 'people')"
           [attr.aria-pressed]="selectedCategory === categoryStats.id"
+          [attr.data-testid]="'category-filter-' + categoryStats.id"
           (keydown.enter)="selectCategory(categoryStats.id)"
           (keydown.space)="selectCategory(categoryStats.id)"
           >
