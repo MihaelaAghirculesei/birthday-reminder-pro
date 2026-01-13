@@ -41,7 +41,7 @@
         <div class="selected-birthday-card">
           @if (selectedBirthday.photo) {
             <div class="birthday-avatar">
-              <img [src]="selectedBirthday.photo" [alt]="selectedBirthday.name" />
+              <img [src]="selectedBirthday.photo" [alt]="selectedBirthday.name" loading="lazy" decoding="async" />
             </div>
           }
           @if (!selectedBirthday.photo) {
