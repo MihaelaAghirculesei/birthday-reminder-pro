@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NotificationComponent } from './shared';
+import { NotificationComponent, SkipToContentComponent } from './shared';
 import { HeaderComponent, FooterComponent } from './layout';
 
 @Component({
@@ -9,6 +9,7 @@ import { HeaderComponent, FooterComponent } from './layout';
   imports: [
     RouterOutlet,
     NotificationComponent,
+    SkipToContentComponent,
     HeaderComponent,
     FooterComponent,
   ],
