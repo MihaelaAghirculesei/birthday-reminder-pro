@@ -14,44 +14,47 @@ import { ThemeService } from '../../core';
   imports: [CommonModule, RouterModule, NetworkStatusComponent, MatSlideToggleModule, MatIconModule, MatButtonModule, MatTooltipModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="app-header">
+    <header class="app-header" role="banner">
       <div class="header-top">
-        <h1 class="hero-title">
+        <h1 class="hero-title" id="main-title">
           <picture>
-            <source srcset="assets/icons/logo-reminder.webp" type="image/webp">
-            <img src="assets/icons/logo-reminder.png" alt="Birthday Reminder Logo" class="app-logo">
+            <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="60" height="60">
+            <img src="assets/icons/logo-reminder.png" alt="Birthday Memories application logo" class="app-logo" width="60" height="60" loading="eager" decoding="sync">
           </picture>
           Birthday Memories
         </h1>
-        <div class="header-controls">
+        <div class="header-controls" role="group" aria-label="Application settings">
           <mat-slide-toggle
             [checked]="themeService.darkMode()"
             (change)="themeService.toggleDarkMode()"
             class="theme-toggle"
             color="primary"
+            aria-label="Toggle dark mode theme"
+            [attr.aria-checked]="themeService.darkMode()"
             matTooltip="Toggle between light and dark theme for better visual comfort"
             matTooltipPosition="below">
-            <mat-icon>{{ themeService.darkMode() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+            <mat-icon aria-hidden="true">{{ themeService.darkMode() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+            <span class="sr-only">{{ themeService.darkMode() ? 'Dark mode enabled' : 'Light mode enabled' }}</span>
           </mat-slide-toggle>
           <app-network-status></app-network-status>
         </div>
       </div>
       <p class="hero-subtitle">Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style.</p>
-      <nav class="nav-menu">
-        <a mat-button routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-          <mat-icon>home</mat-icon>
+      <nav class="nav-menu" role="navigation" aria-label="Main navigation">
+        <a mat-button routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" aria-label="Go to dashboard page">
+          <mat-icon aria-hidden="true">home</mat-icon>
           Dashboard
         </a>
-        <a mat-button routerLink="/scheduled-messages" routerLinkActive="active">
-          <mat-icon>schedule_send</mat-icon>
+        <a mat-button routerLink="/scheduled-messages" routerLinkActive="active" aria-label="Go to scheduled messages page">
+          <mat-icon aria-hidden="true">schedule_send</mat-icon>
           Messages
         </a>
-        <a mat-button routerLink="/calendar-sync" routerLinkActive="active">
-          <mat-icon>sync</mat-icon>
+        <a mat-button routerLink="/calendar-sync" routerLinkActive="active" aria-label="Go to calendar sync page">
+          <mat-icon aria-hidden="true">sync</mat-icon>
           Calendar
         </a>
       </nav>
-    </div>
+    </header>
   `,
   styles: [`
     .app-header {
@@ -202,6 +205,18 @@ import { ThemeService } from '../../core';
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
       }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   `]
 })

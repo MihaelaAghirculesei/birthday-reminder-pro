@@ -95,18 +95,44 @@ body.dark-theme {
   padding: 0;
 }
 
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+  font-style: italic;
+  background-repeat: no-repeat;
+  background-size: cover;
+  shape-margin: 0.75rem;
+}
+
 html, body {
   height: 100%;
   overflow-x: hidden;
 }
 
+@font-face {
+  font-family: 'Roboto Fallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Arial');
+  ascent-override: 92.7734%;
+  descent-override: 24.4141%;
+  line-gap-override: 0%;
+  size-adjust: 100%;
+}
+
 body {
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Roboto', 'Roboto Fallback', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   background: var(--background);
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 ::-webkit-scrollbar {
@@ -126,43 +152,12 @@ body {
   background: var(--primary-dark);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
 .animate-fade-in {
-  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 1;
 }
 
 .animate-slide-in {
-  animation: slideInRight 0.6s ease-out forwards;
+  opacity: 1;
 }
 
 .gradient-text {
@@ -180,7 +175,6 @@ body {
 
   &:hover {
     background: var(--primary-dark) !important;
-    transform: translateY(-2px);
     box-shadow: var(--shadow-elevated) !important;
   }
 }
@@ -193,7 +187,6 @@ body {
 
   &:hover {
     background: var(--surface-hover) !important;
-    transform: translateY(-1px);
   }
 }
 
@@ -202,10 +195,10 @@ body {
   box-shadow: var(--shadow) !important;
   background: var(--surface) !important;
   border: 1px solid var(--border-light) !important;
-  overflow: hidden;
+  overflow: visible;
+  contain: layout;
 
   &:hover {
-    transform: translateY(-4px);
     box-shadow: var(--shadow-elevated) !important;
   }
 }
@@ -235,4 +228,16 @@ body {
 
 .mat-mdc-button-touch-target {
   display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
