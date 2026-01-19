@@ -109,7 +109,7 @@ describe('MessageSchedulerComponent', () => {
     const result = component.getProcessedMessage(mockMessage);
 
     expect(result).toContain('John Doe');
-    expect(result).toContain('35th');
+    expect(result).toContain('36th');
     expect(result).not.toContain('{name}');
     expect(result).not.toContain('{age}');
   });

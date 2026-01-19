@@ -24,7 +24,8 @@
     "types": []
   },
   "exclude": [
-    "cypress"
+    "cypress",
+    "src/**/*.spec.ts"
   ],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
