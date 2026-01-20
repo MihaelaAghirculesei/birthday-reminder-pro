@@ -18,7 +18,7 @@
             <div class="birthday-header">
               @if (birthday.photo) {
                 <div class="birthday-avatar">
-                  <img [src]="birthday.photo" [alt]="birthday.name" loading="lazy" decoding="async" />
+                  <img [src]="birthday.photo" [alt]="birthday.name" width="56" height="56" loading="lazy" decoding="async" />
                 </div>
               }
               @if (!birthday.photo) {

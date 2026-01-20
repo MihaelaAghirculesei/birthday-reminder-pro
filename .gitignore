@@ -46,3 +46,4 @@ cypress/screenshots
 cypress/downloads
 
 .lighthouseci
+"localhost_*.report.html" 

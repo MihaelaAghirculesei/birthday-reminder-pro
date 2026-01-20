@@ -6,11 +6,13 @@
   >
   @if (hasActiveMessages) {
     <picture>
-      <source srcset="assets/icons/configured-message.webp" type="image/webp">
+      <source srcset="assets/icons/configured-message.webp" type="image/webp" width="36" height="36">
       <img
         src="assets/icons/configured-message.png"
         alt="Message configured"
         class="configured-message-icon"
+        width="36"
+        height="36"
         loading="lazy"
         decoding="async"
         />
@@ -19,11 +21,13 @@
 
   @if (!hasActiveMessages) {
     <picture>
-      <source srcset="assets/icons/not-configured-message.webp" type="image/webp">
+      <source srcset="assets/icons/not-configured-message.webp" type="image/webp" width="36" height="36">
       <img
         src="assets/icons/not-configured-message.png"
         alt="No message configured"
         class="not-configured-message-icon"
+        width="36"
+        height="36"
         loading="lazy"
         decoding="async"
         />
