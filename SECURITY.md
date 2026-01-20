@@ -86,16 +86,30 @@ src/environments/environment.example.ts  # ✅ Committed (template only)
 
 ### 5. Content Security Policy (CSP)
 
-Consider adding CSP headers in production:
+**Implemented in `src/index.html`:**
 
 ```
 Content-Security-Policy:
   default-src 'self';
-  script-src 'self' https://apis.google.com;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval';
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src https://fonts.gstatic.com;
-  connect-src 'self' https://*.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://www.googleapis.com https://accounts.google.com;
+  frame-src 'self' https://accounts.google.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  upgrade-insecure-requests;
 ```
+
+**Additional Security Headers:**
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: SAMEORIGIN
+- X-XSS-Protection: 1; mode=block
+- Referrer-Policy: strict-origin-when-cross-origin
+
+Server configuration examples available in `security-headers.conf`
 
 ### 6. HTTPS in Production
 
@@ -105,17 +119,30 @@ Content-Security-Policy:
 - Enable HSTS (HTTP Strict Transport Security)
 - Redirect HTTP to HTTPS
 
-### 7. Input Validation
+### 7. Input Validation & Sanitization
 
-**Current Protections:**
+**Implemented Protections:**
 - Angular's built-in sanitization prevents XSS attacks
 - Form validation prevents invalid data entry
 - TypeScript type checking at compile time
+- Custom sanitization utilities in `src/app/shared/utils/sanitization.utils.ts`
 
-**Additional Recommendations:**
-- Validate file uploads (CSV, JSON, vCard)
-- Sanitize user-generated content
-- Limit file size for imports
+**Sanitization Functions:**
+- `sanitizeUserInput()` - Removes script tags, event handlers, dangerous HTML
+- `sanitizeFileName()` - Validates file names, prevents directory traversal
+- `sanitizeUrl()` - Validates URLs, allows only http/https/mailto protocols
+- `sanitizePhoneNumber()` - Cleans phone number input
+- `sanitizeEmail()` - Normalizes email addresses
+- `escapeHtml()` - Escapes HTML special characters
+- `validateBirthdayName()` - Validates birthday name input (max 100 chars)
+- `validateBirthdayNotes()` - Validates notes (max 500 chars)
+- `sanitizeBirthdayData()` - Complete birthday data sanitization
+
+**Automated Security Checks:**
+- CI/CD pipeline runs `npm audit` on every push
+- Fails build on critical vulnerabilities
+- Warns on 5+ high vulnerabilities
+- Run manually: `npm audit --production`
 
 ---
 
@@ -123,15 +150,21 @@ Content-Security-Policy:
 
 Before deploying to production:
 
+- [x] CSP headers configured in `src/index.html`
+- [x] Security headers configured (see `security-headers.conf`)
+- [x] Input sanitization utilities implemented
+- [x] npm audit automation in CI/CD
 - [ ] Separate OAuth credentials for production environment
 - [ ] `environment.prod.ts` configured with production credentials
 - [ ] HTTPS enabled with valid SSL certificate
 - [ ] Production domain added to Google OAuth authorized origins
 - [ ] API keys restricted to production domain
-- [ ] CSP headers configured
+- [ ] Server security headers applied (Apache/Nginx/Netlify/Vercel)
 - [ ] `npm audit` shows no critical vulnerabilities
 - [ ] Source maps disabled in production build
 - [ ] Error tracking configured (but without exposing sensitive data)
+- [ ] HSTS header enabled on server
+- [ ] Rate limiting configured (if applicable)
 
 ---
 
@@ -157,9 +190,10 @@ Before deploying to production:
 
 ## Security Updates
 
-This document is reviewed and updated regularly. Last review: 2025-12-20
+This document is reviewed and updated regularly. Last review: 2026-01-11
 
 **Recent Updates:**
+- 2026-01-11: Implemented CSP headers, security headers, input sanitization utilities, npm audit automation in CI/CD
 - 2025-12-20: Security audit completed, 9 packages updated, 42 vulnerabilities documented
 - 2025-12-16: Initial security policy created
 
