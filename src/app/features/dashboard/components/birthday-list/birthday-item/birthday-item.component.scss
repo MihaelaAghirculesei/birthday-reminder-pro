@@ -12,7 +12,6 @@
   overflow: hidden;
   background: var(--surface-elevated);
   border: 3px solid var(--primary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 
   .dashboard-photo {
@@ -31,11 +30,6 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  }
 }
 
 .dashboard-birthday-item {
@@ -50,7 +44,6 @@
   border-left: 8px solid #4c3fd9;
   border: 1px solid transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 
   :host-context(body.dark-theme) & {
@@ -58,7 +51,6 @@
   }
 
   &:hover {
-    transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     border: 3px solid #6c757d;
     border-left: 8px solid #4c3fd9;
@@ -80,11 +72,6 @@
     :host-context(body.dark-theme) & {
       background: #3a3a3a;
     }
-  }
-
-  &:active {
-    transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
   }
 
   &:last-child {
@@ -370,7 +357,6 @@
   font-size: 0.9rem;
   color: white;
   text-align: center;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   flex-shrink: 0;
   cursor: pointer;
@@ -403,24 +389,5 @@
   &.green-safe {
     background: radial-gradient(circle, #00b894 0%, #00cec9 100%);
     box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
-  }
-
-  &:hover {
-    transform: scale(1.15) rotate(5deg);
-
-    &.red-alert {
-      transform: scale(1.25) rotate(10deg);
-      box-shadow: 0 0 50px rgba(255, 71, 87, 1), 0 0 100px rgba(255, 71, 87, 0.6);
-    }
-
-    &.orange-warning {
-      transform: scale(1.18) rotate(6deg);
-      box-shadow: 0 0 35px rgba(255, 149, 0, 0.8);
-    }
-
-    &.green-safe {
-      transform: scale(1.12) rotate(3deg);
-      box-shadow: 0 0 25px rgba(0, 184, 148, 0.6);
-    }
   }
 }
