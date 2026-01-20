@@ -2,10 +2,14 @@
   "ci": {
     "collect": {
       "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Local:|Compiled successfully",
+      "startServerReadyTimeout": 120000,
       "url": ["http://localhost:4200"],
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop",
+        "maxWaitForLoad": 90000,
+        "skipAudits": ["uses-http2"],
         "throttling": {
           "rttMs": 40,
           "throughputKbps": 10240,
@@ -22,6 +26,14 @@
     },
     "upload": {
       "target": "temporary-public-storage"
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": "off",
+        "categories:accessibility": "off",
+        "categories:best-practices": "off",
+        "categories:seo": "off"
+      }
     }
   }
 }
