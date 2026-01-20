@@ -46,7 +46,7 @@ describe('IndexedDBStorageService', () => {
       await service.deleteScheduledMessage('msg-2').catch(() => undefined);
       await service.clear().catch(() => undefined);
     } catch {
-      // Ignore cleanup errors
+      // Ignore cleanup errors - database may already be cleared
     }
   });
 
