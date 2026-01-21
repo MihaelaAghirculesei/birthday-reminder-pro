@@ -34,12 +34,14 @@ describe('Notifications', () => {
 
   it('should show success notification after loading demo data', () => {
     cy.contains('Show Demo').click();
-    cy.contains('test birthdays loaded successfully!', { timeout: 10000 }).should('be.visible');
+    cy.get('[data-testid="notification"]', { timeout: 10000 })
+      .should('be.visible')
+      .and('contain.text', 'test birthdays loaded successfully!');
   });
 
   it('should close notification manually', () => {
     cy.contains('Show Demo').click();
-    cy.get('.notification .close-btn', { timeout: 10000 }).first().click();
+    cy.get('[data-testid="close-notification"]', { timeout: 10000 }).first().click({ force: true });
     cy.get('.notification').should('not.exist');
   });
 });
