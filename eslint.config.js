@@ -32,7 +32,7 @@ module.exports = defineConfig([
         },
       ],
       "@angular-eslint/prefer-inject": "off",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {
