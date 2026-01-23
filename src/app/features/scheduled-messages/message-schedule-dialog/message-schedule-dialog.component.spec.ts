@@ -34,7 +34,7 @@ describe('MessageScheduleDialogComponent', () => {
     }
   ];
 
-  const createComponent = (data: any = {}) => {
+  const createComponent = (data: { birthday?: Birthday; birthdayId?: string; message?: unknown } | null = {}) => {
     TestBed.configureTestingModule({
       imports: [MessageScheduleDialogComponent, BrowserAnimationsModule],
       providers: [

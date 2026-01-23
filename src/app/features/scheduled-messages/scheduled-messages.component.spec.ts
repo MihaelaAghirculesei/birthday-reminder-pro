@@ -280,7 +280,7 @@ describe('ScheduledMessagesComponent', () => {
     it('should handle birthday with null scheduledMessages', () => {
       const birthdayWithNull = {
         ...mockBirthdays[0],
-        scheduledMessages: null as any
+        scheduledMessages: null as unknown as undefined
       };
 
       mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
