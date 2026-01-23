@@ -2,6 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PhotoUploadComponent } from './photo-upload.component';
 import { NotificationService } from '../../core/services/notification.service';
 
+interface MockFileInputTarget {
+  files: File[] | null;
+}
+
+interface MockFileInputEvent {
+  target: MockFileInputTarget;
+}
+
 describe('PhotoUploadComponent', () => {
   let component: PhotoUploadComponent;
   let fixture: ComponentFixture<PhotoUploadComponent>;
@@ -38,7 +46,7 @@ describe('PhotoUploadComponent', () => {
   });
 
   describe('onFileSelected', () => {
-    let mockEvent: any;
+    let mockEvent: MockFileInputEvent;
     let mockFile: File;
     let mockFileReader: jasmine.SpyObj<FileReader>;
 
@@ -51,7 +59,7 @@ describe('PhotoUploadComponent', () => {
       };
 
       mockFileReader = jasmine.createSpyObj('FileReader', ['readAsDataURL']);
-      spyOn(window as any, 'FileReader').and.returnValue(mockFileReader);
+      spyOn(window as unknown as { FileReader: typeof FileReader }, 'FileReader').and.returnValue(mockFileReader);
     });
 
     it('should emit photoSelected with base64 string on successful file read', (done) => {
@@ -62,9 +70,9 @@ describe('PhotoUploadComponent', () => {
         done();
       });
 
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
-      mockFileReader.onload!({ target: { result: base64Data } } as any);
+      mockFileReader.onload!({ target: { result: base64Data } } as unknown as ProgressEvent<FileReader>);
     });
 
     it('should show error for file size > 5MB', () => {
@@ -73,7 +81,7 @@ describe('PhotoUploadComponent', () => {
 
       mockEvent.target.files = [largeMockFile];
 
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
       expect(mockNotificationService.show).toHaveBeenCalledWith(
         'File size must be less than 5MB',
@@ -85,7 +93,7 @@ describe('PhotoUploadComponent', () => {
       const textFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       mockEvent.target.files = [textFile];
 
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
       expect(mockNotificationService.show).toHaveBeenCalledWith(
         'Please select a valid image file',
@@ -94,9 +102,9 @@ describe('PhotoUploadComponent', () => {
     });
 
     it('should show error on file read error', () => {
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
-      mockFileReader.onerror!({} as any);
+      mockFileReader.onerror!({} as unknown as ProgressEvent<FileReader>);
 
       expect(mockNotificationService.show).toHaveBeenCalledWith(
         'Failed to read the selected file. Please try again.',
@@ -107,7 +115,7 @@ describe('PhotoUploadComponent', () => {
     it('should not process if no files selected', () => {
       mockEvent.target.files = [];
 
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
       expect(mockNotificationService.show).not.toHaveBeenCalled();
     });
@@ -115,7 +123,7 @@ describe('PhotoUploadComponent', () => {
     it('should not process if files is null', () => {
       mockEvent.target.files = null;
 
-      component.onFileSelected(mockEvent);
+      component.onFileSelected(mockEvent as unknown as Event);
 
       expect(mockNotificationService.show).not.toHaveBeenCalled();
     });

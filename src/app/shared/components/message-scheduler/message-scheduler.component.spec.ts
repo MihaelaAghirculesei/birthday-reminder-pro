@@ -255,7 +255,7 @@ describe('MessageSchedulerComponent', () => {
 
     it('should handle null messages array', (done) => {
       component.birthday = mockBirthday;
-      birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of(null as any));
+      birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of(null as unknown as ScheduledMessage[]));
 
       component.loadMessages();
 
