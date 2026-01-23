@@ -6,7 +6,18 @@ const angular = require("angular-eslint");
 
 module.exports = defineConfig([
   {
+    ignores: [
+      ".angular/**",
+      "coverage/**",
+      "dist/**",
+      "node_modules/**",
+      "functions/**",
+      "cypress/**",
+    ],
+  },
+  {
     files: ["**/*.ts"],
+    ignores: ["cypress.config.ts", "server.ts"],
     extends: [
       eslint.configs.recommended,
       tseslint.configs.recommended,
@@ -32,7 +43,7 @@ module.exports = defineConfig([
         },
       ],
       "@angular-eslint/prefer-inject": "off",
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {
