@@ -6,12 +6,19 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService } from
 import { Birthday } from '../../shared';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
+interface GoogleCalendarSettings {
+  enabled: boolean;
+  calendarId: string;
+  syncMode: string;
+  reminderMinutes: number;
+}
+
 describe('GoogleCalendarSyncComponent', () => {
   let component: GoogleCalendarSyncComponent;
   let fixture: ComponentFixture<GoogleCalendarSyncComponent>;
   let googleCalendarServiceSpy: jasmine.SpyObj<GoogleCalendarService>;
   let isSignedInSubject: BehaviorSubject<boolean>;
-  let settingsSubject: BehaviorSubject<any>;
+  let settingsSubject: BehaviorSubject<GoogleCalendarSettings>;
 
   const mockBirthdays: Birthday[] = [
     {
@@ -40,7 +47,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
   beforeEach(async () => {
     isSignedInSubject = new BehaviorSubject<boolean>(false);
-    settingsSubject = new BehaviorSubject<any>(mockSettings);
+    settingsSubject = new BehaviorSubject<GoogleCalendarSettings>(mockSettings);
 
     const googleCalendarSpyObj = jasmine.createSpyObj('GoogleCalendarService', [
       'initialize',
