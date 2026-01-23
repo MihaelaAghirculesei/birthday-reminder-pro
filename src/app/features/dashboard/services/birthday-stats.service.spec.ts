@@ -169,7 +169,7 @@ describe('BirthdayStatsService', () => {
       const birthdayNoCategory: Birthday = {
         ...mockBirthdays[0],
         id: '4',
-        category: undefined as any
+        category: undefined
       };
       const categoryStats = service.getCategoriesStats([birthdayNoCategory]);
       const defaultCategory = categoryStats.find(s => s.categoryId === 'default');

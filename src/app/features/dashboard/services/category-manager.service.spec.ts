@@ -1,9 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CategoryManagerService } from './category-manager.service';
 import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
 import { Birthday, BirthdayCategory } from '../../../shared';
+
+interface DialogData {
+  mode?: 'add' | 'edit';
+  category?: BirthdayCategory;
+  categoryToDelete?: BirthdayCategory;
+  affectedBirthdaysCount?: number;
+}
 
 describe('CategoryManagerService', () => {
   let service: CategoryManagerService;
@@ -85,7 +92,7 @@ describe('CategoryManagerService', () => {
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
       expect(callArgs[1]?.width).toBe('600px');
-      expect((callArgs[1] as any)?.data?.mode).toBe('add');
+      expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('add');
     });
 
     it('should add category when dialog returns result', () => {
@@ -157,8 +164,8 @@ describe('CategoryManagerService', () => {
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
-      expect((callArgs[1] as any)?.data?.mode).toBe('edit');
-      expect((callArgs[1] as any)?.data?.category?.id).toBe('friends');
+      expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('edit');
+      expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.category?.id).toBe('friends');
     });
 
     it('should update category when dialog returns result', () => {
@@ -197,7 +204,7 @@ describe('CategoryManagerService', () => {
 
       const dialogCallArgs = dialogSpy.open.calls.all();
       const editDialogCalls = dialogCallArgs.filter(call =>
-        (call.args[1] as any)?.data?.mode === 'edit'
+        (call.args[1] as MatDialogConfig<DialogData>)?.data?.mode === 'edit'
       );
       expect(editDialogCalls.length).toBe(0);
     });
@@ -231,8 +238,8 @@ describe('CategoryManagerService', () => {
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
-      expect((callArgs[1] as any)?.data?.categoryToDelete?.id).toBe('work');
-      expect((callArgs[1] as any)?.data?.affectedBirthdaysCount).toBe(1);
+      expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.categoryToDelete?.id).toBe('work');
+      expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.affectedBirthdaysCount).toBe(1);
     });
 
     it('should reassign birthdays and delete category', () => {
