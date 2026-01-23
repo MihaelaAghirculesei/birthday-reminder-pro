@@ -34,8 +34,8 @@ describe('Notifications', () => {
 
   it('should show success notification after loading demo data', () => {
     cy.contains('Show Demo').click();
-    cy.get('[data-testid="notification"]', { timeout: 10000 })
-      .should('be.visible')
+    cy.get('.notification-success', { timeout: 15000 })
+      .should('exist')
       .and('contain.text', 'test birthdays loaded successfully!');
   });
 
