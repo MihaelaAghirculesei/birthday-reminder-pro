@@ -3,6 +3,10 @@ import { SimpleChange } from '@angular/core';
 import { BirthdayItemComponent } from './birthday-item.component';
 import { Birthday } from '../../../../../shared';
 
+interface MockMouseEvent {
+  currentTarget: { blur: jasmine.Spy } | HTMLButtonElement;
+}
+
 describe('BirthdayItemComponent', () => {
   let component: BirthdayItemComponent;
   let fixture: ComponentFixture<BirthdayItemComponent>;
@@ -48,7 +52,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('ngOnChanges', () => {
     it('should update days data when daysUntilBirthday changes', () => {
-      spyOn<any>(component, 'updateDaysData');
+      spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
 
       component.ngOnChanges({
         daysUntilBirthday: new SimpleChange(0, 5, false)
@@ -58,7 +62,7 @@ describe('BirthdayItemComponent', () => {
     });
 
     it('should not update if daysUntilBirthday does not change', () => {
-      spyOn<any>(component, 'updateDaysData');
+      spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
 
       component.ngOnChanges({
         birthday: new SimpleChange(null, mockBirthday, false)
@@ -168,9 +172,9 @@ describe('BirthdayItemComponent', () => {
   describe('onEdit', () => {
     it('should emit edit event with birthday', () => {
       spyOn(component.edit, 'emit');
-      const mockEvent = { currentTarget: { blur: jasmine.createSpy('blur') } } as any;
+      const mockEvent: MockMouseEvent = { currentTarget: { blur: jasmine.createSpy('blur') } };
 
-      component.onEdit(mockEvent);
+      component.onEdit(mockEvent as unknown as Event);
 
       expect(mockEvent.currentTarget.blur).toHaveBeenCalled();
       expect(component.edit.emit).toHaveBeenCalledWith(mockBirthday);
@@ -179,9 +183,9 @@ describe('BirthdayItemComponent', () => {
     it('should blur the button element', () => {
       const mockButton = document.createElement('button');
       spyOn(mockButton, 'blur');
-      const mockEvent = { currentTarget: mockButton } as any;
+      const mockEvent: MockMouseEvent = { currentTarget: mockButton };
 
-      component.onEdit(mockEvent);
+      component.onEdit(mockEvent as unknown as Event);
 
       expect(mockButton.blur).toHaveBeenCalled();
     });
