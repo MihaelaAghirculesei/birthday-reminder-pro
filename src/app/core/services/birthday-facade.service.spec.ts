@@ -11,7 +11,7 @@ describe('BirthdayFacadeService', () => {
 
   beforeEach(() => {
     const storeSpy = jasmine.createSpyObj('Store', ['dispatch', 'select']);
-    storeSpy.select.and.callFake((selector: any) => {
+    storeSpy.select.and.callFake((selector: unknown) => {
       if (selector === BirthdaySelectors.selectBirthdayLoading) return of(false);
       if (selector === BirthdaySelectors.selectBirthdayError) return of(undefined);
       if (selector === BirthdaySelectors.selectSearchTerm) return of('');

@@ -28,7 +28,7 @@ describe('CategoryFacadeService', () => {
   beforeEach(() => {
     const storeSpyObj = jasmine.createSpyObj('Store', ['dispatch', 'select']);
 
-    storeSpyObj.select.and.callFake((selector: any) => {
+    storeSpyObj.select.and.callFake((selector: unknown) => {
       if (selector === CategorySelectors.selectAllCategories) {
         return of(mockCategories);
       }

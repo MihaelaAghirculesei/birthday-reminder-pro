@@ -256,7 +256,7 @@ describe('IndexedDBStorageService', () => {
 
       const birthdays = await service.getBirthdays();
       expect(birthdays[0].name).toBe('New Name');
-      expect((birthdays[0] as any).notes).toBe('Extra notes');
+      expect(birthdays[0].notes).toBe('Extra notes');
     });
   });
 });

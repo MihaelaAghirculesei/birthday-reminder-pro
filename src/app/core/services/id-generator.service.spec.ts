@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { IdGeneratorService } from './id-generator.service';
 
+const cryptoRef = crypto as unknown as { randomUUID?: () => string };
+
 describe('IdGeneratorService', () => {
   let service: IdGeneratorService;
 
@@ -38,7 +40,7 @@ describe('IdGeneratorService', () => {
   });
 
   describe('Browser with crypto.getRandomValues (no randomUUID)', () => {
-    let originalRandomUUID: any;
+    let originalRandomUUID: (() => string) | undefined;
 
     beforeEach(() => {
       TestBed.configureTestingModule({
@@ -48,17 +50,15 @@ describe('IdGeneratorService', () => {
         ]
       });
 
-      // Temporarily remove randomUUID to test fallback to getRandomValues
-      originalRandomUUID = (crypto as any).randomUUID;
-      delete (crypto as any).randomUUID;
+      originalRandomUUID = cryptoRef.randomUUID;
+      delete cryptoRef.randomUUID;
 
       service = TestBed.inject(IdGeneratorService);
     });
 
     afterEach(() => {
-      // Restore randomUUID
       if (originalRandomUUID) {
-        (crypto as any).randomUUID = originalRandomUUID;
+        cryptoRef.randomUUID = originalRandomUUID;
       }
     });
 
