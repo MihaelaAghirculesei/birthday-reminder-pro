@@ -18,6 +18,7 @@
     "e2e:ci": "start-server-and-test start http://localhost:4200 e2e:headless",
     "serve:ssr:birthday-reminder-app": "node dist/birthday-reminder-app/server/server.mjs",
     "lint": "ng lint",
+    "ci:local": "npm run lint && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.app.json && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json && npm test -- --watch=false --browsers=ChromeHeadless --code-coverage && npx cypress run --browser chrome --headless && npm run build",
     "clean": "npx rimraf node_modules dist .angular",
     "clean:all": "npm cache clean --force && npx rimraf node_modules dist .angular"
   },
