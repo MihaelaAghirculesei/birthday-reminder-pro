@@ -9,7 +9,7 @@ describe('CategoryDialogComponent', () => {
   let fixture: ComponentFixture<CategoryDialogComponent>;
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<CategoryDialogComponent>>;
 
-  const createComponent = (data: any = { mode: 'add' }) => {
+  const createComponent = (data: { mode: 'add' | 'edit'; category?: unknown } = { mode: 'add' }) => {
     TestBed.configureTestingModule({
       imports: [CategoryDialogComponent, ReactiveFormsModule, BrowserAnimationsModule],
       providers: [
@@ -335,7 +335,7 @@ describe('CategoryDialogComponent', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty data object', () => {
-      createComponent({});
+      createComponent({ mode: 'add' });
 
       expect(component.categoryForm.value).toEqual({
         name: '',
