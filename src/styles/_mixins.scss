@@ -16,13 +16,9 @@
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
   }
 
-  .mat-mdc-button-touch-target {
-    display: none !important;
-  }
+  .mat-mdc-button-touch-target { display: none !important; }
 
-  mat-icon,
-  .icon,
-  [class$='-icon'] {
+  mat-icon, .icon, [class$='-icon'] {
     font-size: $icon-size !important;
     width: $icon-size !important;
     height: $icon-size !important;
@@ -30,84 +26,82 @@
     transition: all 0.3s ease;
   }
 
-  &:hover mat-icon,
-  &:hover .icon,
-  &:hover [class$='-icon'] {
+  &:hover mat-icon, &:hover .icon, &:hover [class$='-icon'] {
     filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
-  }
-}
-
-@mixin form-input {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 2px solid #007bff !important;
-  border-radius: 6px !important;
-  padding: 8px 12px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  color: #333 !important;
-  width: 100% !important;
-  transition: all 0.3s ease !important;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface-elevated) !important;
-    color: var(--text-primary) !important;
-    border-color: var(--border-light) !important;
-  }
-
-  &:focus {
-    outline: none !important;
-    border-color: #0056b3 !important;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25) !important;
-    background: white !important;
-
-    :host-context(body.dark-theme) & {
-      background: var(--surface-hover) !important;
-      border-color: var(--primary) !important;
-    }
-  }
-
-  &::placeholder {
-    color: #6c757d !important;
-
-    :host-context(body.dark-theme) & {
-      color: var(--text-muted) !important;
-    }
   }
 }
 
 @mixin card-hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  }
+  &:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
 }
 
 @mixin custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--surface-elevated);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 4px;
-
-    &:hover {
-      background: var(--secondary);
-    }
-  }
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-track { background: var(--surface-elevated); border-radius: 4px; }
+  &::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; &:hover { background: var(--secondary); } }
 }
 
 @mixin dark-theme-var($property, $light-value, $dark-var) {
   #{$property}: $light-value;
+  :host-context(body.dark-theme) & { #{$property}: var($dark-var); }
+}
 
-  :host-context(body.dark-theme) & {
-    #{$property}: var($dark-var);
+@mixin form-field-outline-border($color) {
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: $color !important;
+    border-width: 2px !important;
+  }
+  .mdc-notched-outline__notch {
+    border-left: 2px solid $color !important;
+    border-top: 2px solid $color !important;
+    border-bottom: 2px solid $color !important;
+  }
+}
+
+@mixin mat-form-field-light-on-dark {
+  .mat-mdc-text-field-wrapper {
+    background: transparent !important;
+  }
+
+  .mdc-notched-outline__leading {
+    display: none !important;
+  }
+
+  .mdc-notched-outline__notch {
+    border-radius: 12px 0 0 12px !important;
+    padding-left: 20px !important;
+  }
+
+  .mdc-notched-outline__trailing {
+    border-radius: 0 12px 12px 0 !important;
+  }
+
+  @include form-field-outline-border(rgba(255, 255, 255, 0.5));
+
+  .mat-mdc-form-field-label,
+  .mdc-floating-label,
+  .mat-mdc-select-value,
+  .mat-mdc-input-element {
+    color: white !important;
+  }
+
+  .mat-mdc-form-field-hint {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+
+  .mat-mdc-select-arrow,
+  .mat-mdc-form-field-icon-prefix,
+  .mat-mdc-form-field-icon-suffix {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  &.mat-focused {
+    @include form-field-outline-border(rgba(255, 255, 255, 0.9));
+  }
+
+  &:hover:not(.mat-focused) {
+    @include form-field-outline-border(rgba(255, 255, 255, 0.7));
   }
 }

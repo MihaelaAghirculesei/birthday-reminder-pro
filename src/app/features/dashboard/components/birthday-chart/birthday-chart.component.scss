@@ -1,3 +1,5 @@
+@import '../../../../../styles/shared';
+
 .chart-card {
   background: var(--surface) !important;
   border-radius: var(--radius-lg) !important;
@@ -84,16 +86,6 @@
   &:hover {
     transform: scale(1.15);
     box-shadow: var(--shadow-elevated);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
   }
 }
 

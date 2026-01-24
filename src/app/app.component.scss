@@ -1,3 +1,5 @@
+@import '../styles/shared';
+
 .app-container {
   min-height: 100vh;
   background: var(--background);
@@ -292,28 +294,6 @@
   }
   50% {
     background-position: 100% 50%;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
