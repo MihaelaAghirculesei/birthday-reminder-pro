@@ -140,7 +140,7 @@
 
     &:hover:not(.mat-focused) {
       .mat-mdc-text-field-wrapper {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
       }
     }
@@ -173,17 +173,6 @@
 
   &:active {
     transform: translateY(-1px) scale(0.98);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -226,7 +215,7 @@
     width: 48px;
     height: 48px;
     padding: 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -234,7 +223,7 @@
     min-width: 80px;
     min-height: 80px;
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 
     :host-context(body.dark-theme) & {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -284,24 +273,14 @@
     gap: 8px;
 
     &:hover:not([disabled]) {
-      background: rgba(255,255,255,0.9) !important;
+      background: rgba(255, 255, 255, 0.9) !important;
       color: #1e293b !important;
       transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-
-      ::ng-deep .mat-mdc-button-touch-target,
-      ::ng-deep .mdc-button__label,
-      ::ng-deep span {
-        color: #1e293b !important;
-      }
-
-      mat-icon {
-        color: #1e293b !important;
-      }
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     }
 
     &[disabled] {
-      background: rgba(255,255,255,0.7) !important;
+      background: rgba(255, 255, 255, 0.7) !important;
       color: rgba(102, 126, 234, 0.7) !important;
       cursor: not-allowed;
     }

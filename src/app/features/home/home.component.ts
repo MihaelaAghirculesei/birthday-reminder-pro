@@ -17,8 +17,10 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PhotoUploadComponent, DEFAULT_CATEGORY, BirthdayCategory } from '../../shared';
-import { Birthday, getZodiacSign } from '../../shared';
+import { PhotoUploadComponent } from '../../shared/components/photo-upload.component';
+import { DEFAULT_CATEGORY, BirthdayCategory } from '../../shared/constants';
+import { Birthday } from '../../shared/models';
+import { getZodiacSign } from '../../shared/utils';
 import { BirthdayFacadeService, CategoryFacadeService } from '../../core';
 
 @Component({
