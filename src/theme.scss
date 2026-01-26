@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 $custom-primary: mat.m2-define-palette((
   50: #f3f0ff,
@@ -65,7 +66,8 @@ $custom-theme: mat.m2-define-light-theme((
   density: 0,
 ));
 
-@include mat.core-theme($custom-theme);
+@include mat.elevation-classes();
+@include mat.app-background();
 @include mat.button-theme($custom-theme);
 @include mat.fab-theme($custom-theme);
 @include mat.card-theme($custom-theme);
@@ -140,7 +142,8 @@ $custom-theme: mat.m2-define-light-theme((
     ),
   ));
 
-  @include mat.core-color($dark-theme);
+  @include mat.elevation-classes();
+  @include mat.app-background();
   @include mat.button-color($dark-theme);
   @include mat.fab-color($dark-theme);
   @include mat.card-color($dark-theme);
