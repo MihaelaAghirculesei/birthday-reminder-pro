@@ -2,7 +2,7 @@
 
 @include mat.core();
 
-$custom-primary: mat.define-palette((
+$custom-primary: mat.m2-define-palette((
   50: #f3f0ff,
   100: #e5deff,
   200: #d0c1ff,
@@ -27,7 +27,7 @@ $custom-primary: mat.define-palette((
   )
 ));
 
-$custom-accent: mat.define-palette((
+$custom-accent: mat.m2-define-palette((
   50: #f0f9ff,
   100: #e0f2fe,
   200: #bae6fd,
@@ -52,16 +52,16 @@ $custom-accent: mat.define-palette((
   )
 ));
 
-$custom-warn: mat.define-palette(mat.$red-palette);
+$custom-warn: mat.m2-define-palette(mat.$m2-red-palette);
 
 
-$custom-theme: mat.define-light-theme((
+$custom-theme: mat.m2-define-light-theme((
   color: (
     primary: $custom-primary,
     accent: $custom-accent,
     warn: $custom-warn,
   ),
-  typography: mat.define-typography-config(),
+  typography: mat.m2-define-typography-config(),
   density: 0,
 ));
 
@@ -82,7 +82,7 @@ $custom-theme: mat.define-light-theme((
 @include mat.tooltip-theme($custom-theme);
 
 .dark-theme {
-  $dark-primary: mat.define-palette((
+  $dark-primary: mat.m2-define-palette((
     50: #f5f3ff,
     100: #ede9fe,
     200: #ddd6fe,
@@ -107,7 +107,7 @@ $custom-theme: mat.define-light-theme((
     )
   ));
 
-  $dark-accent: mat.define-palette((
+  $dark-accent: mat.m2-define-palette((
     50: #ecfeff,
     100: #cffafe,
     200: #a5f3fc,
@@ -132,7 +132,7 @@ $custom-theme: mat.define-light-theme((
     )
   ));
 
-  $dark-theme: mat.define-dark-theme((
+  $dark-theme: mat.m2-define-dark-theme((
     color: (
       primary: $dark-primary,
       accent: $dark-accent,
