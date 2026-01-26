@@ -1,4 +1,4 @@
-@import '../../../../../styles/shared';
+@use '../../../../../styles/shared' as *;
 
 .chart-card {
   background: var(--surface) !important;
