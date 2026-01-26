@@ -5,11 +5,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { getCategoryIcon, getCategoryColor, getCategoryById } from '../constants/categories';
 
 @Component({
-  selector: 'app-category-icon',
-  standalone: true,
-  imports: [MatIconModule, MatTooltipModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-category-icon',
+    imports: [MatIconModule, MatTooltipModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <div class="category-icon-wrapper"
          [style.background-color]="iconColor"
          [matTooltip]="categoryName"
@@ -19,7 +18,7 @@ import { getCategoryIcon, getCategoryColor, getCategoryById } from '../constants
       </mat-icon>
     </div>
   `,
-  styles: [`
+    styles: [`
     .category-icon-wrapper {
       display: inline-flex;
       align-items: center;

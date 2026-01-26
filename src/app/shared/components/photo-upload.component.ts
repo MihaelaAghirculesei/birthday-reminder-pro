@@ -6,11 +6,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
-  selector: 'app-photo-upload',
-  standalone: true,
-  imports: [MatIconModule, MatButtonModule, MatTooltipModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-photo-upload',
+    imports: [MatIconModule, MatButtonModule, MatTooltipModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <div class="photo-upload-container">
       <div class="photo-preview"
         [class.has-photo]="currentPhoto"
@@ -58,7 +57,7 @@ import { NotificationService } from '../../core/services/notification.service';
         }
       </div>
     `,
-  styles: [`
+    styles: [`
     .photo-upload-container {
       display: flex;
       align-items: flex-start;

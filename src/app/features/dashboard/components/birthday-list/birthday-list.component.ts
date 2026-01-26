@@ -20,23 +20,22 @@ interface EnrichedBirthday extends Birthday {
 }
 
 @Component({
-  selector: 'app-birthday-list',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ScrollingModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-    BirthdayItemComponent,
-    BirthdayImportExportComponent
-],
-  templateUrl: './birthday-list.component.html',
-  styleUrls: ['./birthday-list.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-birthday-list',
+    imports: [
+        FormsModule,
+        ScrollingModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule,
+        BirthdayItemComponent,
+        BirthdayImportExportComponent
+    ],
+    templateUrl: './birthday-list.component.html',
+    styleUrls: ['./birthday-list.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayListComponent implements OnChanges, OnDestroy {
   @Input() birthdays: Birthday[] = [];

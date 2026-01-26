@@ -24,42 +24,35 @@ import { getZodiacSign } from '../../shared/utils';
 import { BirthdayFacadeService, CategoryFacadeService } from '../../core';
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    MatIconModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    PhotoUploadComponent,
-  ],
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  animations: [
-    trigger('expandCollapse', [
-      transition(':enter', [
-        style({ opacity: 0, height: '0px', overflow: 'hidden' }),
-        animate(
-          '300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 1, height: '*', overflow: 'hidden' })
-        ),
-      ]),
-      transition(':leave', [
-        style({ opacity: 1, height: '*', overflow: 'hidden' }),
-        animate(
-          '300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          style({ opacity: 0, height: '0px', overflow: 'hidden' })
-        ),
-      ]),
-    ]),
-  ],
+    selector: 'app-home',
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        MatIconModule,
+        MatButtonModule,
+        MatProgressSpinnerModule,
+        PhotoUploadComponent,
+    ],
+    templateUrl: './home.component.html',
+    styleUrls: ['./home.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    animations: [
+        trigger('expandCollapse', [
+            transition(':enter', [
+                style({ opacity: 0, height: '0px', overflow: 'hidden' }),
+                animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, height: '*', overflow: 'hidden' })),
+            ]),
+            transition(':leave', [
+                style({ opacity: 1, height: '*', overflow: 'hidden' }),
+                animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 0, height: '0px', overflow: 'hidden' })),
+            ]),
+        ]),
+    ]
 })
 export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;

@@ -7,11 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 
 @Component({
-  selector: 'app-notification-permission-banner',
-  standalone: true,
-  imports: [MatCardModule, MatIconModule, MatButtonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-notification-permission-banner',
+    imports: [MatCardModule, MatIconModule, MatButtonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     @if (shouldShow) {
       <div class="notification-banner" data-testid="notification-banner">
         <mat-card class="permission-card">
@@ -49,7 +48,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
       </div>
     }
     `,
-  styles: [`
+    styles: [`
     .notification-banner {
       margin: 16px 0;
       animation: slideDown 0.3s ease-out;

@@ -10,12 +10,11 @@ interface EnrichedChartDataItem extends ChartDataItem {
 }
 
 @Component({
-  selector: 'app-birthday-chart',
-  standalone: true,
-  imports: [MatCardModule, MatIconModule],
-  templateUrl: './birthday-chart.component.html',
-  styleUrls: ['./birthday-chart.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-birthday-chart',
+    imports: [MatCardModule, MatIconModule],
+    templateUrl: './birthday-chart.component.html',
+    styleUrls: ['./birthday-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayChartComponent implements OnChanges {
   private readonly MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

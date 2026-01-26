@@ -19,12 +19,11 @@ interface CategoryDialogData {
 }
 
 @Component({
-  selector: 'app-category-dialog',
-  standalone: true,
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatTooltipModule],
-  templateUrl: './category-dialog.component.html',
-  styleUrls: ['./category-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-category-dialog',
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatTooltipModule],
+    templateUrl: './category-dialog.component.html',
+    styleUrls: ['./category-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryDialogComponent {
   categoryForm: FormGroup;

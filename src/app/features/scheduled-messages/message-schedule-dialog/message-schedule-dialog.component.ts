@@ -16,21 +16,20 @@ interface MessageScheduleDialogData {
 }
 
 @Component({
-  selector: 'app-message-schedule-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatIconModule,
-    MatButtonModule,
-    MessageSchedulerComponent
-  ],
-  templateUrl: './message-schedule-dialog.component.html',
-  styleUrls: ['./message-schedule-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-message-schedule-dialog',
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatIconModule,
+        MatButtonModule,
+        MessageSchedulerComponent
+    ],
+    templateUrl: './message-schedule-dialog.component.html',
+    styleUrls: ['./message-schedule-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageScheduleDialogComponent implements OnInit {
   selectedBirthday: Birthday | null = null;

@@ -7,21 +7,20 @@ import { ZodiacIconComponent, CategoryIconComponent, MessageIndicatorComponent, 
 import { RememberPhotoComponent } from '../../remember-photo/remember-photo.component';
 
 @Component({
-  selector: 'app-birthday-item',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-    ZodiacIconComponent,
-    CategoryIconComponent,
-    RememberPhotoComponent,
-    MessageIndicatorComponent,
-  ],
-  templateUrl: './birthday-item.component.html',
-  styleUrls: ['./birthday-item.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-birthday-item',
+    imports: [
+        CommonModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule,
+        ZodiacIconComponent,
+        CategoryIconComponent,
+        RememberPhotoComponent,
+        MessageIndicatorComponent,
+    ],
+    templateUrl: './birthday-item.component.html',
+    styleUrls: ['./birthday-item.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayItemComponent implements OnChanges {
   @Input() birthday!: Birthday;

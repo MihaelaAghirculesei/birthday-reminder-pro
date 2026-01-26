@@ -10,18 +10,17 @@ import { BirthdayFacadeService } from '../../core';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 
 @Component({
-  selector: 'app-scheduled-messages',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule,
-  ],
-  templateUrl: './scheduled-messages.component.html',
-  styleUrls: ['./scheduled-messages.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-scheduled-messages',
+    imports: [
+        CommonModule,
+        MatCardModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule,
+    ],
+    templateUrl: './scheduled-messages.component.html',
+    styleUrls: ['./scheduled-messages.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ScheduledMessagesComponent {
   birthdaysWithMessages: Signal<Birthday[]> = computed(() =>

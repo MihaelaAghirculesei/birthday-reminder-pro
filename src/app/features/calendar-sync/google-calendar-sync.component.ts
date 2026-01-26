@@ -11,19 +11,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, LoggerService } from '../../core';
 
 @Component({
-  selector: 'app-google-calendar-sync',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatSlideToggleModule,
-    MatIconModule,
-    MatButtonModule
-],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-google-calendar-sync',
+    imports: [
+        ReactiveFormsModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatSlideToggleModule,
+        MatIconModule,
+        MatButtonModule
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <mat-card class="sync-card">
       <mat-card-header>
         <mat-card-title>📅 Google Calendar Sync</mat-card-title>
@@ -147,7 +146,7 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
       </mat-card-content>
     </mat-card>
     `,
-  styles: [`
+    styles: [`
     .sync-card {
       max-width: 600px;
       margin: 0 auto;

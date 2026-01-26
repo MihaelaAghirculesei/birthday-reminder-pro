@@ -9,11 +9,10 @@ import { NetworkStatusComponent } from '../../shared/components/network-status.c
 import { ThemeService } from '../../core';
 
 @Component({
-  selector: 'app-header',
-  standalone: true,
-  imports: [CommonModule, RouterModule, NetworkStatusComponent, MatSlideToggleModule, MatIconModule, MatButtonModule, MatTooltipModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-header',
+    imports: [CommonModule, RouterModule, NetworkStatusComponent, MatSlideToggleModule, MatIconModule, MatButtonModule, MatTooltipModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <header class="app-header" role="banner">
       <div class="header-top">
         <h1 class="hero-title" id="main-title">
@@ -56,7 +55,7 @@ import { ThemeService } from '../../core';
       </nav>
     </header>
   `,
-  styles: [`
+    styles: [`
     .app-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;

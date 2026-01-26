@@ -5,18 +5,17 @@ import { SkipToContentComponent } from './shared/components/skip-to-content.comp
 import { HeaderComponent, FooterComponent } from './layout';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    NotificationComponent,
-    SkipToContentComponent,
-    HeaderComponent,
-    FooterComponent,
-  ],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    selector: 'app-root',
+    imports: [
+        RouterOutlet,
+        NotificationComponent,
+        SkipToContentComponent,
+        HeaderComponent,
+        FooterComponent,
+    ],
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent {
   title = 'Birthday Reminder App';

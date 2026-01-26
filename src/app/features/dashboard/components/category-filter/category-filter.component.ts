@@ -14,12 +14,11 @@ export interface CategoryStats {
 }
 
 @Component({
-  selector: 'app-category-filter',
-  standalone: true,
-  imports: [MatIconModule, MatButtonModule, MatTooltipModule, CategoryIconComponent],
-  templateUrl: './category-filter.component.html',
-  styleUrls: ['./category-filter.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-category-filter',
+    imports: [MatIconModule, MatButtonModule, MatTooltipModule, CategoryIconComponent],
+    templateUrl: './category-filter.component.html',
+    styleUrls: ['./category-filter.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryFilterComponent {
   @Input() categoriesStats: CategoryStats[] = [];

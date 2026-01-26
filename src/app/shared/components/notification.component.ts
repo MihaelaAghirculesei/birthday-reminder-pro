@@ -7,11 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { NotificationService, NotificationMessage } from '../../core/services/notification.service';
 
 @Component({
-  selector: 'app-notification',
-  standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-notification',
+    imports: [CommonModule, MatIconModule, MatButtonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <div class="notification-container">
       @for (notification of notifications$ | async; track notification.id) {
         <div
@@ -33,7 +32,7 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
       }
     </div>
     `,
-  styles: [`
+    styles: [`
     .notification-container {
       position: fixed;
       top: 50%;
@@ -118,17 +117,17 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
       }
     }
   `],
-  animations: [
-    trigger('slideIn', [
-      transition(':enter', [
-        style({ transform: 'translateX(100%)', opacity: 0 }),
-        animate('300ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
-      ]),
-      transition(':leave', [
-        animate('300ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
-      ])
-    ])
-  ]
+    animations: [
+        trigger('slideIn', [
+            transition(':enter', [
+                style({ transform: 'translateX(100%)', opacity: 0 }),
+                animate('300ms ease-out', style({ transform: 'translateX(0)', opacity: 1 }))
+            ]),
+            transition(':leave', [
+                animate('300ms ease-in', style({ transform: 'translateX(100%)', opacity: 0 }))
+            ])
+        ])
+    ]
 })
 export class NotificationComponent {
   notifications$: Observable<NotificationMessage[]>;

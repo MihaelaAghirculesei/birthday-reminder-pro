@@ -17,24 +17,23 @@ import { BirthdayEditService, BirthdayStatsService, ChartDataItem, CategoryManag
 import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-    CalendarIconComponent,
-    DashboardStatsComponent,
-    BirthdayChartComponent,
-    CategoryFilterComponent,
-    BirthdayListComponent,
-    GoogleCalendarSyncComponent,
-    NotificationPermissionBannerComponent
-  ],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-dashboard',
+    imports: [
+        CommonModule,
+        MatButtonModule,
+        MatIconModule,
+        MatTooltipModule,
+        CalendarIconComponent,
+        DashboardStatsComponent,
+        BirthdayChartComponent,
+        CategoryFilterComponent,
+        BirthdayListComponent,
+        GoogleCalendarSyncComponent,
+        NotificationPermissionBannerComponent
+    ],
+    templateUrl: './dashboard.component.html',
+    styleUrls: ['./dashboard.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
   totalBirthdays: Signal<number>;

@@ -2,11 +2,10 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 
 @Component({
-  selector: 'app-footer',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-footer',
+    imports: [],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <footer class="app-footer">
       <div class="footer-content">
         <p>&copy; {{ currentYear }} Birthday Memories. All rights reserved.</p>
@@ -14,7 +13,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       </div>
     </footer>
   `,
-  styles: [`
+    styles: [`
     .app-footer {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;

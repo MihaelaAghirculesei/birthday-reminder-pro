@@ -7,17 +7,16 @@ import { Birthday } from '../../../../../shared';
 import { BackupService, NotificationService } from '../../../../../core';
 
 @Component({
-  selector: 'app-birthday-import-export',
-  standalone: true,
-  imports: [
-    MatCardModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule
-  ],
-  templateUrl: './birthday-import-export.component.html',
-  styleUrls: ['./birthday-import-export.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-birthday-import-export',
+    imports: [
+        MatCardModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule
+    ],
+    templateUrl: './birthday-import-export.component.html',
+    styleUrls: ['./birthday-import-export.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayImportExportComponent {
   @Input() totalBirthdays = 0;

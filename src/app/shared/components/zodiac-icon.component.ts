@@ -3,11 +3,10 @@ import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } f
 import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
 
 @Component({
-  selector: 'app-zodiac-icon',
-  standalone: true,
-  imports: [],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-zodiac-icon',
+    imports: [],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
     <button class="zodiac-button"
             [class]="'zodiac-' + zodiacSign?.toLowerCase()"
             [title]="tooltipText"
@@ -15,7 +14,7 @@ import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
       {{ symbol }}
     </button>
   `,
-  styles: [`
+    styles: [`
     .zodiac-button {
       display: flex;
       align-items: center;

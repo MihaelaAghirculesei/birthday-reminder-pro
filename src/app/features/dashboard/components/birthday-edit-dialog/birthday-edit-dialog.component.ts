@@ -27,23 +27,22 @@ export interface BirthdayEditDialogResult {
 }
 
 @Component({
-  selector: 'app-birthday-edit-dialog',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    PhotoUploadComponent,
-    MessageSchedulerComponent,
-  ],
-  templateUrl: './birthday-edit-dialog.component.html',
-  styleUrls: ['./birthday-edit-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-birthday-edit-dialog',
+    imports: [
+        CommonModule,
+        FormsModule,
+        MatDialogModule,
+        MatButtonModule,
+        MatIconModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        PhotoUploadComponent,
+        MessageSchedulerComponent,
+    ],
+    templateUrl: './birthday-edit-dialog.component.html',
+    styleUrls: ['./birthday-edit-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayEditDialogComponent {
   editedBirthday: Birthday;

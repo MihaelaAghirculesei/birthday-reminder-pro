@@ -3,12 +3,11 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
-  selector: 'app-remember-photo',
-  standalone: true,
-  imports: [MatTooltipModule],
-  templateUrl: './remember-photo.component.html',
-  styleUrls: ['./remember-photo.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-remember-photo',
+    imports: [MatTooltipModule],
+    templateUrl: './remember-photo.component.html',
+    styleUrls: ['./remember-photo.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RememberPhotoComponent {
   @Input() photoUrl: string | null | undefined = null;

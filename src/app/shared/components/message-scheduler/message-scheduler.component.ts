@@ -22,24 +22,23 @@ import { ScheduledMessageService, MessageTemplate } from '../../../features/sche
 import { NotificationService, BirthdayFacadeService } from '../../../core';
 
 @Component({
-  selector: 'app-message-scheduler',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatCardModule,
-    MatExpansionModule,
-    MatChipsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatSlideToggleModule,
-    MatIconModule,
-    MatButtonModule,
-    MatTooltipModule
-],
-  templateUrl: './message-scheduler.component.html',
-  styleUrls: ['./message-scheduler.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-message-scheduler',
+    imports: [
+        ReactiveFormsModule,
+        MatCardModule,
+        MatExpansionModule,
+        MatChipsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatSelectModule,
+        MatSlideToggleModule,
+        MatIconModule,
+        MatButtonModule,
+        MatTooltipModule
+    ],
+    templateUrl: './message-scheduler.component.html',
+    styleUrls: ['./message-scheduler.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageSchedulerComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();

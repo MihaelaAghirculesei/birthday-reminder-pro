@@ -4,12 +4,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Birthday } from '../../models';
 
 @Component({
-  selector: 'app-message-indicator',
-  standalone: true,
-  imports: [CommonModule, MatTooltipModule],
-  templateUrl: './message-indicator.component.html',
-  styleUrls: ['./message-indicator.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-message-indicator',
+    imports: [CommonModule, MatTooltipModule],
+    templateUrl: './message-indicator.component.html',
+    styleUrls: ['./message-indicator.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageIndicatorComponent implements OnChanges {
   @Input() birthday: Birthday | null = null;

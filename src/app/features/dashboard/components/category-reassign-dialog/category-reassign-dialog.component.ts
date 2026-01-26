@@ -16,19 +16,18 @@ export interface CategoryReassignDialogData {
 }
 
 @Component({
-  selector: 'app-category-reassign-dialog',
-  standalone: true,
-  imports: [
-    FormsModule,
-    MatDialogModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatButtonModule
-],
-  templateUrl: './category-reassign-dialog.component.html',
-  styleUrls: ['./category-reassign-dialog.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-category-reassign-dialog',
+    imports: [
+        FormsModule,
+        MatDialogModule,
+        MatIconModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        MatButtonModule
+    ],
+    templateUrl: './category-reassign-dialog.component.html',
+    styleUrls: ['./category-reassign-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryReassignDialogComponent {
   availableCategories: BirthdayCategory[] = [];
