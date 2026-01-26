@@ -11,3 +11,4 @@ export { GoogleCalendarService, GoogleCalendarSettings, GoogleCalendarItem } fro
 export { BackupService, BackupData } from './backup.service';
 export { GlobalErrorHandler } from './global-error-handler.service';
 export { ThemeService } from './theme.service';
+export { LoggerService, SILENT_LOGGING, SILENT_LOGGER_PROVIDER } from './logger.service';

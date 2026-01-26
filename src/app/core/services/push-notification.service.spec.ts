@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PushNotificationService } from './push-notification.service';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { Birthday, ScheduledMessage } from '../../shared/models';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('PushNotificationService', () => {
   let service: PushNotificationService;
@@ -39,7 +40,8 @@ describe('PushNotificationService', () => {
     TestBed.configureTestingModule({
       providers: [
         PushNotificationService,
-        { provide: IndexedDBStorageService, useValue: mockStorage }
+        { provide: IndexedDBStorageService, useValue: mockStorage },
+        SILENT_LOGGER_PROVIDER
       ]
     });
 

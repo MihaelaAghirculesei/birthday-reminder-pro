@@ -1,6 +1,7 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Birthday } from '../../shared';
 import { z } from 'zod';
+import { LoggerService } from './logger.service';
 
 export interface BackupData {
   version: number;
@@ -31,6 +32,8 @@ const BackupSchema = z.object({
 })
 export class BackupService {
   private readonly BACKUP_VERSION = 1;
+
+  constructor(private logger: LoggerService) {}
 
   exportToJSON(birthdays: Birthday[]): void {
     const backup: BackupData = {
@@ -69,9 +72,7 @@ export class BackupService {
     try {
       parsedData = JSON.parse(text);
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to parse JSON backup file:', error);
-      }
+      this.logger.error('Failed to parse JSON backup file:', error);
       throw new Error('Invalid JSON file. Please select a valid backup file.');
     }
 
@@ -79,9 +80,7 @@ export class BackupService {
     try {
       validatedData = BackupSchema.parse(parsedData);
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Backup validation failed:', error);
-      }
+      this.logger.error('Backup validation failed:', error);
       if (error instanceof z.ZodError) {
         const firstError = error.issues[0];
         throw new Error(`Invalid backup format: ${firstError.path.join('.')} - ${firstError.message}`);

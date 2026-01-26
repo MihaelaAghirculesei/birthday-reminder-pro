@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { CategoryStorageService } from './category-storage.service';
 import { BirthdayCategory } from '../../shared';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('CategoryStorageService', () => {
   let service: CategoryStorageService;
@@ -43,7 +44,8 @@ describe('CategoryStorageService', () => {
     TestBed.configureTestingModule({
       providers: [
         CategoryStorageService,
-        { provide: PLATFORM_ID, useValue: 'browser' }
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        SILENT_LOGGER_PROVIDER
       ]
     });
 
@@ -77,7 +79,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -109,7 +112,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -141,7 +145,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -179,7 +184,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -228,7 +234,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -273,7 +280,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);
@@ -312,7 +320,8 @@ describe('CategoryStorageService', () => {
       TestBed.configureTestingModule({
         providers: [
           CategoryStorageService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
         ]
       });
       const serverService = TestBed.inject(CategoryStorageService);

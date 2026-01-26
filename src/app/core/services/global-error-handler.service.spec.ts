@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Injector } from '@angular/core';
 import { GlobalErrorHandler } from './global-error-handler.service';
 import { NotificationService } from './notification.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
@@ -16,14 +17,13 @@ describe('GlobalErrorHandler', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Injector, useValue: injectorSpy },
-        GlobalErrorHandler
+        GlobalErrorHandler,
+        SILENT_LOGGER_PROVIDER
       ]
     });
 
     errorHandler = TestBed.inject(GlobalErrorHandler);
-    spyOn(console, 'group');
-    spyOn(console, 'error');
-    spyOn(console, 'groupEnd');
+    // Note: console spies are set up globally in test-setup.ts
   });
 
   it('should create', () => {
@@ -214,8 +214,8 @@ describe('GlobalErrorHandler', () => {
       notificationServiceSpy.show.and.throwError('Notification failed');
       const error = new Error('Test error');
 
+      // Error is logged via LoggerService (silenced in tests), but should not throw
       expect(() => errorHandler.handleError(error)).not.toThrow();
-      expect(console.error).toHaveBeenCalledWith('Failed to show error notification:', jasmine.any(Error));
     });
 
     it('should handle injector failure gracefully', () => {

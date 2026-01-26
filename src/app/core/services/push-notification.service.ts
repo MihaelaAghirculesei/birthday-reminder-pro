@@ -1,10 +1,11 @@
-import { Injectable, OnDestroy, isDevMode } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { IndexedDBStorageService } from './offline-storage.service';
+import { LoggerService } from './logger.service';
 
 export interface BirthdayNotificationData {
   birthdayId: string;
@@ -21,7 +22,10 @@ export class PushNotificationService implements OnDestroy {
   private isNative = Capacitor.isNativePlatform();
   private destroy$ = new Subject<void>();
 
-  constructor(private storage: IndexedDBStorageService) {
+  constructor(
+    private storage: IndexedDBStorageService,
+    private logger: LoggerService
+  ) {
     this.initializeNotifications();
   }
 
@@ -42,9 +46,7 @@ export class PushNotificationService implements OnDestroy {
         await this.setupNotificationListeners();
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to initialize notifications:', error);
-      }
+      this.logger.error('Failed to initialize notifications:', error);
     }
   }
 
@@ -86,9 +88,7 @@ export class PushNotificationService implements OnDestroy {
         }
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to check browser notifications:', error);
-      }
+      this.logger.error('Failed to check browser notifications:', error);
     }
   }
 
@@ -152,9 +152,7 @@ export class PushNotificationService implements OnDestroy {
         scheduledMessages: updatedMessages
       });
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to mark browser notification as sent:', error);
-      }
+      this.logger.error('Failed to mark browser notification as sent:', error);
     }
   }
 
@@ -170,9 +168,7 @@ export class PushNotificationService implements OnDestroy {
       const status = await LocalNotifications.checkPermissions();
       return status.display === 'granted';
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to check notification permissions:', error);
-      }
+      this.logger.error('Failed to check notification permissions:', error);
       return false;
     }
   }
@@ -184,9 +180,7 @@ export class PushNotificationService implements OnDestroy {
       const status = await LocalNotifications.requestPermissions();
       return status.display === 'granted';
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to request notification permissions:', error);
-      }
+      this.logger.error('Failed to request notification permissions:', error);
       return false;
     }
   }
@@ -235,9 +229,7 @@ export class PushNotificationService implements OnDestroy {
       await LocalNotifications.schedule(options);
       return true;
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to schedule notification:', error);
-      }
+      this.logger.error('Failed to schedule notification:', error);
       return false;
     }
   }
@@ -249,9 +241,7 @@ export class PushNotificationService implements OnDestroy {
       const notificationId = this.generateNotificationId(birthdayId, messageId);
       await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to cancel notification:', error);
-      }
+      this.logger.error('Failed to cancel notification:', error);
     }
   }
 
@@ -268,9 +258,7 @@ export class PushNotificationService implements OnDestroy {
         await LocalNotifications.cancel({ notifications: toCancel });
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to cancel all notifications for birthday:', error);
-      }
+      this.logger.error('Failed to cancel all notifications for birthday:', error);
     }
   }
 
@@ -297,9 +285,7 @@ export class PushNotificationService implements OnDestroy {
         }
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to reschedule notifications:', error);
-      }
+      this.logger.error('Failed to reschedule notifications:', error);
     }
   }
 
@@ -379,9 +365,7 @@ export class PushNotificationService implements OnDestroy {
         }
         return count;
       } catch (error) {
-        if (isDevMode()) {
-          console.error('Failed to get scheduled notifications count (browser):', error);
-        }
+        this.logger.error('Failed to get scheduled notifications count (browser):', error);
         return 0;
       }
     }
@@ -390,9 +374,7 @@ export class PushNotificationService implements OnDestroy {
       const pending = await LocalNotifications.getPending();
       return pending.notifications.length;
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to get scheduled notifications count (native):', error);
-      }
+      this.logger.error('Failed to get scheduled notifications count (native):', error);
       return 0;
     }
   }
@@ -433,9 +415,7 @@ export class PushNotificationService implements OnDestroy {
         }
         return notifications.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
       } catch (error) {
-        if (isDevMode()) {
-          console.error('Failed to get pending notifications (browser):', error);
-        }
+        this.logger.error('Failed to get pending notifications (browser):', error);
         return [];
       }
     }
@@ -450,9 +430,7 @@ export class PushNotificationService implements OnDestroy {
         birthdayId: n.extra?.birthdayId
       }));
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to get pending notifications (native):', error);
-      }
+      this.logger.error('Failed to get pending notifications (native):', error);
       return [];
     }
   }

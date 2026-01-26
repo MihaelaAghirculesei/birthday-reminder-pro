@@ -1,9 +1,10 @@
-import { Injectable, Inject, PLATFORM_ID, isDevMode } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { Birthday } from '../../shared';
 import { environment } from '../../../environments/environment';
 import type { Gapi } from './google-api.types';
+import { LoggerService } from './logger.service';
 
 declare const gapi: Gapi;
 
@@ -64,7 +65,10 @@ export class GoogleCalendarService {
   public isSignedIn$ = this.isSignedInSubject.asObservable();
   public settings$ = this.settingsSubject.asObservable();
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private logger: LoggerService
+  ) {
     if (isPlatformBrowser(this.platformId)) {
       this.loadSettings();
     }
@@ -163,9 +167,7 @@ export class GoogleCalendarService {
         await user.reloadAuthResponse();
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to refresh auth token:', error);
-      }
+      this.logger.error('Failed to refresh auth token:', error);
     }
   }
 
@@ -182,9 +184,7 @@ export class GoogleCalendarService {
           await this.getAuthInstance().currentUser.get().reloadAuthResponse();
           return await operation();
         } catch (retryError) {
-          if (isDevMode()) {
-            console.error('Failed to retry operation after token refresh:', retryError);
-          }
+          this.logger.error('Failed to retry operation after token refresh:', retryError);
           throw error;
         }
       }
@@ -316,9 +316,7 @@ export class GoogleCalendarService {
       try {
         localStorage.setItem('googleCalendarSettings', JSON.stringify(settings));
       } catch (error) {
-        if (isDevMode()) {
-          console.error('[GoogleCalendar] Failed to save settings:', error);
-        }
+        this.logger.error('[GoogleCalendar] Failed to save settings:', error);
       }
     }
   }
@@ -331,9 +329,7 @@ export class GoogleCalendarService {
           const settings = JSON.parse(stored);
           this.settingsSubject.next(settings);
         } catch (error) {
-          if (isDevMode()) {
-            console.error('[GoogleCalendar] Failed to load settings:', error);
-          }
+          this.logger.error('[GoogleCalendar] Failed to load settings:', error);
         }
       }
     }

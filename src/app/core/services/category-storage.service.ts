@@ -1,6 +1,7 @@
-import { Injectable, isDevMode, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BirthdayCategory } from '../../shared';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,10 @@ export class CategoryStorageService {
   private readonly MODIFIED_CATEGORIES_KEY = 'modifiedCategories';
   private readonly DELETED_IDS_KEY = 'deletedCategoryIds';
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private logger: LoggerService
+  ) {}
 
   getCustomCategories(): BirthdayCategory[] {
     if (!isPlatformBrowser(this.platformId)) {
@@ -21,9 +25,7 @@ export class CategoryStorageService {
       const data = localStorage.getItem(this.CUSTOM_CATEGORIES_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to load custom categories:', error);
-      }
+      this.logger.error('Failed to load custom categories:', error);
       return [];
     }
   }
@@ -37,9 +39,7 @@ export class CategoryStorageService {
       const data = localStorage.getItem(this.MODIFIED_CATEGORIES_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to load modified categories:', error);
-      }
+      this.logger.error('Failed to load modified categories:', error);
       return [];
     }
   }
@@ -53,9 +53,7 @@ export class CategoryStorageService {
       const data = localStorage.getItem(this.DELETED_IDS_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to load deleted category IDs:', error);
-      }
+      this.logger.error('Failed to load deleted category IDs:', error);
       return [];
     }
   }
@@ -70,9 +68,7 @@ export class CategoryStorageService {
       categories.push(category);
       localStorage.setItem(this.CUSTOM_CATEGORIES_KEY, JSON.stringify(categories));
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to save custom category:', error);
-      }
+      this.logger.error('Failed to save custom category:', error);
     }
   }
 
@@ -93,9 +89,7 @@ export class CategoryStorageService {
 
       localStorage.setItem(this.MODIFIED_CATEGORIES_KEY, JSON.stringify(categories));
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to update category:', error);
-      }
+      this.logger.error('Failed to update category:', error);
     }
   }
 
@@ -112,9 +106,7 @@ export class CategoryStorageService {
         localStorage.setItem(this.DELETED_IDS_KEY, JSON.stringify(deletedIds));
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to delete category:', error);
-      }
+      this.logger.error('Failed to delete category:', error);
     }
   }
 
@@ -128,9 +120,7 @@ export class CategoryStorageService {
       const updatedIds = deletedIds.filter(id => id !== categoryId);
       localStorage.setItem(this.DELETED_IDS_KEY, JSON.stringify(updatedIds));
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to restore category:', error);
-      }
+      this.logger.error('Failed to restore category:', error);
     }
   }
 }

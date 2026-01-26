@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, isDevMode } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService } from '../../core';
+import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, LoggerService } from '../../core';
 
 @Component({
   selector: 'app-google-calendar-sync',
@@ -399,7 +399,8 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
     private googleCalendarService: GoogleCalendarService,
     private birthdayFacade: BirthdayFacadeService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private logger: LoggerService
   ) {
     this.settingsForm = this.fb.group({
       enabled: [false],
@@ -451,9 +452,7 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
     try {
       await this.googleCalendarService.signIn();
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Google Calendar sign in failed:', error);
-      }
+      this.logger.error('Google Calendar sign in failed:', error);
     } finally {
       this.isConnecting = false;
       this.cdr.markForCheck();
@@ -467,9 +466,7 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
       this.lastSyncResult = null;
       this.cdr.markForCheck();
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Google Calendar sign out failed:', error);
-      }
+      this.logger.error('Google Calendar sign out failed:', error);
     }
   }
 
@@ -478,9 +475,7 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
       this.calendars = await this.googleCalendarService.getCalendars();
       this.cdr.markForCheck();
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Loading calendars failed:', error);
-      }
+      this.logger.error('Loading calendars failed:', error);
     }
   }
 
@@ -494,9 +489,7 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Syncing birthdays failed:', error);
-      }
+      this.logger.error('Syncing birthdays failed:', error);
     } finally {
       this.isSyncing = false;
       this.cdr.markForCheck();

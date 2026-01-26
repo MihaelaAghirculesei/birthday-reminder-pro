@@ -1,5 +1,6 @@
-import { ErrorHandler, Injectable, Injector, isDevMode } from '@angular/core';
+import { ErrorHandler, Injectable, Injector } from '@angular/core';
 import { NotificationService } from './notification.service';
+import { LoggerService } from './logger.service';
 
 interface ErrorContext {
   type: 'IndexedDB' | 'NgRx' | 'GoogleAPI' | 'Network' | 'Unknown';
@@ -19,7 +20,10 @@ interface GoogleAPIError {
 
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
-  constructor(private injector: Injector) {}
+  constructor(
+    private injector: Injector,
+    private logger: LoggerService
+  ) {}
 
   handleError(error: unknown): void {
     const context = this.categorizeError(error);
@@ -142,13 +146,11 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 
   private logError(error: unknown, context: ErrorContext): void {
-    if (isDevMode()) {
-      console.group(`🔴 ${context.type} Error`);
-      console.error('Error:', error);
-      console.error('Technical:', context.technicalMessage);
-      console.error('User message:', context.userMessage);
-      console.groupEnd();
-    }
+    this.logger.group(`🔴 ${context.type} Error`);
+    this.logger.error('Error:', error);
+    this.logger.error('Technical:', context.technicalMessage);
+    this.logger.error('User message:', context.userMessage);
+    this.logger.groupEnd();
   }
 
   private notifyUser(context: ErrorContext): void {
@@ -163,7 +165,7 @@ export class GlobalErrorHandler implements ErrorHandler {
         notificationService.show(context.userMessage, 'error', 5000);
       }
     } catch (e) {
-      console.error('Failed to show error notification:', e);
+      this.logger.error('Failed to show error notification:', e);
     }
   }
 }

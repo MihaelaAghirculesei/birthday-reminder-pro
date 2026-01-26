@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { BackupService } from './backup.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('BackupService', () => {
   let service: BackupService;
 
   beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [SILENT_LOGGER_PROVIDER]
+    });
     service = TestBed.inject(BackupService);
   });
 

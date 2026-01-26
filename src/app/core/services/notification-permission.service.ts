@@ -1,6 +1,7 @@
-import { Injectable, PLATFORM_ID, Inject, isDevMode } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { LoggerService } from './logger.service';
 
 export type NotificationPermissionStatus = 'default' | 'granted' | 'denied';
 
@@ -10,7 +11,10 @@ export type NotificationPermissionStatus = 'default' | 'granted' | 'denied';
 export class NotificationPermissionService {
   private permissionStatus$ = new BehaviorSubject<NotificationPermissionStatus>(this.getCurrentPermission());
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private logger: LoggerService
+  ) {
     if ('permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' as PermissionName })
         .then(permissionStatus => {
@@ -67,9 +71,7 @@ export class NotificationPermissionService {
 
       return permission === 'granted';
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to request notification permission:', error);
-      }
+      this.logger.error('Failed to request notification permission:', error);
       return false;
     }
   }
@@ -99,9 +101,7 @@ export class NotificationPermissionService {
         }
       } as NotificationOptions);
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to show test notification:', error);
-      }
+      this.logger.error('Failed to show test notification:', error);
     }
   }
 

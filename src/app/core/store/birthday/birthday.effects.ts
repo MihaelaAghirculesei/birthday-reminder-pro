@@ -1,4 +1,4 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { NotificationService } from '../../services/notification.service';
 import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { IdGeneratorService } from '../../services/id-generator.service';
+import { LoggerService } from '../../services/logger.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import { getZodiacSign, DEFAULT_CATEGORY } from '../../../shared';
 import { generateMockBirthdays } from '../../../testing';
@@ -307,7 +308,8 @@ export class BirthdayEffects {
     private notificationService: NotificationService,
     private googleCalendarService: GoogleCalendarService,
     private pushNotificationService: PushNotificationService,
-    private idGenerator: IdGeneratorService
+    private idGenerator: IdGeneratorService,
+    private logger: LoggerService
   ) {}
 
   private normalizeCategoryId(category?: string): string {
@@ -336,9 +338,7 @@ export class BirthdayEffects {
       try {
         return await this.googleCalendarService.syncBirthdayToCalendar(birthday);
       } catch (error) {
-        if (isDevMode()) {
-          console.error('[BirthdayEffects] Failed to sync to Google Calendar:', error);
-        }
+        this.logger.error('[BirthdayEffects] Failed to sync to Google Calendar:', error);
         return null;
       }
     }
@@ -350,9 +350,7 @@ export class BirthdayEffects {
       try {
         await this.googleCalendarService.updateBirthdayInCalendar(birthday, birthday.googleCalendarEventId);
       } catch (error) {
-        if (isDevMode()) {
-          console.error('[BirthdayEffects] Failed to update Google Calendar:', error);
-        }
+        this.logger.error('[BirthdayEffects] Failed to update Google Calendar:', error);
       }
     }
   }
@@ -362,9 +360,7 @@ export class BirthdayEffects {
       try {
         await this.googleCalendarService.deleteBirthdayFromCalendar(eventId);
       } catch (error) {
-        if (isDevMode()) {
-          console.error('[BirthdayEffects] Failed to delete from Google Calendar:', error);
-        }
+        this.logger.error('[BirthdayEffects] Failed to delete from Google Calendar:', error);
       }
     }
   }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { BehaviorSubject, of } from 'rxjs';
 import { GoogleCalendarSyncComponent } from './google-calendar-sync.component';
-import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService } from '../../core';
+import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, SILENT_LOGGER_PROVIDER } from '../../core';
 import { Birthday } from '../../shared';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -85,7 +85,8 @@ describe('GoogleCalendarSyncComponent', () => {
       providers: [
         FormBuilder,
         { provide: GoogleCalendarService, useValue: googleCalendarSpyObj },
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj }
+        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
+        SILENT_LOGGER_PROVIDER
       ]
     }).compileComponents();
 

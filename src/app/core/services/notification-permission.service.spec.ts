@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { NotificationPermissionService } from './notification-permission.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 interface MockNotification {
   permission: NotificationPermission;
@@ -42,7 +43,8 @@ describe('NotificationPermissionService', () => {
     TestBed.configureTestingModule({
       providers: [
         NotificationPermissionService,
-        { provide: PLATFORM_ID, useValue: 'browser' }
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        SILENT_LOGGER_PROVIDER
       ]
     });
 

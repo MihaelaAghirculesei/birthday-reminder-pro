@@ -1,5 +1,19 @@
 import { isDevMode } from '@angular/core';
 
+/**
+ * Check if running in test environment (Karma)
+ * Used to suppress console logging during tests
+ */
+function isTestEnvironment(): boolean {
+  if (typeof window === 'undefined' || typeof window.location === 'undefined') {
+    return false;
+  }
+  // Karma runs on port 9876 by default, or URL contains 'karma'
+  return window.location.port === '9876' ||
+         window.location.href.includes('karma') ||
+         window.location.href.includes('_karma_webpack_');
+}
+
 export interface BirthdayCategory {
   id: string;
   name: string;
@@ -60,7 +74,7 @@ export function getCustomCategories(): BirthdayCategory[] {
     const stored = localStorage.getItem('customCategories');
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    if (isDevMode()) {
+    if (isDevMode() && !isTestEnvironment()) {
       console.error('Failed to load custom categories:', error);
     }
     return [];
@@ -73,7 +87,7 @@ function getModifiedCategories(): BirthdayCategory[] {
     const stored = localStorage.getItem('modifiedCategories');
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    if (isDevMode()) {
+    if (isDevMode() && !isTestEnvironment()) {
       console.error('Failed to load modified categories:', error);
     }
     return [];
@@ -86,7 +100,7 @@ function getDeletedCategoryIds(): string[] {
     const stored = localStorage.getItem('deletedCategoryIds');
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
-    if (isDevMode()) {
+    if (isDevMode() && !isTestEnvironment()) {
       console.error('Failed to load deleted category IDs:', error);
     }
     return [];
