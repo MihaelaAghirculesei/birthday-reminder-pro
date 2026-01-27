@@ -14,9 +14,8 @@ describe('Category Filter', () => {
     cy.get('[data-testid="save-birthday-button"]').click();
 
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
-    cy.wait(1000);
 
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 })
+    cy.get('[data-testid="birthday-name-input"]', { timeout: 15000 })
       .should('be.visible')
       .clear()
       .type('Friend Person', { force: true });

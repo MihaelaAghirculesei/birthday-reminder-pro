@@ -14,12 +14,8 @@ describe('Search Functionality', () => {
     cy.get('[data-testid="add-birthday-button"]').click();
     cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
 
-    birthdays.forEach((birthday, index) => {
-      if (index > 0) {
-        cy.wait(500);
-      }
-
-      cy.get('[data-testid="birthday-name-input"]')
+    birthdays.forEach((birthday) => {
+      cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 })
         .should('be.visible')
         .clear()
         .type(birthday.name);
@@ -32,9 +28,8 @@ describe('Search Functionality', () => {
       cy.get('[data-testid="save-birthday-button"]').click();
     });
 
-    cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
-    cy.wait(1000);
-    cy.get('.dashboard-search-field input', { timeout: 10000 }).should('be.visible');
+    cy.get('.dashboard-container', { timeout: 15000 }).should('exist');
+    cy.get('.dashboard-search-field input', { timeout: 15000 }).should('be.visible');
   });
 
   it('should search birthdays by name', () => {

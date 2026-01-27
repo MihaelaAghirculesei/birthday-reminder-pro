@@ -23,9 +23,7 @@ describe('Birthday Reminder App', () => {
   it('should load dashboard after adding test data', () => {
     cy.contains('Show Demo').click();
 
-    cy.wait(1500);
-
-    cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
+    cy.get('.dashboard-container', { timeout: 15000 }).should('exist');
     cy.contains('Dashboard & Statistics').should('be.visible');
   });
 });
