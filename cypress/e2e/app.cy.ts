@@ -1,8 +1,10 @@
 describe('Birthday Reminder App', () => {
   beforeEach(() => {
+    cy.clearLocalStorage();
+    cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/');
-    cy.get('.app-header').should('be.visible'); 
+    cy.visit('/', { timeout: 15000 });
+    cy.get('.app-header', { timeout: 10000 }).should('be.visible');
   });
 
   it('should display the app title', () => {

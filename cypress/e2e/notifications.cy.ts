@@ -1,7 +1,9 @@
 describe('Notifications', () => {
   beforeEach(() => {
+    cy.clearLocalStorage();
+    cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/');
+    cy.visit('/', { timeout: 15000 });
   });
 
   it('should display notification permission banner if supported', () => {

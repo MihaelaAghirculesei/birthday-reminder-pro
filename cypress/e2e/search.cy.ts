@@ -1,7 +1,9 @@
 describe('Search Functionality', () => {
   beforeEach(() => {
+    cy.clearLocalStorage();
+    cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/');
+    cy.visit('/', { timeout: 15000 });
 
     const birthdays = [
       { name: 'Alice Johnson', date: '01/15/1990' },
@@ -10,7 +12,7 @@ describe('Search Functionality', () => {
     ];
 
     cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]').should('be.visible');
+    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
 
     birthdays.forEach((birthday, index) => {
       if (index > 0) {

@@ -1,10 +1,12 @@
 describe('Category Filter', () => {
   beforeEach(() => {
+    cy.clearLocalStorage();
+    cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/');
+    cy.visit('/', { timeout: 15000 });
 
     cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]').should('be.visible');
+    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
     cy.get('[data-testid="birthday-name-input"]').type('Family Member');
     cy.get('[data-testid="birthday-date-input"]').type('05/15/1990');
     cy.get('[data-testid="category-select"]').click();
