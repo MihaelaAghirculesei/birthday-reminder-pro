@@ -105,3 +105,155 @@
     @include form-field-outline-border(rgba(255, 255, 255, 0.7));
   }
 }
+
+@mixin gradient-card($light-gradient, $dark-gradient) {
+  display: flex;
+  flex-direction: column;
+  background: $light-gradient !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-elevated) !important;
+  border: none !important;
+  max-width: 600px;
+  width: 100%;
+  overflow: visible !important;
+  @include card-hover;
+
+  :host-context(body.dark-theme) & {
+    background: $dark-gradient !important;
+  }
+
+  .mat-mdc-card-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 32px !important;
+    overflow: visible !important;
+  }
+}
+
+@mixin glass-icon-circle($size: 80px, $icon-size: 48px) {
+  font-size: $icon-size;
+  width: $icon-size;
+  height: $icon-size;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $size;
+  min-height: $size;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+@mixin birthday-card-base {
+  background: var(--surface) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow) !important;
+  border: 1px solid var(--border-light) !important;
+  overflow: hidden;
+
+  &:hover {
+    box-shadow: var(--shadow-elevated) !important;
+  }
+
+  .mat-mdc-card-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    padding: 20px 32px;
+
+    :host-context(body.dark-theme) & {
+      background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+    }
+
+    .mat-mdc-card-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-primary);
+
+      :host-context(body.dark-theme) & {
+        color: white;
+      }
+    }
+
+    &.collapsible-header {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      &:hover {
+        filter: brightness(1.1);
+      }
+
+      .expand-icon {
+        font-size: 2rem;
+        width: 2rem;
+        height: 2rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        margin-left: 16px;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  .mat-mdc-card-content {
+    padding: 32px;
+  }
+}
+
+@mixin white-action-button {
+  background: var(--text-inverse) !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+  padding: 12px 24px !important;
+  border-radius: var(--radius) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 180px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  :host-context(body.dark-theme) & {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #3b82f6 !important;
+  }
+
+  &:hover:not([disabled]) {
+    background: rgba(255, 255, 255, 0.9) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+    :host-context(body.dark-theme) & {
+      background: rgba(255, 255, 255, 1) !important;
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  &[disabled] {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: rgba(102, 126, 234, 0.7) !important;
+    cursor: not-allowed;
+
+    :host-context(body.dark-theme) & {
+      background: rgba(255, 255, 255, 0.5) !important;
+      color: rgba(59, 130, 246, 0.5) !important;
+    }
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}

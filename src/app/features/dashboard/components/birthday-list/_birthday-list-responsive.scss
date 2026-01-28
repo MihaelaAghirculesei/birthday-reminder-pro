@@ -1,0 +1,102 @@
+@media (max-width: 900px) and (min-width: 769px) {
+  .birthday-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .header-title-section {
+      min-width: auto;
+    }
+
+    .header-search-section {
+      width: 100%;
+
+      .dashboard-search-field {
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .birthday-list-card,
+  .test-data-card,
+  .clear-data-card {
+    .mat-mdc-card-content {
+      padding: 16px !important;
+    }
+  }
+
+  .birthday-list-card {
+    .mat-mdc-card-content {
+      min-height: 280px !important;
+    }
+  }
+
+  .data-management-sections {
+    margin-top: 24px;
+    gap: 24px;
+  }
+
+  .test-data-section,
+  .clear-data-section {
+    padding: 0 8px;
+  }
+
+  .test-data-content,
+  .clear-data-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+
+    .test-icon,
+    .clear-icon {
+      min-width: 64px;
+      min-height: 64px;
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      padding: 12px;
+    }
+
+    .test-info,
+    .clear-info {
+      h3 {
+        font-size: 1.3rem;
+      }
+
+      p {
+        font-size: 0.9rem;
+      }
+    }
+
+    .add-test-btn {
+      min-width: 160px;
+      height: 44px;
+    }
+  }
+
+  .dashboard-birthday-list {
+    gap: 16px;
+  }
+
+  .birthday-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+
+    .header-title-section {
+      min-width: auto;
+      width: 100%;
+    }
+
+    .header-search-section {
+      width: 100%;
+
+      .dashboard-search-field {
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+  }
+}
