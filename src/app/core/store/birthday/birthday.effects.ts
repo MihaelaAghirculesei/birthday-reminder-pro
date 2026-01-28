@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { of } from 'rxjs';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { of, from } from 'rxjs';
+import { catchError, mergeMap, tap, switchMap } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
@@ -11,10 +11,16 @@ import { IdGeneratorService } from '../../services/id-generator.service';
 import { LoggerService } from '../../services/logger.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import { getZodiacSign, DEFAULT_CATEGORY } from '../../../shared';
-import { generateMockBirthdays } from '../../../testing';
 
 @Injectable()
 export class BirthdayEffects {
+  private readonly actions$ = inject(Actions);
+  private readonly offlineStorage = inject(IndexedDBStorageService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly googleCalendarService = inject(GoogleCalendarService);
+  private readonly pushNotificationService = inject(PushNotificationService);
+  private readonly idGenerator = inject(IdGeneratorService);
+  private readonly logger = inject(LoggerService);
 
   loadBirthdays$ = createEffect(() =>
     this.actions$.pipe(
@@ -275,19 +281,21 @@ export class BirthdayEffects {
   loadTestData$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.loadTestData),
-      mergeMap(() => {
-        const testBirthdays = generateMockBirthdays(() => this.idGenerator.generateId());
-
-        const addActions = testBirthdays.map(birthday =>
-          BirthdayActions.addBirthday({ birthday })
-        );
-
-        return [
-          ...addActions,
-          BirthdayActions.loadTestDataSuccess({ birthdays: testBirthdays })
-        ];
-      }),
-      catchError(error => of(BirthdayActions.loadTestDataFailure({ error: error.message })))
+      switchMap(() =>
+        from(import('../../../testing').then(m => m.generateMockBirthdays)).pipe(
+          mergeMap(generateMockBirthdays => {
+            const testBirthdays = generateMockBirthdays(() => this.idGenerator.generateId());
+            const addActions = testBirthdays.map(birthday =>
+              BirthdayActions.addBirthday({ birthday })
+            );
+            return [
+              ...addActions,
+              BirthdayActions.loadTestDataSuccess({ birthdays: testBirthdays })
+            ];
+          }),
+          catchError(error => of(BirthdayActions.loadTestDataFailure({ error: error.message })))
+        )
+      )
     )
   );
 
@@ -302,15 +310,6 @@ export class BirthdayEffects {
     { dispatch: false }
   );
 
-  constructor(
-    private actions$: Actions,
-    private offlineStorage: IndexedDBStorageService,
-    private notificationService: NotificationService,
-    private googleCalendarService: GoogleCalendarService,
-    private pushNotificationService: PushNotificationService,
-    private idGenerator: IdGeneratorService,
-    private logger: LoggerService
-  ) {}
 
   private normalizeCategoryId(category?: string): string {
     if (!category) return DEFAULT_CATEGORY;
