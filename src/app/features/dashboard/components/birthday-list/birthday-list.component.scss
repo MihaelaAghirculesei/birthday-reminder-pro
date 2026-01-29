@@ -1,4 +1,5 @@
 @use '../../../../../styles/shared' as *;
+@use 'birthday-list-responsive';
 
 .birthday-list-card {
   background: var(--surface) !important;
@@ -83,72 +84,6 @@
   }
 }
 
-::ng-deep .header-search-section .dashboard-search-field {
-  margin-bottom: 24px;
-
-  .mat-mdc-text-field-wrapper {
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-  }
-
-  .mat-mdc-form-field-flex {
-    background: var(--surface-elevated) !important;
-    border-radius: var(--radius) !important;
-    padding-left: 26px !important;
-    border: 2px solid var(--border) !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-  }
-
-  .mat-mdc-form-field-underline,
-  .mdc-line-ripple {
-    display: none !important;
-  }
-
-  input {
-    color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
-  }
-
-  label {
-    color: rgba(0, 0, 0, 0.6) !important;
-  }
-
-  :host-context(body.dark-theme) & {
-    input {
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-    }
-
-    label {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    .mat-mdc-form-field-flex {
-      background: var(--surface-hover) !important;
-      border-color: var(--border-light) !important;
-    }
-  }
-
-  .mat-mdc-form-field-focus-overlay,
-  &:hover .mat-mdc-form-field-flex,
-  &.mat-focused .mat-mdc-form-field-flex,
-  &.mat-form-field-should-float .mat-mdc-form-field-flex {
-    border-radius: var(--radius) !important;
-  }
-
-  &.mat-focused .mat-mdc-form-field-flex {
-    border-color: var(--primary) !important;
-  }
-
-  &:hover:not(.mat-focused) .mat-mdc-form-field-flex {
-    border-color: var(--primary) !important;
-    opacity: 0.7;
-  }
-}
-
 .dashboard-birthday-list {
   display: flex;
   flex-direction: column;
@@ -168,9 +103,7 @@ cdk-virtual-scroll-viewport.dashboard-birthday-list {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-right: 8px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding: 8px 8px 8px 0;
   }
 }
 
@@ -231,28 +164,10 @@ cdk-virtual-scroll-viewport.dashboard-birthday-list {
 
 .test-data-card,
 .clear-data-card {
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(135deg, #8b9af7 0%, #b89dd9 50%, #f5b3fc 100%) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-elevated) !important;
-  border: none !important;
-  max-width: 600px;
-  width: 100%;
-  overflow: visible !important;
-  @include card-hover;
-
-  :host-context(body.dark-theme) & {
-    background: linear-gradient(135deg, #4a5568 0%, #5a5a7a 50%, #6b5b7b 100%) !important;
-  }
-
-  .mat-mdc-card-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    padding: 32px !important;
-    overflow: visible !important;
-  }
+  @include gradient-card(
+    linear-gradient(135deg, #8b9af7 0%, #b89dd9 50%, #f5b3fc 100%),
+    linear-gradient(135deg, #4a5568 0%, #5a5a7a 50%, #6b5b7b 100%)
+  );
 }
 
 .test-data-content,
@@ -264,19 +179,7 @@ cdk-virtual-scroll-viewport.dashboard-birthday-list {
 
   .test-icon,
   .clear-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 80px;
-    min-height: 80px;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    @include glass-icon-circle;
   }
 
   .test-info,
@@ -299,153 +202,6 @@ cdk-virtual-scroll-viewport.dashboard-birthday-list {
   }
 
   .add-test-btn {
-    background: var(--text-inverse) !important;
-    color: var(--primary) !important;
-    font-weight: 700 !important;
-    padding: 12px 24px !important;
-    border-radius: var(--radius) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 180px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    :host-context(body.dark-theme) & {
-      background: rgba(255, 255, 255, 0.95) !important;
-      color: #3b82f6 !important;
-    }
-
-    &:hover:not([disabled]) {
-      background: rgba(255, 255, 255, 0.9) !important;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-
-      :host-context(body.dark-theme) & {
-        background: rgba(255, 255, 255, 1) !important;
-        box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
-      }
-    }
-
-    &[disabled] {
-      background: rgba(255, 255, 255, 0.7) !important;
-      color: rgba(102, 126, 234, 0.7) !important;
-      cursor: not-allowed;
-
-      :host-context(body.dark-theme) & {
-        background: rgba(255, 255, 255, 0.5) !important;
-        color: rgba(59, 130, 246, 0.5) !important;
-      }
-    }
-
-    mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .birthday-list-card,
-  .test-data-card,
-  .clear-data-card {
-    .mat-mdc-card-content {
-      padding: 16px !important;
-    }
-  }
-
-  .birthday-list-card {
-    .mat-mdc-card-content {
-      min-height: 280px !important;
-    }
-  }
-
-  .data-management-sections {
-    margin-top: 24px;
-    gap: 24px;
-  }
-
-  .test-data-section,
-  .clear-data-section {
-    padding: 0 8px;
-  }
-
-  .test-data-content,
-  .clear-data-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-
-    .test-icon,
-    .clear-icon {
-      min-width: 64px;
-      min-height: 64px;
-      font-size: 40px;
-      width: 40px;
-      height: 40px;
-      padding: 12px;
-    }
-
-    .test-info,
-    .clear-info {
-      h3 {
-        font-size: 1.3rem;
-      }
-
-      p {
-        font-size: 0.9rem;
-      }
-    }
-
-    .add-test-btn {
-      min-width: 160px;
-      height: 44px;
-    }
-  }
-
-  .dashboard-birthday-list {
-    gap: 16px;
-  }
-
-  .birthday-list-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-
-    .header-title-section {
-      min-width: auto;
-      width: 100%;
-    }
-
-    .header-search-section {
-      width: 100%;
-
-      .dashboard-search-field {
-        width: 100%;
-        max-width: 400px;
-      }
-    }
-  }
-}
-
-@media (max-width: 900px) and (min-width: 769px) {
-  .birthday-list-header {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .header-title-section {
-      min-width: auto;
-    }
-
-    .header-search-section {
-      width: 100%;
-
-      .dashboard-search-field {
-        width: 100%;
-        max-width: 400px;
-      }
-    }
+    @include white-action-button;
   }
 }
