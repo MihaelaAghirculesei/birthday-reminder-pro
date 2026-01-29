@@ -1,5 +1,7 @@
 @use 'styles/animations';
 @use 'styles/mixins';
+@use 'styles/material-overrides';
+@use 'styles/form-components';
 
 :root {
   --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
