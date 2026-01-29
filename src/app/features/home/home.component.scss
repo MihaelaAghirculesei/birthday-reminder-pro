@@ -1,178 +1,18 @@
-.content-sections {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 32px;
-  align-items: start;
-
-  @media (min-width: 1200px) {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-}
+@use '../../../styles/shared' as *;
 
 .add-birthday-card {
-  background: var(--surface) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow) !important;
-  border: 1px solid var(--border-light) !important;
-  overflow: hidden;
+  @include birthday-card-base;
 
-  &:hover {
-    box-shadow: var(--shadow-elevated) !important;
-  }
-
-  .mat-mdc-card-header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    color: white;
-    padding: 20px 32px;
-    transition: all 0.3s ease;
+  .mat-mdc-card-header.collapsible-header .expand-icon {
+    color: #1e293b !important;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 1);
 
     :host-context(body.dark-theme) & {
-      background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
     }
-
-    .mat-mdc-card-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin: 0;
-      color: var(--text-primary);
-      text-shadow: none;
-      transition: all 0.3s ease;
-
-      :host-context(body.dark-theme) & {
-        color: white;
-      }
-    }
-
-    &.collapsible-header {
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      &:hover {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        filter: brightness(1.1);
-
-        :host-context(body.dark-theme) & {
-          background: linear-gradient(135deg, #333333 0%, #3a3a3a 100%);
-        }
-      }
-
-      .expand-icon {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-size: 2rem;
-        width: 2rem;
-        height: 2rem;
-        color: #1e293b !important;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(255, 255, 255, 1);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        margin-left: 16px;
-        flex-shrink: 0;
-        pointer-events: none;
-
-        :host-context(body.dark-theme) & {
-          color: #ffffff !important;
-          background: rgba(255, 255, 255, 0.2);
-          border: 2px solid rgba(255, 255, 255, 0.4);
-        }
-
-        &:hover {
-          background: rgba(255, 255, 255, 1);
-          transform: scale(1.1);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-          :host-context(body.dark-theme) & {
-            background: rgba(255, 255, 255, 0.3);
-          }
-        }
-      }
-    }
-  }
-
-  .mat-mdc-card-content {
-    padding: 32px;
-  }
-}
-
-.birthday-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.category-option {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
-
-  span {
-    font-weight: 500;
-  }
-}
-
-.full-width {
-  width: 100%;
-
-  .mat-mdc-form-field {
-    border-radius: var(--radius-sm) !important;
-    transition: all 0.3s ease;
-
-    .mat-mdc-text-field-wrapper {
-      border-radius: var(--radius-sm) !important;
-      background-color: var(--surface-elevated) !important;
-      transition: all 0.3s ease;
-    }
-
-    &:hover:not(.mat-focused) {
-      .mat-mdc-text-field-wrapper {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transform: translateY(-1px);
-      }
-    }
-  }
-}
-
-.form-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 24px;
-}
-
-.submit-button {
-  min-width: 220px;
-  height: 56px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: var(--radius) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  mat-icon {
-    margin-right: 12px;
-  }
-
-  &:hover {
-    transform: translateY(-3px) scale(1.02);
-  }
-
-  &:active {
-    transform: translateY(-1px) scale(0.98);
   }
 }
 
@@ -183,24 +23,13 @@
 }
 
 .test-data-card {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-elevated) !important;
-  border: none !important;
-  max-width: 600px;
-  width: 100%;
+  @include gradient-card(
+    linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%),
+    var(--surface)
+  );
 
   :host-context(body.dark-theme) & {
-    background: var(--surface) !important;
     border: 1px solid var(--border-light) !important;
-  }
-
-  &:hover {
-    transform: translateY(-4px) scale(1.02);
-  }
-
-  .mat-mdc-card-content {
-    padding: 32px !important;
   }
 }
 
@@ -208,27 +37,14 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  color: white;
+  color: var(--text-inverse);
 
   .test-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 80px;
-    min-height: 80px;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    @include glass-icon-circle;
 
     :host-context(body.dark-theme) & {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
-      color: white;
     }
   }
 
@@ -239,83 +55,37 @@
       margin: 0 0 8px 0;
       font-size: 1.5rem;
       font-weight: 700;
-      color: #ffffff !important;
+      color: var(--text-inverse);
 
       :host-context(body.dark-theme) & {
-        color: var(--text-primary) !important;
+        color: var(--text-primary);
       }
     }
 
     p {
       margin: 0;
       font-size: 1rem;
-      color: #ffffff !important;
-      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.9);
 
       :host-context(body.dark-theme) & {
-        color: var(--text-secondary) !important;
+        color: var(--text-secondary);
       }
     }
   }
 
   .add-test-btn {
-    background: var(--text-inverse) !important;
-    color: var(--primary) !important;
-    font-weight: 700 !important;
-    padding: 12px 24px !important;
-    border-radius: var(--radius) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 180px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    &:hover:not([disabled]) {
-      background: rgba(255, 255, 255, 0.9) !important;
-      color: #1e293b !important;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    }
-
-    &[disabled] {
-      background: rgba(255, 255, 255, 0.7) !important;
-      color: rgba(102, 126, 234, 0.7) !important;
-      cursor: not-allowed;
-    }
-
-    mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
+    @include white-action-button;
   }
 }
 
 @media (max-width: 768px) {
-  .content-sections {
-    gap: 24px;
-  }
-
-  .form-actions {
-    justify-content: stretch;
-
-    .submit-button {
-      width: 100%;
-      min-width: auto;
-    }
-  }
-
   .test-data-section {
     margin: 24px 0;
     padding: 0 8px;
   }
 
-  .test-data-card {
-    .mat-mdc-card-content {
-      padding: 24px !important;
-    }
+  .test-data-card .mat-mdc-card-content {
+    padding: 24px !important;
   }
 
   .test-data-content {
@@ -333,13 +103,8 @@
     }
 
     .test-info {
-      h3 {
-        font-size: 1.3rem;
-      }
-
-      p {
-        font-size: 0.9rem;
-      }
+      h3 { font-size: 1.3rem; }
+      p { font-size: 0.9rem; }
     }
 
     .add-test-btn {
@@ -350,21 +115,7 @@
 }
 
 @media (max-width: 480px) {
-  .content-sections {
-    gap: 16px;
-  }
-
   .add-birthday-card .mat-mdc-card-content {
     padding: 24px !important;
-  }
-
-  .birthday-form {
-    gap: 14px;
-
-    .form-actions .submit-button {
-      font-size: 0.9rem;
-      padding: 10px 18px;
-      height: 42px;
-    }
   }
 }
