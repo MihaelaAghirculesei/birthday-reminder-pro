@@ -1,3 +1,5 @@
+@use '../../../../../styles/shared' as *;
+
 .category-form {
   display: flex;
   flex-direction: column;
@@ -34,6 +36,7 @@
   padding: 8px;
   border: 1px solid var(--border-light);
   border-radius: 8px;
+  @include custom-scrollbar;
 }
 
 .icon-option {
