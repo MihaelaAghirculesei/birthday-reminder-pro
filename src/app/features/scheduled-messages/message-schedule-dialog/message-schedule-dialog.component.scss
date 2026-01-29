@@ -1,16 +1,22 @@
+$white-50: rgba(255, 255, 255, 0.5);
+$white-70: rgba(255, 255, 255, 0.7);
+$white-80: rgba(255, 255, 255, 0.8);
+$white-90: rgba(255, 255, 255, 0.9);
+$dialog-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$dark-bg: #2a2a2a;
 
 ::ng-deep .mat-mdc-dialog-container {
   background: transparent !important;
   box-shadow: none !important;
 
   .mdc-dialog__surface {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: $dialog-gradient !important;
     border-radius: 16px !important;
     overflow: hidden;
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3) !important;
 
     :host-context(body.dark-theme) & {
-      background: #2a2a2a !important;
+      background: $dark-bg !important;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8) !important;
     }
   }
@@ -27,13 +33,12 @@
     align-items: center;
     padding: 16px 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 0;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
 
     :host-context(body.dark-theme) & {
-      background: #2a2a2a;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: $dark-bg;
+      border-bottom-color: rgba(255, 255, 255, 0.1);
     }
 
     h2 {
@@ -45,22 +50,12 @@
       font-weight: 700;
       color: white;
 
-      mat-icon {
-        font-size: 28px;
-        width: 28px;
-        height: 28px;
-        color: white;
-      }
+      mat-icon { font-size: 28px; width: 28px; height: 28px; color: white; }
     }
 
-    .close-button {
-      mat-icon {
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      &:hover mat-icon {
-        color: white;
-      }
+    .close-button mat-icon {
+      color: $white-80;
+      &:hover { color: white; }
     }
   }
 
@@ -69,28 +64,21 @@
     max-height: 70vh;
     overflow-y: auto;
     background: transparent !important;
-
-    :host-context(body.dark-theme) & {
-      background: #2a2a2a !important;
-    }
+    :host-context(body.dark-theme) & { background: $dark-bg !important; }
   }
 
   ::ng-deep .mat-mdc-dialog-actions {
     padding: 16px 24px;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
-    margin-top: 0;
     background: rgba(255, 255, 255, 0.05);
-
     :host-context(body.dark-theme) & {
-      background: #2a2a2a;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: $dark-bg;
+      border-top-color: rgba(255, 255, 255, 0.1);
     }
   }
 
   .birthday-selector {
-    .full-width {
-      width: 100%;
-    }
+    .full-width { width: 100%; }
 
     .birthday-option {
       display: flex;
@@ -98,16 +86,8 @@
       align-items: center;
       width: 100%;
       padding: 4px 0;
-
-      .birthday-name {
-        font-weight: 600;
-        color: var(--text-primary);
-      }
-
-      .birthday-date {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-      }
+      .birthday-name { font-weight: 600; color: var(--text-primary); }
+      .birthday-date { font-size: 0.85rem; color: var(--text-secondary); }
     }
 
     .selector-help {
@@ -118,38 +98,16 @@
       padding: 16px 18px;
       background: transparent !important;
       border-radius: 12px !important;
-      border: 2px solid rgba(255, 255, 255, 0.5) !important;
+      border: 2px solid $white-50 !important;
       backdrop-filter: blur(10px);
       min-height: 56px;
       transition: border-color 0.3s ease;
 
-      :host-context(body.dark-theme) & {
-        border-color: rgba(255, 255, 255, 0.3) !important;
-      }
+      :host-context(body.dark-theme) & { border-color: rgba(255, 255, 255, 0.3) !important; }
+      &:hover { border-color: $white-70 !important; }
 
-      &:hover {
-        border-color: rgba(255, 255, 255, 0.7) !important;
-
-        :host-context(body.dark-theme) & {
-          border-color: rgba(255, 255, 255, 0.5) !important;
-        }
-      }
-
-      mat-icon {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
-        flex-shrink: 0;
-      }
-
-      p {
-        margin: 0;
-        color: white;
-        line-height: 1.5;
-        font-size: 1rem;
-        font-weight: 400;
-      }
+      mat-icon { color: $white-80; font-size: 24px; width: 24px; height: 24px; flex-shrink: 0; }
+      p { margin: 0; color: white; line-height: 1.5; font-size: 1rem; }
     }
   }
 
@@ -172,44 +130,26 @@
       }
 
       .birthday-avatar {
-        width: 60px;
-        height: 60px;
+        width: 60px; height: 60px;
         border-radius: 50%;
         overflow: hidden;
         flex-shrink: 0;
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        border: 2px solid $white-50;
 
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
+        img { width: 100%; height: 100%; object-fit: cover; }
 
         &.no-photo {
           background: rgba(255, 255, 255, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
-
-          mat-icon {
-            color: white;
-            font-size: 32px;
-            width: 32px;
-            height: 32px;
-          }
+          mat-icon { color: white; font-size: 32px; width: 32px; height: 32px; }
         }
       }
 
       .birthday-details {
         flex: 1;
-
-        h3 {
-          margin: 0 0 4px 0;
-          font-size: 1.25rem;
-          font-weight: 700;
-          color: white;
-        }
-
+        h3 { margin: 0 0 4px; font-size: 1.25rem; font-weight: 700; color: white; }
         .birth-date {
           display: flex;
           align-items: center;
@@ -217,12 +157,7 @@
           margin: 0;
           font-size: 0.9rem;
           color: rgba(255, 255, 255, 0.85);
-
-          .small-icon {
-            font-size: 16px;
-            width: 16px;
-            height: 16px;
-          }
+          .small-icon { font-size: 16px; width: 16px; height: 16px; }
         }
       }
 
@@ -234,10 +169,7 @@
         background: rgba(255, 255, 255, 0.2) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.3) !important;
-        }
+        &:hover { background: rgba(255, 255, 255, 0.3) !important; }
       }
     }
 
@@ -248,7 +180,6 @@
       background: rgba(255, 255, 255, 0.1) !important;
       backdrop-filter: blur(10px);
       overflow: hidden;
-
       :host-context(body.dark-theme) & {
         background: rgba(0, 0, 0, 0.3) !important;
         border-color: rgba(255, 255, 255, 0.2);
@@ -256,146 +187,57 @@
     }
   }
 
-  ::ng-deep {
-    .mat-mdc-form-field {
-      .mat-mdc-text-field-wrapper {
-        background: transparent !important;
+  ::ng-deep .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      background: transparent !important;
+      .mat-mdc-form-field-flex { background: transparent; }
+      .mat-mdc-form-field-infix { padding-left: 12px !important; }
 
-        .mat-mdc-form-field-flex {
-          background: transparent;
-        }
-
-        .mat-mdc-form-field-infix {
-          padding-left: 12px !important;
-        }
-
-
-        .mdc-notched-outline {
-          .mdc-notched-outline__leading {
-            display: none !important;
-          }
-
-          .mdc-notched-outline__notch {
-            border-color: rgba(255, 255, 255, 0.5) !important;
-            border-width: 2px !important;
-            border-left: 2px solid rgba(255, 255, 255, 0.5) !important;
-            border-top: 2px solid rgba(255, 255, 255, 0.5) !important;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5) !important;
-            border-radius: 12px 0 0 12px !important;
-          }
-
-          .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.5) !important;
-            border-width: 2px !important;
-            border-radius: 0 12px 12px 0 !important;
-          }
-        }
-      }
-
-      .mat-mdc-form-field-hint-wrapper,
-      .mat-mdc-form-field-hint-spacer {
-        background: transparent !important;
-        padding: 4px 8px;
-      }
-
-      .mat-mdc-form-field-subscript-wrapper {
-        background: transparent !important;
-      }
-
-      .mat-mdc-form-field-label,
-      .mdc-floating-label {
-        color: white !important;
-        line-height: 24px !important;
-      }
-
-      .mdc-notched-outline__notch {
-        padding-left: 20px !important;
-      }
-
-      .mat-mdc-select-value,
-      .mat-mdc-input-element {
-        color: white !important;
-      }
-
-      .mat-mdc-form-field-hint {
-        color: rgba(255, 255, 255, 0.7) !important;
-      }
-
-      .mat-mdc-select-arrow {
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      .mat-mdc-form-field-icon-prefix,
-      .mat-mdc-form-field-icon-suffix {
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      .mat-mdc-form-field-icon-prefix ~ .mat-mdc-form-field-flex {
-        .mdc-notched-outline__leading {
-          border-left: none !important;
-        }
-      }
-
-      .mat-mdc-form-field-icon-suffix ~ .mat-mdc-form-field-flex {
-        .mdc-notched-outline__trailing {
+      .mdc-notched-outline {
+        .mdc-notched-outline__leading { display: none !important; }
+        .mdc-notched-outline__notch {
+          border: 2px solid $white-50 !important;
           border-right: none !important;
+          border-radius: 12px 0 0 12px !important;
+          padding-left: 20px !important;
         }
-      }
-
-      &.mat-focused {
-        .mdc-notched-outline {
-          .mdc-notched-outline__notch {
-            border-color: rgba(255, 255, 255, 0.9) !important;
-            border-width: 2px !important;
-            border-left: 2px solid rgba(255, 255, 255, 0.9) !important;
-            border-top: 2px solid rgba(255, 255, 255, 0.9) !important;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.9) !important;
-          }
-
-          .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.9) !important;
-            border-width: 2px !important;
-          }
-        }
-      }
-
-      &:hover:not(.mat-focused) {
-        .mdc-notched-outline {
-          .mdc-notched-outline__notch {
-            border-color: rgba(255, 255, 255, 0.7) !important;
-            border-left: 2px solid rgba(255, 255, 255, 0.7) !important;
-            border-top: 2px solid rgba(255, 255, 255, 0.7) !important;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.7) !important;
-          }
-
-          .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.7) !important;
-          }
+        .mdc-notched-outline__trailing {
+          border: 2px solid $white-50 !important;
+          border-left: none !important;
+          border-radius: 0 12px 12px 0 !important;
         }
       }
     }
 
-    .mat-mdc-option {
-      background: white;
-      color: var(--text-primary);
+    .mat-mdc-form-field-hint-wrapper,
+    .mat-mdc-form-field-hint-spacer,
+    .mat-mdc-form-field-subscript-wrapper { background: transparent !important; }
+    .mat-mdc-form-field-hint-wrapper { padding: 4px 8px; }
+
+    .mat-mdc-form-field-label, .mdc-floating-label { color: white !important; line-height: 24px !important; }
+    .mat-mdc-select-value, .mat-mdc-input-element { color: white !important; }
+    .mat-mdc-form-field-hint { color: $white-70 !important; }
+    .mat-mdc-select-arrow, .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix { color: $white-80; }
+
+    &.mat-focused .mdc-notched-outline {
+      .mdc-notched-outline__notch, .mdc-notched-outline__trailing { border-color: $white-90 !important; }
     }
+
+    &:hover:not(.mat-focused) .mdc-notched-outline {
+      .mdc-notched-outline__notch, .mdc-notched-outline__trailing { border-color: $white-70 !important; }
+    }
+  }
+
+  ::ng-deep {
+    .mat-mdc-option { background: white; color: var(--text-primary); }
 
     button[mat-stroked-button] {
       color: #764ba2 !important;
-      border-color: rgba(255, 255, 255, 0.5) !important;
+      border-color: $white-50 !important;
       background: white !important;
-
-      .mdc-button__label {
-        color: #764ba2 !important;
-      }
-
       &:hover {
         background: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
-
-        .mdc-button__label {
-          color: white !important;
-        }
       }
     }
   }
@@ -408,41 +250,21 @@
 
     .dialog-header {
       padding: 12px 16px;
-
-      h2 {
-        font-size: 1.2rem;
-
-        mat-icon {
-          font-size: 24px;
-          width: 24px;
-          height: 24px;
-        }
+      h2 { font-size: 1.2rem;
+        mat-icon { font-size: 24px; width: 24px; height: 24px; }
       }
     }
 
-    ::ng-deep .mat-mdc-dialog-content {
-      padding: 16px !important;
-    }
+    ::ng-deep .mat-mdc-dialog-content { padding: 16px !important; }
 
-    .selected-birthday-section {
-      .selected-birthday-card {
-        flex-direction: column;
-        text-align: center;
-
-        .birthday-details {
-          h3 {
-            font-size: 1.1rem;
-          }
-
-          .birth-date {
-            justify-content: center;
-          }
-        }
-
-        .change-button {
-          width: 100%;
-        }
+    .selected-birthday-section .selected-birthday-card {
+      flex-direction: column;
+      text-align: center;
+      .birthday-details {
+        h3 { font-size: 1.1rem; }
+        .birth-date { justify-content: center; }
       }
+      .change-button { width: 100%; }
     }
   }
 }
