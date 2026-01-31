@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of, from } from 'rxjs';
 import { catchError, mergeMap, tap, switchMap } from 'rxjs/operators';
@@ -17,10 +17,19 @@ export class BirthdayEffects {
   private readonly actions$ = inject(Actions);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly notificationService = inject(NotificationService);
-  private readonly googleCalendarService = inject(GoogleCalendarService);
+  private readonly injector = inject(Injector);
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly idGenerator = inject(IdGeneratorService);
   private readonly logger = inject(LoggerService);
+
+  private _googleCalendarService: GoogleCalendarService | null = null;
+
+  private get googleCalendarService(): GoogleCalendarService {
+    if (!this._googleCalendarService) {
+      this._googleCalendarService = this.injector.get(GoogleCalendarService);
+    }
+    return this._googleCalendarService;
+  }
 
   loadBirthdays$ = createEffect(() =>
     this.actions$.pipe(
