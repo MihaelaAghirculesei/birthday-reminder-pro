@@ -1,9 +1,10 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { Birthday } from '../../shared';
 import { environment } from '../../../environments/environment';
 import type { Gapi } from './google-api.types';
+import type { TokenClient, TokenResponse } from './google-identity.types';
 import { LoggerService } from './logger.service';
 
 declare const gapi: Gapi;
@@ -43,23 +44,37 @@ interface GoogleAPIError {
   status?: number;
 }
 
+interface StoredToken {
+  access_token: string;
+  expires_at: number;
+}
+
+const STORAGE_KEY_TOKEN = 'googleCalendarToken';
+const STORAGE_KEY_SETTINGS = 'googleCalendarSettings';
+
 @Injectable({
   providedIn: 'root'
 })
 export class GoogleCalendarService {
   private readonly CLIENT_ID = environment.googleCalendar.clientId;
-  private readonly API_KEY = environment.googleCalendar.apiKey;
   private readonly DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
   private readonly SCOPES = 'https://www.googleapis.com/auth/calendar';
   private readonly TOKEN_REFRESH_THRESHOLD_SECONDS = 300;
 
-  private isInitialized = false;
+  private isGapiLoaded = false;
+  private isGisLoaded = false;
+  private tokenClient: TokenClient | null = null;
+  private pendingTokenPromise: {
+    resolve: (token: string) => void;
+    reject: (error: Error) => void;
+  } | null = null;
+
   private isSignedInSubject = new BehaviorSubject<boolean>(false);
   private settingsSubject = new BehaviorSubject<GoogleCalendarSettings>({
     enabled: false,
     calendarId: 'primary',
     syncMode: 'one-way',
-    reminderMinutes: 1440 // 1 day before
+    reminderMinutes: 1440
   });
 
   public isSignedIn$ = this.isSignedInSubject.asObservable();
@@ -67,45 +82,39 @@ export class GoogleCalendarService {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
+    private ngZone: NgZone,
     private logger: LoggerService
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.loadSettings();
+      this.restoreSession();
     }
   }
 
   async initialize(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId) || this.isInitialized) {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    if (this.CLIENT_ID.includes('YOUR_GOOGLE') || this.API_KEY.includes('YOUR_GOOGLE')) {
+    if (this.CLIENT_ID.includes('YOUR_GOOGLE')) {
       return;
     }
 
-    await this.loadGapi();
-    await gapi.load('client:auth2', async () => {
-      await gapi.client.init({
-        apiKey: this.API_KEY,
-        clientId: this.CLIENT_ID,
-        discoveryDocs: [this.DISCOVERY_DOC],
-        scope: this.SCOPES
-      });
+    await Promise.all([
+      this.loadGapiScript(),
+      this.loadGisScript()
+    ]);
 
-      const authInstance = this.getAuthInstance();
-      this.isSignedInSubject.next(authInstance.isSignedIn.get());
+    await this.initializeGapiClient();
+    this.initializeTokenClient();
 
-      authInstance.isSignedIn.listen((isSignedIn: boolean) => {
-        this.isSignedInSubject.next(isSignedIn);
-      });
-
-      this.isInitialized = true;
-    });
+    await this.restoreSession();
   }
 
-  private loadGapi(): Promise<void> {
+  private loadGapiScript(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (typeof gapi !== 'undefined') {
+      if (this.isGapiLoaded || typeof gapi !== 'undefined') {
+        this.isGapiLoaded = true;
         resolve();
         return;
       }
@@ -118,6 +127,7 @@ export class GoogleCalendarService {
       script.onload = () => {
         const checkGapi = () => {
           if (typeof gapi !== 'undefined') {
+            this.isGapiLoaded = true;
             resolve();
           } else {
             setTimeout(checkGapi, 100);
@@ -132,42 +142,229 @@ export class GoogleCalendarService {
     });
   }
 
-  async signIn(): Promise<void> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
+  private loadGisScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.isGisLoaded || (window.google && window.google.accounts)) {
+        this.isGisLoaded = true;
+        resolve();
+        return;
+      }
 
-    await this.getAuthInstance().signIn();
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+
+      script.onload = () => {
+        const checkGis = () => {
+          if (window.google && window.google.accounts) {
+            this.isGisLoaded = true;
+            resolve();
+          } else {
+            setTimeout(checkGis, 100);
+          }
+        };
+        checkGis();
+      };
+
+      script.onerror = () => reject(new Error('Failed to load Google Identity Services script'));
+
+      document.head.appendChild(script);
+    });
   }
 
-  async signOut(): Promise<void> {
-    if (!this.isInitialized) {
+  private async initializeGapiClient(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({
+            discoveryDocs: [this.DISCOVERY_DOC]
+          });
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+  }
+
+  private initializeTokenClient(): void {
+    if (!window.google || !window.google.accounts) {
+      throw new Error('Google Identity Services not loaded');
+    }
+
+    this.tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: this.CLIENT_ID,
+      scope: this.SCOPES,
+      callback: (response: TokenResponse) => {
+        this.ngZone.run(() => {
+          this.handleTokenResponse(response);
+        });
+      },
+      error_callback: (error: { type: string; message: string }) => {
+        this.ngZone.run(() => {
+          this.logger.error('[GoogleCalendar] Token error:', error);
+          if (this.pendingTokenPromise) {
+            this.pendingTokenPromise.reject(new Error(error.message || 'Token request failed'));
+            this.pendingTokenPromise = null;
+          }
+        });
+      }
+    });
+  }
+
+  private handleTokenResponse(response: TokenResponse): void {
+    if (response.error) {
+      this.logger.error('[GoogleCalendar] Token response error:', response.error_description);
+      if (this.pendingTokenPromise) {
+        this.pendingTokenPromise.reject(new Error(response.error_description || response.error));
+        this.pendingTokenPromise = null;
+      }
       return;
     }
 
-    await this.getAuthInstance().signOut();
-    this.updateSettings({ ...this.settingsSubject.value, enabled: false });
+    const expiresAt = Date.now() + (response.expires_in * 1000);
+    this.saveToken(response.access_token, expiresAt);
+
+    gapi.client.setToken({ access_token: response.access_token });
+    this.isSignedInSubject.next(true);
+
+    if (this.pendingTokenPromise) {
+      this.pendingTokenPromise.resolve(response.access_token);
+      this.pendingTokenPromise = null;
+    }
   }
 
-  private getAuthInstance() {
-    return gapi.auth2.getAuthInstance();
-  }
-
-  private async ensureValidToken(): Promise<void> {
-    if (!this.isInitialized || !this.isSignedInSubject.value) {
+  private saveToken(accessToken: string, expiresAt: number): void {
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
     try {
-      const user = this.getAuthInstance().currentUser.get();
-      const authResponse = user.getAuthResponse(true);
-      const expiresIn = (authResponse.expires_at - Date.now()) / 1000;
+      const tokenData: StoredToken = { access_token: accessToken, expires_at: expiresAt };
+      localStorage.setItem(STORAGE_KEY_TOKEN, JSON.stringify(tokenData));
+    } catch (error) {
+      this.logger.error('[GoogleCalendar] Failed to save token:', error);
+    }
+  }
 
-      if (expiresIn < this.TOKEN_REFRESH_THRESHOLD_SECONDS) {
-        await user.reloadAuthResponse();
+  private getStoredToken(): StoredToken | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_TOKEN);
+      if (stored) {
+        return JSON.parse(stored) as StoredToken;
       }
     } catch (error) {
-      this.logger.error('Failed to refresh auth token:', error);
+      this.logger.error('[GoogleCalendar] Failed to load token:', error);
+    }
+    return null;
+  }
+
+  private clearStoredToken(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.removeItem(STORAGE_KEY_TOKEN);
+      } catch (error) {
+        this.logger.error('[GoogleCalendar] Failed to clear token:', error);
+      }
+    }
+  }
+
+  private async restoreSession(): Promise<void> {
+    const storedToken = this.getStoredToken();
+    if (!storedToken) {
+      return;
+    }
+
+    const now = Date.now();
+    const expiresIn = (storedToken.expires_at - now) / 1000;
+
+    if (expiresIn <= 0) {
+      this.clearStoredToken();
+      return;
+    }
+
+    if (this.isGapiLoaded && typeof gapi !== 'undefined' && gapi.client) {
+      gapi.client.setToken({ access_token: storedToken.access_token });
+      this.isSignedInSubject.next(true);
+
+      if (expiresIn < this.TOKEN_REFRESH_THRESHOLD_SECONDS) {
+        await this.refreshTokenSilently();
+      }
+    }
+  }
+
+  async signIn(): Promise<void> {
+    if (!this.isGisLoaded || !this.isGapiLoaded) {
+      await this.initialize();
+    }
+
+    if (!this.tokenClient) {
+      if (this.CLIENT_ID.includes('YOUR_GOOGLE')) {
+        throw new Error('Google Calendar not configured. Please set a valid Client ID in environment.ts');
+      }
+      throw new Error('Token client not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.pendingTokenPromise = { resolve: () => resolve(), reject };
+      this.tokenClient!.requestAccessToken({ prompt: 'consent' });
+    });
+  }
+
+  async signOut(): Promise<void> {
+    const token = gapi.client.getToken();
+
+    if (token && token.access_token && window.google && window.google.accounts) {
+      window.google.accounts.oauth2.revoke(token.access_token, () => {
+        this.ngZone.run(() => {
+          this.logger.info('[GoogleCalendar] Token revoked');
+        });
+      });
+    }
+
+    gapi.client.setToken(null);
+    this.clearStoredToken();
+    this.isSignedInSubject.next(false);
+    this.updateSettings({ ...this.settingsSubject.value, enabled: false });
+  }
+
+  private async refreshTokenSilently(): Promise<void> {
+    if (!this.tokenClient) {
+      return;
+    }
+
+    return new Promise((resolve) => {
+      this.pendingTokenPromise = {
+        resolve: () => resolve(),
+        reject: () => {
+          this.logger.warn('[GoogleCalendar] Silent refresh failed, will require interactive sign-in');
+          resolve();
+        }
+      };
+
+      this.tokenClient!.requestAccessToken({ prompt: '' });
+    });
+  }
+
+  private async ensureValidToken(): Promise<void> {
+    if (!this.isSignedInSubject.value) {
+      return;
+    }
+
+    const storedToken = this.getStoredToken();
+    if (!storedToken) {
+      return;
+    }
+
+    const expiresIn = (storedToken.expires_at - Date.now()) / 1000;
+
+    if (expiresIn < this.TOKEN_REFRESH_THRESHOLD_SECONDS) {
+      await this.refreshTokenSilently();
     }
   }
 
@@ -181,7 +378,7 @@ export class GoogleCalendarService {
 
       if (status === 401 || status === 403) {
         try {
-          await this.getAuthInstance().currentUser.get().reloadAuthResponse();
+          await this.refreshTokenSilently();
           return await operation();
         } catch (retryError) {
           this.logger.error('Failed to retry operation after token refresh:', retryError);
@@ -314,7 +511,7 @@ export class GoogleCalendarService {
     this.settingsSubject.next(settings);
     if (isPlatformBrowser(this.platformId)) {
       try {
-        localStorage.setItem('googleCalendarSettings', JSON.stringify(settings));
+        localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
       } catch (error) {
         this.logger.error('[GoogleCalendar] Failed to save settings:', error);
       }
@@ -323,7 +520,7 @@ export class GoogleCalendarService {
 
   private loadSettings(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const stored = localStorage.getItem('googleCalendarSettings');
+      const stored = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (stored) {
         try {
           const settings = JSON.parse(stored);
@@ -341,5 +538,9 @@ export class GoogleCalendarService {
 
   isEnabled(): boolean {
     return this.settingsSubject.value.enabled && this.isSignedInSubject.value;
+  }
+
+  isInitialized(): boolean {
+    return this.isGapiLoaded && this.isGisLoaded && this.tokenClient !== null;
   }
 }
