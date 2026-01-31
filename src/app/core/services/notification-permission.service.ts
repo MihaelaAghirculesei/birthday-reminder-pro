@@ -31,7 +31,9 @@ export class NotificationPermissionService {
   }
 
   isSupported(): boolean {
-    return 'Notification' in window && 'serviceWorker' in navigator;
+    return 'Notification' in window &&
+           typeof Notification.requestPermission === 'function' &&
+           'serviceWorker' in navigator;
   }
 
 

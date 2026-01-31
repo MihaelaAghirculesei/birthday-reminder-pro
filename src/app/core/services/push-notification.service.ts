@@ -53,7 +53,9 @@ export class PushNotificationService implements OnDestroy {
   private async initializeBrowserNotifications(): Promise<void> {
     if (typeof window === 'undefined') return;
 
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ('Notification' in window &&
+        typeof Notification.requestPermission === 'function' &&
+        Notification.permission === 'default') {
       await Notification.requestPermission();
     }
 
