@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import type { Gapi } from './google-api.types';
 import type { TokenClient, TokenResponse } from './google-identity.types';
 import { LoggerService } from './logger.service';
+import { GoogleApiErrorService } from './google-api-error.service';
 
 declare const gapi: Gapi;
 
@@ -32,16 +33,6 @@ export interface CalendarEvent {
     useDefault: boolean;
     overrides?: { method: string; minutes: number }[];
   };
-}
-
-interface GoogleAPIError {
-  result?: {
-    error?: {
-      code?: number;
-      message?: string;
-    };
-  };
-  status?: number;
 }
 
 interface StoredToken {
@@ -83,7 +74,8 @@ export class GoogleCalendarService {
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
     private ngZone: NgZone,
-    private logger: LoggerService
+    private logger: LoggerService,
+    private errorService: GoogleApiErrorService
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.loadSettings();
@@ -368,40 +360,55 @@ export class GoogleCalendarService {
     }
   }
 
-  private async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    context: string,
+    maxRetries = 2
+  ): Promise<T> {
     await this.ensureValidToken();
 
-    try {
-      return await operation();
-    } catch (error: unknown) {
-      const status = this.extractErrorStatus(error);
+    let lastError: unknown;
 
-      if (status === 401 || status === 403) {
-        try {
-          await this.refreshTokenSilently();
-          return await operation();
-        } catch (retryError) {
-          this.logger.error('Failed to retry operation after token refresh:', retryError);
-          throw error;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: unknown) {
+        lastError = error;
+        const errorDetails = this.errorService.parseError(error, context);
+
+        if (this.errorService.isAuthError(errorDetails.code)) {
+          try {
+            await this.refreshTokenSilently();
+            continue;
+          } catch {
+            throw this.errorService.createError(errorDetails, context);
+          }
         }
+
+        if (this.errorService.isRateLimitError(errorDetails.code)) {
+          const delay = Math.pow(2, attempt) * 1000;
+          this.logger.warn(`[GoogleCalendar] Rate limited, waiting ${delay}ms before retry...`);
+          await this.delay(delay);
+          continue;
+        }
+
+        if (this.errorService.isServerError(errorDetails.code) && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 500;
+          this.logger.warn(`[GoogleCalendar] Server error, retrying in ${delay}ms...`);
+          await this.delay(delay);
+          continue;
+        }
+
+        throw this.errorService.createError(errorDetails, context);
       }
-
-      throw error;
-    }
-  }
-
-  private extractErrorStatus(error: unknown): number | undefined {
-    if (!this.isGoogleAPIError(error)) {
-      return undefined;
     }
 
-    return error.result?.error?.code || error.status;
+    const finalError = this.errorService.parseError(lastError, context);
+    throw this.errorService.createError(finalError, context);
   }
 
-  private isGoogleAPIError(error: unknown): error is GoogleAPIError {
-    return typeof error === 'object' &&
-           error !== null &&
-           ('result' in error || 'status' in error);
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async getCalendars(): Promise<GoogleCalendarItem[]> {
@@ -409,10 +416,13 @@ export class GoogleCalendarService {
       throw new Error('Not signed in to Google Calendar');
     }
 
-    return this.executeWithRetry(async () => {
-      const response = await gapi.client.calendar.calendarList.list();
-      return response.result.items || [];
-    });
+    return this.executeWithRetry(
+      async () => {
+        const response = await gapi.client.calendar.calendarList.list();
+        return response.result.items || [];
+      },
+      'getCalendars'
+    );
   }
 
   async syncBirthdayToCalendar(birthday: Birthday): Promise<string> {
@@ -420,19 +430,22 @@ export class GoogleCalendarService {
       throw new Error('Google Calendar sync is not enabled');
     }
 
-    return this.executeWithRetry(async () => {
-      const event = this.createBirthdayEvent(birthday);
-      const response = await gapi.client.calendar.events.insert({
-        calendarId: this.settingsSubject.value.calendarId,
-        resource: event
-      });
+    return this.executeWithRetry(
+      async () => {
+        const event = this.createBirthdayEvent(birthday);
+        const response = await gapi.client.calendar.events.insert({
+          calendarId: this.settingsSubject.value.calendarId,
+          resource: event
+        });
 
-      if (!response.result.id) {
-        throw new Error('Failed to create calendar event: No event ID returned');
-      }
+        if (!response.result.id) {
+          throw new Error('Failed to create calendar event: No event ID returned');
+        }
 
-      return response.result.id;
-    });
+        return response.result.id;
+      },
+      `syncBirthday:${birthday.name}`
+    );
   }
 
   async updateBirthdayInCalendar(birthday: Birthday, eventId: string): Promise<void> {
@@ -440,14 +453,17 @@ export class GoogleCalendarService {
       throw new Error('Google Calendar sync is not enabled');
     }
 
-    return this.executeWithRetry(async () => {
-      const event = this.createBirthdayEvent(birthday);
-      await gapi.client.calendar.events.update({
-        calendarId: this.settingsSubject.value.calendarId,
-        eventId: eventId,
-        resource: event
-      });
-    });
+    return this.executeWithRetry(
+      async () => {
+        const event = this.createBirthdayEvent(birthday);
+        await gapi.client.calendar.events.update({
+          calendarId: this.settingsSubject.value.calendarId,
+          eventId: eventId,
+          resource: event
+        });
+      },
+      `updateBirthday:${birthday.name}`
+    );
   }
 
   async deleteBirthdayFromCalendar(eventId: string): Promise<void> {
@@ -455,12 +471,15 @@ export class GoogleCalendarService {
       return;
     }
 
-    return this.executeWithRetry(async () => {
-      await gapi.client.calendar.events.delete({
-        calendarId: this.settingsSubject.value.calendarId,
-        eventId: eventId
-      });
-    });
+    return this.executeWithRetry(
+      async () => {
+        await gapi.client.calendar.events.delete({
+          calendarId: this.settingsSubject.value.calendarId,
+          eventId: eventId
+        });
+      },
+      `deleteEvent:${eventId}`
+    );
   }
 
   async syncAllBirthdays(birthdays: Birthday[]): Promise<{ success: number; failed: number; errors: string[] }> {
