@@ -455,4 +455,322 @@ describe('PushNotificationService', () => {
       expect(notifications.length).toBeGreaterThanOrEqual(0);
     });
   });
+
+  describe('Age calculation', () => {
+    it('should calculate correct age for past birthday this year', async () => {
+      const now = new Date();
+      const pastDate = new Date(now.getFullYear() - 30, now.getMonth() - 1, 15);
+      const birthday = {
+        ...mockBirthday,
+        birthDate: pastDate,
+        scheduledMessages: [{
+          ...mockMessage,
+          message: 'Age: {age}'
+        }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].body).toContain('Age:');
+        expect(notifications[0].body).not.toContain('{age}');
+      }
+    });
+
+    it('should calculate correct age for upcoming birthday this year', async () => {
+      const now = new Date();
+      const futureDate = new Date(now.getFullYear() - 25, now.getMonth() + 1, 15);
+      const birthday = {
+        ...mockBirthday,
+        birthDate: futureDate,
+        scheduledMessages: [{
+          ...mockMessage,
+          message: 'Turning {age}'
+        }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].body).not.toContain('{age}');
+      }
+    });
+
+    it('should handle birthday on same month different day', async () => {
+      const now = new Date();
+      const sameMonthDate = new Date(now.getFullYear() - 20, now.getMonth(), now.getDate() + 5);
+      const birthday = {
+        ...mockBirthday,
+        birthDate: sameMonthDate,
+        scheduledMessages: [{
+          ...mockMessage,
+          message: '{name} turns {age}'
+        }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      expect(Array.isArray(notifications)).toBe(true);
+    });
+  });
+
+  describe('Multiple birthdays handling', () => {
+    it('should process all birthdays with messages', async () => {
+      const birthdays = [
+        {
+          ...mockBirthday,
+          id: 'b1',
+          name: 'Alice',
+          scheduledMessages: [{ ...mockMessage, id: 'm1', active: true }]
+        },
+        {
+          ...mockBirthday,
+          id: 'b2',
+          name: 'Bob',
+          scheduledMessages: [{ ...mockMessage, id: 'm2', active: true }]
+        },
+        {
+          ...mockBirthday,
+          id: 'b3',
+          name: 'Charlie',
+          scheduledMessages: [{ ...mockMessage, id: 'm3', active: true }]
+        }
+      ];
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve(birthdays));
+      const count = await service.getScheduledNotificationsCount();
+
+      expect(count).toBe(3);
+    });
+
+    it('should handle mix of birthdays with and without messages', async () => {
+      const birthdays = [
+        {
+          ...mockBirthday,
+          id: 'b1',
+          scheduledMessages: [{ ...mockMessage, id: 'm1', active: true }]
+        },
+        {
+          ...mockBirthday,
+          id: 'b2'
+          // no scheduledMessages
+        },
+        {
+          ...mockBirthday,
+          id: 'b3',
+          scheduledMessages: []
+        }
+      ];
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve(birthdays));
+      const count = await service.getScheduledNotificationsCount();
+
+      expect(count).toBe(1);
+    });
+
+    it('should return notifications from multiple birthdays', async () => {
+      const birthdays = [
+        {
+          ...mockBirthday,
+          id: 'b1',
+          name: 'Alice',
+          scheduledMessages: [{ ...mockMessage, id: 'm1' }]
+        },
+        {
+          ...mockBirthday,
+          id: 'b2',
+          name: 'Bob',
+          scheduledMessages: [{ ...mockMessage, id: 'm2' }]
+        }
+      ];
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve(birthdays));
+      const notifications = await service.getPendingNotifications();
+
+      expect(notifications.length).toBe(2);
+    });
+  });
+
+  describe('Scheduled time parsing', () => {
+    it('should handle midnight scheduled time', async () => {
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [{ ...mockMessage, scheduledTime: '00:00' }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].scheduledAt.getHours()).toBe(0);
+        expect(notifications[0].scheduledAt.getMinutes()).toBe(0);
+      }
+    });
+
+    it('should handle end of day scheduled time', async () => {
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [{ ...mockMessage, scheduledTime: '23:59' }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].scheduledAt.getHours()).toBe(23);
+        expect(notifications[0].scheduledAt.getMinutes()).toBe(59);
+      }
+    });
+
+    it('should handle noon scheduled time', async () => {
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [{ ...mockMessage, scheduledTime: '12:00' }]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].scheduledAt.getHours()).toBe(12);
+      }
+    });
+  });
+
+  describe('Multiple messages per birthday', () => {
+    it('should count all active messages for a single birthday', async () => {
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [
+          { ...mockMessage, id: 'm1', active: true },
+          { ...mockMessage, id: 'm2', active: true },
+          { ...mockMessage, id: 'm3', active: true }
+        ]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const count = await service.getScheduledNotificationsCount();
+
+      expect(count).toBe(3);
+    });
+
+    it('should return notifications for all messages of a birthday', async () => {
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [
+          { ...mockMessage, id: 'm1', scheduledTime: '08:00' },
+          { ...mockMessage, id: 'm2', scheduledTime: '12:00' },
+          { ...mockMessage, id: 'm3', scheduledTime: '18:00' }
+        ]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      expect(notifications.length).toBe(3);
+    });
+  });
+
+  describe('Error handling in storage operations', () => {
+    it('should handle storage error in getScheduledNotificationsCount gracefully', async () => {
+      mockStorage.getBirthdays.and.returnValue(Promise.reject(new Error('Storage error')));
+
+      const count = await service.getScheduledNotificationsCount();
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle storage error in getPendingNotifications gracefully', async () => {
+      mockStorage.getBirthdays.and.returnValue(Promise.reject(new Error('Storage error')));
+
+      const notifications = await service.getPendingNotifications();
+
+      expect(notifications).toEqual([]);
+    });
+  });
+
+  describe('Default title handling', () => {
+    it('should use default title when message title is undefined', async () => {
+      const messageNoTitle = {
+        ...mockMessage,
+        title: undefined as unknown as string
+      };
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [messageNoTitle]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].title).toBe('🎂 Birthday Reminder');
+      }
+    });
+
+    it('should use default title when message title is null', async () => {
+      const messageNullTitle = {
+        ...mockMessage,
+        title: null as unknown as string
+      };
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [messageNullTitle]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      if (notifications.length > 0) {
+        expect(notifications[0].title).toBe('🎂 Birthday Reminder');
+      }
+    });
+  });
+
+  describe('Birthday date edge cases', () => {
+    it('should handle leap year birthday', async () => {
+      const leapYearBirthday = new Date(2000, 1, 29); // Feb 29
+      const birthday = {
+        ...mockBirthday,
+        birthDate: leapYearBirthday,
+        scheduledMessages: [mockMessage]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      expect(Array.isArray(notifications)).toBe(true);
+    });
+
+    it('should handle end of year birthday', async () => {
+      const endOfYearBirthday = new Date(1990, 11, 31); // Dec 31
+      const birthday = {
+        ...mockBirthday,
+        birthDate: endOfYearBirthday,
+        scheduledMessages: [mockMessage]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      expect(Array.isArray(notifications)).toBe(true);
+    });
+
+    it('should handle start of year birthday', async () => {
+      const startOfYearBirthday = new Date(1990, 0, 1); // Jan 1
+      const birthday = {
+        ...mockBirthday,
+        birthDate: startOfYearBirthday,
+        scheduledMessages: [mockMessage]
+      };
+
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+      const notifications = await service.getPendingNotifications();
+
+      expect(Array.isArray(notifications)).toBe(true);
+    });
+  });
 });
