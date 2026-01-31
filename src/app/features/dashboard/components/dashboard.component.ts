@@ -28,8 +28,8 @@ import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
         BirthdayChartComponent,
         CategoryFilterComponent,
         BirthdayListComponent,
-        GoogleCalendarSyncComponent,
-        NotificationPermissionBannerComponent
+        NotificationPermissionBannerComponent,
+        GoogleCalendarSyncComponent
     ],
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.scss'],

@@ -75,6 +75,18 @@
   </div>
 
   <div class="full-width-section">
-    <app-google-calendar-sync></app-google-calendar-sync>
+    @defer (on viewport) {
+      <app-google-calendar-sync></app-google-calendar-sync>
+    } @placeholder {
+      <div class="calendar-sync-placeholder">
+        <mat-icon>cloud_sync</mat-icon>
+        <span>Google Calendar Sync</span>
+      </div>
+    } @loading (minimum 200ms) {
+      <div class="calendar-sync-loading">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span>Loading...</span>
+      </div>
+    }
   </div>
 </div>
