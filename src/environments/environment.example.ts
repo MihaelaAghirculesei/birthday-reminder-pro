@@ -6,13 +6,18 @@
  * 2. Replace placeholder values with your actual credentials
  * 3. NEVER commit environment.ts to Git (it's in .gitignore)
  *
- * GOOGLE CALENDAR SETUP:
+ * GOOGLE CALENDAR SETUP (Google Identity Services):
  * 1. Go to https://console.cloud.google.com/
  * 2. Create a new project or select existing
  * 3. Enable Google Calendar API
- * 4. Create OAuth 2.0 credentials (Web application)
- * 5. Add authorized JavaScript origins: http://localhost:4200
- * 6. Copy Client ID and API Key to environment.ts
+ * 4. Go to "APIs & Services" > "Credentials"
+ * 5. Create OAuth 2.0 credentials (Web application type)
+ * 6. Add authorized JavaScript origins: http://localhost:4200
+ * 7. Copy only the Client ID (API Key is no longer required with GIS)
+ *
+ * NOTE: This app uses Google Identity Services (GIS) for OAuth 2.0
+ * authentication. The deprecated gapi.auth2 library is no longer used.
+ * No API key is required for this authentication flow.
  */
 
 export const environment = {
@@ -20,10 +25,6 @@ export const environment = {
   googleCalendar: {
     // Replace with your Google OAuth 2.0 Client ID
     // Example: '123456789-abcdefghijklmnop.apps.googleusercontent.com'
-    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-
-    // Replace with your Google API Key
-    // Example: 'AIzaSyAaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQq'
-    apiKey: 'YOUR_GOOGLE_API_KEY'
+    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
   }
 };
