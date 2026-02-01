@@ -1,32 +1,41 @@
 <mat-card class="chart-card">
   <mat-card-header>
     <mat-card-title>
-      <mat-icon>bar_chart</mat-icon>
+      <mat-icon aria-hidden="true">bar_chart</mat-icon>
       Monthly Distribution
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <div class="chart-container">
+    <div
+      class="chart-container"
+      role="img"
+      [attr.aria-label]="'Bar chart showing birthday distribution across 12 months. Total: ' + totalBirthdays + ' birthdays'"
+    >
       @for (monthData of enrichedChartData; track monthData.month) {
-        <div class="chart-bar">
+        <div
+          class="chart-bar"
+          role="listitem"
+          [attr.aria-label]="monthData.month + ': ' + monthData.count + ' ' + (monthData.count === 1 ? 'birthday' : 'birthdays')"
+        >
           <div class="bar-container">
             <div
               class="bar"
               [style.height.%]="monthData.heightPercent"
               [class.current-month]="monthData.isCurrentMonth"
+              aria-hidden="true"
             ></div>
             @if (monthData.count > 0) {
-              <div class="bar-value">
+              <div class="bar-value" aria-hidden="true">
                 {{ monthData.count }}
               </div>
             }
           </div>
-          <div class="bar-label">{{ monthData.month }}</div>
+          <div class="bar-label" aria-hidden="true">{{ monthData.month }}</div>
         </div>
       }
     </div>
     @if (totalBirthdays === 0) {
-      <div class="chart-legend">
+      <div class="chart-legend" role="status" aria-live="polite">
         <p class="no-data-text">Add some birthdays to see the chart!</p>
       </div>
     }

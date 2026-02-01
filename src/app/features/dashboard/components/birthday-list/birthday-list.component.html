@@ -47,19 +47,19 @@
     }
 
     @if (birthdays.length === 0 && searchTerm) {
-      <div class="no-birthdays">
-        <mat-icon class="no-data-icon">search_off</mat-icon>
+      <div class="no-birthdays" role="status" aria-live="polite">
+        <mat-icon class="no-data-icon" aria-hidden="true">search_off</mat-icon>
         <p class="no-data-text">No birthdays found matching "{{ searchTerm }}"</p>
-        <button mat-raised-button color="primary" (click)="onClearSearch()">
-          <mat-icon>clear</mat-icon>
+        <button mat-raised-button color="primary" (click)="onClearSearch()" aria-label="Clear search and show all birthdays">
+          <mat-icon aria-hidden="true">clear</mat-icon>
           Clear Search
         </button>
       </div>
     }
 
     @if (birthdays.length === 0 && !searchTerm && totalBirthdays === 0) {
-      <div class="no-birthdays">
-        <mat-icon class="no-data-icon">cake</mat-icon>
+      <div class="no-birthdays" role="status" aria-live="polite">
+        <mat-icon class="no-data-icon" aria-hidden="true">cake</mat-icon>
         <p class="no-data-text">No birthdays yet. Add your first one!</p>
       </div>
     }

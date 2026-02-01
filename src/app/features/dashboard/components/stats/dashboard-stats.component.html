@@ -1,62 +1,63 @@
-<div class="stats-row">
-  <mat-card class="stat-card">
+<div class="stats-row" role="region" aria-label="Birthday statistics">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'Total birthdays: ' + totalBirthdays">
     <mat-card-content>
       <div class="stat-content">
-        <mat-icon class="stat-icon total">cake</mat-icon>
+        <mat-icon class="stat-icon total" aria-hidden="true">cake</mat-icon>
         <div class="stat-info">
-          <div class="stat-number">{{ totalBirthdays }}</div>
+          <div class="stat-number" aria-hidden="true">{{ totalBirthdays }}</div>
           <div class="stat-label">Total Birthdays</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'Birthdays in next 30 days: ' + birthdaysThisMonth">
     <mat-card-content>
       <div class="stat-content">
         <app-calendar-icon
           size="40"
           strokeWidth="2"
           cssClass="stat-icon month"
+          aria-hidden="true"
         ></app-calendar-icon>
         <div class="stat-info">
-          <div class="stat-number">{{ birthdaysThisMonth }}</div>
+          <div class="stat-number" aria-hidden="true">{{ birthdaysThisMonth }}</div>
           <div class="stat-label">Next 30 Days</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'Average age: ' + averageAge + ' years'">
     <mat-card-content>
       <div class="stat-content">
-        <mat-icon class="stat-icon age">person</mat-icon>
+        <mat-icon class="stat-icon age" aria-hidden="true">person</mat-icon>
         <div class="stat-info">
-          <div class="stat-number">{{ averageAge }}</div>
+          <div class="stat-number" aria-hidden="true">{{ averageAge }}</div>
           <div class="stat-label">Average Age</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'Days until next birthday: ' + nextBirthdayDays">
     <mat-card-content>
       <div class="stat-content">
-        <mat-icon class="stat-icon next">schedule</mat-icon>
+        <mat-icon class="stat-icon next" aria-hidden="true">schedule</mat-icon>
         <div class="stat-info">
-          <div class="stat-number">{{ nextBirthdayDays }}</div>
+          <div class="stat-number" aria-hidden="true">{{ nextBirthdayDays }}</div>
           <div class="stat-label">Days to Next</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'Next birthday: ' + nextBirthdayText">
     <mat-card-content>
       <div class="stat-content">
-        <mat-icon class="stat-icon upcoming">event</mat-icon>
+        <mat-icon class="stat-icon upcoming" aria-hidden="true">event</mat-icon>
         <div class="stat-info">
-          <div class="stat-number">{{ nextBirthdayText }}</div>
+          <div class="stat-number" aria-hidden="true">{{ nextBirthdayText }}</div>
           <div class="stat-label">Next Birthday</div>
         </div>
       </div>
