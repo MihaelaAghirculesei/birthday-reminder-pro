@@ -1,12 +1,12 @@
 import { ApplicationConfig, isDevMode, ErrorHandler } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withPreloading } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
-import { NotificationService, GlobalErrorHandler, ThemeService } from './core';
+import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy } from './core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
 import { BirthdayEffects } from './core/store/birthday/birthday.effects';
@@ -16,7 +16,7 @@ import { uiReducer } from './core/store/ui/ui.reducer';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
     provideAnimationsAsync(),
     provideNativeDateAdapter(),
     provideStore({

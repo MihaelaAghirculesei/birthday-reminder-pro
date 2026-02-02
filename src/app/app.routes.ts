@@ -8,11 +8,13 @@ export const routes: Routes = [
   },
   {
     path: 'scheduled-messages',
-    loadComponent: () => import('./features/scheduled-messages/scheduled-messages.component').then(m => m.ScheduledMessagesComponent)
+    loadComponent: () => import('./features/scheduled-messages/scheduled-messages.component').then(m => m.ScheduledMessagesComponent),
+    data: { preload: true }
   },
   {
     path: 'calendar-sync',
-    loadComponent: () => import('./features/calendar-sync/google-calendar-sync.component').then(m => m.GoogleCalendarSyncComponent)
+    loadComponent: () => import('./features/calendar-sync/google-calendar-sync.component').then(m => m.GoogleCalendarSyncComponent),
+    data: { preload: false }
   },
   {
     path: '**',
