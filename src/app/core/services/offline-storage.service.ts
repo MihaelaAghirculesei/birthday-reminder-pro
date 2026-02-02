@@ -1,10 +1,13 @@
 import { Injectable, isDevMode, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
+import { LoggerService } from './logger.service';
 
 interface StoredBirthday extends Omit<Birthday, 'birthDate'> {
   birthDate: string;
 }
+
+const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
 
 export interface OfflineStorageService {
   getBirthdays(): Promise<Birthday[]>;
@@ -20,10 +23,39 @@ export interface OfflineStorageService {
 })
 export class IndexedDBStorageService implements OfflineStorageService {
   private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
   private dbName = 'BirthdayReminderDB';
   private dbVersion = 2;
   private storeName = 'birthdays';
   private messagesStoreName = 'scheduledMessages';
+
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    context: string,
+    maxRetries = 3
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+        const errorName = (error as DOMException)?.name || 'Unknown';
+
+        if (!RETRYABLE_ERRORS.includes(errorName) || attempt === maxRetries) {
+          this.logger.error(`[IndexedDB] ${context} failed after ${attempt} attempt(s):`, error);
+          throw error;
+        }
+
+        const delay = Math.min(100 * Math.pow(2, attempt - 1), 1000);
+        this.logger.warn(`[IndexedDB] ${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    throw lastError;
+  }
 
   private async openDB(): Promise<IDBDatabase> {
     if (!isPlatformBrowser(this.platformId)) {
@@ -60,21 +92,23 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     try {
-      const db = await this.openDB();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([this.storeName], 'readonly');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.getAll();
+      return await this.executeWithRetry(async () => {
+        const db = await this.openDB();
+        return new Promise<Birthday[]>((resolve, reject) => {
+          const transaction = db.transaction([this.storeName], 'readonly');
+          const store = transaction.objectStore(this.storeName);
+          const request = store.getAll();
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const birthdays = request.result.map((b: StoredBirthday) => ({
-            ...b,
-            birthDate: new Date(b.birthDate)
-          }));
-          resolve(birthdays);
-        };
-      });
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => {
+            const birthdays = request.result.map((b: StoredBirthday) => ({
+              ...b,
+              birthDate: new Date(b.birthDate)
+            }));
+            resolve(birthdays);
+          };
+        });
+      }, 'getBirthdays');
     } catch (error) {
       if (isDevMode()) {
         console.error('Failed to get birthdays from IndexedDB:', error);
@@ -88,9 +122,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
 
@@ -106,12 +140,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject(transaction.error);
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to save birthdays to IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'saveBirthdays');
   }
 
   async addBirthday(birthday: Birthday): Promise<void> {
@@ -119,9 +148,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
         const request = store.add({
@@ -132,12 +161,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to add birthday to IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'addBirthday');
   }
 
   async updateBirthday(birthday: Birthday): Promise<void> {
@@ -145,9 +169,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
         const request = store.put({
@@ -158,12 +182,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to update birthday in IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'updateBirthday');
   }
 
   async deleteBirthday(id: string): Promise<void> {
@@ -171,9 +190,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
         const request = store.delete(id);
@@ -181,12 +200,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to delete birthday from IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'deleteBirthday');
   }
 
   async clear(): Promise<void> {
@@ -194,9 +208,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
         const request = store.clear();
@@ -204,12 +218,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to clear birthdays from IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'clear');
   }
 
   async saveScheduledMessage(message: ScheduledMessage): Promise<void> {
@@ -217,9 +226,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
         const request = store.add(message);
@@ -227,12 +236,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to save scheduled message to IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'saveScheduledMessage');
   }
 
   async updateScheduledMessage(message: ScheduledMessage): Promise<void> {
@@ -240,9 +244,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
         const request = store.put(message);
@@ -250,12 +254,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to update scheduled message in IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'updateScheduledMessage');
   }
 
   async deleteScheduledMessage(id: string): Promise<void> {
@@ -263,9 +262,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return;
     }
 
-    try {
+    return this.executeWithRetry(async () => {
       const db = await this.openDB();
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
         const request = store.delete(id);
@@ -273,12 +272,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
       });
-    } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to delete scheduled message from IndexedDB:', error);
-      }
-      throw error;
-    }
+    }, 'deleteScheduledMessage');
   }
 
   async getScheduledMessagesByBirthday(birthdayId: string): Promise<ScheduledMessage[]> {
@@ -287,16 +281,18 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     try {
-      const db = await this.openDB();
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([this.messagesStoreName], 'readonly');
-        const store = transaction.objectStore(this.messagesStoreName);
-        const index = store.index('birthdayId');
-        const request = index.getAll(birthdayId);
+      return await this.executeWithRetry(async () => {
+        const db = await this.openDB();
+        return new Promise<ScheduledMessage[]>((resolve, reject) => {
+          const transaction = db.transaction([this.messagesStoreName], 'readonly');
+          const store = transaction.objectStore(this.messagesStoreName);
+          const index = store.index('birthdayId');
+          const request = index.getAll(birthdayId);
 
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result || []);
-      });
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result || []);
+        });
+      }, 'getScheduledMessagesByBirthday');
     } catch (error) {
       if (isDevMode()) {
         console.error('Failed to get scheduled messages from IndexedDB:', error);
