@@ -9,6 +9,23 @@ export interface BackupData {
   birthdays: Birthday[];
 }
 
+const ScheduledMessageSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  message: z.string(),
+  scheduledTime: z.string(),
+  active: z.boolean(),
+  createdDate: z.union([z.string(), z.date()]),
+  lastSentDate: z.union([z.string(), z.date()]).optional(),
+  messageType: z.enum(['text', 'html']),
+  priority: z.enum(['low', 'normal', 'high']),
+  sentCount: z.number().optional(),
+  nextScheduledDate: z.union([z.string(), z.date()]).optional(),
+  notificationSent: z.boolean().optional(),
+  lastNotificationId: z.string().optional(),
+  birthdayId: z.string().optional()
+});
+
 const BackupSchema = z.object({
   version: z.number(),
   exportDate: z.string(),
@@ -23,7 +40,7 @@ const BackupSchema = z.object({
     zodiacSign: z.string().max(50).optional(),
     googleCalendarEventId: z.string().optional(),
     reminderDays: z.number().optional(),
-    scheduledMessages: z.array(z.any()).optional()
+    scheduledMessages: z.array(ScheduledMessageSchema).optional()
   }))
 });
 
