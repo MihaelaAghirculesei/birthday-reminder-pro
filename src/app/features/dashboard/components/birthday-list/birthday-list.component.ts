@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
+import { take } from 'rxjs';
 import { Birthday, BirthdayCategory } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
@@ -130,7 +131,7 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
       ariaModal: true
     });
 
-    dialogRef.afterClosed().subscribe((result: BirthdayEditDialogResult | undefined) => {
+    dialogRef.afterClosed().pipe(take(1)).subscribe((result: BirthdayEditDialogResult | undefined) => {
       if (result) {
         const updatedBirthday: Birthday = {
           ...result.birthday,
