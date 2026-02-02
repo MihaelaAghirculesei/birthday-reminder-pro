@@ -1,6 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID, NgZone } from '@angular/core';
 import { GoogleCalendarService } from './google-calendar.service';
+import { SecureStorageService } from './secure-storage.service';
 import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
 import type { Gapi, GapiTokenObject } from './google-api.types';
 
@@ -8,8 +9,10 @@ describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;
   let mockTokenClient: jasmine.SpyObj<TokenClient>;
   let mockOauth2: jasmine.SpyObj<GoogleAccountsOAuth2>;
+  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
   let tokenCallback: ((response: TokenResponse) => void) | null = null;
   let currentToken: GapiTokenObject | null = null;
+  let storedData = new Map<string, unknown>();
 
   const createMockGapi = (): Gapi => ({
     client: {
@@ -60,10 +63,29 @@ describe('GoogleCalendarService', () => {
   beforeEach(() => {
     currentToken = null;
     tokenCallback = null;
+    storedData = new Map();
 
-    spyOn(localStorage, 'getItem').and.returnValue(null);
-    spyOn(localStorage, 'setItem');
-    spyOn(localStorage, 'removeItem');
+    localStorage.clear();
+    spyOn(localStorage, 'setItem').and.callThrough();
+    spyOn(localStorage, 'getItem').and.callThrough();
+
+    mockSecureStorage = jasmine.createSpyObj<SecureStorageService>('SecureStorageService', [
+      'setItem',
+      'getItem',
+      'removeItem'
+    ]);
+
+    mockSecureStorage.setItem.and.callFake(async (key: string, value: unknown) => {
+      storedData.set(key, value);
+    });
+
+    mockSecureStorage.getItem.and.callFake(async <T>(key: string): Promise<T | null> => {
+      return (storedData.get(key) as T) ?? null;
+    });
+
+    mockSecureStorage.removeItem.and.callFake(async (key: string) => {
+      storedData.delete(key);
+    });
 
     window.gapi = createMockGapi();
     window.google = createMockGis();
@@ -71,7 +93,8 @@ describe('GoogleCalendarService', () => {
     TestBed.configureTestingModule({
       providers: [
         GoogleCalendarService,
-        { provide: PLATFORM_ID, useValue: 'browser' }
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: SecureStorageService, useValue: mockSecureStorage }
       ]
     });
 
@@ -81,6 +104,7 @@ describe('GoogleCalendarService', () => {
   afterEach(() => {
     delete window.gapi;
     delete window.google;
+    localStorage.clear();
   });
 
   it('should create', () => {
@@ -128,7 +152,7 @@ describe('GoogleCalendarService', () => {
       tick();
 
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith({ access_token: 'test-token' });
-      expect(localStorage.setItem).toHaveBeenCalled();
+      expect(mockSecureStorage.setItem).toHaveBeenCalled();
     }));
 
     it('should handle token error response', fakeAsync(() => {
@@ -172,7 +196,7 @@ describe('GoogleCalendarService', () => {
 
       expect(mockOauth2.revoke).toHaveBeenCalledWith('test-token', jasmine.any(Function));
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith(null);
-      expect(localStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
+      expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
     });
 
     it('should request access token on sign in', fakeAsync(() => {
@@ -207,9 +231,7 @@ describe('GoogleCalendarService', () => {
 
     it('should refresh token when expiring soon', fakeAsync(() => {
       const expiresAt = Date.now() + 200000;
-      (localStorage.getItem as jasmine.Spy).and.returnValue(
-        JSON.stringify({ access_token: 'old-token', expires_at: expiresAt })
-      );
+      storedData.set('googleCalendarToken', { access_token: 'old-token', expires_at: expiresAt });
 
       mockTokenClient.requestAccessToken.and.callFake(() => {
         if (tokenCallback) {
@@ -230,9 +252,7 @@ describe('GoogleCalendarService', () => {
 
     it('should not refresh token when valid', fakeAsync(() => {
       const expiresAt = Date.now() + 600000;
-      (localStorage.getItem as jasmine.Spy).and.returnValue(
-        JSON.stringify({ access_token: 'valid-token', expires_at: expiresAt })
-      );
+      storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
 
       (service as unknown as { ensureValidToken: () => Promise<void> }).ensureValidToken();
       tick();
@@ -242,9 +262,7 @@ describe('GoogleCalendarService', () => {
 
     it('should retry on 401 error', fakeAsync(() => {
       const expiresAt = Date.now() + 600000;
-      (localStorage.getItem as jasmine.Spy).and.returnValue(
-        JSON.stringify({ access_token: 'test-token', expires_at: expiresAt })
-      );
+      storedData.set('googleCalendarToken', { access_token: 'test-token', expires_at: expiresAt });
 
       const error401 = { result: { error: { code: 401 } } };
       let callCount = 0;
@@ -284,12 +302,7 @@ describe('GoogleCalendarService', () => {
       service.updateSettings({ enabled: true, calendarId: 'primary', syncMode: 'one-way', reminderMinutes: 1440 });
 
       const expiresAt = Date.now() + 600000;
-      (localStorage.getItem as jasmine.Spy).and.callFake((key: string) => {
-        if (key === 'googleCalendarToken') {
-          return JSON.stringify({ access_token: 'valid-token', expires_at: expiresAt });
-        }
-        return null;
-      });
+      storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
 
       if (window.gapi) {
         window.gapi.client.calendar.calendarList.list = jasmine.createSpy('list').and.returnValue(
@@ -425,9 +438,7 @@ describe('GoogleCalendarService', () => {
   describe('Session Restore', () => {
     it('should restore session from valid stored token', fakeAsync(() => {
       const expiresAt = Date.now() + 600000;
-      (localStorage.getItem as jasmine.Spy).and.returnValue(
-        JSON.stringify({ access_token: 'stored-token', expires_at: expiresAt })
-      );
+      storedData.set('googleCalendarToken', { access_token: 'stored-token', expires_at: expiresAt });
 
       (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
       (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
@@ -440,9 +451,7 @@ describe('GoogleCalendarService', () => {
 
     it('should clear expired token on restore', fakeAsync(() => {
       const expiresAt = Date.now() - 1000;
-      (localStorage.getItem as jasmine.Spy).and.returnValue(
-        JSON.stringify({ access_token: 'expired-token', expires_at: expiresAt })
-      );
+      storedData.set('googleCalendarToken', { access_token: 'expired-token', expires_at: expiresAt });
 
       (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
       (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
@@ -450,7 +459,7 @@ describe('GoogleCalendarService', () => {
       (service as unknown as { restoreSession: () => Promise<void> }).restoreSession();
       tick();
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
+      expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
     }));
   });
 

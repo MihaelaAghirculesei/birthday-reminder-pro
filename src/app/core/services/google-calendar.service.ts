@@ -7,6 +7,7 @@ import type { Gapi } from './google-api.types';
 import type { TokenClient, TokenResponse } from './google-identity.types';
 import { LoggerService } from './logger.service';
 import { GoogleApiErrorService } from './google-api-error.service';
+import { SecureStorageService } from './secure-storage.service';
 
 declare const gapi: Gapi;
 
@@ -75,7 +76,8 @@ export class GoogleCalendarService {
     @Inject(PLATFORM_ID) private platformId: object,
     private ngZone: NgZone,
     private logger: LoggerService,
-    private errorService: GoogleApiErrorService
+    private errorService: GoogleApiErrorService,
+    private secureStorage: SecureStorageService
   ) {
     if (isPlatformBrowser(this.platformId)) {
       this.loadSettings();
@@ -205,7 +207,7 @@ export class GoogleCalendarService {
     });
   }
 
-  private handleTokenResponse(response: TokenResponse): void {
+  private async handleTokenResponse(response: TokenResponse): Promise<void> {
     if (response.error) {
       this.logger.error('[GoogleCalendar] Token response error:', response.error_description);
       if (this.pendingTokenPromise) {
@@ -216,7 +218,7 @@ export class GoogleCalendarService {
     }
 
     const expiresAt = Date.now() + (response.expires_in * 1000);
-    this.saveToken(response.access_token, expiresAt);
+    await this.saveToken(response.access_token, expiresAt);
 
     gapi.client.setToken({ access_token: response.access_token });
     this.isSignedInSubject.next(true);
@@ -227,39 +229,37 @@ export class GoogleCalendarService {
     }
   }
 
-  private saveToken(accessToken: string, expiresAt: number): void {
+  private async saveToken(accessToken: string, expiresAt: number): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
     try {
       const tokenData: StoredToken = { access_token: accessToken, expires_at: expiresAt };
-      localStorage.setItem(STORAGE_KEY_TOKEN, JSON.stringify(tokenData));
+      await this.secureStorage.setItem(STORAGE_KEY_TOKEN, tokenData);
+      this.logger.info('[GoogleCalendar] Token saved securely (encrypted)');
     } catch (error) {
       this.logger.error('[GoogleCalendar] Failed to save token:', error);
     }
   }
 
-  private getStoredToken(): StoredToken | null {
+  private async getStoredToken(): Promise<StoredToken | null> {
     if (!isPlatformBrowser(this.platformId)) {
       return null;
     }
 
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_TOKEN);
-      if (stored) {
-        return JSON.parse(stored) as StoredToken;
-      }
+      return await this.secureStorage.getItem<StoredToken>(STORAGE_KEY_TOKEN);
     } catch (error) {
       this.logger.error('[GoogleCalendar] Failed to load token:', error);
+      return null;
     }
-    return null;
   }
 
-  private clearStoredToken(): void {
+  private async clearStoredToken(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        localStorage.removeItem(STORAGE_KEY_TOKEN);
+        await this.secureStorage.removeItem(STORAGE_KEY_TOKEN);
       } catch (error) {
         this.logger.error('[GoogleCalendar] Failed to clear token:', error);
       }
@@ -267,7 +267,7 @@ export class GoogleCalendarService {
   }
 
   private async restoreSession(): Promise<void> {
-    const storedToken = this.getStoredToken();
+    const storedToken = await this.getStoredToken();
     if (!storedToken) {
       return;
     }
@@ -276,7 +276,7 @@ export class GoogleCalendarService {
     const expiresIn = (storedToken.expires_at - now) / 1000;
 
     if (expiresIn <= 0) {
-      this.clearStoredToken();
+      await this.clearStoredToken();
       return;
     }
 
@@ -320,7 +320,7 @@ export class GoogleCalendarService {
     }
 
     gapi.client.setToken(null);
-    this.clearStoredToken();
+    await this.clearStoredToken();
     this.isSignedInSubject.next(false);
     this.updateSettings({ ...this.settingsSubject.value, enabled: false });
   }
@@ -348,7 +348,7 @@ export class GoogleCalendarService {
       return;
     }
 
-    const storedToken = this.getStoredToken();
+    const storedToken = await this.getStoredToken();
     if (!storedToken) {
       return;
     }
