@@ -38,7 +38,7 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -50,27 +50,75 @@ jobs:
 
       - run: npm ci
 
-      - name: Run npm audit
-        run: npm audit --omit=dev --audit-level=moderate
-        continue-on-error: true
+      - name: Run npm audit (production dependencies)
+        run: npm audit --omit=dev --audit-level=high
 
-      - name: Check for critical vulnerabilities
+      - name: Check vulnerability thresholds
         run: |
-          CRITICAL=$(npm audit --json | jq '.metadata.vulnerabilities.critical // 0')
-          HIGH=$(npm audit --json | jq '.metadata.vulnerabilities.high // 0')
+          AUDIT_JSON=$(npm audit --json 2>/dev/null || echo '{"metadata":{"vulnerabilities":{}}}')
+          CRITICAL=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(echo "$AUDIT_JSON" | jq '.metadata.vulnerabilities.high // 0')
 
-          echo "Critical vulnerabilities: $CRITICAL"
-          echo "High vulnerabilities: $HIGH"
+          echo "📊 Vulnerability Report"
+          echo "======================"
+          echo "Critical: $CRITICAL"
+          echo "High: $HIGH"
 
           if [ "$CRITICAL" -gt 0 ]; then
-            echo "⚠️  Found $CRITICAL critical vulnerabilities (temporarily allowed)"
+            echo "❌ Found $CRITICAL critical vulnerabilities - blocking deployment"
+            exit 1
           fi
 
-          if [ "$HIGH" -gt 50 ]; then
-            echo "⚠️  Found $HIGH high vulnerabilities (temporarily allowed)"
+          if [ "$HIGH" -gt 5 ]; then
+            echo "❌ Found $HIGH high vulnerabilities (max allowed: 5) - blocking deployment"
+            exit 1
           fi
 
-          echo "✅ Security audit completed (warnings only)"
+          echo "✅ Security thresholds passed"
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'birthday-reminder-app'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --failOnCVSS 9
+            --enableExperimental
+            --exclude "**/node_modules/typescript/**"
+            --exclude "**/node_modules/@types/**"
+        continue-on-error: true
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-dependency-check-report
+          path: reports/
+          retention-days: 30
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
 
   unit-tests:
     name: Unit Tests & Coverage
@@ -371,7 +419,7 @@ jobs:
     name: All Checks Passed
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check]
+    needs: [lint-and-typecheck, security-audit, codeql-analysis, unit-tests, e2e-tests, build, bundle-size-check]
     if: always()
 
     steps:
@@ -386,4 +434,9 @@ jobs:
             echo "❌ One or more checks failed"
             exit 1
           fi
-          echo "✅ All checks passed!"
+
+          if [[ "${{ needs.codeql-analysis.result }}" != "success" ]]; then
+            echo "⚠️  CodeQL analysis failed (non-blocking)"
+          fi
+
+          echo "✅ All required checks passed!"
