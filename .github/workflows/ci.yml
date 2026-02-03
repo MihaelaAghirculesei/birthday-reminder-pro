@@ -101,8 +101,8 @@ jobs:
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     permissions:
+      actions: read     
       contents: read
       security-events: write
 
