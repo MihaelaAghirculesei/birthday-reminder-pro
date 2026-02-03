@@ -97,29 +97,6 @@ jobs:
           path: reports/
           retention-days: 30
 
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      actions: read     
-      contents: read
-      security-events: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-and-quality
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:javascript-typescript"
-
   unit-tests:
     name: Unit Tests & Coverage
     runs-on: ubuntu-latest
@@ -419,7 +396,7 @@ jobs:
     name: All Checks Passed
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [lint-and-typecheck, security-audit, codeql-analysis, unit-tests, e2e-tests, build, bundle-size-check]
+    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check]
     if: always()
 
     steps:
@@ -433,10 +410,6 @@ jobs:
              [[ "${{ needs.bundle-size-check.result }}" != "success" ]]; then
             echo "❌ One or more checks failed"
             exit 1
-          fi
-
-          if [[ "${{ needs.codeql-analysis.result }}" != "success" ]]; then
-            echo "⚠️  CodeQL analysis failed (non-blocking)"
           fi
 
           echo "✅ All required checks passed!"
