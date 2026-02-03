@@ -20,36 +20,36 @@
   </div>
 
   <app-dashboard-stats
-    [totalBirthdays]="totalBirthdays()"
-    [birthdaysThisMonth]="birthdaysThisMonth()"
-    [averageAge]="averageAge()"
-    [nextBirthdayDays]="nextBirthdayDays()"
-    [nextBirthdayText]="nextBirthdayText()"
+    [totalBirthdays]="facade.totalBirthdays()"
+    [birthdaysThisMonth]="facade.birthdaysThisMonth()"
+    [averageAge]="facade.averageAge()"
+    [nextBirthdayDays]="facade.nextBirthdayDays()"
+    [nextBirthdayText]="facade.nextBirthdayText()"
   ></app-dashboard-stats>
 
   <app-notification-permission-banner></app-notification-permission-banner>
 
   <app-category-filter
-    [categoriesStats]="categoriesStats()"
-    [selectedCategory]="selectedCategory"
-    (categorySelected)="selectCategory($event)"
-    (filterCleared)="clearCategoryFilter()"
+    [categoriesStats]="facade.categoriesStats()"
+    [selectedCategory]="facade.selectedCategory()"
+    (categorySelected)="onCategorySelect($event)"
+    (filterCleared)="onClearCategoryFilter()"
     (addCategoryClicked)="onAddCategory()"
     (editCategoryClicked)="onEditCategory($event)"
     (deleteCategoryClicked)="onDeleteCategory($event)"
   ></app-category-filter>
 
   <app-birthday-list
-    [birthdays]="allBirthdays()"
-    [categories]="categories()"
-    [searchTerm]="dashboardSearchTerm"
-    [lastAction]="lastAction"
-    [totalBirthdays]="totalBirthdays()"
+    [birthdays]="facade.filteredBirthdays()"
+    [categories]="facade.categories()"
+    [searchTerm]="facade.searchTerm()"
+    [lastAction]="facade.lastAction()"
+    [totalBirthdays]="facade.totalBirthdays()"
     (searchTermChange)="onSearchTermChange($event)"
     (clearSearch)="onClearSearch()"
-    (undoAction)="undoLastAction()"
-    (addTestData)="addTestData()"
-    (clearAllData)="clearAllData()"
+    (undoAction)="onUndoAction()"
+    (addTestData)="onAddTestData()"
+    (clearAllData)="onClearAllData()"
     (birthdaysImported)="onBirthdaysImported($event)"
   ></app-birthday-list>
 
@@ -57,7 +57,7 @@
     mat-fab
     color="primary"
     class="schedule-message-fab"
-    (click)="openMessageDialog($event)"
+    (click)="onOpenMessageDialog($event)"
     matTooltip="Schedule Birthday Messages"
     matTooltipPosition="left"
     aria-label="Schedule birthday messages"
@@ -67,10 +67,10 @@
 
   <div class="full-width-section">
     <app-birthday-chart
-      [chartData]="chartData()"
-      [maxCount]="maxCount()"
+      [chartData]="facade.chartData()"
+      [maxCount]="facade.maxCount()"
       [currentMonth]="currentMonth"
-      [totalBirthdays]="totalBirthdays()"
+      [totalBirthdays]="facade.totalBirthdays()"
     ></app-birthday-chart>
   </div>
 
