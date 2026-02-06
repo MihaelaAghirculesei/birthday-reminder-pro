@@ -112,7 +112,7 @@
   background: $light-gradient !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-elevated) !important;
-  border: none !important;
+  border: 1px solid var(--border-light) !important;
   max-width: 600px;
   width: 100%;
   overflow: visible !important;

@@ -24,7 +24,7 @@
   --text-inverse: #ffffff;
 
   --border: #e2e8f0;
-  --border-light: #f1f5f9;
+  --border-light: #cbd5e1;
   --shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-elevated: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 
@@ -214,6 +214,11 @@ body {
 
 .mat-mdc-card-content * {
   color: var(--text-primary) !important;
+}
+
+body.dark-theme .mat-mdc-card-content .add-test-btn,
+body.dark-theme .mat-mdc-card-content .add-test-btn * {
+  color: #000000 !important;
 }
 
 .mat-mdc-form-field-label {
