@@ -4,6 +4,7 @@ describe('Notifications', () => {
     cy.clearCookies();
     cy.clearIndexedDB();
     cy.visit('/', { timeout: 15000 });
+    cy.waitForAngular();
   });
 
   it('should display notification permission banner if supported', () => {

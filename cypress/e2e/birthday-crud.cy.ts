@@ -4,11 +4,11 @@ describe('Birthday CRUD Operations', () => {
     cy.clearCookies();
     cy.clearIndexedDB();
     cy.visit('/', { timeout: 15000 });
+    cy.waitForAngular();
   });
 
   it('should add a new birthday', () => {
-    cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
+    cy.expandBirthdayForm();
 
     cy.get('[data-testid="birthday-name-input"]').type('John Doe');
     cy.get('[data-testid="birthday-date-input"]').type('05/15/1990');
@@ -21,8 +21,7 @@ describe('Birthday CRUD Operations', () => {
   });
 
   it('should edit an existing birthday', () => {
-    cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
+    cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Jane Smith');
     cy.get('[data-testid="birthday-date-input"]').type('12/25/1985');
     cy.get('[data-testid="save-birthday-button"]').click();
@@ -41,8 +40,7 @@ describe('Birthday CRUD Operations', () => {
   });
 
   it('should delete a birthday', () => {
-    cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
+    cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Test User');
     cy.get('[data-testid="birthday-date-input"]').type('01/01/2000');
     cy.get('[data-testid="save-birthday-button"]').click();
@@ -56,10 +54,10 @@ describe('Birthday CRUD Operations', () => {
   });
 
   it('should cancel birthday creation', () => {
-    cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
+    cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Cancelled User');
 
+    // Click header to collapse form
     cy.get('[data-testid="add-birthday-button"]').click();
 
     cy.get('[data-testid="birthday-name-input"]').should('not.be.visible');

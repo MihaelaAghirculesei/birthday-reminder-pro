@@ -4,7 +4,7 @@ describe('Birthday Reminder App', () => {
     cy.clearCookies();
     cy.clearIndexedDB();
     cy.visit('/', { timeout: 15000 });
-    cy.get('.app-header', { timeout: 10000 }).should('be.visible');
+    cy.waitForAngular();
   });
 
   it('should display the app title', () => {
