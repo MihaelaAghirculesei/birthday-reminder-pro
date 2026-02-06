@@ -7,3 +7,6 @@ export { SkipToContentComponent } from './skip-to-content.component';
 export { ZodiacIconComponent } from './zodiac-icon.component';
 export { MessageIndicatorComponent } from './message-indicator/message-indicator.component';
 export { MessageSchedulerComponent } from './message-scheduler/message-scheduler.component';
+export { AuthButtonComponent } from './auth-button/auth-button.component';
+export { SyncStatusComponent } from './sync-status/sync-status.component';
+export { UserMenuComponent } from './user-menu/user-menu.component';
