@@ -25,7 +25,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
   private platformId = inject(PLATFORM_ID);
   private logger = inject(LoggerService);
   private dbName = 'BirthdayReminderDB';
-  private dbVersion = 2;
+  private dbVersion = 3;
   private storeName = 'birthdays';
   private messagesStoreName = 'scheduledMessages';
 
@@ -81,6 +81,12 @@ export class IndexedDBStorageService implements OfflineStorageService {
           const messageStore = db.createObjectStore(this.messagesStoreName, { keyPath: 'id' });
           messageStore.createIndex('birthdayId', 'birthdayId', { unique: false });
           messageStore.createIndex('active', 'active', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains('pendingChanges')) {
+          const pendingStore = db.createObjectStore('pendingChanges', { keyPath: 'id' });
+          pendingStore.createIndex('entityType', 'entityType', { unique: false });
+          pendingStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
     });

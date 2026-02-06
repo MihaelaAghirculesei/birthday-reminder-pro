@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { BirthdayEffects } from './birthday.effects';
@@ -9,16 +10,21 @@ import { NotificationService } from '../../services/notification.service';
 import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { IdGeneratorService } from '../../services/id-generator.service';
+import { LoggerService } from '../../services/logger.service';
+import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 
 describe('BirthdayEffects', () => {
   let actions$: Observable<Action>;
   let effects: BirthdayEffects;
+  let store: MockStore;
   let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
   let googleCalendarMock: jasmine.SpyObj<GoogleCalendarService>;
   let pushNotificationMock: jasmine.SpyObj<PushNotificationService>;
   let idGeneratorMock: jasmine.SpyObj<IdGeneratorService>;
+  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let syncCoordinatorMock: jasmine.SpyObj<SyncCoordinatorService>;
 
   const mockBirthday: Birthday = {
     id: '1',
@@ -26,6 +32,22 @@ describe('BirthdayEffects', () => {
     birthDate: new Date(1990, 0, 15),
     category: 'Family',
     zodiacSign: 'Capricorn'
+  };
+
+  const initialState = {
+    auth: {
+      user: null,
+      loading: false,
+      error: null,
+      initialized: true
+    },
+    sync: {
+      state: 'idle',
+      lastSyncAt: null,
+      pendingChanges: 0,
+      error: null,
+      isOnline: true
+    }
   };
 
   beforeEach(() => {
@@ -56,6 +78,8 @@ describe('BirthdayEffects', () => {
       'cancelNotification'
     ]);
     idGeneratorMock = jasmine.createSpyObj('IdGeneratorService', ['generateId']);
+    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    syncCoordinatorMock = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange', 'processPendingChanges']);
 
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
     offlineStorageMock.saveScheduledMessage.and.returnValue(Promise.resolve());
@@ -67,20 +91,29 @@ describe('BirthdayEffects', () => {
     googleCalendarMock.deleteBirthdayFromCalendar.and.returnValue(Promise.resolve());
     googleCalendarMock.isEnabled.and.returnValue(false);
     idGeneratorMock.generateId.and.returnValue('new-id');
+    syncCoordinatorMock.queueChange.and.returnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
       providers: [
         BirthdayEffects,
         provideMockActions(() => actions$),
+        provideMockStore({ initialState }),
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
         { provide: NotificationService, useValue: notificationServiceMock },
         { provide: GoogleCalendarService, useValue: googleCalendarMock },
         { provide: PushNotificationService, useValue: pushNotificationMock },
-        { provide: IdGeneratorService, useValue: idGeneratorMock }
+        { provide: IdGeneratorService, useValue: idGeneratorMock },
+        { provide: LoggerService, useValue: loggerMock },
+        { provide: SyncCoordinatorService, useValue: syncCoordinatorMock }
       ]
     });
 
     effects = TestBed.inject(BirthdayEffects);
+    store = TestBed.inject(MockStore);
+  });
+
+  afterEach(() => {
+    store.resetSelectors();
   });
 
   describe('loadBirthdays$', () => {
@@ -191,8 +224,9 @@ describe('BirthdayEffects', () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
 
       effects.updateBirthday$.subscribe(action => {
-        const expectedBirthday = { ...mockBirthday, category: 'family' };
-        expect(action).toEqual(BirthdayActions.updateBirthdaySuccess({ birthday: expectedBirthday }));
+        expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
+        const successAction = action as ReturnType<typeof BirthdayActions.updateBirthdaySuccess>;
+        expect(successAction.birthday.category).toBe('family');
         expect(offlineStorageMock.updateBirthday).toHaveBeenCalled();
         done();
       });

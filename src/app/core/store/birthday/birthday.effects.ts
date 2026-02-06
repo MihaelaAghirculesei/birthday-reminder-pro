@@ -1,7 +1,8 @@
 import { inject, Injectable, Injector } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Store } from '@ngrx/store';
 import { of, from } from 'rxjs';
-import { catchError, mergeMap, tap, switchMap } from 'rxjs/operators';
+import { catchError, mergeMap, tap, switchMap, withLatestFrom } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
@@ -9,18 +10,22 @@ import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { IdGeneratorService } from '../../services/id-generator.service';
 import { LoggerService } from '../../services/logger.service';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
+import { Birthday, createSyncMetadata, updateSyncMetadata } from '../../../shared/models/birthday.model';
 import { getZodiacSign, DEFAULT_CATEGORY } from '../../../shared';
+import * as AuthSelectors from '../auth/auth.selectors';
 
 @Injectable()
 export class BirthdayEffects {
   private readonly actions$ = inject(Actions);
+  private readonly store = inject(Store);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly notificationService = inject(NotificationService);
   private readonly injector = inject(Injector);
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly idGenerator = inject(IdGeneratorService);
   private readonly logger = inject(LoggerService);
+  private readonly syncCoordinator = inject(SyncCoordinatorService);
 
   private _googleCalendarService: GoogleCalendarService | null = null;
 
@@ -53,9 +58,12 @@ export class BirthdayEffects {
   addBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.addBirthday),
-      mergeMap(({ birthday }) => {
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthday }, userId]) => {
+        const syncMeta = createSyncMetadata(userId);
         const newBirthday: Birthday = {
           ...birthday,
+          ...syncMeta,
           id: this.idGenerator.generateId(),
           category: this.normalizeCategoryId(birthday.category || DEFAULT_CATEGORY),
           zodiacSign: birthday.zodiacSign || getZodiacSign(birthday.birthDate).name
@@ -68,7 +76,13 @@ export class BirthdayEffects {
           return newBirthday;
         }).then(finalBirthday =>
           this.offlineStorage.addBirthday(finalBirthday).then(() => finalBirthday)
-        ).then(finalBirthday =>
+        ).then(async finalBirthday => {
+          // Queue for cloud sync if authenticated
+          if (userId) {
+            await this.syncCoordinator.queueChange('birthday', finalBirthday.id, 'create', finalBirthday);
+          }
+          return finalBirthday;
+        }).then(finalBirthday =>
           BirthdayActions.addBirthdaySuccess({ birthday: finalBirthday })
         ).catch(error =>
           BirthdayActions.addBirthdayFailure({ error: error.message })
@@ -91,14 +105,24 @@ export class BirthdayEffects {
   updateBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.updateBirthday),
-      mergeMap(({ birthday }) => {
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthday }, userId]) => {
+        const syncMeta = updateSyncMetadata(birthday, userId);
         const normalizedBirthday: Birthday = {
           ...birthday,
+          ...syncMeta,
           category: this.normalizeCategoryId(birthday.category)
         };
+
         return this.updateGoogleCalendar(normalizedBirthday).then(() =>
           this.offlineStorage.updateBirthday(normalizedBirthday)
-        ).then(() =>
+        ).then(async () => {
+          // Queue for cloud sync if authenticated
+          if (userId) {
+            await this.syncCoordinator.queueChange('birthday', normalizedBirthday.id, 'update', normalizedBirthday);
+          }
+          return normalizedBirthday;
+        }).then(() =>
           BirthdayActions.updateBirthdaySuccess({ birthday: normalizedBirthday })
         ).catch(error =>
           BirthdayActions.updateBirthdayFailure({ error: error.message })
@@ -121,7 +145,8 @@ export class BirthdayEffects {
   deleteBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.deleteBirthday),
-      mergeMap(({ id }) =>
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ id }, userId]) =>
         this.offlineStorage.getBirthdays().then(birthdays => {
           const birthday = birthdays.find(b => b.id === id);
           return birthday;
@@ -133,7 +158,13 @@ export class BirthdayEffects {
           return id;
         }).then(birthdayId =>
           this.offlineStorage.deleteBirthday(birthdayId)
-        ).then(() =>
+        ).then(async () => {
+          // Queue for cloud sync if authenticated
+          if (userId) {
+            await this.syncCoordinator.queueChange('birthday', id, 'delete', { id });
+          }
+          return id;
+        }).then(() =>
           BirthdayActions.deleteBirthdaySuccess({ id })
         ).catch(error =>
           BirthdayActions.deleteBirthdayFailure({ error: error.message })
@@ -169,17 +200,26 @@ export class BirthdayEffects {
   addMessageToBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.addMessageToBirthday),
-      mergeMap(({ birthdayId, message }) =>
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthdayId, message }, userId]) =>
         this.offlineStorage.saveScheduledMessage(message).then(() =>
           this.offlineStorage.getBirthdays()
         ).then(birthdays => {
           const birthday = birthdays.find(b => b.id === birthdayId);
           if (birthday) {
-            const updatedBirthday = {
+            const syncMeta = updateSyncMetadata(birthday, userId);
+            const updatedBirthday: Birthday = {
               ...birthday,
+              ...syncMeta,
               scheduledMessages: [...(birthday.scheduledMessages || []), message]
             };
             this.pushNotificationService.scheduleNotification(birthday, message);
+
+            // Queue for cloud sync
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
+            }
+
             return this.offlineStorage.updateBirthday(updatedBirthday);
           }
           return Promise.resolve();
@@ -195,7 +235,8 @@ export class BirthdayEffects {
   updateMessageInBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.updateMessageInBirthday),
-      mergeMap(({ birthdayId, messageId, updates }) =>
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthdayId, messageId, updates }, userId]) =>
         this.offlineStorage.getScheduledMessagesByBirthday(birthdayId).then(messages => {
           const message = messages.find(m => m.id === messageId);
           if (message) {
@@ -208,13 +249,21 @@ export class BirthdayEffects {
         ).then(birthdays => {
           const birthday = birthdays.find(b => b.id === birthdayId);
           if (birthday?.scheduledMessages) {
+            const syncMeta = updateSyncMetadata(birthday, userId);
             const updatedMessages = birthday.scheduledMessages.map(msg =>
               msg.id === messageId ? { ...msg, ...updates } : msg
             );
-            const updatedBirthday = {
+            const updatedBirthday: Birthday = {
               ...birthday,
+              ...syncMeta,
               scheduledMessages: updatedMessages
             };
+
+            // Queue for cloud sync
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
+            }
+
             return this.offlineStorage.updateBirthday(updatedBirthday);
           }
           return Promise.resolve();
@@ -230,18 +279,27 @@ export class BirthdayEffects {
   deleteMessageFromBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.deleteMessageFromBirthday),
-      mergeMap(({ birthdayId, messageId }) =>
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthdayId, messageId }, userId]) =>
         this.offlineStorage.deleteScheduledMessage(messageId).then(() => {
           this.pushNotificationService.cancelNotification(birthdayId, messageId);
           return this.offlineStorage.getBirthdays();
         }).then(birthdays => {
           const birthday = birthdays.find(b => b.id === birthdayId);
           if (birthday?.scheduledMessages) {
+            const syncMeta = updateSyncMetadata(birthday, userId);
             const updatedMessages = birthday.scheduledMessages.filter(msg => msg.id !== messageId);
-            const updatedBirthday = {
+            const updatedBirthday: Birthday = {
               ...birthday,
+              ...syncMeta,
               scheduledMessages: updatedMessages
             };
+
+            // Queue for cloud sync
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
+            }
+
             return this.offlineStorage.updateBirthday(updatedBirthday);
           }
           return Promise.resolve();

@@ -1,16 +1,31 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NetworkStatusComponent } from '../../shared/components/network-status.component';
+import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
+import { UserMenuComponent } from '../../shared/components/user-menu/user-menu.component';
 import { ThemeService } from '../../core';
+import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 
 @Component({
     selector: 'app-header',
-    imports: [CommonModule, RouterModule, NetworkStatusComponent, MatSlideToggleModule, MatIconModule, MatButtonModule, MatTooltipModule],
+    imports: [
+      CommonModule,
+      RouterModule,
+      NetworkStatusComponent,
+      AuthButtonComponent,
+      UserMenuComponent,
+      MatSlideToggleModule,
+      MatIconModule,
+      MatButtonModule,
+      MatTooltipModule
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <header class="app-header" role="banner">
@@ -36,6 +51,11 @@ import { ThemeService } from '../../core';
             <span class="sr-only">{{ themeService.darkMode() ? 'Dark mode enabled' : 'Light mode enabled' }}</span>
           </mat-slide-toggle>
           <app-network-status></app-network-status>
+          @if (isAuthenticated()) {
+            <app-user-menu></app-user-menu>
+          } @else if (!authLoading()) {
+            <app-auth-button></app-auth-button>
+          }
         </div>
       </div>
       <p class="hero-subtitle">Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style.</p>
@@ -156,6 +176,7 @@ import { ThemeService } from '../../core';
       .header-controls {
         position: static;
         justify-content: center;
+        flex-wrap: wrap;
       }
 
       .theme-toggle {
@@ -186,6 +207,7 @@ import { ThemeService } from '../../core';
         font-weight: 500;
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
 
         mat-icon {
           font-size: 20px;
@@ -220,5 +242,16 @@ import { ThemeService } from '../../core';
   `]
 })
 export class HeaderComponent {
-  constructor(public themeService: ThemeService) {}
+  private readonly store = inject(Store);
+  public readonly themeService = inject(ThemeService);
+
+  isAuthenticated = toSignal(
+    this.store.select(AuthSelectors.selectIsAuthenticated),
+    { initialValue: false }
+  );
+
+  authLoading = toSignal(
+    this.store.select(AuthSelectors.selectAuthLoading),
+    { initialValue: true }
+  );
 }
