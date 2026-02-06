@@ -1,0 +1,170 @@
+import { TestBed } from '@angular/core/testing';
+import { provideMockActions } from '@ngrx/effects/testing';
+import { provideMockStore } from '@ngrx/store/testing';
+import { Observable, of, throwError } from 'rxjs';
+import { Action } from '@ngrx/store';
+import { AuthEffects } from './auth.effects';
+import * as AuthActions from './auth.actions';
+import { FirebaseAuthService, AuthUser } from '../../services/firebase-auth.service';
+import { NotificationService } from '../../services/notification.service';
+
+describe('AuthEffects', () => {
+  let actions$: Observable<Action>;
+  let effects: AuthEffects;
+  let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
+  let notificationServiceMock: jasmine.SpyObj<NotificationService>;
+
+  const mockUser: AuthUser = {
+    uid: 'user-123',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    photoURL: 'https://example.com/photo.jpg'
+  };
+
+  beforeEach(() => {
+    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [
+      'signInWithGoogle',
+      'signOut',
+      'initAuthListener'
+    ]);
+    notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthEffects,
+        provideMockActions(() => actions$),
+        provideMockStore(),
+        { provide: FirebaseAuthService, useValue: authServiceMock },
+        { provide: NotificationService, useValue: notificationServiceMock }
+      ]
+    });
+
+    effects = TestBed.inject(AuthEffects);
+  });
+
+  describe('signInWithGoogle$', () => {
+    it('should dispatch signInSuccess on successful sign in', (done) => {
+      authServiceMock.signInWithGoogle.and.returnValue(of(mockUser));
+      actions$ = of(AuthActions.signInWithGoogle());
+
+      effects.signInWithGoogle$.subscribe((action) => {
+        expect(action).toEqual(AuthActions.signInSuccess({ user: mockUser }));
+        done();
+      });
+    });
+
+    it('should dispatch signInFailure on error', (done) => {
+      authServiceMock.signInWithGoogle.and.returnValue(
+        throwError(() => new Error('Sign-in failed'))
+      );
+      actions$ = of(AuthActions.signInWithGoogle());
+
+      effects.signInWithGoogle$.subscribe((action) => {
+        expect(action).toEqual(AuthActions.signInFailure({ error: 'Sign-in failed' }));
+        done();
+      });
+    });
+  });
+
+  describe('signInSuccess$', () => {
+    it('should show welcome notification', (done) => {
+      actions$ = of(AuthActions.signInSuccess({ user: mockUser }));
+
+      effects.signInSuccess$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Welcome, Test User!',
+          'success'
+        );
+        done();
+      });
+    });
+
+    it('should use email if displayName is null', (done) => {
+      const userNoName: AuthUser = { ...mockUser, displayName: null };
+      actions$ = of(AuthActions.signInSuccess({ user: userNoName }));
+
+      effects.signInSuccess$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Welcome, test@example.com!',
+          'success'
+        );
+        done();
+      });
+    });
+  });
+
+  describe('signInFailure$', () => {
+    it('should show error notification', (done) => {
+      actions$ = of(AuthActions.signInFailure({ error: 'Something went wrong' }));
+
+      effects.signInFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Something went wrong',
+          'error'
+        );
+        done();
+      });
+    });
+
+    it('should not show notification for cancelled sign-in', (done) => {
+      actions$ = of(AuthActions.signInFailure({ error: 'Sign-in cancelled' }));
+
+      effects.signInFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).not.toHaveBeenCalled();
+        done();
+      });
+    });
+  });
+
+  describe('signOut$', () => {
+    it('should dispatch signOutSuccess on successful sign out', (done) => {
+      authServiceMock.signOut.and.returnValue(of(undefined));
+      actions$ = of(AuthActions.signOut());
+
+      effects.signOut$.subscribe((action) => {
+        expect(action).toEqual(AuthActions.signOutSuccess());
+        done();
+      });
+    });
+
+    it('should dispatch signOutFailure on error', (done) => {
+      authServiceMock.signOut.and.returnValue(
+        throwError(() => new Error('Sign-out failed'))
+      );
+      actions$ = of(AuthActions.signOut());
+
+      effects.signOut$.subscribe((action) => {
+        expect(action).toEqual(AuthActions.signOutFailure({ error: 'Sign-out failed' }));
+        done();
+      });
+    });
+  });
+
+  describe('signOutSuccess$', () => {
+    it('should show success notification', (done) => {
+      actions$ = of(AuthActions.signOutSuccess());
+
+      effects.signOutSuccess$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Signed out successfully',
+          'success'
+        );
+        done();
+      });
+    });
+  });
+
+  describe('signOutFailure$', () => {
+    it('should show error notification', (done) => {
+      actions$ = of(AuthActions.signOutFailure({ error: 'Network error' }));
+
+      effects.signOutFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Sign out failed: Network error',
+          'error'
+        );
+        done();
+      });
+    });
+  });
+});
