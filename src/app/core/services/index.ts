@@ -15,3 +15,7 @@ export { ThemeService } from './theme.service';
 export { LoggerService, SILENT_LOGGING, SILENT_LOGGER_PROVIDER } from './logger.service';
 export { SecureStorageService } from './secure-storage.service';
 export { SelectivePreloadingStrategy } from './selective-preloading.strategy';
+export { FirebaseAuthService, AuthUser } from './firebase-auth.service';
+export { FirestoreService } from './firestore.service';
+export { SyncCoordinatorService } from './sync-coordinator.service';
+export { PendingChangesService, PendingChange, ChangeType, EntityType } from './pending-changes.service';
