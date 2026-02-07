@@ -239,7 +239,7 @@ describe('BirthdayEffects', () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
 
       effects.updateBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed' }));
+        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', id: '1' }));
         done();
       });
     });
@@ -277,7 +277,7 @@ describe('BirthdayEffects', () => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed' }));
+        expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed', id: '1' }));
         done();
       });
     });

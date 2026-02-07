@@ -34,7 +34,8 @@ describe('Birthday Selectors', () => {
     selectedId: '1',
     filters: { ...initialBirthdayFilters },
     loading: false,
-    error: null
+    error: null,
+    optimisticBackup: {}
   };
 
   const state = {

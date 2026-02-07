@@ -125,7 +125,7 @@ export class BirthdayEffects {
         }).then(() =>
           BirthdayActions.updateBirthdaySuccess({ birthday: normalizedBirthday })
         ).catch(error =>
-          BirthdayActions.updateBirthdayFailure({ error: error.message })
+          BirthdayActions.updateBirthdayFailure({ error: error.message, id: normalizedBirthday.id })
         );
       })
     )
@@ -167,7 +167,7 @@ export class BirthdayEffects {
         }).then(() =>
           BirthdayActions.deleteBirthdaySuccess({ id })
         ).catch(error =>
-          BirthdayActions.deleteBirthdayFailure({ error: error.message })
+          BirthdayActions.deleteBirthdayFailure({ error: error.message, id })
         )
       )
     )
