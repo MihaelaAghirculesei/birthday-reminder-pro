@@ -56,33 +56,85 @@ describe('Birthday Reducer', () => {
     });
   });
 
-  describe('Update Actions', () => {
-    it('should update birthday on success', () => {
-      const initialState = birthdayReducer(
+  describe('Update Actions (Optimistic)', () => {
+    it('should optimistically apply update immediately', () => {
+      let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
 
       const updated = { ...mockBirthday, name: 'Jane Doe' };
-      const action = BirthdayActions.updateBirthdaySuccess({ birthday: updated });
-      const state = birthdayReducer(initialState, action);
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
 
       expect(state.entities['1']?.name).toBe('Jane Doe');
+      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+    });
+
+    it('should clear backup on updateBirthdaySuccess', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      const updated = { ...mockBirthday, name: 'Jane Doe' };
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: updated }));
+
+      expect(state.entities['1']?.name).toBe('Jane Doe');
+      expect(state.optimisticBackup['1']).toBeUndefined();
+    });
+
+    it('should rollback on updateBirthdayFailure', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      const updated = { ...mockBirthday, name: 'Jane Doe' };
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
+      expect(state.entities['1']?.name).toBe('Jane Doe');
+
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', id: '1' }));
+      expect(state.entities['1']?.name).toBe('John Doe');
+      expect(state.optimisticBackup['1']).toBeUndefined();
     });
   });
 
-  describe('Delete Actions', () => {
-    it('should delete birthday on success', () => {
+  describe('Delete Actions (Optimistic)', () => {
+    it('should optimistically remove birthday on deleteBirthday action', () => {
       const initialState = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
 
-      const action = BirthdayActions.deleteBirthdaySuccess({ id: '1' });
+      const action = BirthdayActions.deleteBirthday({ id: '1' });
       const state = birthdayReducer(initialState, action);
 
       expect(state.entities['1']).toBeUndefined();
       expect(state.ids.length).toBe(0);
+      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+    });
+
+    it('should clear backup on deleteBirthdaySuccess', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
+      state = birthdayReducer(state, BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+
+      expect(state.optimisticBackup['1']).toBeUndefined();
+    });
+
+    it('should rollback on deleteBirthdayFailure', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
+      expect(state.entities['1']).toBeUndefined();
+
+      state = birthdayReducer(state, BirthdayActions.deleteBirthdayFailure({ error: 'Failed', id: '1' }));
+      expect(state.entities['1']).toEqual(mockBirthday);
+      expect(state.optimisticBackup['1']).toBeUndefined();
     });
 
     it('should clear selectedId if deleted birthday was selected', () => {
@@ -92,7 +144,7 @@ describe('Birthday Reducer', () => {
       );
       state = birthdayReducer(state, BirthdayActions.selectBirthday({ id: '1' }));
 
-      const action = BirthdayActions.deleteBirthdaySuccess({ id: '1' });
+      const action = BirthdayActions.deleteBirthday({ id: '1' });
       const newState = birthdayReducer(state, action);
 
       expect(newState.selectedId).toBeNull();
@@ -180,20 +232,28 @@ describe('Birthday Reducer', () => {
       expect(state.error).toBeNull();
     });
 
-    it('should set loading on updateBirthday', () => {
-      const action = BirthdayActions.updateBirthday({ birthday: mockBirthday });
-      const state = birthdayReducer(initialBirthdayState, action);
+    it('should optimistically apply update on updateBirthday (no loading)', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      const updated = { ...mockBirthday, name: 'Updated Name' };
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
 
-      expect(state.loading).toBe(true);
-      expect(state.error).toBeNull();
+      expect(state.loading).toBe(false);
+      expect(state.entities['1']?.name).toBe('Updated Name');
+      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
     });
 
-    it('should set loading on deleteBirthday', () => {
-      const action = BirthdayActions.deleteBirthday({ id: '1' });
-      const state = birthdayReducer(initialBirthdayState, action);
+    it('should optimistically remove on deleteBirthday (no loading)', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
 
-      expect(state.loading).toBe(true);
-      expect(state.error).toBeNull();
+      expect(state.loading).toBe(false);
+      expect(state.entities['1']).toBeUndefined();
     });
 
     it('should set loading on clearAllBirthdays', () => {

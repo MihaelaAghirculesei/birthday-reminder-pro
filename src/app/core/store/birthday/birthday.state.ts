@@ -6,6 +6,7 @@ export interface BirthdayState extends EntityState<Birthday> {
   filters: BirthdayFilters;
   loading: boolean;
   error: string | null;
+  optimisticBackup: Record<string, Birthday>;
 }
 
 export interface BirthdayFilters {

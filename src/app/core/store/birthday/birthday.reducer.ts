@@ -13,7 +13,8 @@ export const initialBirthdayState: BirthdayState = birthdayAdapter.getInitialSta
   selectedId: null,
   filters: initialBirthdayFilters,
   loading: false,
-  error: null
+  error: null,
+  optimisticBackup: {}
 });
 
 export const birthdayReducer = createReducer(
@@ -59,50 +60,91 @@ export const birthdayReducer = createReducer(
     error
   })),
 
-  on(BirthdayActions.updateBirthday, (state) => ({
-    ...state,
-    loading: true,
-    error: null
-  })),
-
-  on(BirthdayActions.updateBirthdaySuccess, (state, { birthday }) =>
-    birthdayAdapter.updateOne(
+  // Optimistic update: apply changes immediately, backup previous version
+  on(BirthdayActions.updateBirthday, (state, { birthday }) => {
+    const previous = state.entities[birthday.id];
+    const newState = birthdayAdapter.updateOne(
       { id: birthday.id, changes: birthday },
       {
         ...state,
         loading: false,
-        error: null
+        error: null,
+        optimisticBackup: previous
+          ? { ...state.optimisticBackup, [birthday.id]: previous }
+          : state.optimisticBackup
       }
-    )
-  ),
+    );
+    return newState;
+  }),
 
-  on(BirthdayActions.updateBirthdayFailure, (state, { error }) => ({
-    ...state,
-    loading: false,
-    error
-  })),
-
-
-  on(BirthdayActions.deleteBirthday, (state) => ({
-    ...state,
-    loading: true,
-    error: null
-  })),
-
-  on(BirthdayActions.deleteBirthdaySuccess, (state, { id }) =>
-    birthdayAdapter.removeOne(id, {
+  // Optimistic success: clear backup
+  on(BirthdayActions.updateBirthdaySuccess, (state, { birthday }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { [birthday.id]: _removed, ...remainingBackup } = state.optimisticBackup;
+    return {
       ...state,
       loading: false,
       error: null,
-      selectedId: state.selectedId === id ? null : state.selectedId
-    })
-  ),
+      optimisticBackup: remainingBackup
+    };
+  }),
 
-  on(BirthdayActions.deleteBirthdayFailure, (state, { error }) => ({
-    ...state,
-    loading: false,
-    error
-  })),
+  // Optimistic rollback: restore previous version on failure
+  on(BirthdayActions.updateBirthdayFailure, (state, { error, id }) => {
+    if (id && state.optimisticBackup[id]) {
+      const backup = state.optimisticBackup[id];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
+      return birthdayAdapter.updateOne(
+        { id, changes: backup },
+        { ...state, loading: false, error, optimisticBackup: remainingBackup }
+      );
+    }
+    return { ...state, loading: false, error };
+  }),
+
+
+  // Optimistic delete: remove immediately, backup for potential rollback
+  on(BirthdayActions.deleteBirthday, (state, { id }) => {
+    const entity = state.entities[id];
+    return birthdayAdapter.removeOne(id, {
+      ...state,
+      loading: false,
+      error: null,
+      selectedId: state.selectedId === id ? null : state.selectedId,
+      optimisticBackup: entity
+        ? { ...state.optimisticBackup, [id]: entity }
+        : state.optimisticBackup
+    });
+  }),
+
+  // Optimistic delete success: clear backup
+  on(BirthdayActions.deleteBirthdaySuccess, (state, { id }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
+    return {
+      ...state,
+      loading: false,
+      error: null,
+      optimisticBackup: remainingBackup
+    };
+  }),
+
+  // Optimistic delete rollback: restore entity on failure
+  on(BirthdayActions.deleteBirthdayFailure, (state, { error, id }) => {
+    if (id && state.optimisticBackup[id]) {
+      const backup = state.optimisticBackup[id];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
+      return birthdayAdapter.addOne(backup, {
+        ...state,
+        loading: false,
+        error,
+        optimisticBackup: remainingBackup
+      });
+    }
+    return { ...state, loading: false, error };
+  }),
 
   on(BirthdayActions.selectBirthday, (state, { id }) => ({
     ...state,

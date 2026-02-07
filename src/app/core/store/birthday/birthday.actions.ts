@@ -43,7 +43,7 @@ export const updateBirthdaySuccess = createAction(
 
 export const updateBirthdayFailure = createAction(
   '[Birthday] Update Birthday Failure',
-  props<{ error: string }>()
+  props<{ error: string; id?: string }>()
 );
 
 export const deleteBirthday = createAction(
@@ -58,7 +58,7 @@ export const deleteBirthdaySuccess = createAction(
 
 export const deleteBirthdayFailure = createAction(
   '[Birthday] Delete Birthday Failure',
-  props<{ error: string }>()
+  props<{ error: string; id?: string }>()
 );
 
 export const selectBirthday = createAction(
