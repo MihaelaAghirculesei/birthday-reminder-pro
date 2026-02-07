@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -384,8 +384,8 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
     }
   `]
 })
-export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class GoogleCalendarSyncComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
 
   isSignedIn = false;
   isConnecting = false;
@@ -415,7 +415,7 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
     });
 
     this.googleCalendarService.isSignedIn$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(isSignedIn => {
         this.isSignedIn = isSignedIn;
         if (isSignedIn) {
@@ -425,14 +425,14 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
       });
 
     this.googleCalendarService.settings$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(settings => {
         this.settingsForm.patchValue(settings);
         this.cdr.markForCheck();
       });
 
     this.settingsForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(value => {
         if (this.settingsForm.valid) {
           this.googleCalendarService.updateSettings(value);
@@ -440,10 +440,6 @@ export class GoogleCalendarSyncComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
   async signIn() {
     this.isConnecting = true;
