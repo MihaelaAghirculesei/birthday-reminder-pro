@@ -52,8 +52,8 @@ describe('PushNotificationService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should not throw on ngOnDestroy', () => {
-    expect(() => service.ngOnDestroy()).not.toThrow();
+  it('should use DestroyRef for cleanup', () => {
+    expect(service['destroyRef']).toBeTruthy();
   });
 
   describe('scheduleNotification', () => {

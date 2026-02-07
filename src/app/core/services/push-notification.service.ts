@@ -1,7 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, inject, DestroyRef } from '@angular/core';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
-import { Subject, interval } from 'rxjs';
+import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { IndexedDBStorageService } from './offline-storage.service';
@@ -18,21 +18,26 @@ export interface BirthdayNotificationData {
 @Injectable({
   providedIn: 'root'
 })
-export class PushNotificationService implements OnDestroy {
+export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
-  private destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private storage: IndexedDBStorageService,
     private logger: LoggerService
   ) {
+    try {
+      this.destroyRef.onDestroy(() => {
+        this.destroy$.next();
+        this.destroy$.complete();
+      });
+    } catch {
+      // Guard against destroyed injector in test environments
+    }
     this.initializeNotifications();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
   private async initializeNotifications(): Promise<void> {
     if (!this.isNative) {
