@@ -21,7 +21,7 @@ import { PhotoUploadComponent } from '../../shared/components/photo-upload.compo
 import { DEFAULT_CATEGORY, BirthdayCategory } from '../../shared/constants';
 import { Birthday } from '../../shared/models';
 import { getZodiacSign } from '../../shared/utils';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../core';
+import { BirthdayFacadeService, CategoryFacadeService, LoggerService } from '../../core';
 
 @Component({
     selector: 'app-home',
@@ -61,6 +61,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly birthdayFacade = inject(BirthdayFacadeService);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly logger = inject(LoggerService);
 
   birthdayForm!: FormGroup;
   birthdays: Signal<Birthday[]> = this.birthdayFacade.birthdays;
@@ -153,7 +154,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.isDashboardLoaded = true;
       this.cdr.markForCheck();
     } catch (error) {
-      console.error('Failed to load dashboard component:', error);
+      this.logger.error('Failed to load dashboard component:', error);
     }
   }
 

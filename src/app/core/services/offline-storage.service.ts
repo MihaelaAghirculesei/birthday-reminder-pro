@@ -1,4 +1,4 @@
-import { Injectable, isDevMode, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { LoggerService } from './logger.service';
@@ -116,9 +116,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         });
       }, 'getBirthdays');
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to get birthdays from IndexedDB:', error);
-      }
+      this.logger.error('Failed to get birthdays from IndexedDB:', error);
       return [];
     }
   }
@@ -300,9 +298,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         });
       }, 'getScheduledMessagesByBirthday');
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Failed to get scheduled messages from IndexedDB:', error);
-      }
+      this.logger.error('Failed to get scheduled messages from IndexedDB:', error);
       return [];
     }
   }

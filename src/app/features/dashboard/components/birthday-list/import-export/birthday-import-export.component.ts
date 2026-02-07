@@ -1,10 +1,10 @@
-import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy, isDevMode, Signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy, Signal, inject } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Birthday } from '../../../../../shared';
-import { BackupService, NotificationService } from '../../../../../core';
+import { BackupService, NotificationService, LoggerService } from '../../../../../core';
 
 @Component({
     selector: 'app-birthday-import-export',
@@ -24,6 +24,8 @@ export class BirthdayImportExportComponent {
   @Output() birthdaysImported = new EventEmitter<Birthday[]>();
 
   isImporting = signal(false);
+
+  private readonly logger = inject(LoggerService);
 
   constructor(
     private backupService: BackupService,
@@ -53,9 +55,7 @@ export class BirthdayImportExportComponent {
       this.birthdaysImported.emit(birthdays);
       this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
     } catch (error) {
-      if (isDevMode()) {
-        console.error('Import failed:', error);
-      }
+      this.logger.error('Import failed:', error);
       this.notificationService.show('Invalid backup file', 'error');
     } finally {
       this.isImporting.set(false);
@@ -74,9 +74,7 @@ export class BirthdayImportExportComponent {
       this.birthdaysImported.emit(birthdays);
       this.notificationService.show(`Imported ${birthdays.length} birthdays from CSV`, 'success');
     } catch (error) {
-      if (isDevMode()) {
-        console.error('CSV import failed:', error);
-      }
+      this.logger.error('CSV import failed:', error);
       this.notificationService.show('Invalid CSV file', 'error');
     } finally {
       this.isImporting.set(false);
@@ -95,9 +93,7 @@ export class BirthdayImportExportComponent {
       this.birthdaysImported.emit(birthdays);
       this.notificationService.show(`Imported ${birthdays.length} birthdays from vCard`, 'success');
     } catch (error) {
-      if (isDevMode()) {
-        console.error('vCard import failed:', error);
-      }
+      this.logger.error('vCard import failed:', error);
       this.notificationService.show('Invalid vCard file', 'error');
     } finally {
       this.isImporting.set(false);

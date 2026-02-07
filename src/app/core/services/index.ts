@@ -19,3 +19,4 @@ export { FirebaseAuthService, AuthUser } from './firebase-auth.service';
 export { FirestoreService } from './firestore.service';
 export { SyncCoordinatorService } from './sync-coordinator.service';
 export { PendingChangesService, PendingChange, ChangeType, EntityType } from './pending-changes.service';
+export { ErrorReportingService, ErrorReport, ERROR_REPORTER } from './error-reporting.service';

@@ -1,6 +1,7 @@
 import { ErrorHandler, Injectable, Injector } from '@angular/core';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
+import { ErrorReportingService } from './error-reporting.service';
 
 interface ErrorContext {
   type: 'IndexedDB' | 'NgRx' | 'GoogleAPI' | 'Network' | 'Unknown';
@@ -29,6 +30,7 @@ export class GlobalErrorHandler implements ErrorHandler {
     const context = this.categorizeError(error);
 
     this.logError(error, context);
+    this.reportError(error, context);
     this.notifyUser(context);
   }
 
@@ -151,6 +153,22 @@ export class GlobalErrorHandler implements ErrorHandler {
     this.logger.error('Technical:', context.technicalMessage);
     this.logger.error('User message:', context.userMessage);
     this.logger.groupEnd();
+  }
+
+  private reportError(error: unknown, context: ErrorContext): void {
+    try {
+      const reporter = this.injector.get(ErrorReportingService);
+      reporter.captureError({
+        error,
+        type: context.type,
+        technicalMessage: context.technicalMessage,
+        timestamp: Date.now(),
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
+      });
+    } catch {
+      // Silently fail - error reporting should never cause errors
+    }
   }
 
   private notifyUser(context: ErrorContext): void {
