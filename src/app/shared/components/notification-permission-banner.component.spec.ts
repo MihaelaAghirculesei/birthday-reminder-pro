@@ -99,16 +99,10 @@ describe('NotificationPermissionBannerComponent', () => {
     });
   });
 
-  describe('ngOnDestroy', () => {
-    it('should complete destroy$ subject', () => {
+  describe('cleanup', () => {
+    it('should use DestroyRef for subscription cleanup', () => {
       fixture.detectChanges();
-      spyOn(component['destroy$'], 'next');
-      spyOn(component['destroy$'], 'complete');
-
-      component.ngOnDestroy();
-
-      expect(component['destroy$'].next).toHaveBeenCalled();
-      expect(component['destroy$'].complete).toHaveBeenCalled();
+      expect(component['destroyRef']).toBeTruthy();
     });
   });
 

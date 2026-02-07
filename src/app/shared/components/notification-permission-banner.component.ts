@@ -1,6 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-
-import { Subject, takeUntil } from 'rxjs';
+import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -140,11 +139,12 @@ import { NotificationPermissionService } from '../../core/services/notification-
     }
   `]
 })
-export class NotificationPermissionBannerComponent implements OnInit, OnDestroy {
+export class NotificationPermissionBannerComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   shouldShow = false;
   isRequesting = false;
   private dismissed = false;
-  private destroy$ = new Subject<void>();
 
   constructor(
     private permissionService: NotificationPermissionService,
@@ -164,15 +164,10 @@ export class NotificationPermissionBannerComponent implements OnInit, OnDestroy 
 
     this.updateShouldShow();
     this.permissionService.permissionStatus
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateShouldShow();
       });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private updateShouldShow(): void {

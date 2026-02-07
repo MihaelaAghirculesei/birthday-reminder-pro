@@ -1,6 +1,6 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { Subject, takeUntil } from 'rxjs';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -40,8 +40,8 @@ import { NotificationService, BirthdayFacadeService } from '../../../core';
     styleUrls: ['./message-scheduler.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MessageSchedulerComponent implements OnInit, OnChanges, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class MessageSchedulerComponent implements OnInit, OnChanges {
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input() birthday: Birthday | null = null;
 
@@ -76,7 +76,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges, OnDestroy {
     this.loadMessages();
 
     this.messageForm.get('message')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updateMessagePreview();
       });
@@ -98,7 +98,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges, OnDestroy {
   loadMessages(): void {
     if (this.birthday) {
       this.birthdayFacade.getMessagesByBirthday(this.birthday.id)
-        .pipe(takeUntil(this.destroy$))
+        .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(messages => {
           this.messages = messages || [];
         });
@@ -219,10 +219,5 @@ export class MessageSchedulerComponent implements OnInit, OnChanges, OnDestroy {
 
   trackByIndex(index: number): number {
     return index;
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

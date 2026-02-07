@@ -201,14 +201,8 @@ describe('MessageSchedulerComponent', () => {
     expect(component.messageForm.get('title')?.value).toBeNull();
   });
 
-  it('should cleanup on destroy', () => {
-    spyOn(component['destroy$'], 'next');
-    spyOn(component['destroy$'], 'complete');
-
-    component.ngOnDestroy();
-
-    expect(component['destroy$'].next).toHaveBeenCalled();
-    expect(component['destroy$'].complete).toHaveBeenCalled();
+  it('should use DestroyRef for subscription cleanup', () => {
+    expect(component['destroyRef']).toBeTruthy();
   });
 
   it('should update message preview when birthday changes', () => {
