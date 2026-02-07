@@ -2,29 +2,13 @@ import { Injectable } from '@angular/core';
 import { Birthday } from '../../shared';
 import { z } from 'zod';
 import { LoggerService } from './logger.service';
+import { ScheduledMessageSchema } from '../../shared/schemas/birthday.schema';
 
 export interface BackupData {
   version: number;
   exportDate: string;
   birthdays: Birthday[];
 }
-
-const ScheduledMessageSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  message: z.string(),
-  scheduledTime: z.string(),
-  active: z.boolean(),
-  createdDate: z.union([z.string(), z.date()]),
-  lastSentDate: z.union([z.string(), z.date()]).optional(),
-  messageType: z.enum(['text', 'html']),
-  priority: z.enum(['low', 'normal', 'high']),
-  sentCount: z.number().optional(),
-  nextScheduledDate: z.union([z.string(), z.date()]).optional(),
-  notificationSent: z.boolean().optional(),
-  lastNotificationId: z.string().optional(),
-  birthdayId: z.string().optional()
-});
 
 const BackupSchema = z.object({
   version: z.number(),

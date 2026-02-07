@@ -17,6 +17,7 @@ import { Observable, Subject, from, of } from 'rxjs';
 import { getFirebaseFirestore, isFirebaseConfigured } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
+import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
 
 export interface FirestoreDocument {
   id: string;
@@ -301,9 +302,10 @@ export class FirestoreService {
   // ============ HELPERS ============
 
   private mapBirthdaysFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Birthday[] {
-    return snapshot.docs.map((doc) => {
+    const birthdays: Birthday[] = [];
+    for (const doc of snapshot.docs) {
       const data = doc.data() as StoredBirthday;
-      return {
+      const mapped = {
         ...data,
         id: doc.id,
         birthDate: data.birthDate instanceof Timestamp
@@ -311,23 +313,38 @@ export class FirestoreService {
           : new Date(data.birthDate as unknown as string),
         syncStatus: 'synced' as const
       };
-    });
+      const result = safeParseBirthday(mapped);
+      if (result.success) {
+        birthdays.push(mapped);
+      } else {
+        this.logger.warn('[Firestore] Skipping invalid birthday document:', doc.id, result.error.issues);
+      }
+    }
+    return birthdays;
   }
 
   private mapCategoriesFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Category[] {
-    return snapshot.docs.map((doc) => {
+    const categories: Category[] = [];
+    for (const doc of snapshot.docs) {
       const data = doc.data();
-      return {
+      const mapped = {
         ...data,
         id: doc.id,
         syncStatus: 'synced'
       } as Category;
-    });
+      const result = safeParseCategory(mapped);
+      if (result.success) {
+        categories.push(mapped);
+      } else {
+        this.logger.warn('[Firestore] Skipping invalid category document:', doc.id, result.error.issues);
+      }
+    }
+    return categories;
   }
 
   private mapBirthdayToFirestore(birthday: Birthday, userId: string): Record<string, unknown> {
-    const { syncStatus: _, ...rest } = birthday;
-    void _;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { syncStatus: _removed, ...rest } = birthday;
 
     return {
       ...rest,
