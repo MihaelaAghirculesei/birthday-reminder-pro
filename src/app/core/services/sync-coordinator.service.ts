@@ -1,4 +1,4 @@
-import { Injectable, inject, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { Subject, Subscription, take } from 'rxjs';
@@ -19,7 +19,7 @@ const MAX_RETRY_COUNT = 3;
 @Injectable({
   providedIn: 'root'
 })
-export class SyncCoordinatorService implements OnDestroy {
+export class SyncCoordinatorService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly store = inject(Store);
   private readonly authService = inject(FirebaseAuthService);
@@ -29,7 +29,8 @@ export class SyncCoordinatorService implements OnDestroy {
   private readonly networkService = inject(NetworkService);
   private readonly logger = inject(LoggerService);
 
-  private destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
   private isInitialized = false;
 
@@ -173,11 +174,34 @@ export class SyncCoordinatorService implements OnDestroy {
   }
 
   private resolveConflict(local: Birthday, cloud: Birthday): Birthday {
-    // Last-write-wins strategy
     const localTime = local.updatedAt || 0;
     const cloudTime = cloud.updatedAt || 0;
 
-    return localTime > cloudTime ? local : cloud;
+    // If timestamps are equal, prefer cloud (server authority)
+    if (localTime === cloudTime) {
+      return cloud;
+    }
+
+    // If timestamps differ significantly (>1s), use last-write-wins
+    if (Math.abs(localTime - cloudTime) > 1000) {
+      return localTime > cloudTime ? local : cloud;
+    }
+
+    // Near-simultaneous edits: merge fields, prefer newer non-empty values
+    const winner = localTime > cloudTime ? local : cloud;
+    const loser = localTime > cloudTime ? cloud : local;
+
+    return {
+      ...loser,
+      ...winner,
+      // Preserve notes from both if winner has none
+      notes: winner.notes || loser.notes,
+      // Preserve category if winner lost it
+      category: winner.category || loser.category,
+      // Keep the latest updatedAt
+      updatedAt: Math.max(localTime, cloudTime),
+      syncStatus: 'synced' as const
+    };
   }
 
   async migrateLocalToCloud(): Promise<number> {
@@ -306,9 +330,15 @@ export class SyncCoordinatorService implements OnDestroy {
     this.store.dispatch(SyncActions.updatePendingCount({ count }));
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-    this.teardownCloudListeners();
+  constructor() {
+    try {
+      this.destroyRef.onDestroy(() => {
+        this.destroy$.next();
+        this.destroy$.complete();
+        this.teardownCloudListeners();
+      });
+    } catch {
+      // Guard against destroyed injector in test environments
+    }
   }
 }
