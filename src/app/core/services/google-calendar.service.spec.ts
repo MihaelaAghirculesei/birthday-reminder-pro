@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID, NgZone } from '@angular/core';
 import { GoogleCalendarService } from './google-calendar.service';
 import { SecureStorageService } from './secure-storage.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
 import type { Gapi, GapiTokenObject } from './google-api.types';
 
@@ -94,7 +95,8 @@ describe('GoogleCalendarService', () => {
       providers: [
         GoogleCalendarService,
         { provide: PLATFORM_ID, useValue: 'browser' },
-        { provide: SecureStorageService, useValue: mockSecureStorage }
+        { provide: SecureStorageService, useValue: mockSecureStorage },
+        SILENT_LOGGER_PROVIDER
       ]
     });
 

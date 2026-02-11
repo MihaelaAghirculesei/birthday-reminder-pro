@@ -23,7 +23,7 @@
     }
   ],
   "hosting": {
-    "public": "dist/birthday-reminder-app/browser",
+    "public": "dist/birthday-reminder-pro/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

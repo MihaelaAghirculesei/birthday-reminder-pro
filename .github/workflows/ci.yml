@@ -26,6 +26,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Initialize environment files
+        run: npm run env:init
+
       - name: Run ESLint
         run: npm run lint
 
@@ -79,7 +82,7 @@ jobs:
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'birthday-reminder-app'
+          project: 'birthday-reminder-pro'
           path: '.'
           format: 'HTML'
           args: >
@@ -116,6 +119,9 @@ jobs:
           sudo apt-get install -y chromium-browser xvfb
 
       - run: npm ci
+
+      - name: Initialize environment files
+        run: npm run env:init
 
       - name: Run unit tests with coverage
         run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
@@ -166,7 +172,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           start: npm start
-          wait-on: 'http://localhost:4201'
+          wait-on: 'http://localhost:4203'
           wait-on-timeout: 120
           browser: chrome
           record: false
@@ -210,7 +216,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: production-build
-          path: dist/birthday-reminder-app
+          path: dist/birthday-reminder-pro
           retention-days: 7
 
   bundle-size-check:
@@ -231,16 +237,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: production-build
-          path: dist/birthday-reminder-app
+          path: dist/birthday-reminder-pro
 
       - name: Analyze bundle size
         run: |
           echo "📦 Bundle Size Report"
           echo "===================="
 
-          find dist/birthday-reminder-app -name "*.js" -type f -exec ls -lh {} \; | awk '{print $9 " - " $5}'
+          find dist/birthday-reminder-pro -name "*.js" -type f -exec ls -lh {} \; | awk '{print $9 " - " $5}'
 
-          MAIN_JS_BYTES=$(find dist/birthday-reminder-app -name "main*.js" -type f -exec ls -l {} \; | awk '{print $5}' | head -1 || echo "0")
+          MAIN_JS_BYTES=$(find dist/birthday-reminder-pro -name "main*.js" -type f -exec ls -l {} \; | awk '{print $5}' | head -1 || echo "0")
 
           if [ "$MAIN_JS_BYTES" -gt 0 ]; then
             MAIN_JS_KB=$((MAIN_JS_BYTES / 1024))
@@ -267,7 +273,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            const distPath = 'dist/birthday-reminder-app';
+            const distPath = 'dist/birthday-reminder-pro';
 
             if (!fs.existsSync(distPath)) {
               console.log('Build directory not found');
@@ -321,7 +327,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: production-build
-          path: dist/birthday-reminder-app
+          path: dist/birthday-reminder-pro
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli@0.13.x
@@ -400,15 +406,30 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
+      - name: Check deploy prerequisites
+        id: check
+        run: |
+          if [ -z "$FIREBASE_SA" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT not configured — skipping deploy"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
 
       - name: Download build artifacts
+        if: steps.check.outputs.skip != 'true'
         uses: actions/download-artifact@v4
         with:
           name: production-build
-          path: dist/birthday-reminder-app
+          path: dist/birthday-reminder-pro
 
       - name: Deploy to Firebase Hosting
+        if: steps.check.outputs.skip != 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -424,15 +445,30 @@ jobs:
     if: github.event_name == 'pull_request'
 
     steps:
+      - name: Check deploy prerequisites
+        id: check
+        run: |
+          if [ -z "$FIREBASE_SA" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT not configured — skipping preview deploy"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.skip != 'true'
 
       - name: Download build artifacts
+        if: steps.check.outputs.skip != 'true'
         uses: actions/download-artifact@v4
         with:
           name: production-build
-          path: dist/birthday-reminder-app
+          path: dist/birthday-reminder-pro
 
       - name: Deploy preview to Firebase Hosting
+        if: steps.check.outputs.skip != 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

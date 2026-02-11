@@ -33,7 +33,11 @@ describe('AuthEffects', () => {
       providers: [
         AuthEffects,
         provideMockActions(() => actions$),
-        provideMockStore(),
+        provideMockStore({
+          initialState: {
+            auth: { user: null, loading: false, error: null, initialized: true }
+          }
+        }),
         { provide: FirebaseAuthService, useValue: authServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock }
       ]

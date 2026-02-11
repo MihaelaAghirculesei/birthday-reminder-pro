@@ -1,12 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { LoggerService } from './logger.service';
+import { environment } from '../../../environments/environment';
 
 describe('FirebaseAuthService', () => {
   let service: FirebaseAuthService;
   let loggerMock: jasmine.SpyObj<LoggerService>;
+  const originalFirebase = environment.firebase;
 
   beforeEach(() => {
+    // Force isFirebaseConfigured() to return false — no real Firebase calls
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).firebase = undefined;
+
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
 
     TestBed.configureTestingModule({
@@ -16,6 +22,11 @@ describe('FirebaseAuthService', () => {
     });
 
     service = TestBed.inject(FirebaseAuthService);
+  });
+
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).firebase = originalFirebase;
   });
 
   it('should create', () => {

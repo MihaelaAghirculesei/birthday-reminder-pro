@@ -19,17 +19,19 @@ import { syncReducer } from './core/store/sync/sync.reducer';
 import { SyncEffects } from './core/store/sync/sync.effects';
 import { FirebaseAuthService } from './core/services/firebase-auth.service';
 import { SyncCoordinatorService } from './core/services/sync-coordinator.service';
+import { LoggerService } from './core/services/logger.service';
 
 function initializeApp(
   authService: FirebaseAuthService,
-  syncCoordinator: SyncCoordinatorService
+  syncCoordinator: SyncCoordinatorService,
+  logger: LoggerService
 ) {
   return async () => {
     try {
       authService.initAuthListener();
       await syncCoordinator.initialize();
     } catch (error) {
-      console.error('[App] Initialization error (app will continue in offline mode):', error);
+      logger.error('[App] Initialization error (app will continue in offline mode):', error);
     }
   };
 }
@@ -53,7 +55,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
-      deps: [FirebaseAuthService, SyncCoordinatorService],
+      deps: [FirebaseAuthService, SyncCoordinatorService, LoggerService],
       multi: true
     },
     provideServiceWorker('ngsw-worker.js', {

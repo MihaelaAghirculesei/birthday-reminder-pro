@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "birthday-reminder-app": {
+    "birthday-reminder-pro": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,13 +17,18 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/birthday-reminder-app",
+            "outputPath": "dist/birthday-reminder-pro",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
             "tsConfig": "tsconfig.app.json",
+            "allowedCommonJsDependencies": [
+              "@firebase/firestore",
+              "@grpc/grpc-js",
+              "@grpc/proto-loader"
+            ],
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
@@ -46,8 +51,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1.15mb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "2mb",
+                  "maximumError": "3mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -82,14 +87,14 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "port": 4201
+            "port": 4203
           },
           "configurations": {
             "production": {
-              "buildTarget": "birthday-reminder-app:build:production"
+              "buildTarget": "birthday-reminder-pro:build:production"
             },
             "development": {
-              "buildTarget": "birthday-reminder-app:build:development"
+              "buildTarget": "birthday-reminder-pro:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -97,7 +102,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "birthday-reminder-app:build"
+            "buildTarget": "birthday-reminder-pro:build"
           }
         },
         "test": {

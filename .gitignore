@@ -46,4 +46,7 @@ cypress/screenshots
 cypress/downloads
 
 .lighthouseci
-"localhost_*.report.html" 
+localhost_*.report.html
+
+.firebase/
+/public

@@ -21,7 +21,7 @@ module.exports = function (config) {
       suppressAll: true
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/birthday-reminder-app'),
+      dir: require('path').join(__dirname, './coverage/birthday-reminder-pro'),
       subdir: '.',
       reporters: [
         { type: 'html' },
