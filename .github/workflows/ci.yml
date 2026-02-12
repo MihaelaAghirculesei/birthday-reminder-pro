@@ -402,6 +402,7 @@ jobs:
     name: Deploy to Firebase Hosting
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -441,6 +442,7 @@ jobs:
     name: Deploy Preview
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     needs: [build]
     if: github.event_name == 'pull_request'
 
