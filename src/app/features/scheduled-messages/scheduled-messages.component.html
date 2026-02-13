@@ -56,6 +56,23 @@
                     <span class="status" [class.active]="message.active">
                       {{ message.active ? "Active" : "Inactive" }}
                     </span>
+                    @if (getWishLinks(birthday, message).length > 0) {
+                      <div class="wish-actions">
+                        @for (link of getWishLinks(birthday, message); track link.channel) {
+                          <a
+                            mat-icon-button
+                            [href]="safeUrl(link.url)"
+                            target="_blank"
+                            rel="noopener"
+                            [matTooltip]="'Send via ' + link.label"
+                            [attr.aria-label]="'Send wish via ' + link.label + ' to ' + birthday.name"
+                            [style.color]="link.color"
+                            >
+                            <mat-icon>{{ link.icon }}</mat-icon>
+                          </a>
+                        }
+                      </div>
+                    }
                     <div class="message-actions">
                       <button
                         mat-icon-button

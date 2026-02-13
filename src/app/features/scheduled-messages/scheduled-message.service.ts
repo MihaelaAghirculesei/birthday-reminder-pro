@@ -31,19 +31,19 @@ export class ScheduledMessageService {
     return [
       {
         title: 'Simple Happy Birthday',
-        message: 'Happy birthday {name}! Best wishes for your {age} years! 🎉'
+        message: 'Happy birthday {name}! May these {age} years be just the beginning of a wonderful chapter. Thank you for the light you bring into the lives of those who love you. 🎉💖\n\n{sender}'
       },
       {
         title: 'Formal Message',
-        message: 'Dear {name}, I wish you a very happy birthday and a year full of satisfaction!'
+        message: 'Dear {name}, on this special day I wish to express my warmest wishes. May your path always be illuminated with joy and may every achievement be a source of pride. With esteem and affection.\n\n{senderFull}'
       },
       {
         title: 'Fun Message',
-        message: 'Hey {name}! Today you turn {age}... you\'re getting older! 😄 But you\'re still amazing! 🎂'
+        message: 'Hey {name}! Today you blow out {age} candles... and I would blow out every star just to see you smile! 🥳 Age increases, but your soul remains the same: unique, special, unforgettable. 🎂✨\n\n{sender}'
       },
       {
         title: 'Zodiac Message',
-        message: 'Happy birthday {name}! As a typical {zodiac}, this will be a special year for you! 🌟'
+        message: 'Happy birthday {name}! The sky is brighter today because you were born. As a true {zodiac}, you have that magic that few possess: the courage to be yourself. May this year bring you endless emotions. 🌟💫\n\n{sender}'
       }
     ];
   }

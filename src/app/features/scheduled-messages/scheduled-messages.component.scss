@@ -243,6 +243,19 @@
               }
             }
 
+            .wish-actions {
+              display: flex;
+              gap: 2px;
+
+              button {
+                transition: transform 0.2s ease;
+
+                &:hover {
+                  transform: scale(1.15);
+                }
+              }
+            }
+
             .message-actions {
               display: flex;
               gap: 4px;

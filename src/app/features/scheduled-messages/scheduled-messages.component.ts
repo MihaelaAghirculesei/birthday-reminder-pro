@@ -1,12 +1,14 @@
-import { Component, ChangeDetectionStrategy, computed, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, Signal, inject } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Birthday, ScheduledMessage } from '../../shared';
-import { BirthdayFacadeService } from '../../core';
+import { Birthday, ScheduledMessage, WishLink, getAvailableWishLinks } from '../../shared';
+import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
+import { BirthdayFacadeService, SenderSettingsService } from '../../core';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 
 @Component({
@@ -24,9 +26,9 @@ import { MessageScheduleDialogComponent } from './message-schedule-dialog/messag
 })
 export class ScheduledMessagesComponent {
   birthdaysWithMessages: Signal<Birthday[]> = computed(() =>
-    this.birthdayFacade.birthdays().filter(
-      b => b.scheduledMessages && b.scheduledMessages.length > 0
-    )
+    this.birthdayFacade.birthdays()
+      .filter(b => b.scheduledMessages && b.scheduledMessages.length > 0)
+      .sort((a, b) => getDaysUntilBirthday(a.birthDate) - getDaysUntilBirthday(b.birthDate))
   );
 
   constructor(
@@ -70,5 +72,16 @@ export class ScheduledMessagesComponent {
 
   trackByMessage(_index: number, message: ScheduledMessage): string {
     return message.id;
+  }
+
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly senderSettings = inject(SenderSettingsService);
+
+  getWishLinks(birthday: Birthday, message: ScheduledMessage): WishLink[] {
+    return getAvailableWishLinks(birthday, message.message, this.senderSettings.getSenderName(), this.senderSettings.getSenderFullName());
+  }
+
+  safeUrl(url: string): SafeUrl {
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   }
 }
