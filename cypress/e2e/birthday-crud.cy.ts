@@ -3,7 +3,7 @@ describe('Birthday CRUD Operations', () => {
     cy.clearLocalStorage();
     cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/', { timeout: 15000 });
+    cy.visit('/');
     cy.waitForAngular();
   });
 
@@ -33,6 +33,7 @@ describe('Birthday CRUD Operations', () => {
 
     cy.get('.dialog-container').should('be.visible');
     cy.get('.dialog-container [data-testid="birthday-name-input"]').clear().type('Jane Doe');
+    cy.get('.dialog-container input[type="email"]').type('jane@example.com');
     cy.get('.dialog-container [data-testid="save-birthday-button"]').click();
 
     cy.contains('Jane Doe').should('be.visible');
@@ -55,12 +56,12 @@ describe('Birthday CRUD Operations', () => {
 
   it('should cancel birthday creation', () => {
     cy.expandBirthdayForm();
-    cy.get('[data-testid="birthday-name-input"]').type('Cancelled User');
+    cy.get('[data-testid="birthday-name-input"]').first().type('Cancelled User');
 
     // Click header to collapse form
     cy.get('[data-testid="add-birthday-button"]').click();
 
-    cy.get('[data-testid="birthday-name-input"]').should('not.be.visible');
+    cy.get('[data-testid="birthday-name-input"]').first().should('not.be.visible');
     cy.get('.dashboard-container').should('not.exist');
   });
 });

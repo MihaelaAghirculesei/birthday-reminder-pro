@@ -19,7 +19,7 @@ describe('NotificationService', () => {
           jasmine.objectContaining({
             message: 'test',
             type: 'info',
-            duration: 3000,
+            duration: 0,
             id: jasmine.any(String)
           })
         );

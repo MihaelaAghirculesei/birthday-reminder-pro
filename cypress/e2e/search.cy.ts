@@ -3,7 +3,7 @@ describe('Search Functionality', () => {
     cy.clearLocalStorage();
     cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/', { timeout: 15000 });
+    cy.visit('/');
     cy.waitForAngular();
 
     const birthdays = [

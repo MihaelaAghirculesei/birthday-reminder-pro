@@ -356,8 +356,7 @@ describe('MessageSchedulerComponent', () => {
 
       expect(notificationServiceMock.show).toHaveBeenCalledWith(
         jasmine.stringContaining('🧪 TEST'),
-        'info',
-        5000
+        'info'
       );
     });
 

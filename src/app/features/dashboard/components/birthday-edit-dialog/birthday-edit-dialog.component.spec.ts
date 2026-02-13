@@ -16,6 +16,9 @@ describe('BirthdayEditDialogComponent', () => {
     notes: 'Test notes',
     photo: 'photo.jpg',
     rememberPhoto: 'remember.jpg',
+    email: 'john@example.com',
+    phone: '+1234567890',
+    telegramUsername: 'johndoe',
     scheduledMessages: []
   };
 

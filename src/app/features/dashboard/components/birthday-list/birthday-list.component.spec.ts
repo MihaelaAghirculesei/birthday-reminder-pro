@@ -41,11 +41,14 @@ describe('BirthdayListComponent', () => {
   ];
 
   beforeEach(async () => {
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', ['addBirthday', 'updateBirthday', 'deleteBirthday']);
+    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', ['addBirthday', 'updateBirthday', 'deleteBirthday', 'getBirthdayById']);
     const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
 
     birthdayFacadeSpyObj.birthdays$ = of(mockBirthdays);
     birthdayFacadeSpyObj.birthdays = jasmine.createSpy('birthdays').and.returnValue(mockBirthdays);
+    birthdayFacadeSpyObj.getBirthdayById.and.callFake((id: string) =>
+      of(mockBirthdays.find(b => b.id === id))
+    );
 
     await TestBed.configureTestingModule({
       imports: [BirthdayListComponent, NoopAnimationsModule],
@@ -196,7 +199,10 @@ describe('BirthdayListComponent', () => {
           birthDate: '1992-03-10',
           category: 'friends',
           photo: null,
-          rememberPhoto: null
+          rememberPhoto: null,
+          email: '',
+          phone: '',
+          telegramUsername: ''
         }
       }));
       dialogSpy.open.and.returnValue(mockDialogRef);

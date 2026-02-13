@@ -3,33 +3,35 @@ describe('Category Filter', () => {
     cy.clearLocalStorage();
     cy.clearCookies();
     cy.clearIndexedDB();
-    cy.visit('/', { timeout: 15000 });
+    cy.visit('/');
     cy.waitForAngular();
 
     // Add first birthday (Family)
     cy.expandBirthdayForm();
-    cy.get('[data-testid="birthday-name-input"]').type('Family Member');
-    cy.get('[data-testid="birthday-date-input"]').type('05/15/1990');
-    cy.get('[data-testid="category-select"]').click();
+    cy.get('[data-testid="birthday-name-input"]').first().type('Family Member');
+    cy.get('[data-testid="birthday-date-input"]').first().type('05/15/1990');
+    cy.get('[data-testid="category-select"]').first().click();
     cy.contains('mat-option', 'Family').click();
-    cy.get('[data-testid="save-birthday-button"]').click();
+    cy.get('[data-testid="save-birthday-button"]').first().click();
 
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
 
     // Form stays expanded after save - fill in the second birthday
     cy.get('[data-testid="birthday-name-input"]', { timeout: 15000 })
+      .first()
       .should('be.visible')
       .clear()
       .type('Friend Person');
 
     cy.get('[data-testid="birthday-date-input"]')
+      .first()
       .should('be.visible')
       .clear()
       .type('08/20/1985');
 
-    cy.get('[data-testid="category-select"]').click();
+    cy.get('[data-testid="category-select"]').first().click();
     cy.contains('mat-option', 'Friends').click();
-    cy.get('[data-testid="save-birthday-button"]').click();
+    cy.get('[data-testid="save-birthday-button"]').first().click();
 
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
   });

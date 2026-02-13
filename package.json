@@ -18,6 +18,7 @@
     "test:ci": "ng test --no-watch --code-coverage --browsers=ChromeHeadlessCI",
     "e2e": "cypress open",
     "e2e:headless": "cypress run",
+    "pree2e:ci": "npx kill-port 4203 || true",
     "e2e:ci": "start-server-and-test start http://localhost:4203 e2e:headless",
     "serve:ssr:birthday-reminder-pro": "node dist/birthday-reminder-pro/server/server.mjs",
     "lint": "ng lint",
