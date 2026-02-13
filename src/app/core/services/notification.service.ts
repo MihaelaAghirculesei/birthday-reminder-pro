@@ -19,21 +19,29 @@ export class NotificationService {
 
   constructor(private idGenerator: IdGeneratorService) {}
 
-  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration = 3000): void {
+  private readonly defaultDurations: Record<string, number> = {
+    success: 3000,
+    error: 0,
+    warning: 0,
+    info: 0
+  };
+
+  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration?: number): void {
+    const effectiveDuration = duration ?? this.defaultDurations[type] ?? 0;
     const notification: NotificationMessage = {
       id: this.idGenerator.generateId(),
       message,
       type,
-      duration
+      duration: effectiveDuration
     };
 
     const currentNotifications = this.notifications$.value;
     this.notifications$.next([...currentNotifications, notification]);
 
-    if (duration > 0) {
+    if (effectiveDuration > 0) {
       const timer = setTimeout(() => {
         this.remove(notification.id);
-      }, duration);
+      }, effectiveDuration);
       this.timers.set(notification.id, timer);
     }
   }
