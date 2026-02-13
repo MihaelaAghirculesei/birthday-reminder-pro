@@ -18,6 +18,9 @@ export interface Birthday extends SyncMetadata {
   zodiacSign?: string;
   googleCalendarEventId?: string;
   category?: string;
+  email?: string;
+  phone?: string;
+  telegramUsername?: string;
   scheduledMessages?: ScheduledMessage[];
 }
 
