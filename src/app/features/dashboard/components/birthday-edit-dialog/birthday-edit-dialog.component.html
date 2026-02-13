@@ -52,6 +52,49 @@
         <mat-icon matPrefix>category</mat-icon>
       </mat-form-field>
 
+      <div class="contact-section">
+        <div class="contact-section-title">
+          <mat-icon>contacts</mat-icon>
+          <span>Contact Info (for sending wishes)</span>
+        </div>
+        <div class="contact-fields">
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+            <mat-label>Email</mat-label>
+            <input
+              matInput
+              type="email"
+              [(ngModel)]="editingData.email"
+              (ngModelChange)="onContactChange()"
+              placeholder="email@example.com"
+              />
+            <mat-icon matPrefix>email</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+            <mat-label>Phone</mat-label>
+            <input
+              matInput
+              type="tel"
+              [(ngModel)]="editingData.phone"
+              (ngModelChange)="onContactChange()"
+              placeholder="+1234567890"
+              />
+            <mat-icon matPrefix>phone</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+            <mat-label>Telegram Username</mat-label>
+            <input
+              matInput
+              [(ngModel)]="editingData.telegramUsername"
+              (ngModelChange)="onContactChange()"
+              placeholder="username"
+              />
+            <mat-icon matPrefix>send</mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+
       <div class="photo-sections-container">
         <div class="photo-section">
           <div class="photo-section-title">
@@ -82,21 +125,24 @@
       </div>
 
       <div class="scheduler-section">
-        <div class="photo-section-title">
-          <mat-icon>schedule_send</mat-icon>
-          <span>Scheduled Messages</span>
-        </div>
-        <app-message-scheduler [birthday]="data.birthday"></app-message-scheduler>
+        <app-message-scheduler [birthday]="data.birthday" (unsavedChanges)="onMessageUnsavedChanges($event)"></app-message-scheduler>
       </div>
     </div>
   </mat-dialog-content>
+
+  @if (contactWarning) {
+    <div class="contact-warning">
+      <mat-icon>warning</mat-icon>
+      Please add at least one contact info (Email, Phone, or Telegram) to enable sending wishes.
+    </div>
+  }
 
   <mat-dialog-actions align="end" class="dialog-actions">
     <button mat-button (click)="onCancel()" color="warn">
       <mat-icon>close</mat-icon>
       Cancel
     </button>
-    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button">
+    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages">
       <mat-icon>check</mat-icon>
       Save Changes
     </button>

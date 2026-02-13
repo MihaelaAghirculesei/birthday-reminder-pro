@@ -23,6 +23,9 @@ export interface BirthdayEditDialogResult {
     category: string;
     photo: string | null;
     rememberPhoto: string | null;
+    email: string;
+    phone: string;
+    telegramUsername: string;
   };
 }
 
@@ -45,6 +48,8 @@ export interface BirthdayEditDialogResult {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayEditDialogComponent {
+  hasUnsavedMessages = false;
+  contactWarning = false;
   editedBirthday: Birthday;
   editingData: {
     name: string;
@@ -53,6 +58,9 @@ export class BirthdayEditDialogComponent {
     category: string;
     photo: string | null;
     rememberPhoto: string | null;
+    email: string;
+    phone: string;
+    telegramUsername: string;
   };
 
   constructor(
@@ -67,6 +75,9 @@ export class BirthdayEditDialogComponent {
       category: data.birthday.category || '',
       photo: data.birthday.photo || null,
       rememberPhoto: data.birthday.rememberPhoto || null,
+      email: data.birthday.email || '',
+      phone: data.birthday.phone || '',
+      telegramUsername: data.birthday.telegramUsername || '',
     };
   }
 
@@ -99,11 +110,31 @@ export class BirthdayEditDialogComponent {
     this.editingData.rememberPhoto = null;
   }
 
+  onMessageUnsavedChanges(hasUnsaved: boolean): void {
+    this.hasUnsavedMessages = hasUnsaved;
+  }
+
+  hasAnyContact(): boolean {
+    return !!(this.editingData.email.trim() || this.editingData.phone.trim() || this.editingData.telegramUsername.trim());
+  }
+
+  onContactChange(): void {
+    if (this.contactWarning && this.hasAnyContact()) {
+      this.contactWarning = false;
+    }
+  }
+
   onCancel(): void {
     this.dialogRef.close();
   }
 
   onSave(): void {
+    const hasContact = !!(this.editingData.email.trim() || this.editingData.phone.trim() || this.editingData.telegramUsername.trim());
+    if (!hasContact) {
+      this.contactWarning = true;
+      return;
+    }
+    this.contactWarning = false;
     const result: BirthdayEditDialogResult = {
       birthday: this.data.birthday,
       editedData: this.editingData

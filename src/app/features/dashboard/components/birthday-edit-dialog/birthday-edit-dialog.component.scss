@@ -142,6 +142,46 @@ h2[mat-dialog-title] {
   }
 }
 
+.contact-section {
+  background: #f9f9f9;
+  border-radius: var(--radius);
+  border: 1px solid #e0e0e0;
+  padding: 16px;
+
+  :host-context(body.dark-theme) & {
+    background: var(--surface-elevated);
+    border-color: var(--border-light);
+  }
+
+  .contact-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 1rem;
+
+    :host-context(body.dark-theme) & {
+      color: var(--text-primary);
+    }
+
+    mat-icon {
+      color: var(--primary);
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+  }
+
+  .contact-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
 .photo-section,
 .scheduler-section {
   background: #f9f9f9;
@@ -160,6 +200,7 @@ h2[mat-dialog-title] {
 
 .scheduler-section {
   padding: 20px;
+  overflow: hidden;
 }
 
 .photo-section-title {
@@ -198,6 +239,34 @@ h2[mat-dialog-title] {
     :host-context(body.dark-theme) & {
       color: var(--text-secondary);
     }
+  }
+}
+
+.contact-error ::ng-deep .mdc-notched-outline__leading,
+.contact-error ::ng-deep .mdc-notched-outline__notch,
+.contact-error ::ng-deep .mdc-notched-outline__trailing {
+  border-color: #f44336 !important;
+  border-width: 2px !important;
+}
+
+.contact-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #fff3e0;
+  color: #e65100;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  :host-context(body.dark-theme) & {
+    background: #3e2723;
+    color: #ffab40;
+  }
+
+  mat-icon {
+    color: #ff9800;
+    flex-shrink: 0;
   }
 }
 

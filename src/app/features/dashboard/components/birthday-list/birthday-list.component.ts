@@ -8,12 +8,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { take } from 'rxjs';
+import { take, switchMap, EMPTY, map } from 'rxjs';
 import { Birthday, BirthdayCategory } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { BirthdayFacadeService } from '../../../../core';
-import { BirthdayEditDialogComponent, BirthdayEditDialogData, BirthdayEditDialogResult } from '../birthday-edit-dialog/birthday-edit-dialog.component';
+import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
 
 interface EnrichedBirthday extends Birthday {
@@ -131,19 +131,29 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
       ariaModal: true
     });
 
-    dialogRef.afterClosed().pipe(take(1)).subscribe((result: BirthdayEditDialogResult | undefined) => {
-      if (result) {
-        const updatedBirthday: Birthday = {
-          ...result.birthday,
-          name: result.editedData.name.trim() || result.birthday.name,
-          notes: result.editedData.notes.trim(),
-          birthDate: new Date(result.editedData.birthDate),
-          category: result.editedData.category,
-          photo: result.editedData.photo || undefined,
-          rememberPhoto: result.editedData.rememberPhoto || undefined
-        };
-        this.birthdayFacade.updateBirthday(updatedBirthday);
-      }
+    dialogRef.afterClosed().pipe(
+      take(1),
+      switchMap(result => {
+        if (!result) return EMPTY;
+        return this.birthdayFacade.getBirthdayById(result.birthday.id).pipe(
+          take(1),
+          map(current => ({ result, current: current || result.birthday }))
+        );
+      })
+    ).subscribe(({ result, current }) => {
+      const updatedBirthday: Birthday = {
+        ...current,
+        name: result.editedData.name.trim() || result.birthday.name,
+        notes: result.editedData.notes.trim(),
+        birthDate: new Date(result.editedData.birthDate),
+        category: result.editedData.category,
+        photo: result.editedData.photo || undefined,
+        rememberPhoto: result.editedData.rememberPhoto || undefined,
+        email: result.editedData.email.trim() || undefined,
+        phone: result.editedData.phone.trim() || undefined,
+        telegramUsername: result.editedData.telegramUsername.trim() || undefined
+      };
+      this.birthdayFacade.updateBirthday(updatedBirthday);
     });
   }
 
