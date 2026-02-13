@@ -1,30 +1,28 @@
-import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { createSelector } from '@ngrx/store';
 import { AuthState, initialAuthState } from './auth.state';
 
-export const selectAuthState = createFeatureSelector<AuthState>('auth');
-
-const selectAuthStateOrDefault = createSelector(
-  selectAuthState,
+export const selectAuthState = createSelector(
+  (state: Record<string, unknown>) => state['auth'] as AuthState | undefined,
   (state) => state ?? initialAuthState
 );
 
 export const selectAuthUser = createSelector(
-  selectAuthStateOrDefault,
+  selectAuthState,
   (state) => state.user
 );
 
 export const selectAuthLoading = createSelector(
-  selectAuthStateOrDefault,
+  selectAuthState,
   (state) => state.loading
 );
 
 export const selectAuthError = createSelector(
-  selectAuthStateOrDefault,
+  selectAuthState,
   (state) => state.error
 );
 
 export const selectAuthInitialized = createSelector(
-  selectAuthStateOrDefault,
+  selectAuthState,
   (state) => state.initialized
 );
 
