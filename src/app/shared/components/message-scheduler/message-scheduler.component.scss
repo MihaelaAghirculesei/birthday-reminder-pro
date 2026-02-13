@@ -5,32 +5,6 @@
     background: var(--scheduler-bg) !important;
     color: var(--scheduler-text) !important;
 
-    .mat-mdc-card-header {
-      background: var(--scheduler-header) !important;
-      color: white !important;
-      margin: -24px -24px 24px -24px;
-      padding: 24px 24px 24px 32px;
-
-      .mat-mdc-card-title {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: white !important;
-
-        mat-icon {
-          font-size: 28px;
-          width: 28px;
-          height: 28px;
-          color: white !important;
-        }
-      }
-
-      .mat-mdc-card-subtitle {
-        color: rgba(255, 255, 255, 0.9) !important;
-        margin-top: 8px;
-      }
-    }
-
     .mat-mdc-card-content {
       background: var(--scheduler-bg) !important;
       color: var(--scheduler-text) !important;

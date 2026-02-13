@@ -1,15 +1,5 @@
 <div class="message-scheduler">
   <mat-card class="scheduler-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>schedule_send</mat-icon>
-        Scheduled Messages for {{ birthday?.name }}
-      </mat-card-title>
-      <mat-card-subtitle>
-        Create messages to send automatically on birthday
-      </mat-card-subtitle>
-    </mat-card-header>
-
     <mat-card-content>
       <mat-expansion-panel
         class="new-message-panel"
@@ -96,7 +86,7 @@
               placeholder="Write your personalized message..."
             ></textarea>
             <mat-hint>
-              Use: {{ "{" }}name{{ "}" }} for name, {{ "{" }}age{{ "}" }} for age, {{ "{" }}zodiac{{ "}" }} for zodiac sign
+              Variables: {{ "{" }}name{{ "}" }}, {{ "{" }}age{{ "}" }}, {{ "{" }}zodiac{{ "}" }}, {{ "{" }}sender{{ "}" }}, {{ "{" }}senderFull{{ "}" }}
             </mat-hint>
           </mat-form-field>
 
@@ -211,6 +201,19 @@
                     >
                     <mat-icon>send</mat-icon>
                   </button>
+                  @for (link of getWishLinks(message); track link.channel) {
+                    <a
+                      mat-icon-button
+                      [href]="safeUrl(link.url)"
+                      target="_blank"
+                      rel="noopener"
+                      [title]="'Send via ' + link.label"
+                      [attr.aria-label]="'Send wish via ' + link.label"
+                      [style.color]="link.color"
+                      >
+                      <mat-icon>{{ link.icon }}</mat-icon>
+                    </a>
+                  }
                   <button
                     mat-icon-button
                     (click)="deleteMessage(message)"

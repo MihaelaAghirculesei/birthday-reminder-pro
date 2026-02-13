@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
@@ -17,9 +18,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ScheduledMessage, Birthday, calculateAge } from '../..';
+import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks } from '../..';
 import { ScheduledMessageService, MessageTemplate } from '../../../features/scheduled-messages/scheduled-message.service';
-import { NotificationService, BirthdayFacadeService } from '../../../core';
+import { NotificationService, BirthdayFacadeService, SenderSettingsService } from '../../../core';
 
 @Component({
     selector: 'app-message-scheduler',
@@ -42,8 +43,12 @@ import { NotificationService, BirthdayFacadeService } from '../../../core';
 })
 export class MessageSchedulerComponent implements OnInit, OnChanges {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly senderSettings = inject(SenderSettingsService);
 
   @Input() birthday: Birthday | null = null;
+  @Output() unsavedChanges = new EventEmitter<boolean>();
 
   messageForm: FormGroup;
   messages: ScheduledMessage[] = [];
@@ -101,6 +106,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(messages => {
           this.messages = messages || [];
+          this.cdr.markForCheck();
         });
     }
   }
@@ -113,6 +119,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
       priority: 'normal',
       active: true,
     });
+    this.unsavedChanges.emit(true);
   }
 
   applyTemplate(template: MessageTemplate): void {
@@ -143,6 +150,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
       this.loadMessages();
       this.cancelEdit();
+      this.unsavedChanges.emit(false);
     }
   }
 
@@ -150,12 +158,14 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     this.editingMessage = message;
     this.isCreatingMessage = true;
     this.messageForm.patchValue(message);
+    this.unsavedChanges.emit(true);
   }
 
   cancelEdit(): void {
     this.isCreatingMessage = false;
     this.editingMessage = null;
     this.messageForm.reset();
+    this.unsavedChanges.emit(false);
   }
 
   async toggleMessageStatus(message: ScheduledMessage): Promise<void> {
@@ -172,8 +182,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
       const processedMessage = this.getProcessedMessage(message);
       this.notificationService.show(
         `🧪 TEST - ${message.title}: ${processedMessage}`,
-        'info',
-        5000
+        'info'
       );
     }
   }
@@ -196,7 +205,9 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     return template
       .replace(/\{name\}/g, birthday.name)
       .replace(/\{age\}/g, calculateAge(birthday.birthDate).toString())
-      .replace(/\{zodiac\}/g, birthday.zodiacSign || '');
+      .replace(/\{zodiac\}/g, birthday.zodiacSign || '')
+      .replace(/\{sender\}/g, this.senderSettings.getSenderName())
+      .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
   }
 
   formatDate(date: Date): string {
@@ -219,5 +230,14 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   trackByIndex(index: number): number {
     return index;
+  }
+
+  getWishLinks(message: ScheduledMessage): WishLink[] {
+    if (!this.birthday) return [];
+    return getAvailableWishLinks(this.birthday, message.message, this.senderSettings.getSenderName(), this.senderSettings.getSenderFullName());
+  }
+
+  safeUrl(url: string): SafeUrl {
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   }
 }
