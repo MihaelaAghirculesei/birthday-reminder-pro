@@ -10,3 +10,4 @@ export { MessageSchedulerComponent } from './message-scheduler/message-scheduler
 export { AuthButtonComponent } from './auth-button/auth-button.component';
 export { SyncStatusComponent } from './sync-status/sync-status.component';
 export { UserMenuComponent } from './user-menu/user-menu.component';
+export { SenderSettingsDialogComponent } from './sender-settings-dialog/sender-settings-dialog.component';

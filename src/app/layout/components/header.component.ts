@@ -6,10 +6,12 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NetworkStatusComponent } from '../../shared/components/network-status.component';
 import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
 import { UserMenuComponent } from '../../shared/components/user-menu/user-menu.component';
+import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
 import { ThemeService } from '../../core';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 
@@ -38,6 +40,14 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
           Birthday Memories
         </h1>
         <div class="header-controls" role="group" aria-label="Application settings">
+          <button mat-icon-button
+            (click)="openSenderSettings()"
+            matTooltip="Set your name for message signatures"
+            matTooltipPosition="below"
+            aria-label="Sender name settings"
+            class="settings-btn">
+            <mat-icon>settings</mat-icon>
+          </button>
           <mat-slide-toggle
             [checked]="themeService.darkMode()"
             (change)="themeService.toggleDarkMode()"
@@ -146,6 +156,12 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       }
     }
 
+    .settings-btn {
+      color: white;
+      opacity: 0.9;
+      &:hover { opacity: 1; }
+    }
+
     app-network-status {
       position: static;
     }
@@ -243,6 +259,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 })
 export class HeaderComponent {
   private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
   public readonly themeService = inject(ThemeService);
 
   isAuthenticated = toSignal(
@@ -254,4 +271,11 @@ export class HeaderComponent {
     this.store.select(AuthSelectors.selectAuthLoading),
     { initialValue: true }
   );
+
+  openSenderSettings(): void {
+    this.dialog.open(SenderSettingsDialogComponent, {
+      width: '400px',
+      maxWidth: '95vw'
+    });
+  }
 }
