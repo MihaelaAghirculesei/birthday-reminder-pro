@@ -4,8 +4,10 @@ import { Capacitor } from '@capacitor/core';
 import { interval, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Birthday, ScheduledMessage } from '../../shared/models';
+import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { LoggerService } from './logger.service';
+import { SenderSettingsService } from './sender-settings.service';
 
 export interface BirthdayNotificationData {
   birthdayId: string;
@@ -22,15 +24,22 @@ export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
   private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
+  private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private storage: IndexedDBStorageService,
-    private logger: LoggerService
+    private logger: LoggerService,
+    private senderSettings: SenderSettingsService
   ) {
     try {
       this.destroyRef.onDestroy(() => {
         this.destroy$.next();
         this.destroy$.complete();
+        // Clear all browser timeouts
+        for (const timeout of this.browserTimeouts.values()) {
+          clearTimeout(timeout);
+        }
+        this.browserTimeouts.clear();
       });
     } catch {
       // Guard against destroyed injector in test environments
@@ -64,11 +73,31 @@ export class PushNotificationService {
       await Notification.requestPermission();
     }
 
+    // Schedule precise timeouts for today's messages
+    await this.scheduleAllBrowserTimeouts();
+
+    // Fallback polling every 30s with wider window
     this.checkBrowserNotifications();
 
-    interval(60000)
+    interval(30000)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.checkBrowserNotifications());
+  }
+
+  private async scheduleAllBrowserTimeouts(): Promise<void> {
+    try {
+      const birthdays = await this.storage.getBirthdays();
+      for (const birthday of birthdays) {
+        if (!birthday.scheduledMessages) continue;
+        for (const message of birthday.scheduledMessages) {
+          if (message.active) {
+            this.scheduleBrowserTimeout(birthday, message);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error('Failed to schedule browser timeouts:', error);
+    }
   }
 
   private async checkBrowserNotifications(): Promise<void> {
@@ -114,7 +143,7 @@ export class PushNotificationService {
     );
 
     const timeDiff = now.getTime() - thisYearBirthday.getTime();
-    const isWithinWindow = timeDiff >= 0 && timeDiff < 120000;
+    const isWithinWindow = timeDiff >= 0 && timeDiff < 300000; // 5 minute window
 
     const lastSent = message.lastSentDate ? new Date(message.lastSentDate) : null;
     const notSentToday = !lastSent ||
@@ -127,8 +156,13 @@ export class PushNotificationService {
 
   private showBrowserNotification(birthday: Birthday, message: ScheduledMessage): void {
     const body = this.formatMessage(message.message, birthday);
+    const wishLinks = getAvailableWishLinks(birthday, message.message, this.senderSettings.getSenderName(), this.senderSettings.getSenderFullName());
+    const channelHint = wishLinks.length > 0
+      ? `📩 Click to send via: ${wishLinks.map(l => l.label).join(', ')}`
+      : '🔔 Click to open app';
+
     const notification = new Notification(message.title || '🎂 Birthday Reminder', {
-      body,
+      body: channelHint + '\n' + body,
       icon: '/assets/icons/logo-reminder.png',
       tag: `birthday-${birthday.id}-${message.id}`,
       requireInteraction: true
@@ -137,6 +171,7 @@ export class PushNotificationService {
     notification.onclick = () => {
       window.focus();
       notification.close();
+      window.open('/scheduled-messages', '_self');
     };
   }
 
@@ -202,6 +237,7 @@ export class PushNotificationService {
     if (!scheduledDate) return false;
 
     if (!this.isNative) {
+      this.scheduleBrowserTimeout(birthday, message);
       return true;
     }
 
@@ -241,8 +277,57 @@ export class PushNotificationService {
     }
   }
 
+  private scheduleBrowserTimeout(birthday: Birthday, message: ScheduledMessage): void {
+    if (typeof window === 'undefined') return;
+
+    const key = `${birthday.id}-${message.id}`;
+
+    // Cancel existing timeout for this message
+    const existing = this.browserTimeouts.get(key);
+    if (existing) {
+      clearTimeout(existing);
+      this.browserTimeouts.delete(key);
+    }
+
+    const birthDate = new Date(birthday.birthDate);
+    const now = new Date();
+    const [hours, minutes] = message.scheduledTime.split(':').map(Number);
+
+    const scheduledTime = new Date(
+      now.getFullYear(),
+      birthDate.getMonth(),
+      birthDate.getDate(),
+      hours,
+      minutes,
+      0,
+      0
+    );
+
+    const delay = scheduledTime.getTime() - now.getTime();
+
+    // Only schedule if it's in the future and within 24 hours
+    if (delay > 0 && delay < 86400000) {
+      const timeout = setTimeout(async () => {
+        this.browserTimeouts.delete(key);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          this.showBrowserNotification(birthday, message);
+          await this.markBrowserNotificationSent(birthday.id, message.id);
+        }
+      }, delay);
+      this.browserTimeouts.set(key, timeout);
+    }
+  }
+
   async cancelNotification(birthdayId: string, messageId: string): Promise<void> {
-    if (!this.isNative) return;
+    if (!this.isNative) {
+      const key = `${birthdayId}-${messageId}`;
+      const timeout = this.browserTimeouts.get(key);
+      if (timeout) {
+        clearTimeout(timeout);
+        this.browserTimeouts.delete(key);
+      }
+      return;
+    }
 
     try {
       const notificationId = this.generateNotificationId(birthdayId, messageId);
@@ -253,7 +338,16 @@ export class PushNotificationService {
   }
 
   async cancelAllNotificationsForBirthday(birthdayId: string): Promise<void> {
-    if (!this.isNative) return;
+    if (!this.isNative) {
+      // Clear all browser timeouts for this birthday
+      for (const [key, timeout] of this.browserTimeouts.entries()) {
+        if (key.startsWith(`${birthdayId}-`)) {
+          clearTimeout(timeout);
+          this.browserTimeouts.delete(key);
+        }
+      }
+      return;
+    }
 
     try {
       const pending = await LocalNotifications.getPending();
@@ -344,7 +438,9 @@ export class PushNotificationService {
     return template
       .replace(/\{name\}/g, birthday.name)
       .replace(/\{age\}/g, age?.toString() || '')
-      .replace(/\{zodiac\}/g, birthday.zodiacSign || '');
+      .replace(/\{zodiac\}/g, birthday.zodiacSign || '')
+      .replace(/\{sender\}/g, this.senderSettings.getSenderName())
+      .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
   }
 
   private calculateAge(birthDate: Date): number | null {

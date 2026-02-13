@@ -259,6 +259,11 @@ export class BirthdayEffects {
               scheduledMessages: updatedMessages
             };
 
+            const updatedMsg = updatedMessages.find(m => m.id === messageId);
+            if (updatedMsg) {
+              this.pushNotificationService.scheduleNotification(birthday, updatedMsg);
+            }
+
             // Queue for cloud sync
             if (userId) {
               this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
