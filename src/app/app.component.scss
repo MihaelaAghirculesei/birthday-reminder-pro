@@ -4,7 +4,6 @@
   min-height: 100vh;
   background: var(--background);
   position: relative;
-  overflow: hidden;
 
   &::before {
     content: '';
@@ -29,17 +28,6 @@
   }
 }
 
-.toolbar-title {
-  margin-left: 16px;
-  font-weight: 700;
-  font-size: 1.5rem;
-  background: var(--primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
 .content-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -49,69 +37,6 @@
   gap: 32px;
   position: relative;
   z-index: 1;
-}
-
-.app-header {
-  text-align: center;
-  margin: 40px 0 60px 0;
-  position: relative;
-  z-index: 2;
-
-  .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 0 140px 16px 140px;
-    max-width: 1336px;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 32px;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 16px;
-      align-items: center;
-    }
-  }
-
-  .hero-title {
-    font-size: 3.5rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.8) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0;
-    text-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    animation: fadeInUp 0.8s ease-out;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-
-    .app-logo {
-      width: 48px;
-      height: 48px;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-      animation: fadeInUp 0.8s ease-out 0.2s both;
-      transition: transform 0.3s ease;
-
-      &:hover {
-        transform: scale(1.1) rotate(5deg);
-      }
-    }
-  }
-
-  .hero-subtitle {
-    font-size: 1.25rem;
-    color: rgba(255,255,255,0.9);
-    font-weight: 400;
-    max-width: 600px;
-    margin: 0 auto;
-    line-height: 1.6;
-    animation: fadeInUp 0.8s ease-out 0.2s both;
-  }
 }
 
 .add-birthday-card {
@@ -156,26 +81,7 @@
   }
 }
 
-@media (max-width: 1200px) {
-  .app-header .hero-title {
-    font-size: 3rem;
-  }
-}
-
 @media (max-width: 768px) {
-  .app-header {
-    margin: 20px 0 40px 0;
-
-    .hero-title {
-      font-size: 2.5rem;
-    }
-
-    .hero-subtitle {
-      font-size: 1.1rem;
-      padding: 0 20px;
-    }
-  }
-
   .content-container {
     padding: 24px 16px;
     gap: 24px;
@@ -183,28 +89,6 @@
 }
 
 @media (max-width: 480px) {
-  .app-header {
-    margin: 12px 0 20px 0;
-
-    .hero-title {
-      font-size: 1.7rem;
-      gap: 8px;
-      flex-direction: column;
-      text-align: center;
-
-      .app-logo {
-        width: 40px;
-        height: 40px;
-      }
-    }
-
-    .hero-subtitle {
-      font-size: 0.9rem;
-      padding: 0 12px;
-      line-height: 1.4;
-    }
-  }
-
   .content-container {
     padding: 16px 8px;
     gap: 16px;

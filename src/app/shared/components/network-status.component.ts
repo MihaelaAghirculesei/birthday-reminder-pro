@@ -25,12 +25,25 @@ import { NetworkService } from '../../core';
       font-size: 0.875rem;
       font-weight: 600;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(0, 0, 0, 0.2);
       box-shadow: 0 2px 8px rgba(17, 153, 142, 0.2);
+      height: var(--header-icon-size, 36px);
+      box-sizing: border-box;
 
       mat-icon {
         font-size: 18px;
         width: 18px;
         height: 18px;
+      }
+
+      span {
+        @media (max-width: 430px) {
+          display: none;
+        }
+      }
+
+      @media (max-width: 430px) {
+        padding: 8px;
       }
 
       &.offline {
