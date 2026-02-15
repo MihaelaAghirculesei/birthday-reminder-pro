@@ -12,18 +12,16 @@ export class AuthEffects {
   private readonly authService = inject(FirebaseAuthService);
   private readonly notificationService = inject(NotificationService);
 
-  signInWithGoogle$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthActions.signInWithGoogle),
-      exhaustMap(() =>
-        this.authService.signInWithGoogle().pipe(
-          map((user) => AuthActions.signInSuccess({ user })),
-          catchError((error) =>
-            of(AuthActions.signInFailure({ error: error.message }))
-          )
-        )
-      )
-    )
+  signInWithGoogle$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.signInWithGoogle),
+        tap(() => {
+          // Sign-in popup is triggered directly from AuthButtonComponent
+          // to avoid browser popup blocking. This effect only handles loading state.
+        })
+      ),
+    { dispatch: false }
   );
 
   signInSuccess$ = createEffect(
