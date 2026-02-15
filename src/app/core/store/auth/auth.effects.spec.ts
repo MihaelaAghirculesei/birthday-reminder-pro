@@ -47,24 +47,11 @@ describe('AuthEffects', () => {
   });
 
   describe('signInWithGoogle$', () => {
-    it('should dispatch signInSuccess on successful sign in', (done) => {
-      authServiceMock.signInWithGoogle.and.returnValue(of(mockUser));
+    it('should not dispatch any action (dispatch: false)', (done) => {
       actions$ = of(AuthActions.signInWithGoogle());
 
       effects.signInWithGoogle$.subscribe((action) => {
-        expect(action).toEqual(AuthActions.signInSuccess({ user: mockUser }));
-        done();
-      });
-    });
-
-    it('should dispatch signInFailure on error', (done) => {
-      authServiceMock.signInWithGoogle.and.returnValue(
-        throwError(() => new Error('Sign-in failed'))
-      );
-      actions$ = of(AuthActions.signInWithGoogle());
-
-      effects.signInWithGoogle$.subscribe((action) => {
-        expect(action).toEqual(AuthActions.signInFailure({ error: 'Sign-in failed' }));
+        expect(action.type).toBe('[Auth] Sign In With Google');
         done();
       });
     });

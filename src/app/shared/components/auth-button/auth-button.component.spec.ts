@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthButtonComponent } from './auth-button.component';
+import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 
 describe('AuthButtonComponent', () => {
@@ -15,9 +16,16 @@ describe('AuthButtonComponent', () => {
   };
 
   beforeEach(async () => {
+    const authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [
+      'signInWithGoogle', 'signOut', 'initAuthListener', 'performGoogleSignInDirect'
+    ]);
+
     await TestBed.configureTestingModule({
       imports: [AuthButtonComponent, NoopAnimationsModule],
-      providers: [provideMockStore({ initialState })]
+      providers: [
+        provideMockStore({ initialState }),
+        { provide: FirebaseAuthService, useValue: authServiceMock }
+      ]
     }).compileComponents();
 
     store = TestBed.inject(MockStore);
