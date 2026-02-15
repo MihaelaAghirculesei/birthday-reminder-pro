@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -54,7 +54,7 @@ import { BirthdayFacadeService, CategoryFacadeService, LoggerService } from '../
         ]),
     ]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;
 
   private readonly fb = inject(FormBuilder);
@@ -72,6 +72,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private testDataTimer: ReturnType<typeof setTimeout> | null = null;
   private dashboardComponentRef: ComponentRef<unknown> | null = null;
   private isDashboardLoaded = false;
+  private viewReady = false;
 
   constructor() {
     this.birthdayForm = this.fb.group({
@@ -86,12 +87,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     effect(() => {
       const hasBirthdays = this.birthdays().length > 0;
 
+      if (!this.viewReady) return;
+
       if (hasBirthdays && !this.isDashboardLoaded) {
         this.loadDashboard();
       } else if (!hasBirthdays && this.isDashboardLoaded) {
         this.unloadDashboard();
       }
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.viewReady = true;
+    if (this.birthdays().length > 0 && !this.isDashboardLoaded) {
+      this.loadDashboard();
+    }
   }
 
   ngOnInit(): void {
