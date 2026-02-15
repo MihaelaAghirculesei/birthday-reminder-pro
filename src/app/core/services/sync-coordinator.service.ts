@@ -33,6 +33,7 @@ export class SyncCoordinatorService {
   private readonly destroy$ = new Subject<void>();
   private subscriptions: Subscription[] = [];
   private isInitialized = false;
+  private hasActiveListeners = false;
 
   async initialize(): Promise<void> {
     if (!isPlatformBrowser(this.platformId) || this.isInitialized) return;
@@ -93,13 +94,17 @@ export class SyncCoordinatorService {
       });
 
     this.subscriptions.push(birthdaysSub, categoriesSub);
+    this.hasActiveListeners = true;
     this.logger.info('[SyncCoordinator] Cloud listeners setup for user:', userId);
   }
 
   private teardownCloudListeners(): void {
+    if (!this.hasActiveListeners) return;
+
     this.firestoreService.unsubscribeAll();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.subscriptions = [];
+    this.hasActiveListeners = false;
     this.logger.info('[SyncCoordinator] Cloud listeners torn down');
   }
 

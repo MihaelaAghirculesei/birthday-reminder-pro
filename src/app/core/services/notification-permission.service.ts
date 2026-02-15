@@ -15,7 +15,7 @@ export class NotificationPermissionService {
     @Inject(PLATFORM_ID) private platformId: object,
     private logger: LoggerService
   ) {
-    if ('permissions' in navigator) {
+    if (isPlatformBrowser(this.platformId) && 'permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' as PermissionName })
         .then(permissionStatus => {
           permissionStatus.onchange = () => {
@@ -31,7 +31,9 @@ export class NotificationPermissionService {
   }
 
   isSupported(): boolean {
-    return 'Notification' in window &&
+    return isPlatformBrowser(this.platformId) &&
+           typeof window !== 'undefined' &&
+           'Notification' in window &&
            typeof Notification.requestPermission === 'function' &&
            'serviceWorker' in navigator;
   }
