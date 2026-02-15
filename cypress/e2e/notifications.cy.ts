@@ -45,6 +45,8 @@ describe('Notifications', () => {
   it('should close notification manually', () => {
     cy.contains('Show Demo').click();
     cy.get('[data-testid="close-notification"]', { timeout: 10000 }).first().click({ force: true });
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(500); // Wait for exit animation to complete
     cy.get('.notification').should('not.exist');
   });
 });

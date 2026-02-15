@@ -43,8 +43,8 @@ Cypress.Commands.add('waitForAngular', () => {
   cy.get('.app-header', { timeout: 10000 }).should('be.visible');
   // Wait for Angular SSR hydration to complete
   // The SSR pre-renders HTML but event handlers aren't attached until hydration finishes
-  // Check that Angular Material components are fully initialized
-  cy.get('mat-slide-toggle', { timeout: 10000 }).should('exist');
+  // Check that Angular Material components are fully initialized (use add-birthday button as universal hydration marker)
+  cy.get('[data-testid="add-birthday-button"]', { timeout: 10000 }).should('exist');
   // Allow time for Angular to attach all event handlers after DOM is ready
   // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.wait(1000);
