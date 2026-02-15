@@ -159,7 +159,7 @@ describe('NotificationPermissionService', () => {
 
     it('should handle request permission error', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.reject('Error'));
+      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.reject(new Error('Permission request failed')));
 
       const result = await service.requestPermission();
 
@@ -220,7 +220,7 @@ describe('NotificationPermissionService', () => {
     it('should handle showNotification error', async () => {
       windowRef.Notification!.permission = 'granted';
       Object.defineProperty(navigator.serviceWorker, 'ready', {
-        value: Promise.reject('Error'),
+        value: Promise.reject(new Error('Service worker not available')),
         configurable: true
       });
 

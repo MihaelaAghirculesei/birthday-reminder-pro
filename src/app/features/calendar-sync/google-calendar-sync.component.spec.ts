@@ -175,7 +175,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign in error', async () => {
-      googleCalendarServiceSpy.signIn.and.returnValue(Promise.reject('Error'));
+      googleCalendarServiceSpy.signIn.and.returnValue(Promise.reject(new Error('Sign in failed')));
 
       await component.signIn();
 
@@ -209,7 +209,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign out error', async () => {
-      googleCalendarServiceSpy.signOut.and.returnValue(Promise.reject('Error'));
+      googleCalendarServiceSpy.signOut.and.returnValue(Promise.reject(new Error('Sign out failed')));
 
       await expectAsync(component.signOut()).toBeResolved();
     });
@@ -228,7 +228,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle calendar loading error', async () => {
-      googleCalendarServiceSpy.getCalendars.and.returnValue(Promise.reject('Error'));
+      googleCalendarServiceSpy.getCalendars.and.returnValue(Promise.reject(new Error('Failed to load calendars')));
 
       await expectAsync(component.loadCalendars()).toBeResolved();
     });
@@ -263,7 +263,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sync error', async () => {
-      googleCalendarServiceSpy.syncAllBirthdays.and.returnValue(Promise.reject('Error'));
+      googleCalendarServiceSpy.syncAllBirthdays.and.returnValue(Promise.reject(new Error('Sync failed')));
 
       await component.syncAllBirthdays();
 
