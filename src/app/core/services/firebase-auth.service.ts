@@ -30,6 +30,7 @@ export class FirebaseAuthService {
   private readonly userSubject = new BehaviorSubject<AuthUser | null>(null);
   private readonly loadingSubject = new BehaviorSubject<boolean>(true);
   private authUnsubscribe: Unsubscribe | null = null;
+  private isDestroyed = false;
 
   readonly user$ = this.userSubject.asObservable();
   readonly loading$ = this.loadingSubject.asObservable();
@@ -85,6 +86,16 @@ export class FirebaseAuthService {
     }
   }
 
+  async performGoogleSignInDirect(): Promise<AuthUser> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('Auth not available on server');
+    }
+    if (!isFirebaseConfigured()) {
+      throw new Error('Firebase not configured. Add credentials to environment.ts');
+    }
+    return this.performGoogleSignIn();
+  }
+
   signInWithGoogle(): Observable<AuthUser> {
     if (!isPlatformBrowser(this.platformId)) {
       return from(Promise.reject(new Error('Auth not available on server')));
@@ -98,6 +109,10 @@ export class FirebaseAuthService {
   }
 
   private async performGoogleSignIn(): Promise<AuthUser> {
+    if (this.isDestroyed) {
+      throw new Error('Service destroyed');
+    }
+
     const auth = getFirebaseAuth();
 
     if (!auth) {
@@ -166,6 +181,7 @@ export class FirebaseAuthService {
   }
 
   destroy(): void {
+    this.isDestroyed = true;
     if (this.authUnsubscribe) {
       this.authUnsubscribe();
       this.authUnsubscribe = null;

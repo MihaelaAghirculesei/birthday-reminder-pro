@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
 
+import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
 
@@ -74,13 +75,21 @@ import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
 })
 export class AuthButtonComponent {
   private readonly store = inject(Store);
+  private readonly authService = inject(FirebaseAuthService);
 
   loading = toSignal(
     this.store.select(AuthSelectors.selectAuthLoading),
     { initialValue: false }
   );
 
-  signIn(): void {
+  async signIn(): Promise<void> {
     this.store.dispatch(AuthActions.signInWithGoogle());
+    try {
+      const user = await this.authService.performGoogleSignInDirect();
+      this.store.dispatch(AuthActions.signInSuccess({ user }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sign-in failed';
+      this.store.dispatch(AuthActions.signInFailure({ error: message }));
+    }
   }
 }
