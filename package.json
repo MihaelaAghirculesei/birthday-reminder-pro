@@ -23,7 +23,7 @@
     "serve:ssr:birthday-reminder-pro": "node dist/birthday-reminder-pro/server/server.mjs",
     "lint": "ng lint",
     "validate:ci": "node scripts/validate-ci.js",
-    "ci:local": "npm run validate:ci && npm audit --omit=dev --audit-level=moderate && npm run lint && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.app.json && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json && npm test -- --watch=false --browsers=ChromeHeadless --code-coverage && npm run e2e:ci && npm run build && node -e \"const fs=require('fs');const f=fs.readdirSync('dist/birthday-reminder-pro/browser').find(x=>x.startsWith('main')&&x.endsWith('.js'));const s=fs.statSync('dist/birthday-reminder-pro/browser/'+f).size;console.log('Main bundle:',Math.round(s/1024)+'KB');if(s>512000){console.error('ERROR: Bundle > 500KB!');process.exit(1)}\"",
+    "ci:local": "npm run validate:ci && npm audit --omit=dev --audit-level=moderate && npm run lint && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.app.json && npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json && npm test -- --watch=false --code-coverage && npm run e2e:ci && npm run build && node -e \"const fs=require('fs');const f=fs.readdirSync('dist/birthday-reminder-pro/browser').find(x=>x.startsWith('main')&&x.endsWith('.js'));const s=fs.statSync('dist/birthday-reminder-pro/browser/'+f).size;console.log('Main bundle:',Math.round(s/1024)+'KB');if(s>512000){console.error('ERROR: Bundle > 500KB!');process.exit(1)}\"",
     "clean": "npx rimraf node_modules dist .angular",
     "clean:all": "npm cache clean --force && npx rimraf node_modules dist .angular"
   },

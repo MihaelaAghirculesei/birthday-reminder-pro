@@ -45,17 +45,37 @@ module.exports = function (config) {
       }
     },
     reporters: ['progress', 'kjhtml', 'coverage'],
-    browsers: ['ChromeHeadless'],
+    browsers: ['ChromeHeadlessNoNoise'],
     customLaunchers: {
+      ChromeHeadlessNoNoise: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-extensions',
+          '--disable-translate',
+          '--disable-sync',
+          '--disable-component-extensions-with-background-pages',
+          '--no-first-run'
+        ]
+      },
       ChromeHeadlessCI: {
         base: 'ChromeHeadless',
         flags: [
           '--no-sandbox',
           '--disable-gpu',
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-extensions',
+          '--disable-translate',
+          '--disable-sync',
+          '--no-first-run',
+          '--disable-component-extensions-with-background-pages'
         ]
       }
     },
+    forceKillTimeout: 10000,
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
@@ -64,6 +84,8 @@ module.exports = function (config) {
     restartOnFileChange: true,
     browserDisconnectTimeout: 10000,
     browserDisconnectTolerance: 3,
-    browserNoActivityTimeout: 60000
+    browserNoActivityTimeout: 60000,
+    processKillTimeout: 10000,
+    captureTimeout: 60000
   });
 };
