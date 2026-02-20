@@ -8,6 +8,14 @@ export default defineConfig({
     video: false,
     screenshotOnRunFailure: true,
     setupNodeEvents(on, config) {
+      on('task', {
+        log(message: string) {
+          if (!message.includes('ws://') && !message.includes('WebSocket')) {
+            console.log(message);
+          }
+          return null;
+        }
+      });
     },
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
     supportFile: 'cypress/support/e2e.ts',

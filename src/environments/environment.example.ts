@@ -10,6 +10,8 @@ export const environment = {
   googleCalendar: {
     clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
   },
+  // Firebase Console → Authentication → Sign-in method → Google → Web client ID
+  googleAuthClientId: '',
   firebase: {
     apiKey: 'YOUR_FIREBASE_API_KEY',
     authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',

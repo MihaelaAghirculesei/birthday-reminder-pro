@@ -465,6 +465,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Some transitions could be smoother
 - Google Calendar re-authentication after token expiry
 
+### WebSocket errors during E2E tests
+When running `npm run ci:local` you may see errors like:
+
+```
+Cannot establish a connection with the server ws://localhost:4203/
+```
+
+These errors are **normal and expected** - they occur because the dev server is terminated after the tests, but the browser keeps trying to maintain the WebSocket connection. The tests have still passed successfully.
+
 ---
 
 **Note:** This is a learning project I built to practice NgRx and offline-first architecture. Feel free to check out the code!
