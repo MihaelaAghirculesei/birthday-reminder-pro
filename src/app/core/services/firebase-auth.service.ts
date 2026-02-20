@@ -4,12 +4,14 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   signOut,
   onAuthStateChanged,
   Unsubscribe
 } from 'firebase/auth';
 import { Observable, BehaviorSubject, from } from 'rxjs';
 import { getFirebaseAuth, isFirebaseConfigured } from '../../firebase.config';
+import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
 
 export interface AuthUser {
@@ -80,6 +82,7 @@ export class FirebaseAuthService {
           this.loadingSubject.next(false);
         });
       });
+
     } catch (error) {
       this.logger.error('[FirebaseAuth] Failed to initialize auth listener:', error);
       this.loadingSubject.next(false);
@@ -119,8 +122,22 @@ export class FirebaseAuthService {
       throw new Error('Firebase Auth not available');
     }
 
-    const provider = new GoogleAuthProvider();
+    // Try Google Identity Services first (no popup → no COOP warnings)
+    if (environment.googleAuthClientId && isPlatformBrowser(this.platformId)) {
+      try {
+        return await this.signInWithGIS(auth);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : '';
+        if (msg.startsWith('GIS_')) {
+          this.logger.info('[FirebaseAuth] GIS unavailable, falling back to popup');
+        } else {
+          throw error;
+        }
+      }
+    }
 
+    // Fallback: popup flow
+    const provider = new GoogleAuthProvider();
     provider.addScope('email');
     provider.addScope('profile');
 
@@ -141,6 +158,37 @@ export class FirebaseAuthService {
 
       throw new Error(firebaseError.message || 'Sign-in failed');
     }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private signInWithGIS(auth: any): Promise<AuthUser> {
+    return new Promise<AuthUser>((resolve, reject) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const gis = (window as any).google?.accounts?.id;
+      if (!gis) {
+        reject(new Error('GIS_NOT_LOADED'));
+        return;
+      }
+
+      gis.initialize({
+        client_id: environment.googleAuthClientId,
+        callback: async (response: { credential: string }) => {
+          try {
+            const credential = GoogleAuthProvider.credential(response.credential);
+            const result = await signInWithCredential(auth, credential);
+            this.logger.info('[FirebaseAuth] GIS sign-in successful');
+            resolve(this.mapFirebaseUser(result.user));
+          } catch (error) {
+            this.logger.error('[FirebaseAuth] GIS credential sign-in failed:', error);
+            reject(error);
+          }
+        },
+        auto_select: true,
+        use_fedcm_for_prompt: true,
+      });
+
+      gis.prompt();
+    });
   }
 
   signOut(): Observable<void> {
