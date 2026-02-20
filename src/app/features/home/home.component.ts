@@ -54,7 +54,7 @@ import { BirthdayFacadeService, CategoryFacadeService, LoggerService } from '../
         ]),
     ]
 })
-export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;
 
   private readonly fb = inject(FormBuilder);

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChild, HostListener, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -127,8 +127,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
         <input #importVCard type="file" accept=".vcf" hidden (change)="onImportVCard($event)">
         <h1 class="hero-title" id="main-title">
           <picture>
-            <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="60" height="60">
-            <img src="assets/icons/logo-reminder.png" alt="Birthday Memories application logo" class="app-logo" width="60" height="60" loading="eager" decoding="sync">
+            <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="46" height="46">
+            <img src="assets/icons/logo-reminder.png" alt="Birthday Memories application logo" class="app-logo" width="46" height="46" loading="eager" decoding="sync">
           </picture>
           Birthday Memories
         </h1>
@@ -137,6 +137,91 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
         </div>
       </div>
       <p class="hero-subtitle">Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style.</p>
+      <nav class="nav-strip" role="navigation" aria-label="Main navigation">
+        <a mat-button routerLink="/" class="nav-strip-item">
+          <mat-icon>home</mat-icon>
+          <span>Dashboard</span>
+        </a>
+        <a mat-button routerLink="/scheduled-messages" class="nav-strip-item">
+          <mat-icon>schedule_send</mat-icon>
+          <span>Messages</span>
+        </a>
+        <button mat-button [matMenuTriggerFor]="stripSettingsMenu" class="nav-strip-item">
+          <mat-icon>settings</mat-icon>
+          <span>Settings</span>
+          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+        </button>
+        <button mat-button [matMenuTriggerFor]="stripImportMenu" class="nav-strip-item">
+          <mat-icon>upload_file</mat-icon>
+          <span>Import</span>
+          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+        </button>
+        <button mat-button [matMenuTriggerFor]="stripExportMenu" class="nav-strip-item">
+          <mat-icon>download</mat-icon>
+          <span>Export</span>
+          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+        </button>
+        @if (isAuthenticated()) {
+          <div class="nav-strip-spacer"></div>
+          <div class="nav-strip-user">
+            @if (userPhotoURL()) {
+              <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" referrerpolicy="no-referrer" />
+            } @else {
+              <mat-icon class="nav-strip-user-icon">account_circle</mat-icon>
+            }
+            <span class="nav-strip-user-name">{{ userDisplayName() || 'User' }}</span>
+          </div>
+          <button mat-button (click)="signOut()" class="nav-strip-item nav-strip-signout">
+            <mat-icon>logout</mat-icon>
+            <span>Sign out</span>
+          </button>
+        } @else if (!authLoading()) {
+          <div class="nav-strip-spacer"></div>
+          <app-auth-button></app-auth-button>
+        }
+      </nav>
+      <mat-menu #stripSettingsMenu="matMenu" class="nav-strip-dropdown">
+        <a mat-menu-item routerLink="/calendar-sync">
+          <mat-icon>sync</mat-icon>
+          <span>Calendar Sync</span>
+        </a>
+        <button mat-menu-item (click)="openSenderSettings()">
+          <mat-icon>badge</mat-icon>
+          <span>Message Signature</span>
+        </button>
+        <button mat-menu-item (click)="enableNotifications()" [disabled]="notificationsGranted">
+          <mat-icon>{{ notificationsGranted ? 'notifications_active' : 'notifications' }}</mat-icon>
+          <span>{{ notificationsGranted ? 'Notifications Enabled' : 'Enable Notifications' }}</span>
+        </button>
+        <button mat-menu-item (click)="themeService.toggleDarkMode()">
+          <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <span>{{ themeService.darkMode() ? 'Light Theme' : 'Dark Theme' }}</span>
+        </button>
+      </mat-menu>
+      <mat-menu #stripImportMenu="matMenu" class="nav-strip-dropdown">
+        <button mat-menu-item (click)="importJSON.click()">
+          <mat-icon>data_object</mat-icon>
+          <span>Import JSON</span>
+        </button>
+        <button mat-menu-item (click)="importCSV.click()">
+          <mat-icon>table_chart</mat-icon>
+          <span>Import CSV</span>
+        </button>
+        <button mat-menu-item (click)="importVCard.click()">
+          <mat-icon>contact_page</mat-icon>
+          <span>Import vCard</span>
+        </button>
+      </mat-menu>
+      <mat-menu #stripExportMenu="matMenu" class="nav-strip-dropdown">
+        <button mat-menu-item (click)="exportJSON()">
+          <mat-icon>data_object</mat-icon>
+          <span>Export JSON</span>
+        </button>
+        <button mat-menu-item (click)="exportCSV()">
+          <mat-icon>table_chart</mat-icon>
+          <span>Export CSV</span>
+        </button>
+      </mat-menu>
     </header>
   `,
     styles: [`
@@ -154,15 +239,15 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .app-header {
-      --header-icon-size: 60px;
+      --header-icon-size: 46px;
       background: rgba(102, 126, 234, 0.5);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       color: #1a1a1a;
-      padding: 2rem;
+      padding: 1rem 1.5rem;
       text-align: center;
       border-radius: 12px;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2),
                   inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -178,19 +263,20 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 
     .header-top {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      gap: 1rem;
+      position: relative;
+      min-height: var(--header-icon-size);
     }
 
     .hero-title {
-      font-size: 2.5rem;
+      font-size: 1.8rem;
       margin: 0;
       font-weight: 700;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.6rem;
     }
 
     .app-logo {
@@ -201,8 +287,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .hero-subtitle {
-      font-size: 1.1rem;
-      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      margin: 0.25rem 0 0;
       opacity: 0.85;
       font-weight: 300;
       color: #1a1a1a;
@@ -216,6 +302,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       display: flex;
       align-items: center;
       gap: 1rem;
+      position: absolute;
+      right: 0;
     }
 
     ::ng-deep .nav-menu-main.mat-mdc-menu-panel {
@@ -321,6 +409,11 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .menu-btn {
+      display: none;
+      position: absolute;
+      left: 0;
+      align-items: center;
+      justify-content: center;
       color: #1a1a1a;
       opacity: 0.9;
       width: var(--header-icon-size);
@@ -348,39 +441,243 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       position: static;
     }
 
+    /* Strip dropdown glassmorphism */
+    ::ng-deep .nav-strip-dropdown.mat-mdc-menu-panel {
+      background: rgba(102, 126, 234, 0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      min-width: 200px;
+
+      .mat-mdc-menu-content {
+        color: #1a1a1a;
+      }
+
+      .mat-mdc-menu-item {
+        color: #1a1a1a !important;
+
+        .mat-icon {
+          color: rgba(26, 26, 26, 0.75) !important;
+        }
+
+        .mdc-list-item__primary-text {
+          color: #1a1a1a !important;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        &[disabled] {
+          opacity: 0.6 !important;
+        }
+      }
+
+      mat-divider, .mat-divider {
+        border-top-color: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+
+    ::ng-deep body.dark-theme .nav-strip-dropdown.mat-mdc-menu-panel {
+      background: rgba(40, 40, 40, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+      .mat-mdc-menu-content {
+        color: white;
+      }
+
+      .mat-mdc-menu-item {
+        color: white !important;
+
+        .mat-icon {
+          color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .mdc-list-item__primary-text {
+          color: white !important;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      mat-divider, .mat-divider {
+        border-top-color: rgba(255, 255, 255, 0.15) !important;
+      }
+    }
+
+    /* Nav strip */
+    .nav-strip {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-top: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      flex-wrap: wrap;
+
+      :host-context(body.dark-theme) & {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    .nav-strip-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #1a1a1a !important;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: 8px;
+      padding: 0.3rem 0.75rem;
+      min-height: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: background 0.2s ease, border-color 0.2s ease;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.08);
+        border-color: rgba(0, 0, 0, 0.15);
+      }
+
+      .mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #1a1a1a;
+      }
+
+      :host-context(body.dark-theme) & {
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.12);
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .mat-icon {
+          color: rgba(255, 255, 255, 0.85);
+        }
+      }
+    }
+
+    .nav-strip-arrow {
+      font-size: 18px !important;
+      width: 18px !important;
+      height: 18px !important;
+      margin-left: -0.2rem;
+      opacity: 0.6;
+    }
+
+    .nav-strip-spacer {
+      flex: 1;
+    }
+
+    .nav-strip-user {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0 0.5rem;
+      font-size: 0.85rem;
+      color: #1a1a1a;
+      opacity: 0.85;
+
+      :host-context(body.dark-theme) & {
+        color: white;
+      }
+    }
+
+    .nav-strip-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .nav-strip-user-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .nav-strip-user-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav-strip-signout {
+      opacity: 0.7;
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 1180px) {
+      .nav-strip {
+        gap: 0.5rem;
+      }
+
+      .nav-strip-item {
+        padding: 0.3rem 0.5rem;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 1010px) {
+      .menu-btn {
+        display: inline-flex;
+      }
+
+      .nav-strip {
+        display: none;
+      }
+    }
+
     @media (max-width: 768px) {
       .app-header {
-        --header-icon-size: 50px;
-        padding: 1.5rem;
+        --header-icon-size: 40px;
+        padding: 0.75rem 1rem;
       }
 
       .hero-title {
-        font-size: 1.8rem;
+        font-size: 1.4rem;
       }
 
       .hero-subtitle {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
       }
     }
 
     @media (max-width: 430px) {
       .app-header {
-        padding: 1rem;
+        padding: 0.6rem 0.75rem;
       }
 
       .hero-title {
-        font-size: 1.3rem;
-        gap: 0.5rem;
+        font-size: 1.15rem;
+        gap: 0.4rem;
       }
 
       .hero-subtitle {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
       }
     }
 
   `]
 })
-export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
   private readonly backupService = inject(BackupService);
@@ -395,22 +692,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
   notificationsGranted = false;
-  private hideTimer: ReturnType<typeof setTimeout> | null = null;
-  private menuHideTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly hideDelay = 3000;
-  private menuMouseEnterHandler = () => this.clearMenuTimer();
-  private menuMouseLeaveHandler = () => this.startMenuHideTimer();
-
-  @HostListener('mouseenter')
-  onMouseEnter(): void {
-    this.showHeader();
-    this.clearTimer();
-  }
-
-  @HostListener('mouseleave')
-  onMouseLeave(): void {
-    this.startHideTimer();
-  }
+  private lastScrollY = 0;
+  private readonly scrollThreshold = 10;
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -418,75 +701,40 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
       this.permissionService.permissionStatus.subscribe(status => {
         this.notificationsGranted = status === 'granted';
       });
+      this.lastScrollY = this.getScrollY();
       this.ngZone.runOutsideAngular(() => {
-        document.addEventListener('mousemove', this.onDocumentMouseMove);
+        window.addEventListener('scroll', this.onScroll, { passive: true });
+        document.body.addEventListener('scroll', this.onScroll, { passive: true });
       });
-      this.startHideTimer();
     }
   }
 
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId) && this.navMenuTrigger) {
-      this.navMenuTrigger.menuOpened.subscribe(() => {
-        const panel = document.querySelector('.nav-menu-panel') as HTMLElement;
-        if (panel) {
-          const overlay = panel.closest('.cdk-overlay-pane')?.parentElement as HTMLElement;
-          const container = overlay || panel;
-          container.addEventListener('mouseenter', this.menuMouseEnterHandler);
-          container.addEventListener('mouseleave', this.menuMouseLeaveHandler);
-          this.startMenuHideTimer();
-        }
-      });
-      this.navMenuTrigger.menuClosed.subscribe(() => {
-        this.clearMenuTimer();
-      });
-    }
-  }
+ 
 
   ngOnDestroy(): void {
-    this.clearTimer();
-    this.clearMenuTimer();
     if (isPlatformBrowser(this.platformId)) {
-      document.removeEventListener('mousemove', this.onDocumentMouseMove);
+      window.removeEventListener('scroll', this.onScroll);
+      document.body.removeEventListener('scroll', this.onScroll);
     }
   }
 
-  private onDocumentMouseMove = (): void => {
-    this.showHeader();
-    this.startHideTimer();
-  };
-
-  private showHeader(): void {
-    this.el.nativeElement.classList.remove('header-hidden');
+  private getScrollY(): number {
+    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
   }
 
-  private startHideTimer(): void {
-    this.clearTimer();
-    this.hideTimer = setTimeout(() => {
+  private onScroll = (): void => {
+    const currentY = this.getScrollY();
+    if (currentY <= 0) {
+      this.el.nativeElement.classList.remove('header-hidden');
+      this.lastScrollY = currentY;
+    } else if (currentY > this.lastScrollY + this.scrollThreshold) {
       this.el.nativeElement.classList.add('header-hidden');
-    }, this.hideDelay);
-  }
-
-  private clearTimer(): void {
-    if (this.hideTimer) {
-      clearTimeout(this.hideTimer);
-      this.hideTimer = null;
+      this.lastScrollY = currentY;
+    } else if (currentY < this.lastScrollY - this.scrollThreshold) {
+      this.el.nativeElement.classList.remove('header-hidden');
+      this.lastScrollY = currentY;
     }
-  }
-
-  private startMenuHideTimer(): void {
-    this.clearMenuTimer();
-    this.menuHideTimer = setTimeout(() => {
-      this.navMenuTrigger?.closeMenu();
-    }, this.hideDelay);
-  }
-
-  private clearMenuTimer(): void {
-    if (this.menuHideTimer) {
-      clearTimeout(this.menuHideTimer);
-      this.menuHideTimer = null;
-    }
-  }
+  };
 
   isAuthenticated = toSignal(
     this.store.select(AuthSelectors.selectIsAuthenticated),
