@@ -1,3 +1,5 @@
+@use '../../../../../styles/shared' as *;
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -6,10 +8,7 @@
 }
 
 .stat-card {
-  background: var(--surface) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow) !important;
-  border: 1px solid var(--border-light) !important;
+  @include surface-card;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   position: relative;
@@ -93,7 +92,7 @@
     flex: 1;
 
     .stat-number {
-      font-size: 2.5rem;
+      font-size: clamp(1.2rem, 3vw, 1.75rem);
       font-weight: 800;
       background: var(--primary);
       -webkit-background-clip: text;
@@ -107,8 +106,6 @@
       font-size: 1rem;
       color: var(--text-secondary);
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
   }
 }
@@ -125,10 +122,6 @@
       min-width: 60px;
       min-height: 60px;
       font-size: 32px;
-    }
-
-    .stat-info .stat-number {
-      font-size: 2rem;
     }
   }
 }
@@ -150,10 +143,6 @@
       min-width: 56px;
       min-height: 56px;
       font-size: 28px;
-    }
-
-    .stat-info .stat-number {
-      font-size: 1.75rem;
     }
   }
 }

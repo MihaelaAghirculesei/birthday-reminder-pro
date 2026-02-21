@@ -1,10 +1,7 @@
 @use '../../../../../styles/shared' as *;
 
 .chart-card {
-  background: var(--surface) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow) !important;
-  border: 1px solid var(--border-light) !important;
+  @include surface-card;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
