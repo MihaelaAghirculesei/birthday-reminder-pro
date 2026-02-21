@@ -1,15 +1,6 @@
+@use '../../../../../styles/shared' as *;
 
-::ng-deep .mat-mdc-dialog-container {
-  background: transparent !important;
-  box-shadow: none !important;
-
-  .mdc-dialog__surface {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border-radius: 16px !important;
-    overflow: hidden;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3) !important;
-  }
-}
+@include gradient-dialog-surface($dark-bg: null);
 
 .category-reassign-dialog {
   min-width: 500px;
@@ -30,13 +21,13 @@
       font-size: 32px;
       width: 32px;
       height: 32px;
-      color: rgba(255, 255, 255, 0.9);
+      color: $white-90;
     }
 
     h2 {
       margin: 0;
       flex: 1;
-      font-size: 1.5rem;
+      font-size: clamp(0.95rem, 3.5vw, 1.5rem);
       font-weight: 700;
       color: white;
     }
@@ -59,12 +50,9 @@
 
   mat-dialog-content {
     .warning-message {
-      background: rgba(255, 255, 255, 0.15) !important;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px !important;
+      @include glass-panel;
       padding: 16px;
       margin-bottom: 24px;
-      backdrop-filter: blur(10px);
 
       .count-warning {
         font-size: 16px;
@@ -80,17 +68,14 @@
 
       .info-text {
         margin: 0;
-        color: rgba(255, 255, 255, 0.9);
+        color: $white-90;
       }
     }
 
     .reassign-section {
+      @include glass-panel;
       margin-bottom: 24px;
-      background: rgba(255, 255, 255, 0.15) !important;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px !important;
       padding: 16px;
-      backdrop-filter: blur(10px);
 
       h3 {
         font-size: 16px;
@@ -121,17 +106,14 @@
     }
 
     .alternative-section {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px !important;
+      @include glass-panel($bg-opacity: 0.1);
       padding: 16px;
       margin-top: 16px;
-      backdrop-filter: blur(10px);
 
       .alternative-text {
         margin: 0;
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.9);
+        color: $white-90;
       }
     }
   }
@@ -155,7 +137,7 @@
           .mdc-notched-outline__leading,
           .mdc-notched-outline__notch,
           .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.5) !important;
+            border-color: $white-50 !important;
             border-width: 2px !important;
           }
 
@@ -199,11 +181,11 @@
       }
 
       .mat-mdc-form-field-hint {
-        color: rgba(255, 255, 255, 0.7) !important;
+        color: $white-70 !important;
       }
 
       .mat-mdc-select-arrow {
-        color: rgba(255, 255, 255, 0.8);
+        color: $white-80;
       }
 
       &.mat-focused {
@@ -211,7 +193,7 @@
           .mdc-notched-outline__leading,
           .mdc-notched-outline__notch,
           .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: $white-90 !important;
             border-width: 2px !important;
           }
         }
@@ -222,7 +204,7 @@
           .mdc-notched-outline__leading,
           .mdc-notched-outline__notch,
           .mdc-notched-outline__trailing {
-            border-color: rgba(255, 255, 255, 0.7) !important;
+            border-color: $white-70 !important;
           }
         }
       }
@@ -237,7 +219,7 @@
     button[mat-stroked-button],
     button[mat-raised-button] {
       color: #764ba2 !important;
-      border: 2px solid rgba(255, 255, 255, 0.5) !important;
+      border: 2px solid $white-50 !important;
       background: white !important;
       border-radius: 4px !important;
 
@@ -256,7 +238,7 @@
       &:hover {
         background: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
-        border-color: rgba(255, 255, 255, 0.5) !important;
+        border-color: $white-50 !important;
 
         .mdc-button__label {
           color: white !important;
@@ -320,13 +302,13 @@
     &:hover,
     &.mat-mdc-option-active {
       background: rgba(255, 255, 255, 0.15) !important;
-      border-color: rgba(255, 255, 255, 0.5) !important;
+      border-color: $white-50 !important;
       transform: translateX(4px);
     }
 
     &.mat-mdc-option-selected {
       background: rgba(255, 255, 255, 0.25) !important;
-      border-color: rgba(255, 255, 255, 0.7) !important;
+      border-color: $white-70 !important;
     }
   }
 }
