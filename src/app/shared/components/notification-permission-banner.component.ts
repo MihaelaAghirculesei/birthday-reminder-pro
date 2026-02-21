@@ -102,7 +102,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
 
     .text-section h3 {
       margin: 0 0 8px 0;
-      font-size: 20px;
+      font-size: clamp(0.95rem, 3.5vw, 1.5rem);
       font-weight: 500;
     }
 

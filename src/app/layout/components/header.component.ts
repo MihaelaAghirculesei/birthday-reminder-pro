@@ -270,7 +270,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .hero-title {
-      font-size: 1.8rem;
+      font-size: clamp(1.4rem, 5vw, 1.8rem);
       margin: 0;
       font-weight: 700;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
@@ -287,7 +287,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .hero-subtitle {
-      font-size: 0.95rem;
+      font-size: clamp(0.75rem, 2.5vw, 0.95rem);
       margin: 0.25rem 0 0;
       opacity: 0.85;
       font-weight: 300;
@@ -650,14 +650,6 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
         --header-icon-size: 40px;
         padding: 0.75rem 1rem;
       }
-
-      .hero-title {
-        font-size: 1.4rem;
-      }
-
-      .hero-subtitle {
-        font-size: 0.85rem;
-      }
     }
 
     @media (max-width: 430px) {
@@ -666,12 +658,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       }
 
       .hero-title {
-        font-size: 1.15rem;
         gap: 0.4rem;
-      }
-
-      .hero-subtitle {
-        font-size: 0.75rem;
       }
     }
 

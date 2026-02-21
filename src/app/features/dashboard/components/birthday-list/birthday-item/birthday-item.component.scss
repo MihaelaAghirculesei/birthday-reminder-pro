@@ -1,10 +1,10 @@
 @use '../../../../../../styles/shared' as *;
 
 .dashboard-avatar {
-  width: 200px;
-  height: 200px;
-  min-width: 200px;
-  min-height: 200px;
+  width: clamp(80px, 25vw, 200px);
+  height: clamp(80px, 25vw, 200px);
+  min-width: clamp(80px, 25vw, 200px);
+  min-height: clamp(80px, 25vw, 200px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,9 +22,9 @@
   }
 
   .dashboard-default-icon {
-    font-size: 100px;
-    width: 100px;
-    height: 100px;
+    font-size: clamp(40px, 12vw, 100px);
+    width: clamp(40px, 12vw, 100px);
+    height: clamp(40px, 12vw, 100px);
     background: var(--primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

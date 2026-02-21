@@ -161,7 +161,7 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
         padding: 32px;
 
         .mat-mdc-card-title {
-          font-size: 1.75rem;
+          font-size: clamp(1rem, 4vw, 1.75rem);
           font-weight: 700;
           margin: 0;
           color: var(--text-primary);
@@ -329,10 +329,6 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
 
         .mat-mdc-card-header {
           padding: 16px;
-
-          .mat-mdc-card-title {
-            font-size: 1.2rem;
-          }
         }
       }
 
