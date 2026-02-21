@@ -2,6 +2,20 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+
+  .mat-mdc-form-field {
+    font-size: 14px;
+
+    .mat-mdc-floating-label.mdc-floating-label {
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    .mat-mdc-select-value {
+      font-size: 14px;
+    }
+  }
 }
 
 .category-option {
@@ -54,8 +68,6 @@
   font-size: 1.1rem;
   font-weight: 600;
   border-radius: var(--radius) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   mat-icon {
