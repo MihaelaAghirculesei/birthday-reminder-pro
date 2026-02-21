@@ -1,3 +1,5 @@
+@use '../../../../../styles/shared' as *;
+
 .dialog-container {
   width: 100%;
   max-width: 700px;
@@ -48,27 +50,7 @@ h2[mat-dialog-title] {
     color: var(--text-primary);
   }
 
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f5f5f5;
-    border-radius: 4px;
-
-    :host-context(body.dark-theme) & {
-      background: var(--surface-elevated);
-    }
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--primary);
-    border-radius: 4px;
-
-    &:hover {
-      background: var(--secondary);
-    }
-  }
+  @include custom-scrollbar;
 }
 
 .edit-form {
@@ -142,46 +124,7 @@ h2[mat-dialog-title] {
   }
 }
 
-.contact-section {
-  background: #f9f9f9;
-  border-radius: var(--radius);
-  border: 1px solid #e0e0e0;
-  padding: 16px;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface-elevated);
-    border-color: var(--border-light);
-  }
-
-  .contact-section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 16px;
-    color: #1a1a1a;
-    font-weight: 600;
-    font-size: 1rem;
-
-    :host-context(body.dark-theme) & {
-      color: var(--text-primary);
-    }
-
-    mat-icon {
-      color: var(--primary);
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-  }
-
-  .contact-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-}
-
+.contact-section,
 .photo-section,
 .scheduler-section {
   background: #f9f9f9;
@@ -194,6 +137,16 @@ h2[mat-dialog-title] {
   }
 }
 
+.contact-section {
+  padding: 16px;
+
+  .contact-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
 .photo-section {
   padding: 16px;
 }
@@ -203,6 +156,7 @@ h2[mat-dialog-title] {
   overflow: hidden;
 }
 
+.contact-section-title,
 .photo-section-title {
   display: flex;
   align-items: center;
@@ -223,7 +177,9 @@ h2[mat-dialog-title] {
     height: 20px;
     flex-shrink: 0;
   }
+}
 
+.photo-section-title {
   .title-text {
     display: flex;
     flex-direction: column;
