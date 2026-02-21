@@ -49,27 +49,11 @@
   }
 
   .test-info {
-    flex: 1;
+    @include info-card-text;
 
-    h3 {
-      margin: 0 0 8px 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-inverse);
-
-      :host-context(body.dark-theme) & {
-        color: var(--text-primary);
-      }
-    }
-
-    p {
-      margin: 0;
-      font-size: 1rem;
-      color: rgba(255, 255, 255, 0.9);
-
-      :host-context(body.dark-theme) & {
-        color: var(--text-secondary);
-      }
+    :host-context(body.dark-theme) & {
+      h3 { color: var(--text-primary); }
+      p { color: var(--text-secondary); }
     }
   }
 
@@ -103,7 +87,6 @@
     }
 
     .test-info {
-      h3 { font-size: 1.3rem; }
       p { font-size: 0.9rem; }
     }
 
