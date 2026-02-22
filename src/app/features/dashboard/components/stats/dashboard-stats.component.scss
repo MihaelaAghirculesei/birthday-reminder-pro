@@ -126,23 +126,24 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 530px) {
   .stats-row {
     grid-template-columns: 1fr;
     gap: 12px;
   }
 
   .stat-card {
-    .stat-content {
-      gap: 16px;
-      flex-direction: column;
-      align-items: flex-start;
+    .mat-mdc-card-content {
+      padding: 16px !important;
     }
 
     .stat-icon {
-      min-width: 56px;
-      min-height: 56px;
       font-size: 28px;
+      width: 28px;
+      height: 28px;
+      min-width: 52px;
+      min-height: 52px;
+      padding: 12px;
     }
   }
 }
