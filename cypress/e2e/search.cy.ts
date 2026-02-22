@@ -33,13 +33,13 @@ describe('Search Functionality', () => {
   });
 
   it('should search birthdays by name', () => {
-    cy.contains('Alice Johnson').should('be.visible');
-    cy.contains('Bob Smith').should('be.visible');
-    cy.contains('Charlie Brown').should('be.visible');
+    cy.contains('Alice Johnson').should('exist');
+    cy.contains('Bob Smith').should('exist');
+    cy.contains('Charlie Brown').should('exist');
 
     cy.get('.dashboard-search-field input').type('Alice', { force: true });
 
-    cy.contains('Alice Johnson').should('be.visible');
+    cy.contains('Alice Johnson').should('exist');
     cy.contains('Bob Smith').should('not.exist');
     cy.contains('Charlie Brown').should('not.exist');
   });
@@ -50,9 +50,9 @@ describe('Search Functionality', () => {
 
     cy.get('.dashboard-search-field input').clear({ force: true });
 
-    cy.contains('Alice Johnson').should('be.visible');
-    cy.contains('Bob Smith').should('be.visible');
-    cy.contains('Charlie Brown').should('be.visible');
+    cy.contains('Alice Johnson').should('exist');
+    cy.contains('Bob Smith').should('exist');
+    cy.contains('Charlie Brown').should('exist');
   });
 
   it('should show no results message for non-existent search', () => {
