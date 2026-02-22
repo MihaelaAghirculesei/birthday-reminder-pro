@@ -662,6 +662,33 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       }
     }
 
+    @media (max-width: 380px) {
+      .header-top {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4rem;
+      }
+
+      .hero-title {
+        order: -1;
+        flex-basis: 100%;
+        justify-content: center;
+
+        .app-logo {
+          height: 28px;
+          width: 28px;
+        }
+      }
+
+      .menu-btn {
+        position: static;
+      }
+
+      .header-controls {
+        position: static;
+      }
+    }
+
   `]
 })
 export class HeaderComponent implements OnInit, OnDestroy {

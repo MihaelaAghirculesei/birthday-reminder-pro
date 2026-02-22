@@ -37,13 +37,31 @@ import { NetworkService } from '../../core';
       }
 
       span {
-        @media (max-width: 430px) {
+        @media (max-width: 600px) {
           display: none;
         }
       }
 
-      @media (max-width: 430px) {
+      @media (max-width: 600px) {
         padding: 8px;
+        position: relative;
+
+        &:hover span {
+          display: block;
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          margin-top: 6px;
+          padding: 4px 10px;
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          z-index: 100;
+          pointer-events: none;
+        }
       }
 
       &.offline {
