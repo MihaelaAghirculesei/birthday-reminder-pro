@@ -1,9 +1,9 @@
 @use '../../../../../styles/shared' as *;
 
-@include gradient-dialog-surface($dark-bg: null);
+@include gradient-dialog-surface;
 
 .category-reassign-dialog {
-  min-width: 500px;
+  min-width: min(500px, 90vw);
   max-width: 600px;
   background: transparent !important;
 
@@ -313,7 +313,13 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
+  ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
+    max-width: 90vw !important;
+    max-height: 95vh !important;
+    margin: 0 auto;
+  }
+
   .category-reassign-dialog {
     min-width: auto;
     max-width: 100%;
@@ -334,6 +340,13 @@
 
     ::ng-deep .mat-mdc-dialog-content {
       padding: 16px !important;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    ::ng-deep .mat-mdc-dialog-actions {
+      padding: 12px 16px;
+      flex-wrap: wrap;
     }
   }
 }
