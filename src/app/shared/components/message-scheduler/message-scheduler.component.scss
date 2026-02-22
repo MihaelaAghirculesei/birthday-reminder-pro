@@ -281,23 +281,28 @@
 
   .empty-state {
     text-align: center;
-    padding: 40px;
+    padding: 24px;
     color: var(--scheduler-muted);
 
     > mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      margin-bottom: 8px;
       color: var(--border-light);
     }
 
-    button mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-      margin-bottom: 0;
-      margin-right: 8px;
+    button {
+      padding: 13px 16px;
+      line-height: 1.4;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        margin-bottom: 0;
+        margin-right: 8px;
+      }
     }
 
     h3 {
