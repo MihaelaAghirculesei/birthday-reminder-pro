@@ -19,7 +19,8 @@ export class CategoryManagerService {
 
   addCategory(): void {
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
-      width: '600px',
+      width: 'min(600px, 90vw)',
+      maxWidth: '90vw',
       data: { mode: 'add' }
     });
 
@@ -51,7 +52,8 @@ export class CategoryManagerService {
     if (!category) return;
 
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
-      width: '600px',
+      width: 'min(600px, 90vw)',
+      maxWidth: '90vw',
       data: {
         mode: 'edit',
         category: category
@@ -103,8 +105,8 @@ export class CategoryManagerService {
     }
 
     const dialogRef = this.dialog.open(CategoryReassignDialogComponent, {
-      width: '600px',
-      maxWidth: '95vw',
+      width: 'min(600px, 90vw)',
+      maxWidth: '90vw',
       data: {
         categoryToDelete: { id: '__orphaned__', name: 'Work', icon: 'business_center', color: '#FF9800' },
         affectedBirthdaysCount: uncategorizedBirthdays.length,
@@ -129,8 +131,8 @@ export class CategoryManagerService {
     allCategories: BirthdayCategory[]
   ): void {
     const dialogRef = this.dialog.open(CategoryReassignDialogComponent, {
-      width: '600px',
-      maxWidth: '95vw',
+      width: 'min(600px, 90vw)',
+      maxWidth: '90vw',
       data: {
         categoryToDelete: category,
         affectedBirthdaysCount: affectedBirthdays.length,

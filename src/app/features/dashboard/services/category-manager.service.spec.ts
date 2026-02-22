@@ -91,7 +91,7 @@ describe('CategoryManagerService', () => {
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
-      expect(callArgs[1]?.width).toBe('600px');
+      expect(callArgs[1]?.width).toBe('min(600px, 90vw)');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('add');
     });
 
