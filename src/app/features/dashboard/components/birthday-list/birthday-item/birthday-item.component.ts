@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
 import { ZodiacIconComponent, CategoryIconComponent, MessageIndicatorComponent, Birthday, calculateAge } from '../../../../../shared';
 import { RememberPhotoComponent } from '../../remember-photo/remember-photo.component';
 
@@ -13,6 +15,8 @@ import { RememberPhotoComponent } from '../../remember-photo/remember-photo.comp
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,
+        MatMenuModule,
+        MatDividerModule,
         ZodiacIconComponent,
         CategoryIconComponent,
         RememberPhotoComponent,

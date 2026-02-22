@@ -1,10 +1,10 @@
 @use '../../../../../../styles/shared' as *;
 
 .dashboard-avatar {
-  width: clamp(80px, 25vw, 200px);
-  height: clamp(80px, 25vw, 200px);
-  min-width: clamp(80px, 25vw, 200px);
-  min-height: clamp(80px, 25vw, 200px);
+  width: clamp(80px, 20.6vw, 175px);
+  height: clamp(80px, 20.6vw, 175px);
+  min-width: clamp(80px, 20.6vw, 175px);
+  min-height: clamp(80px, 20.6vw, 175px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,6 +35,7 @@
 .dashboard-birthday-item {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 16px;
   margin: 0 16px;
@@ -187,41 +188,22 @@
   }
 }
 
-.dashboard-icons {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  min-height: 40px;
-
-  * {
-    vertical-align: middle;
-  }
-}
-
-.dashboard-icons-left {
+.dashboard-toolbar {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1;
+  flex-wrap: wrap;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
 }
 
-.dashboard-icons-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-
-  button {
-    margin: 0;
-    align-self: center;
-  }
+.toolbar-spacer {
+  flex: 1;
 }
 
 .edit-button-circle {
   @include circular-button(55px, #007bff, #0056b3);
-  margin-top: 29px;
-  margin-right: 8px;
 
   :host-context(body.dark-theme) & {
     background: var(--button-edit) !important;
@@ -239,7 +221,6 @@
 
 .delete-button-circle {
   @include circular-button(55px, #dc3545, #c82333, 34px);
-  margin-top: 29px;
 
   :host-context(body.dark-theme) & {
     background: var(--button-delete) !important;
@@ -302,5 +283,187 @@
   &.green-safe {
     background: radial-gradient(circle, #00b894 0%, #00cec9 100%);
     box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+  }
+}
+
+@media (max-width: 970px) {
+  .dashboard-birthday-item {
+    gap: 12px;
+    padding: 12px;
+    margin: 0 8px;
+  }
+
+  .dashboard-birthday-content {
+    min-width: 0;
+  }
+
+  .dashboard-toolbar {
+    gap: 8px;
+  }
+
+  .edit-button-circle {
+    @include circular-button(45px, #007bff, #0056b3);
+  }
+
+  .delete-button-circle {
+    @include circular-button(45px, #dc3545, #c82333, 28px);
+  }
+
+  ::ng-deep .dashboard-toolbar {
+    app-category-icon,
+    app-zodiac-icon,
+    app-message-indicator,
+    app-remember-photo {
+      transform: scale(0.85);
+    }
+  }
+
+  .birthday-days-circle {
+    width: 70px;
+    height: 70px;
+    margin: 8px;
+  }
+}
+
+// Compact menu button — hidden by default, shown <660px
+.compact-menu-btn {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 36px !important;
+  height: 36px !important;
+  color: var(--text-secondary);
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+}
+
+
+// Menu panel styles — same as header burger menu
+::ng-deep .birthday-item-menu.mat-mdc-menu-panel {
+  min-width: 180px;
+  background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  .mat-mdc-menu-content {
+    color: white;
+  }
+
+  .mat-mdc-menu-item {
+    color: white !important;
+
+    .mat-icon {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .mdc-list-item__primary-text {
+      color: white !important;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &[disabled] {
+      opacity: 1 !important;
+      color: white !important;
+
+      .mdc-list-item__primary-text {
+        color: white !important;
+      }
+    }
+  }
+
+  mat-divider, .mat-divider {
+    border-top-color: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  @media (max-width: 400px) {
+    .mat-mdc-menu-item {
+      min-height: 36px;
+      font-size: 14px;
+
+      .mdc-list-item__primary-text {
+        font-size: 14px !important;
+      }
+
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+@media (max-width: 660px) {
+  .compact-hide {
+    display: none !important;
+  }
+
+  .compact-menu-btn {
+    display: inline-flex;
+  }
+
+  .dashboard-birthday-item {
+    align-items: center;
+    gap: 10px;
+    padding: 10px 40px 10px 10px;
+    margin: 0 4px;
+    position: relative;
+  }
+
+  .dashboard-avatar {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .dashboard-default-icon {
+    font-size: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .dashboard-name {
+    font-size: 1rem;
+  }
+
+  .dashboard-actions {
+    height: auto;
+  }
+
+  .birthday-days-circle {
+    width: 52px;
+    height: 52px;
+    margin: 0;
+
+    .days-number {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+@media (max-width: 470px) {
+  .dashboard-birthday-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 40px 12px 12px;
+  }
+
+  .dashboard-birthday-content {
+    align-items: center;
+  }
+
+  .dashboard-actions {
+    height: auto;
   }
 }

@@ -23,12 +23,12 @@
       <div class="dashboard-name">
         {{ birthday.name }}
       </div>
-      <div class="dashboard-age">
+      <div class="dashboard-age compact-hide">
         {{ getAge(birthday.birthDate) }} years old
       </div>
     </div>
 
-    <div class="dashboard-birthday-details">
+    <div class="dashboard-birthday-details compact-hide">
       <div class="dashboard-birth-date">
         <mat-icon class="small-icon">cake</mat-icon>
         {{ birthday.birthDate | date : 'EEEE, MMMM dd, yyyy' }}
@@ -39,62 +39,6 @@
           {{ birthday.notes }}
         </div>
       }
-    </div>
-
-    <div class="dashboard-icons">
-      <div class="dashboard-icons-left">
-        <app-category-icon
-          [categoryId]="birthday.category || defaultCategory"
-          cssClass="dashboard-category-inline"
-        ></app-category-icon>
-        @if (birthday.zodiacSign) {
-          <app-zodiac-icon
-            [zodiacSign]="birthday.zodiacSign"
-            cssClass="dashboard-zodiac-inline"
-          ></app-zodiac-icon>
-        }
-        <app-message-indicator
-          [birthday]="birthday"
-        ></app-message-indicator>
-        <app-remember-photo
-          [photoUrl]="birthday.rememberPhoto"
-          [birthdayName]="birthday.name"
-          (share)="onShareRememberPhoto()"
-          (download)="onDownloadRememberPhoto()"
-        ></app-remember-photo>
-      </div>
-      <div class="dashboard-icons-right">
-        <button
-          mat-icon-button
-          color="primary"
-          (click)="onEdit($event)"
-          class="edit-button-circle"
-          matTooltip="Edit birthday"
-          [attr.aria-label]="'Edit ' + birthday.name + ' birthday'"
-          data-testid="edit-birthday-button"
-          >
-          <mat-icon class="edit-icon">edit</mat-icon>
-        </button>
-        <button
-          mat-icon-button
-          color="warn"
-          (click)="onDelete()"
-          class="delete-button-circle"
-          matTooltip="Delete birthday"
-          [attr.aria-label]="'Delete ' + birthday.name + ' birthday'"
-          data-testid="delete-birthday-button"
-          >
-          <img
-            src="assets/icons/delete-button.png"
-            alt="Delete"
-            class="delete-icon"
-            width="34"
-            height="34"
-            loading="lazy"
-            decoding="async"
-            />
-        </button>
-      </div>
     </div>
   </div>
 
@@ -109,5 +53,94 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Burger menu for compact mode (<660px) -->
+  <button
+    mat-icon-button
+    [matMenuTriggerFor]="itemMenu"
+    class="compact-menu-btn"
+    aria-label="More options"
+    (click)="$event.stopPropagation()"
+    >
+    <mat-icon>more_vert</mat-icon>
+  </button>
+  <mat-menu #itemMenu="matMenu" class="birthday-item-menu">
+    <div mat-menu-item disabled class="menu-info-item">
+      <mat-icon>person</mat-icon>
+      <span>{{ getAge(birthday.birthDate) }} years old</span>
+    </div>
+    <div mat-menu-item disabled class="menu-info-item">
+      <mat-icon>cake</mat-icon>
+      <span>{{ birthday.birthDate | date : 'MMM dd, yyyy' }}</span>
+    </div>
+    @if (birthday.notes) {
+      <div mat-menu-item disabled class="menu-info-item">
+        <mat-icon>note</mat-icon>
+        <span>{{ birthday.notes }}</span>
+      </div>
+    }
+    <mat-divider></mat-divider>
+    <button mat-menu-item (click)="onEdit($event)" data-testid="edit-birthday-button">
+      <mat-icon>edit</mat-icon>
+      <span>Edit</span>
+    </button>
+    <button mat-menu-item (click)="onDelete()" data-testid="delete-birthday-button">
+      <mat-icon>delete</mat-icon>
+      <span>Delete</span>
+    </button>
+  </mat-menu>
+
+  <div class="dashboard-toolbar compact-hide">
+    <app-category-icon
+      [categoryId]="birthday.category || defaultCategory"
+      cssClass="dashboard-category-inline"
+    ></app-category-icon>
+    @if (birthday.zodiacSign) {
+      <app-zodiac-icon
+        [zodiacSign]="birthday.zodiacSign"
+        cssClass="dashboard-zodiac-inline"
+      ></app-zodiac-icon>
+    }
+    <app-message-indicator
+      [birthday]="birthday"
+    ></app-message-indicator>
+    <app-remember-photo
+      [photoUrl]="birthday.rememberPhoto"
+      [birthdayName]="birthday.name"
+      (share)="onShareRememberPhoto()"
+      (download)="onDownloadRememberPhoto()"
+    ></app-remember-photo>
+    <div class="toolbar-spacer"></div>
+    <button
+      mat-icon-button
+      color="primary"
+      (click)="onEdit($event)"
+      class="edit-button-circle"
+      matTooltip="Edit birthday"
+      [attr.aria-label]="'Edit ' + birthday.name + ' birthday'"
+      data-testid="edit-birthday-button"
+      >
+      <mat-icon class="edit-icon">edit</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      color="warn"
+      (click)="onDelete()"
+      class="delete-button-circle"
+      matTooltip="Delete birthday"
+      [attr.aria-label]="'Delete ' + birthday.name + ' birthday'"
+      data-testid="delete-birthday-button"
+      >
+      <img
+        src="assets/icons/delete-button.png"
+        alt="Delete"
+        class="delete-icon"
+        width="34"
+        height="34"
+        loading="lazy"
+        decoding="async"
+        />
+    </button>
   </div>
 </div>
