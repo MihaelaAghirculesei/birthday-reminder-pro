@@ -1,6 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -24,7 +23,6 @@ interface EnrichedBirthday extends Birthday {
     selector: 'app-birthday-list',
     imports: [
         FormsModule,
-        ScrollingModule,
         MatCardModule,
         MatFormFieldModule,
         MatInputModule,

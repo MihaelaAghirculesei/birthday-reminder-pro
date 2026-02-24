@@ -32,18 +32,16 @@
   </mat-card-header>
   <mat-card-content>
     @if (enrichedBirthdays.length > 0) {
-      <cdk-virtual-scroll-viewport
-        itemSize="120"
-        class="dashboard-birthday-list scrollable"
-        >
-        <app-birthday-item
-          *cdkVirtualFor="let birthday of enrichedBirthdays; trackBy: trackByBirthday"
-          [birthday]="birthday"
-          [daysUntilBirthday]="birthday.daysUntilBirthday"
-          (edit)="editBirthday($event)"
-          (deleted)="deleteBirthday($event)"
-        ></app-birthday-item>
-      </cdk-virtual-scroll-viewport>
+      <div class="dashboard-birthday-list scrollable">
+        @for (birthday of enrichedBirthdays; track birthday.id) {
+          <app-birthday-item
+            [birthday]="birthday"
+            [daysUntilBirthday]="birthday.daysUntilBirthday"
+            (edit)="editBirthday($event)"
+            (deleted)="deleteBirthday($event)"
+          ></app-birthday-item>
+        }
+      </div>
     }
 
     @if (birthdays.length === 0 && searchTerm) {
