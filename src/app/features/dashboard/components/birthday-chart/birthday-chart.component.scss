@@ -12,7 +12,6 @@
 
   .mat-mdc-card-content {
     padding: 24px !important;
-    min-height: 350px !important;
   }
 }
 
@@ -31,6 +30,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   flex: 1;
   margin: 0 2px;
 }
@@ -41,7 +41,6 @@
   align-items: center;
   height: 120px;
   justify-content: end;
-  position: relative;
 }
 
 .bar {
@@ -87,11 +86,10 @@
 }
 
 .bar-value {
-  position: absolute;
-  top: -20px;
   font-size: 12px;
   font-weight: 600;
   color: #333;
+  margin-bottom: 4px;
 }
 
 .bar-label {
@@ -148,6 +146,32 @@
 
   .bar-value {
     font-size: 10px;
-    top: -16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .chart-container {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 12px 0;
+    padding: 12px 0;
+  }
+
+  .chart-bar {
+    flex: 0 0 calc(100% / 6);
+    max-width: calc(100% / 6);
+    margin: 0;
+  }
+
+  .bar-label {
+    font-size: 0.875rem;
+  }
+
+  .bar-value {
+    font-size: 12px;
+  }
+
+  .bar {
+    width: 20px;
   }
 }

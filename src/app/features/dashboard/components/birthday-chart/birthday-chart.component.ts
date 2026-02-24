@@ -30,7 +30,7 @@ export class BirthdayChartComponent implements OnChanges {
     if (changes['chartData'] || changes['maxCount'] || changes['currentMonth']) {
       this.enrichedChartData = this.chartData.map(item => ({
         ...item,
-        heightPercent: this.maxCount > 0 ? (item.count / this.maxCount) * 100 : 0,
+        heightPercent: this.maxCount > 0 ? (item.count / this.maxCount) * 80 : 0,
         isCurrentMonth: this.MONTHS.indexOf(item.month) === this.currentMonth
       }));
     }

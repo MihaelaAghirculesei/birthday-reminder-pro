@@ -17,6 +17,11 @@
           role="listitem"
           [attr.aria-label]="monthData.month + ': ' + monthData.count + ' ' + (monthData.count === 1 ? 'birthday' : 'birthdays')"
         >
+          @if (monthData.count > 0) {
+            <div class="bar-value" aria-hidden="true">
+              {{ monthData.count }}
+            </div>
+          }
           <div class="bar-container">
             <div
               class="bar"
@@ -24,11 +29,6 @@
               [class.current-month]="monthData.isCurrentMonth"
               aria-hidden="true"
             ></div>
-            @if (monthData.count > 0) {
-              <div class="bar-value" aria-hidden="true">
-                {{ monthData.count }}
-              </div>
-            }
           </div>
           <div class="bar-label" aria-hidden="true">{{ monthData.month }}</div>
         </div>
