@@ -43,14 +43,12 @@
     padding: 0 8px;
   }
 
-  .test-data-content,
-  .clear-data-content {
+  .test-data-content {
     flex-direction: column;
     text-align: center;
     gap: 16px;
 
-    .test-icon,
-    .clear-icon {
+    .test-icon {
       min-width: 64px;
       min-height: 64px;
       font-size: 40px;
@@ -59,8 +57,7 @@
       padding: 12px;
     }
 
-    .test-info,
-    .clear-info {
+    .test-info {
       h3 {
         font-size: 1.3rem;
       }
