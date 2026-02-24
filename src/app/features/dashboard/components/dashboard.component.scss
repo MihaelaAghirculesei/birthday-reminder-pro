@@ -1,6 +1,6 @@
 .dashboard-container {
   padding: 32px;
-  max-width: 1400px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
   animation: fadeIn 0.5s ease-in;
 }

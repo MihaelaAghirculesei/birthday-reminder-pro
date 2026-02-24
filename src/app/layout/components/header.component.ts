@@ -246,9 +246,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       color: #1a1a1a;
       padding: 1rem 1.5rem;
       text-align: center;
-      border-radius: 12px;
       margin-bottom: 1.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2),
                   inset 0 1px 0 rgba(255, 255, 255, 0.15);
 
@@ -267,6 +266,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       align-items: center;
       position: relative;
       min-height: var(--header-icon-size);
+      max-width: var(--content-max-width);
+      margin: 0 auto;
     }
 
     .hero-title {
@@ -288,7 +289,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 
     .hero-subtitle {
       font-size: clamp(0.75rem, 2.5vw, 0.95rem);
-      margin: 0.25rem 0 0;
+      margin: 0.25rem auto 0;
+      max-width: var(--content-max-width);
       opacity: 0.85;
       font-weight: 300;
       color: #1a1a1a;
@@ -517,16 +519,16 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       display: flex;
       align-items: center;
       gap: 1.25rem;
-      margin-top: 0.5rem;
-      padding: 0.35rem 0.75rem;
+      margin: 0.5rem -1.5rem -1rem;
+      padding: 0.35rem max(0.75rem, calc((100vw - var(--content-max-width)) / 2 + 0.75rem));
       background: rgba(255, 255, 255, 0.15);
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
       flex-wrap: wrap;
 
       :host-context(body.dark-theme) & {
         background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.08);
+        border-top-color: rgba(255, 255, 255, 0.08);
       }
     }
 

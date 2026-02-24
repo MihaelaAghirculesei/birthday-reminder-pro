@@ -4,6 +4,7 @@
 @use 'styles/form-components';
 
 :root {
+  --content-max-width: 1400px;
   --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --primary-dark: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
   --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
