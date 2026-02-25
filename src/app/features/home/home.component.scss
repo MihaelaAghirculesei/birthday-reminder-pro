@@ -1,5 +1,12 @@
 @use '../../../styles/shared' as *;
 
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
 .add-birthday-card {
   @include birthday-card-base;
 
