@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs';
 
 import {
   ReactiveFormsModule,
@@ -15,10 +16,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks } from '../..';
+import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../..';
 import { ScheduledMessageService, MessageTemplate } from '../../../features/scheduled-messages/scheduled-message.service';
 import { NotificationService, BirthdayFacadeService, SenderSettingsService } from '../../../core';
 
@@ -46,6 +48,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly senderSettings = inject(SenderSettingsService);
+  private readonly dialog = inject(MatDialog);
 
   @Input() birthday: Birthday | null = null;
   @Output() unsavedChanges = new EventEmitter<boolean>();
@@ -187,12 +190,28 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     }
   }
 
-  async deleteMessage(message: ScheduledMessage): Promise<void> {
-    if (confirm(`Delete message "${message.title}"?`) && this.birthday) {
-      await this.birthdayFacade.deleteMessageFromBirthday(this.birthday.id, message.id);
-      this.loadMessages();
-      this.notificationService.show('Message deleted', 'success');
-    }
+  deleteMessage(message: ScheduledMessage): void {
+    if (!this.birthday) return;
+
+    const birthdayId = this.birthday.id;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(450px, 90vw)',
+      data: {
+        title: 'Delete Message?',
+        message: `Are you sure you want to delete "${message.title}"?`,
+        confirmText: 'Delete',
+        icon: 'delete',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe(async confirmed => {
+      if (confirmed) {
+        await this.birthdayFacade.deleteMessageFromBirthday(birthdayId, message.id);
+        this.loadMessages();
+        this.notificationService.show('Message deleted', 'success');
+      }
+    });
   }
 
   getProcessedMessage(message: ScheduledMessage): string {
