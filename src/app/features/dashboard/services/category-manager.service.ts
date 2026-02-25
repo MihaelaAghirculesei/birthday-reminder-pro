@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { take } from 'rxjs';
-import { Birthday, BirthdayCategory } from '../../../shared';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
+import { BirthdayFacadeService, CategoryFacadeService, NotificationService } from '../../../core';
 import { CategoryDialogComponent } from '../components/category-dialog/category-dialog.component';
 import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
 
@@ -14,7 +14,8 @@ export class CategoryManagerService {
   constructor(
     private dialog: MatDialog,
     private birthdayFacade: BirthdayFacadeService,
-    private categoryFacade: CategoryFacadeService
+    private categoryFacade: CategoryFacadeService,
+    private notificationService: NotificationService
   ) {}
 
   addCategory(): void {
@@ -87,9 +88,22 @@ export class CategoryManagerService {
     if (affectedBirthdays.length > 0) {
       this.handleCategoryDeletionWithBirthdays(categoryId, category, affectedBirthdays, allCategories);
     } else {
-      if (confirm(`Are you sure you want to delete the category "${category.name}"?`)) {
-        this.categoryFacade.deleteCategory(categoryId);
-      }
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: 'min(450px, 90vw)',
+        data: {
+          title: 'Delete Category?',
+          message: `Are you sure you want to delete the category "${category.name}"?`,
+          confirmText: 'Delete',
+          icon: 'delete',
+          color: 'warn'
+        }
+      });
+
+      dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
+        if (confirmed) {
+          this.categoryFacade.deleteCategory(categoryId);
+        }
+      });
     }
   }
 
@@ -100,7 +114,7 @@ export class CategoryManagerService {
     const uncategorizedBirthdays = birthdays.filter(b => b.category && !validCategoryIds.has(b.category));
 
     if (uncategorizedBirthdays.length === 0) {
-      alert('There are no uncategorized birthdays to reassign.');
+      this.notificationService.show('There are no uncategorized birthdays to reassign.', 'info');
       return;
     }
 
