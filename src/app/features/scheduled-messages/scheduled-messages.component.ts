@@ -2,11 +2,12 @@ import { Component, ChangeDetectionStrategy, computed, Signal, inject } from '@a
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
+import { take } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Birthday, ScheduledMessage, WishLink, getAvailableWishLinks } from '../../shared';
+import { Birthday, ScheduledMessage, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../../shared';
 import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
 import { BirthdayFacadeService, SenderSettingsService } from '../../core';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
@@ -48,9 +49,22 @@ export class ScheduledMessagesComponent {
   }
 
   deleteMessage(birthdayId: string, messageId: string): void {
-    if (confirm('Are you sure you want to delete this message?')) {
-      this.birthdayFacade.deleteMessageFromBirthday(birthdayId, messageId);
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(450px, 90vw)',
+      data: {
+        title: 'Delete Message?',
+        message: 'Are you sure you want to delete this scheduled message?',
+        confirmText: 'Delete',
+        icon: 'delete',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
+      if (confirmed) {
+        this.birthdayFacade.deleteMessageFromBirthday(birthdayId, messageId);
+      }
+    });
   }
 
   getPriorityLabel(priority: string): string {
