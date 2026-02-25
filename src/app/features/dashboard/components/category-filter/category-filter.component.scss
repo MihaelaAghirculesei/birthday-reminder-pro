@@ -114,7 +114,7 @@
 
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -124,7 +124,7 @@
   border-radius: 20px !important;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08) !important;
   border: 2px solid transparent !important;
-  padding: 24px;
+  padding: 16px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -207,7 +207,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .category-icon-section {
@@ -225,11 +225,13 @@
 }
 
 .selection-indicator {
-  position: absolute;
-  top: -8px;
-  right: -8px;
   background: var(--success);
+  border: 1px solid rgba(150, 150, 150, 0.4);
   border-radius: 50%;
+
+  .selected & {
+    border-color: rgb(99, 27, 103);
+  }
   width: 32px;
   height: 32px;
   display: flex;
@@ -263,16 +265,20 @@
 
 .category-stat-info {
   flex: 1;
+  min-width: 0;
   text-align: left;
 }
 
 .category-stat-name {
-  font-size: clamp(1rem, 3vw, 1.125rem);
+  font-size: clamp(0.85rem, 2.5vw, 1.125rem);
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 6px;
   letter-spacing: -0.01em;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .category-stat-count {
@@ -289,16 +295,16 @@
 
 .category-actions {
   display: flex;
+  flex-direction: column;
   gap: 4px;
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
+  flex-shrink: 0;
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 10;
 }
 
-.category-stat-card:hover .category-actions {
+.category-stat-card:hover .category-actions,
+.category-stat-card.selected .category-actions {
   opacity: 1;
 }
 
@@ -336,20 +342,50 @@
   &.edit-btn {
     color: var(--primary) !important;
     background: rgba(102, 126, 234, 0.1) !important;
+    border: 1px solid rgba(150, 150, 150, 0.4) !important;
+
+    .selected & {
+      border-color: rgb(99, 27, 103) !important;
+    }
 
     &:hover {
       background: rgba(102, 126, 234, 0.2) !important;
       transform: scale(1.1);
+    }
+
+    :host-context(body.dark-theme) & {
+      color: #93b0ff !important;
+      background: rgba(102, 126, 234, 0.2) !important;
+      border-color: rgba(102, 126, 234, 0.4) !important;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.35) !important;
+      }
     }
   }
 
   &.delete-btn {
     color: var(--warning) !important;
     background: rgba(255, 107, 107, 0.1) !important;
+    border: 1px solid rgba(150, 150, 150, 0.4) !important;
+
+    .selected & {
+      border-color: rgb(99, 27, 103) !important;
+    }
 
     &:hover {
       background: rgba(255, 107, 107, 0.2) !important;
       transform: scale(1.1);
+    }
+
+    :host-context(body.dark-theme) & {
+      color: #ff8a80 !important;
+      background: rgba(255, 107, 107, 0.2) !important;
+      border-color: rgba(255, 107, 107, 0.4) !important;
+
+      &:hover {
+        background: rgba(255, 107, 107, 0.35) !important;
+      }
     }
   }
 }

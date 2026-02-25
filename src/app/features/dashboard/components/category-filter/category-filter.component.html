@@ -47,16 +47,9 @@
                 [color]="categoryStats.color"
                 cssClass="category-stat-icon"
               ></app-category-icon>
-              @if (selectedCategory === categoryStats.id) {
-                <div
-                  class="selection-indicator"
-                  >
-                  <mat-icon>check_circle</mat-icon>
-                </div>
-              }
             </div>
             <div class="category-stat-info">
-              <div class="category-stat-name">{{ categoryStats.name }}</div>
+              <div class="category-stat-name" [matTooltip]="categoryStats.name">{{ categoryStats.name }}</div>
               <div class="category-stat-count">
                 {{ categoryStats.count }}
                 {{ categoryStats.count === 1 ? 'person' : 'people' }}
@@ -81,6 +74,11 @@
                 >
                 <mat-icon>delete</mat-icon>
               </button>
+              @if (selectedCategory === categoryStats.id) {
+                <div class="selection-indicator">
+                  <mat-icon>check_circle</mat-icon>
+                </div>
+              }
             </div>
           </div>
         </div>
