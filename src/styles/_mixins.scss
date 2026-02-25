@@ -112,12 +112,12 @@ $dialog-dark-bg: #2a2a2a !default;
       border-radius: 16px !important;
       overflow: hidden;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3) !important;
-      @if $dark-bg {
-        :host-context(body.dark-theme) & {
-          background: $dark-bg !important;
-          box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8) !important;
-        }
-      }
+    }
+  }
+  @if $dark-bg {
+    ::ng-deep body.dark-theme .mat-mdc-dialog-container .mdc-dialog__surface {
+      background: $dark-bg !important;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8) !important;
     }
   }
 }
