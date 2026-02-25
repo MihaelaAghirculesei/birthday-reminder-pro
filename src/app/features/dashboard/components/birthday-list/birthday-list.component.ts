@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { take, switchMap, EMPTY, map } from 'rxjs';
-import { Birthday, BirthdayCategory } from '../../../../shared';
+import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { BirthdayFacadeService } from '../../../../core';
@@ -92,11 +92,26 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   }
 
   onClearAllData(): void {
-    this.isClearingData = true;
-    this.clearAllData.emit();
-    this.clearDataTimer = setTimeout(() => {
-      this.isClearingData = false;
-    }, 2000);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(450px, 90vw)',
+      data: {
+        title: 'Clear All Data?',
+        message: 'This will permanently delete all birthdays and categories. This action cannot be undone.',
+        confirmText: 'Clear All',
+        icon: 'delete_forever',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
+      if (confirmed) {
+        this.isClearingData = true;
+        this.clearAllData.emit();
+        this.clearDataTimer = setTimeout(() => {
+          this.isClearingData = false;
+        }, 2000);
+      }
+    });
   }
 
   onBirthdaysImported(birthdays: Birthday[]): void {
@@ -156,6 +171,21 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   }
 
   deleteBirthday(birthday: Birthday): void {
-    this.birthdayFacade.deleteBirthday(birthday.id);
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(450px, 90vw)',
+      data: {
+        title: 'Delete Birthday?',
+        message: `Are you sure you want to delete "${birthday.name}"?`,
+        confirmText: 'Delete',
+        icon: 'delete',
+        color: 'warn'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
+      if (confirmed) {
+        this.birthdayFacade.deleteBirthday(birthday.id);
+      }
+    });
   }
 }
