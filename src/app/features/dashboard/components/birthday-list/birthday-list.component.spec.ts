@@ -144,6 +144,10 @@ describe('BirthdayListComponent', () => {
     }));
 
     it('should emit clearAllData and set clearing state', fakeAsync(() => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
       spyOn(component.clearAllData, 'emit');
       component.onClearAllData();
 
@@ -225,22 +229,29 @@ describe('BirthdayListComponent', () => {
 
   describe('Delete birthday', () => {
     it('should delete birthday by id', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
       component.deleteBirthday(mockBirthdays[0]);
       expect(birthdayFacadeSpy.deleteBirthday).toHaveBeenCalledWith('1');
     });
   });
 
   describe('Component cleanup', () => {
-    it('should clear timers on destroy', () => {
+    it('should clear timers on destroy', fakeAsync(() => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
       component.onAddTestData();
       component.onClearAllData();
 
-      spyOn(window, 'clearTimeout');
       component.ngOnDestroy();
 
       // Timers should be cleared
       expect(component['testDataTimer']).toBeDefined();
       expect(component['clearDataTimer']).toBeDefined();
-    });
+    }));
   });
 });

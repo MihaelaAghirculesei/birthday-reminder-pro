@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { MessageSchedulerComponent } from './message-scheduler.component';
 import { ScheduledMessageService } from '../../../features/scheduled-messages/scheduled-message.service';
@@ -13,6 +14,7 @@ describe('MessageSchedulerComponent', () => {
   let scheduledMessageServiceMock: jasmine.SpyObj<ScheduledMessageService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
   let birthdayFacadeMock: jasmine.SpyObj<BirthdayFacadeService>;
+  let dialogMock: jasmine.SpyObj<MatDialog>;
 
   const mockBirthday: Birthday = {
     id: '1',
@@ -41,6 +43,7 @@ describe('MessageSchedulerComponent', () => {
       'createMessage'
     ]);
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
+    dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
     birthdayFacadeMock = jasmine.createSpyObj('BirthdayFacadeService', [
       'getMessagesByBirthday',
       'addMessageToBirthday',
@@ -64,7 +67,8 @@ describe('MessageSchedulerComponent', () => {
       providers: [
         { provide: ScheduledMessageService, useValue: scheduledMessageServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeMock }
+        { provide: BirthdayFacadeService, useValue: birthdayFacadeMock },
+        { provide: MatDialog, useValue: dialogMock }
       ]
     }).compileComponents();
 
@@ -370,31 +374,36 @@ describe('MessageSchedulerComponent', () => {
   });
 
   describe('deleteMessage', () => {
-    it('should delete message after confirmation', async () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+    it('should delete message after confirmation', fakeAsync(() => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      dialogMock.open.and.returnValue(mockDialogRef);
+      birthdayFacadeMock.deleteMessageFromBirthday.and.resolveTo();
       component.birthday = mockBirthday;
       birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([]));
 
-      await component.deleteMessage(mockMessage);
+      component.deleteMessage(mockMessage);
+      tick();
 
       expect(birthdayFacadeMock.deleteMessageFromBirthday).toHaveBeenCalledWith('1', 'msg1');
       expect(notificationServiceMock.show).toHaveBeenCalledWith('Message deleted', 'success');
-    });
+    }));
 
-    it('should not delete when confirmation is cancelled', async () => {
-      spyOn(window, 'confirm').and.returnValue(false);
+    it('should not delete when confirmation is cancelled', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(false));
+      dialogMock.open.and.returnValue(mockDialogRef);
       component.birthday = mockBirthday;
 
-      await component.deleteMessage(mockMessage);
+      component.deleteMessage(mockMessage);
 
       expect(birthdayFacadeMock.deleteMessageFromBirthday).not.toHaveBeenCalled();
     });
 
-    it('should not delete when birthday is null', async () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+    it('should not delete when birthday is null', () => {
       component.birthday = null;
 
-      await component.deleteMessage(mockMessage);
+      component.deleteMessage(mockMessage);
 
       expect(birthdayFacadeMock.deleteMessageFromBirthday).not.toHaveBeenCalled();
     });

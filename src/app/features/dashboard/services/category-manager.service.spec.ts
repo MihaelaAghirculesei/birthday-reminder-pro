@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CategoryManagerService } from './category-manager.service';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { BirthdayFacadeService, CategoryFacadeService, NotificationService } from '../../../core';
 import { Birthday, BirthdayCategory } from '../../../shared';
 
 interface DialogData {
@@ -17,6 +17,7 @@ describe('CategoryManagerService', () => {
   let dialogSpy: jasmine.SpyObj<MatDialog>;
   let birthdayFacadeSpy: jasmine.SpyObj<BirthdayFacadeService>;
   let categoryFacadeSpy: jasmine.SpyObj<CategoryFacadeService>;
+  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
 
   const mockCategories: BirthdayCategory[] = [
     { id: 'friends', name: 'Friends', icon: 'group', color: '#4CAF50' },
@@ -49,6 +50,7 @@ describe('CategoryManagerService', () => {
 
   beforeEach(() => {
     const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
+    const notificationServiceSpyObj = jasmine.createSpyObj('NotificationService', ['show']);
     const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', ['updateBirthday'], {
       birthdays$: of(mockBirthdays),
       birthdays: jasmine.createSpy('birthdays').and.returnValue(mockBirthdays)
@@ -67,7 +69,8 @@ describe('CategoryManagerService', () => {
         CategoryManagerService,
         { provide: MatDialog, useValue: dialogSpyObj },
         { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
-        { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj }
+        { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
+        { provide: NotificationService, useValue: notificationServiceSpyObj }
       ]
     });
 
@@ -75,6 +78,7 @@ describe('CategoryManagerService', () => {
     dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     birthdayFacadeSpy = TestBed.inject(BirthdayFacadeService) as jasmine.SpyObj<BirthdayFacadeService>;
     categoryFacadeSpy = TestBed.inject(CategoryFacadeService) as jasmine.SpyObj<CategoryFacadeService>;
+    notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
   });
 
   it('should be created', () => {
@@ -146,12 +150,10 @@ describe('CategoryManagerService', () => {
   });
 
   describe('editCategory', () => {
-    it('should show alert when no orphaned birthdays exist', () => {
-      spyOn(window, 'alert');
-
+    it('should show notification when no orphaned birthdays exist', () => {
       service.editCategory('__orphaned__');
 
-      expect(window.alert).toHaveBeenCalledWith('There are no uncategorized birthdays to reassign.');
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('There are no uncategorized birthdays to reassign.', 'info');
       expect(dialogSpy.open).not.toHaveBeenCalled();
     });
 
@@ -211,18 +213,20 @@ describe('CategoryManagerService', () => {
   });
 
   describe('deleteCategory', () => {
-    beforeEach(() => {
-      spyOn(window, 'confirm').and.returnValue(true);
-    });
-
     it('should delete category without birthdays after confirmation', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
       service.deleteCategory('family'); // family has no birthdays in mockBirthdays
 
       expect(categoryFacadeSpy.deleteCategory).toHaveBeenCalledWith('family');
     });
 
     it('should not delete if user cancels confirmation', () => {
-      (window.confirm as jasmine.Spy).and.returnValue(false);
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(false));
+      dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.deleteCategory('family');
 

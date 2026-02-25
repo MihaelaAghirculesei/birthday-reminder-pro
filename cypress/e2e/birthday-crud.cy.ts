@@ -50,6 +50,8 @@ describe('Birthday CRUD Operations', () => {
     cy.contains('Test User').should('be.visible');
 
     cy.get('[data-testid="delete-birthday-button"]').first().click();
+    cy.get('.confirm-dialog', { timeout: 5000 }).should('be.visible');
+    cy.get('.confirm-dialog .confirm-btn').click();
 
     cy.contains('Test User').should('not.exist');
   });
@@ -57,10 +59,7 @@ describe('Birthday CRUD Operations', () => {
   it('should cancel birthday creation', () => {
     cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').first().type('Cancelled User');
-
-    // Click header to collapse form
     cy.get('[data-testid="add-birthday-button"]').click();
-
     cy.get('[data-testid="birthday-name-input"]').first().should('not.be.visible');
     cy.get('.dashboard-container').should('not.exist');
   });

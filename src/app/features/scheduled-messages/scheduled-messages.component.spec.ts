@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { signal } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ScheduledMessagesComponent } from './scheduled-messages.component';
@@ -162,25 +163,29 @@ describe('ScheduledMessagesComponent', () => {
 
   describe('deleteMessage', () => {
     it('should call facade deleteMessageFromBirthday when confirmed', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      mockDialog.open.and.returnValue(mockDialogRef);
 
       component.deleteMessage('1', 'm1');
 
-      expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to delete this message?');
       expect(mockBirthdayFacade.deleteMessageFromBirthday).toHaveBeenCalledWith('1', 'm1');
     });
 
     it('should not call facade when cancelled', () => {
-      spyOn(window, 'confirm').and.returnValue(false);
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(false));
+      mockDialog.open.and.returnValue(mockDialogRef);
 
       component.deleteMessage('1', 'm1');
 
-      expect(window.confirm).toHaveBeenCalled();
       expect(mockBirthdayFacade.deleteMessageFromBirthday).not.toHaveBeenCalled();
     });
 
     it('should handle deletion of different messages', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      mockDialog.open.and.returnValue(mockDialogRef);
 
       component.deleteMessage('3', 'm2');
 
@@ -256,7 +261,9 @@ describe('ScheduledMessagesComponent', () => {
 
   describe('Integration - Complete Flows', () => {
     it('should support opening dialog and deleting message workflow', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(true));
+      mockDialog.open.and.returnValue(mockDialogRef);
 
       component.openScheduleDialog(mockBirthdays[0]);
       expect(mockDialog.open).toHaveBeenCalled();

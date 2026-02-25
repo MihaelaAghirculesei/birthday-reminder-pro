@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { NotificationPermissionService } from './notification-permission.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { take } from 'rxjs';
 
 interface MockNotification {
   permission: NotificationPermission;
@@ -271,7 +272,7 @@ describe('NotificationPermissionService', () => {
 
   describe('permissionStatus observable', () => {
     it('should expose permissionStatus observable', (done) => {
-      service.permissionStatus.subscribe(status => {
+      service.permissionStatus.pipe(take(1)).subscribe(status => {
         expect(['default', 'granted', 'denied']).toContain(status);
         done();
       });
