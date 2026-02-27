@@ -62,6 +62,11 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   messagePreview = '';
 
+  get hasAnyContact(): boolean {
+    if (!this.birthday) return false;
+    return !!(this.birthday.email?.trim() || this.birthday.phone?.trim() || this.birthday.telegramUsername?.trim());
+  }
+
   constructor(
     private fb: FormBuilder,
     private scheduledMessageService: ScheduledMessageService,

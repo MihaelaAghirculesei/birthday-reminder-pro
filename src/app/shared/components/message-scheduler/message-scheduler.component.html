@@ -1,6 +1,13 @@
 <div class="message-scheduler">
   <mat-card class="scheduler-card">
     <mat-card-content>
+      @if (!hasAnyContact) {
+        <div class="empty-state no-contact-alert">
+          <mat-icon>contact_mail</mat-icon>
+          <h3>No Contact Information</h3>
+          <p>You need to add at least one contact method (email, phone, or Telegram) to {{ birthday?.name }} before you can schedule messages. Edit the birthday to add contact info.</p>
+        </div>
+      } @else {
       <mat-expansion-panel
         class="new-message-panel"
         [expanded]="isCreatingMessage"
@@ -245,6 +252,7 @@
             </button>
           </div>
         }
+      }
       </mat-card-content>
     </mat-card>
   </div>
