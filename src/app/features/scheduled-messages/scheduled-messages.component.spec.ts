@@ -283,6 +283,35 @@ describe('ScheduledMessagesComponent', () => {
     });
   });
 
+  describe('noBirthdays computed signal', () => {
+    it('should return false when there are birthdays', () => {
+      expect(component.noBirthdays()).toBe(false);
+    });
+
+    it('should return true when there are no birthdays', () => {
+      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
+        'deleteMessageFromBirthday'
+      ], {
+        birthdays: signal([])
+      });
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
+        providers: [
+          { provide: MatDialog, useValue: mockDialog },
+          { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
+        ]
+      });
+
+      fixture = TestBed.createComponent(ScheduledMessagesComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+
+      expect(component.noBirthdays()).toBe(true);
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle birthday with null scheduledMessages', () => {
       const birthdayWithNull = {
