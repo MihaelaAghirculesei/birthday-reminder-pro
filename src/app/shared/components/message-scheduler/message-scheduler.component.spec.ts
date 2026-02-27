@@ -409,6 +409,38 @@ describe('MessageSchedulerComponent', () => {
     });
   });
 
+  describe('hasAnyContact', () => {
+    it('should return false when birthday is null', () => {
+      component.birthday = null;
+      expect(component.hasAnyContact).toBeFalse();
+    });
+
+    it('should return false when birthday has no contact info', () => {
+      component.birthday = mockBirthday;
+      expect(component.hasAnyContact).toBeFalse();
+    });
+
+    it('should return true when birthday has email', () => {
+      component.birthday = { ...mockBirthday, email: 'test@example.com' };
+      expect(component.hasAnyContact).toBeTrue();
+    });
+
+    it('should return true when birthday has phone', () => {
+      component.birthday = { ...mockBirthday, phone: '+1234567890' };
+      expect(component.hasAnyContact).toBeTrue();
+    });
+
+    it('should return true when birthday has telegram', () => {
+      component.birthday = { ...mockBirthday, telegramUsername: 'testuser' };
+      expect(component.hasAnyContact).toBeTrue();
+    });
+
+    it('should return false when contact fields are empty strings', () => {
+      component.birthday = { ...mockBirthday, email: '', phone: '  ', telegramUsername: '' };
+      expect(component.hasAnyContact).toBeFalse();
+    });
+  });
+
   describe('message value changes', () => {
     it('should update preview when message value changes', (done) => {
       component.birthday = mockBirthday;
