@@ -32,6 +32,8 @@ export class ScheduledMessagesComponent {
       .sort((a, b) => getDaysUntilBirthday(a.birthDate) - getDaysUntilBirthday(b.birthDate))
   );
 
+  noBirthdays: Signal<boolean> = computed(() => this.birthdayFacade.birthdays().length === 0);
+
   constructor(
     private birthdayFacade: BirthdayFacadeService,
     private dialog: MatDialog

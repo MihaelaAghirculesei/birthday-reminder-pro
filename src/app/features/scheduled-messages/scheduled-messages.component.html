@@ -2,13 +2,19 @@
   <div class="header">
     <h2>Scheduled Messages</h2>
     <p class="subtitle">All scheduled messages for birthdays</p>
-    <button mat-fab extended color="primary" (click)="openScheduleDialog()" class="add-message-fab" aria-label="Create new scheduled message">
+    <button mat-fab extended color="primary" (click)="openScheduleDialog()" class="add-message-fab" aria-label="Create new scheduled message" [disabled]="noBirthdays()">
       <mat-icon>add</mat-icon>
       New Message
     </button>
   </div>
 
-  @if (birthdaysWithMessages().length > 0) {
+  @if (noBirthdays()) {
+    <div class="no-messages">
+      <mat-icon class="large-icon">cake</mat-icon>
+      <h3>No Birthdays Added</h3>
+      <p>You need to add at least one birthday before you can schedule messages. Go to the dashboard to add your first birthday!</p>
+    </div>
+  } @else if (birthdaysWithMessages().length > 0) {
     <div
       class="messages-list"
       >
