@@ -122,6 +122,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       this.birthdayFacade.addBirthday(formData);
       this.birthdayForm.reset({ reminderDays: 7, category: DEFAULT_CATEGORY });
       this.selectedPhoto = null;
+      this.isAddBirthdayExpanded = false;
     }
   }
 
