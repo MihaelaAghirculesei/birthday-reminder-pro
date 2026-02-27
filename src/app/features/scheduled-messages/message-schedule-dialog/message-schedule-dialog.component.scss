@@ -66,7 +66,20 @@
       align-items: center;
       width: 100%;
       padding: 4px 0;
-      .birthday-name { font-weight: 600; color: var(--text-primary); }
+      .birthday-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .no-contact-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: #f44336;
+        }
+      }
       .birthday-date { font-size: 0.85rem; color: var(--text-secondary); }
     }
 
@@ -88,6 +101,33 @@
 
       mat-icon { color: $white-80; font-size: 24px; width: 24px; height: 24px; flex-shrink: 0; }
       p { margin: 0; color: white; line-height: 1.5; font-size: 1rem; }
+    }
+  }
+
+  .no-birthdays-alert {
+    text-align: center;
+    padding: 40px 20px;
+
+    mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: $white-70;
+      margin-bottom: 16px;
+    }
+
+    h3 {
+      margin: 16px 0 8px;
+      font-size: clamp(0.95rem, 3.5vw, 1.25rem);
+      font-weight: 600;
+      color: white;
+    }
+
+    p {
+      margin: 0;
+      color: $white-80;
+      line-height: 1.5;
+      font-size: 0.95rem;
     }
   }
 
