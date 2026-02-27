@@ -13,10 +13,13 @@ describe('Category Filter', () => {
     cy.get('[data-testid="category-select"]').first().click();
     cy.contains('mat-option', 'Family').click();
     cy.get('[data-testid="save-birthday-button"]').first().click();
+    // Wait for form close animation to complete
+    cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.be.visible');
 
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
 
-    // Form stays expanded after save - fill in the second birthday
+    // Re-expand form for second birthday
+    cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]', { timeout: 15000 })
       .first()
       .should('be.visible')
