@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MessageSchedulerComponent } from '../../../shared/components/message-scheduler/message-scheduler.component';
 import { Birthday } from '../../../shared/models';
 import { BirthdayFacadeService } from '../../../core';
@@ -25,6 +26,7 @@ interface MessageScheduleDialogData {
         MatSelectModule,
         MatIconModule,
         MatButtonModule,
+        MatTooltipModule,
         MessageSchedulerComponent
     ],
     templateUrl: './message-schedule-dialog.component.html',
@@ -34,6 +36,7 @@ interface MessageScheduleDialogData {
 export class MessageScheduleDialogComponent implements OnInit {
   selectedBirthday: Birthday | null = null;
   allBirthdays: Signal<Birthday[]> = this.birthdayFacade.birthdays;
+  noBirthdays: Signal<boolean> = computed(() => this.allBirthdays().length === 0);
   selectedBirthdayId = '';
   showBirthdaySelector = false;
 
@@ -64,6 +67,10 @@ export class MessageScheduleDialogComponent implements OnInit {
         this.showBirthdaySelector = false;
       }
     }
+  }
+
+  hasContact(birthday: Birthday): boolean {
+    return !!(birthday.email?.trim() || birthday.phone?.trim() || birthday.telegramUsername?.trim());
   }
 
   changeBirthday(): void {
