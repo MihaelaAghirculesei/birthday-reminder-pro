@@ -12,9 +12,9 @@ describe('Search Functionality', () => {
       { name: 'Charlie Brown', date: '09/10/1992' }
     ];
 
-    cy.expandBirthdayForm();
-
     birthdays.forEach((birthday) => {
+      cy.expandBirthdayForm();
+
       cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 })
         .should('be.visible')
         .clear()
@@ -26,6 +26,8 @@ describe('Search Functionality', () => {
         .type(birthday.date);
 
       cy.get('[data-testid="save-birthday-button"]').click();
+      // Wait for form close animation to complete before next iteration
+      cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.be.visible');
     });
 
     cy.get('.dashboard-container', { timeout: 15000 }).should('exist');
