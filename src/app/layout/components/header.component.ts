@@ -113,9 +113,9 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
             <mat-icon>badge</mat-icon>
             <span>Message Signature</span>
           </button>
-          <button mat-menu-item (click)="enableNotifications()" [disabled]="notificationsGranted">
-            <mat-icon>{{ notificationsGranted ? 'notifications_active' : 'notifications' }}</mat-icon>
-            <span>{{ notificationsGranted ? 'Notifications Enabled' : 'Enable Notifications' }}</span>
+          <button mat-menu-item (click)="toggleNotifications()">
+            <mat-icon>{{ notificationsGranted && notificationsEnabled ? 'notifications_active' : notificationsGranted && !notificationsEnabled ? 'notifications_off' : 'notifications' }}</mat-icon>
+            <span>{{ notificationsGranted && notificationsEnabled ? 'Disable Notifications' : 'Enable Notifications' }}</span>
           </button>
           <button mat-menu-item (click)="themeService.toggleDarkMode()">
             <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -189,9 +189,9 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
           <mat-icon>badge</mat-icon>
           <span>Message Signature</span>
         </button>
-        <button mat-menu-item (click)="enableNotifications()" [disabled]="notificationsGranted">
-          <mat-icon>{{ notificationsGranted ? 'notifications_active' : 'notifications' }}</mat-icon>
-          <span>{{ notificationsGranted ? 'Notifications Enabled' : 'Enable Notifications' }}</span>
+        <button mat-menu-item (click)="toggleNotifications()">
+          <mat-icon>{{ notificationsGranted && notificationsEnabled ? 'notifications_active' : notificationsGranted && !notificationsEnabled ? 'notifications_off' : 'notifications' }}</mat-icon>
+          <span>{{ notificationsGranted && notificationsEnabled ? 'Disable Notifications' : 'Enable Notifications' }}</span>
         </button>
         <button mat-menu-item (click)="themeService.toggleDarkMode()">
           <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -708,14 +708,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
   notificationsGranted = false;
+  notificationsEnabled = false;
   private lastScrollY = 0;
   private readonly scrollThreshold = 10;
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.notificationsGranted = this.permissionService.getCurrentPermission() === 'granted';
+      this.notificationsEnabled = this.permissionService.isNotificationsEnabled();
       this.permissionService.permissionStatus.subscribe(status => {
         this.notificationsGranted = status === 'granted';
+      });
+      this.permissionService.notificationsEnabled.subscribe(enabled => {
+        this.notificationsEnabled = enabled;
       });
       this.lastScrollY = this.getScrollY();
       this.ngZone.runOutsideAngular(() => {
@@ -781,9 +786,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.store.dispatch(AuthActions.signOut());
   }
 
-  async enableNotifications(): Promise<void> {
-    const granted = await this.permissionService.requestPermission();
-    if (granted) {
+  async toggleNotifications(): Promise<void> {
+    if (!this.notificationsGranted) {
+      const granted = await this.permissionService.requestPermission();
+      if (granted) {
+        this.notificationService.show('Notifications enabled!', 'success');
+      }
+    } else if (this.notificationsEnabled) {
+      this.permissionService.setNotificationsEnabled(false);
+      this.notificationService.show('Notifications disabled', 'info');
+    } else {
+      this.permissionService.setNotificationsEnabled(true);
       this.notificationService.show('Notifications enabled!', 'success');
     }
   }
