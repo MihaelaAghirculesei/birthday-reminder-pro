@@ -138,6 +138,49 @@ body {
   font-weight: 400;
 }
 
+// Smooth theme transition: morph colors when toggling dark ↔ light
+body,
+body *,
+body *::before,
+body *::after {
+  transition: color 0.5s ease,
+              background-color 0.5s ease,
+              border-color 0.5s ease,
+              box-shadow 0.4s ease,
+              fill 0.5s ease,
+              stroke 0.5s ease;
+}
+
+// Overlay flash on theme toggle
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9999;
+}
+
+body.theme-transitioning::after {
+  animation: theme-flash 0.6s ease-out;
+}
+
+// Light → Dark: purple-tinted flash
+body.theme-transitioning.dark-theme::after {
+  background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.15), transparent 70%);
+}
+
+// Dark → Light: blue-tinted flash
+body.theme-transitioning:not(.dark-theme)::after {
+  background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.15), transparent 70%);
+}
+
+@keyframes theme-flash {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
