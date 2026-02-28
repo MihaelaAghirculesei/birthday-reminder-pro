@@ -10,6 +10,7 @@ export type NotificationPermissionStatus = 'default' | 'granted' | 'denied';
 })
 export class NotificationPermissionService {
   private permissionStatus$ = new BehaviorSubject<NotificationPermissionStatus>(this.getCurrentPermission());
+  private notificationsEnabled$ = new BehaviorSubject<boolean>(this.readNotificationsEnabled());
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
@@ -51,6 +52,33 @@ export class NotificationPermissionService {
     return this.getCurrentPermission() === 'granted';
   }
 
+  get notificationsEnabled(): Observable<boolean> {
+    return this.notificationsEnabled$.asObservable();
+  }
+
+  isNotificationsEnabled(): boolean {
+    return this.notificationsEnabled$.getValue();
+  }
+
+  setNotificationsEnabled(enabled: boolean): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('notificationsEnabled', JSON.stringify(enabled));
+    }
+    this.notificationsEnabled$.next(enabled);
+  }
+
+  private readNotificationsEnabled(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    const stored = localStorage.getItem('notificationsEnabled');
+    if (stored === null) {
+      // Default: enabled if permission is already granted
+      return this.getCurrentPermission() === 'granted';
+    }
+    return JSON.parse(stored);
+  }
+
   async requestPermission(): Promise<boolean> {
     if (!this.isSupported()) {
       return false;
@@ -71,6 +99,10 @@ export class NotificationPermissionService {
       if (isPlatformBrowser(this.platformId)) {
         localStorage.setItem('notificationPermissionRequested', 'true');
         localStorage.setItem('notificationPermissionGranted', (permission === 'granted').toString());
+      }
+
+      if (permission === 'granted') {
+        this.setNotificationsEnabled(true);
       }
 
       return permission === 'granted';

@@ -278,4 +278,90 @@ describe('NotificationPermissionService', () => {
       });
     });
   });
+
+  describe('notificationsEnabled toggle', () => {
+    it('should default to false when permission is not granted and nothing stored', () => {
+      windowRef.Notification!.permission = 'default';
+      // Re-create service to pick up default state
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          NotificationPermissionService,
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          SILENT_LOGGER_PROVIDER
+        ]
+      });
+      const freshService = TestBed.inject(NotificationPermissionService);
+      expect(freshService.isNotificationsEnabled()).toBe(false);
+    });
+
+    it('should default to true when permission is granted and nothing stored', () => {
+      windowRef.Notification!.permission = 'granted';
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          NotificationPermissionService,
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          SILENT_LOGGER_PROVIDER
+        ]
+      });
+      const freshService = TestBed.inject(NotificationPermissionService);
+      expect(freshService.isNotificationsEnabled()).toBe(true);
+    });
+
+    it('should read stored value from localStorage', () => {
+      localStorageMock['notificationsEnabled'] = 'false';
+      windowRef.Notification!.permission = 'granted';
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          NotificationPermissionService,
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          SILENT_LOGGER_PROVIDER
+        ]
+      });
+      const freshService = TestBed.inject(NotificationPermissionService);
+      expect(freshService.isNotificationsEnabled()).toBe(false);
+    });
+
+    it('should set and persist enabled state', () => {
+      service.setNotificationsEnabled(true);
+      expect(service.isNotificationsEnabled()).toBe(true);
+      expect(localStorage.setItem).toHaveBeenCalledWith('notificationsEnabled', 'true');
+    });
+
+    it('should set and persist disabled state', () => {
+      service.setNotificationsEnabled(false);
+      expect(service.isNotificationsEnabled()).toBe(false);
+      expect(localStorage.setItem).toHaveBeenCalledWith('notificationsEnabled', 'false');
+    });
+
+    it('should emit via notificationsEnabled observable', (done) => {
+      service.setNotificationsEnabled(true);
+      service.notificationsEnabled.pipe(take(1)).subscribe(enabled => {
+        expect(enabled).toBe(true);
+        done();
+      });
+    });
+
+    it('should auto-enable when requestPermission grants', async () => {
+      windowRef.Notification!.permission = 'default';
+      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('granted'));
+
+      await service.requestPermission();
+
+      expect(service.isNotificationsEnabled()).toBe(true);
+      expect(localStorage.setItem).toHaveBeenCalledWith('notificationsEnabled', 'true');
+    });
+
+    it('should not auto-enable when requestPermission is denied', async () => {
+      windowRef.Notification!.permission = 'default';
+      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('denied'));
+
+      await service.requestPermission();
+
+      // Should remain at the default (false, since permission was 'default' before)
+      expect(service.isNotificationsEnabled()).toBe(false);
+    });
+  });
 });
