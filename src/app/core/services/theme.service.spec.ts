@@ -37,6 +37,10 @@ describe('ThemeService', () => {
     storeSpy = TestBed.inject(Store) as jasmine.SpyObj<Store>;
   });
 
+  afterEach(() => {
+    document.body.classList.remove('dark-theme', 'theme-transitioning');
+  });
+
   it('should be created', () => {
     service = TestBed.inject(ThemeService);
     expect(service).toBeTruthy();
@@ -66,6 +70,10 @@ describe('ThemeService', () => {
       tick();
 
       expect(document.body.classList.contains('dark-theme')).toBe(true);
+      expect(document.body.classList.contains('theme-transitioning')).toBe(true);
+
+      tick(600);
+      expect(document.body.classList.contains('theme-transitioning')).toBe(false);
     }));
 
     it('should remove dark theme class from body when disabled', fakeAsync(() => {
@@ -75,6 +83,7 @@ describe('ThemeService', () => {
       tick();
 
       expect(document.body.classList.contains('dark-theme')).toBe(false);
+      tick(600);
     }));
 
     it('should save theme preference to localStorage', fakeAsync(() => {
@@ -83,14 +92,15 @@ describe('ThemeService', () => {
       tick();
 
       expect(localStorage.setItem).toHaveBeenCalledWith('birthday-app-dark-mode', 'true');
+      tick(600);
     }));
 
     it('should update localStorage when theme changes', fakeAsync(() => {
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(true);
-      tick();
+      tick(600);
       darkModeSubject.next(false);
-      tick();
+      tick(600);
 
       expect(localStorage.setItem).toHaveBeenCalledWith('birthday-app-dark-mode', 'false');
     }));

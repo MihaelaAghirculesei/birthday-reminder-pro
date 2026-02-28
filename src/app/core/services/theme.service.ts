@@ -41,11 +41,17 @@ export class ThemeService {
   private applyTheme(isDark: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    document.body.classList.add('theme-transitioning');
+
     if (isDark) {
       document.body.classList.add('dark-theme');
     } else {
       document.body.classList.remove('dark-theme');
     }
+
+    setTimeout(() => {
+      document.body.classList.remove('theme-transitioning');
+    }, 600);
   }
 
   toggleDarkMode(): void {
