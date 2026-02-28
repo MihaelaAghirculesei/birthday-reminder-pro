@@ -8,6 +8,7 @@ import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { LoggerService } from './logger.service';
 import { SenderSettingsService } from './sender-settings.service';
+import { NotificationPermissionService } from './notification-permission.service';
 
 export interface BirthdayNotificationData {
   birthdayId: string;
@@ -25,6 +26,8 @@ export class PushNotificationService {
   private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
   private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+  private readonly permissionService = inject(NotificationPermissionService);
 
   constructor(
     private storage: IndexedDBStorageService,
@@ -102,7 +105,7 @@ export class PushNotificationService {
 
   private async checkBrowserNotifications(): Promise<void> {
     if (typeof window === 'undefined') return;
-    if (!('Notification' in window) || Notification.permission !== 'granted') {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !this.permissionService.isNotificationsEnabled()) {
       return;
     }
 
@@ -309,7 +312,7 @@ export class PushNotificationService {
     if (delay > 0 && delay < 86400000) {
       const timeout = setTimeout(async () => {
         this.browserTimeouts.delete(key);
-        if ('Notification' in window && Notification.permission === 'granted') {
+        if ('Notification' in window && Notification.permission === 'granted' && this.permissionService.isNotificationsEnabled()) {
           this.showBrowserNotification(birthday, message);
           await this.markBrowserNotificationSent(birthday.id, message.id);
         }

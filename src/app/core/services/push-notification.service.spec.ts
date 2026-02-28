@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { PushNotificationService } from './push-notification.service';
 import { IndexedDBStorageService } from './offline-storage.service';
+import { NotificationPermissionService } from './notification-permission.service';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('PushNotificationService', () => {
   let service: PushNotificationService;
   let mockStorage: jasmine.SpyObj<IndexedDBStorageService>;
+  let mockPermissionService: jasmine.SpyObj<NotificationPermissionService>;
 
   const mockBirthday: Birthday = {
     id: 'b1',
@@ -35,12 +37,18 @@ describe('PushNotificationService', () => {
       'updateBirthday'
     ]);
 
+    mockPermissionService = jasmine.createSpyObj('NotificationPermissionService', [
+      'isNotificationsEnabled'
+    ]);
+    mockPermissionService.isNotificationsEnabled.and.returnValue(true);
+
     mockStorage.getBirthdays.and.returnValue(Promise.resolve([]));
 
     TestBed.configureTestingModule({
       providers: [
         PushNotificationService,
         { provide: IndexedDBStorageService, useValue: mockStorage },
+        { provide: NotificationPermissionService, useValue: mockPermissionService },
         SILENT_LOGGER_PROVIDER
       ]
     });
@@ -727,6 +735,44 @@ describe('PushNotificationService', () => {
       if (notifications.length > 0) {
         expect(notifications[0].title).toBe('🎂 Birthday Reminder');
       }
+    });
+  });
+
+  describe('Notification enabled guard', () => {
+    it('should skip checkBrowserNotifications when notifications disabled', async () => {
+      mockPermissionService.isNotificationsEnabled.and.returnValue(false);
+      const birthday = {
+        ...mockBirthday,
+        scheduledMessages: [mockMessage]
+      };
+      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthday]));
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (service as any).checkBrowserNotifications();
+
+      // If guard works, storage.getBirthdays should NOT be called by checkBrowserNotifications
+      // (it may have been called during init, so we reset and check)
+      mockStorage.getBirthdays.calls.reset();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (service as any).checkBrowserNotifications();
+      expect(mockStorage.getBirthdays).not.toHaveBeenCalled();
+    });
+
+    it('should allow checkBrowserNotifications when notifications enabled and permission granted', async () => {
+      mockPermissionService.isNotificationsEnabled.and.returnValue(true);
+      // Simulate browser permission granted
+      const origPermission = Notification.permission;
+      Object.defineProperty(Notification, 'permission', { value: 'granted', writable: true, configurable: true });
+      mockStorage.getBirthdays.calls.reset();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (service as any).checkBrowserNotifications();
+
+      // When enabled and granted, it should proceed and call getBirthdays
+      expect(mockStorage.getBirthdays).toHaveBeenCalled();
+
+      // Restore
+      Object.defineProperty(Notification, 'permission', { value: origPermission, writable: true, configurable: true });
     });
   });
 
