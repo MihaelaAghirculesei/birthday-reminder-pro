@@ -109,3 +109,21 @@
     padding: 24px !important;
   }
 }
+
+@media (max-width: 390px) {
+  .test-data-content {
+    gap: 12px;
+
+    .test-icon {
+      min-width: 52px;
+      min-height: 52px;
+      padding: 8px;
+    }
+
+    .add-test-btn {
+      min-width: 140px;
+      height: 40px;
+      padding: 8px 16px !important;
+    }
+  }
+}

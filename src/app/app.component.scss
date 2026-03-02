@@ -43,9 +43,9 @@
 }
 
 .add-birthday-card {
-  @include birthday-card-base;
   animation: fadeInUp 0.6s ease-out 0.4s both;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
+  @include birthday-card-base;
 
   &:hover {
     transform: translateY(-8px);
@@ -60,7 +60,7 @@
     }
 
     &.collapsible-header {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: $transition-smooth;
 
       &:hover {
         background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
@@ -71,7 +71,7 @@
       }
 
       .expand-icon {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: $transition-smooth;
         backdrop-filter: blur(10px);
         pointer-events: none;
 
@@ -102,6 +102,13 @@
   }
 }
 
+@media (max-width: 390px) {
+  .content-container {
+    padding: 8px 4px;
+    gap: 12px;
+  }
+}
+
 .message-scheduler-section {
   margin: 24px 0;
   padding: 16px 0;
@@ -120,11 +127,11 @@
 }
 
 .test-data-card {
+  animation: fadeInUp 0.6s ease-out 0.3s both;
   @include gradient-card(
     linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%),
-    linear-gradient(135deg, #2a2a2a 0%, #333333 100%)
+    $dark-theme-gradient
   );
-  animation: fadeInUp 0.6s ease-out 0.3s both;
 }
 
 .test-data-content {
