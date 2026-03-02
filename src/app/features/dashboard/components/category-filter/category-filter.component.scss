@@ -205,7 +205,6 @@
   z-index: 1;
   height: 100%;
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 12px;
 }
@@ -218,9 +217,7 @@
 }
 
 .category-stat-icon {
-  font-size: 48px !important;
-  width: 48px !important;
-  height: 48px !important;
+  @include icon-size(48px, true);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
@@ -242,9 +239,7 @@
 
   mat-icon {
     color: white !important;
-    font-size: 20px !important;
-    width: 20px !important;
-    height: 20px !important;
+    @include icon-size(20px, true);
   }
 }
 
@@ -318,9 +313,7 @@
 
   .warning-icon {
     color: #ff9800;
-    font-size: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
+    @include icon-size(28px, true);
     animation: pulse-warning 2s infinite;
   }
 }
@@ -333,9 +326,7 @@
   line-height: 32px !important;
 
   mat-icon {
-    font-size: 18px !important;
-    width: 18px !important;
-    height: 18px !important;
+    @include icon-size(18px, true);
     line-height: 18px !important;
   }
 
@@ -392,9 +383,7 @@
 
 .filter-icon {
   color: var(--primary) !important;
-  font-size: 24px !important;
-  width: 24px !important;
-  height: 24px !important;
+  @include icon-size(24px, true);
   animation: checkmark 0.3s ease-in-out;
 }
 
@@ -546,9 +535,7 @@
 }
 
 .filtered-category-icon {
-  font-size: 48px !important;
-  width: 48px !important;
-  height: 48px !important;
+  @include icon-size(48px, true);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
   transition: all 0.3s ease;
 
@@ -614,9 +601,7 @@
 }
 
 .add-category-icon {
-  font-size: 48px !important;
-  width: 48px !important;
-  height: 48px !important;
+  @include icon-size(48px, true);
   color: white !important;
   filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.1));
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -632,5 +617,85 @@
   50% {
     transform: scale(1.05);
     opacity: 1;
+  }
+}
+
+@media (max-width: 390px) {
+  .categories-section {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .section-header {
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    gap: 10px;
+    font-size: 1.05rem;
+  }
+
+  .title-icon-wrapper {
+    width: 40px;
+    height: 40px;
+
+    mat-icon, .title-custom-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+  }
+
+  .categories-grid { gap: 10px; }
+  .filtered-dashboard-grid { gap: 16px; }
+
+  .category-stat-card {
+    padding: 12px;
+    border-radius: 14px !important;
+  }
+
+  .category-stat-icon,
+  .add-category-icon,
+  .filtered-category-icon {
+    @include icon-size(36px, true);
+  }
+
+  .category-stat-name { font-size: 0.9rem; }
+
+  .section-subtitle,
+  .category-stat-count,
+  .filter-text,
+  .filtered-date {
+    font-size: 0.85rem;
+  }
+
+  .filter-info {
+    padding: 12px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .categories-grid,
+  .filtered-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filtered-card-content {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .filtered-name { font-size: 0.95rem; }
+
+  .filtered-icons-section {
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .filtered-zodiac-icon {
+    font-size: 24px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
 }

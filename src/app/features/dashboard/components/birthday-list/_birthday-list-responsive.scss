@@ -1,3 +1,5 @@
+@use '../../../../../styles/shared' as *;
+
 @media (max-width: 900px) and (min-width: 769px) {
   .birthday-list-header {
     flex-direction: column;
@@ -95,5 +97,90 @@
         max-width: 400px;
       }
     }
+  }
+}
+
+@media (max-width: 390px) {
+  .birthday-list-header {
+    padding: 16px 12px;
+    gap: 12px;
+
+    .header-title-section {
+      gap: 10px;
+
+      .mat-mdc-card-title {
+        font-size: 1rem;
+      }
+    }
+  }
+
+  .birthday-list-card,
+  .test-data-card,
+  .clear-data-card {
+    .mat-mdc-card-content {
+      padding: 10px !important;
+    }
+  }
+
+  .data-management-sections {
+    margin-top: 16px;
+    gap: 16px;
+  }
+
+  .test-data-section,
+  .clear-data-section {
+    padding: 0;
+  }
+
+  .test-data-content {
+    gap: 12px;
+
+    .test-icon {
+      min-width: 52px;
+      min-height: 52px;
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      padding: 10px;
+    }
+
+    .test-info {
+      h3 { font-size: 0.95rem; }
+      p { font-size: 0.85rem; }
+    }
+
+    .add-test-btn {
+      min-width: 140px;
+      height: 40px;
+      font-size: 0.85rem !important;
+      padding: 8px 16px !important;
+    }
+  }
+
+  .dashboard-birthday-list {
+    gap: 10px;
+  }
+
+  .no-birthdays {
+    padding: 24px 12px;
+
+    p { font-size: 0.9rem; }
+  }
+
+  .clear-data-content {
+    gap: 8px;
+
+    .clear-icon {
+      min-width: 48px;
+      min-height: 48px;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      padding: 10px;
+    }
+  }
+
+  .no-data-icon {
+    @include icon-size(48px);
   }
 }
