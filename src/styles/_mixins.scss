@@ -6,6 +6,31 @@ $white-90: rgba(255, 255, 255, 0.9) !default;
 $dialog-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !default;
 $dialog-dark-bg: #2a2a2a !default;
 
+// Dark theme colors
+$dark-bg: #2a2a2a !default;
+$dark-bg-secondary: #333333 !default;
+$dark-bg-elevated: #3a3a3a !default;
+$dark-theme-gradient: linear-gradient(135deg, $dark-bg 0%, $dark-bg-secondary 100%) !default;
+
+// Card gradient (purple)
+$card-gradient-light: linear-gradient(135deg, #8b9af7 0%, #b89dd9 50%, #f5b3fc 100%) !default;
+$card-gradient-dark: linear-gradient(135deg, #4a5568 0%, #5a5a7a 50%, #6b5b7b 100%) !default;
+
+// Birthday item colors
+$item-border-accent: #4c3fd9 !default;
+$item-bg-light: #d2d4d7 !default;
+$item-bg-hover: #f1f3f4 !default;
+$item-border-hover: #6c757d !default;
+
+// Button gradients
+$btn-edit-start: #007bff !default;
+$btn-edit-end: #0056b3 !default;
+$btn-delete-start: #dc3545 !default;
+$btn-delete-end: #c82333 !default;
+
+// Shared transition
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
 @mixin circular-button($size, $gradient-start, $gradient-end, $icon-size: 20px) {
   width: $size !important;
   height: $size !important;
@@ -13,7 +38,7 @@ $dialog-dark-bg: #2a2a2a !default;
   color: white !important;
   border-radius: 50% !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition: $transition-smooth !important;
   border: none !important;
   display: flex !important;
   align-items: center !important;
@@ -39,8 +64,23 @@ $dialog-dark-bg: #2a2a2a !default;
   }
 }
 
+@mixin icon-size($size, $important: false) {
+  $flag: if($important, ' !important', '');
+  font-size: #{$size}#{$flag};
+  width: #{$size}#{$flag};
+  height: #{$size}#{$flag};
+}
+
+@mixin square-size($size, $important: false) {
+  $flag: if($important, ' !important', '');
+  width: #{$size}#{$flag};
+  height: #{$size}#{$flag};
+  min-width: #{$size}#{$flag};
+  min-height: #{$size}#{$flag};
+}
+
 @mixin card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
   &:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
 }
 
@@ -77,6 +117,10 @@ $dialog-dark-bg: #2a2a2a !default;
     align-items: center;
     padding: 32px !important;
     overflow: visible !important;
+
+    @media (max-width: 390px) {
+      padding: 16px !important;
+    }
   }
 }
 
@@ -143,7 +187,7 @@ $dialog-dark-bg: #2a2a2a !default;
     padding: 20px 32px;
 
     :host-context(body.dark-theme) & {
-      background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+      background: $dark-theme-gradient;
     }
 
     .mat-mdc-card-title {
@@ -168,6 +212,13 @@ $dialog-dark-bg: #2a2a2a !default;
         filter: brightness(1.1);
       }
 
+      .mat-mdc-card-title {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       .expand-icon {
         font-size: 2rem;
         width: 2rem;
@@ -182,10 +233,29 @@ $dialog-dark-bg: #2a2a2a !default;
         flex-shrink: 0;
       }
     }
+
+    @media (max-width: 390px) {
+      padding: 14px 12px;
+
+      .mat-mdc-card-title {
+        font-size: 1rem;
+      }
+
+      &.collapsible-header .expand-icon {
+        margin-left: 8px;
+        font-size: 1.5rem;
+        width: 1.5rem;
+        height: 1.5rem;
+      }
+    }
   }
 
   .mat-mdc-card-content {
     padding: 32px;
+
+    @media (max-width: 390px) {
+      padding: 16px;
+    }
   }
 }
 
@@ -195,7 +265,7 @@ $dialog-dark-bg: #2a2a2a !default;
   font-weight: 700 !important;
   padding: 12px 24px !important;
   border-radius: var(--radius) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
   min-width: 180px;
   height: 48px;
   display: flex;
@@ -231,9 +301,7 @@ $dialog-dark-bg: #2a2a2a !default;
   }
 
   mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+    @include icon-size(20px);
   }
 }
 
@@ -252,5 +320,10 @@ $dialog-dark-bg: #2a2a2a !default;
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.4;
+  }
+
+  @media (max-width: 390px) {
+    h3 { font-size: 0.95rem; }
+    p { font-size: 0.85rem; }
   }
 }
