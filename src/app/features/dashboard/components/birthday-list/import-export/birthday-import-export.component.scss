@@ -13,17 +13,17 @@
 .backup-card {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #8b9af7 0%, #b89dd9 50%, #f5b3fc 100%) !important;
+  background: $card-gradient-light !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-elevated) !important;
   border: none !important;
   max-width: 600px;
   width: 100%;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
   overflow: visible !important;
 
   :host-context(body.dark-theme) & {
-    background: linear-gradient(135deg, #4a5568 0%, #5a5a7a 50%, #6b5b7b 100%) !important;
+    background: $card-gradient-dark !important;
   }
 
   &:hover {
@@ -84,9 +84,7 @@
       }
 
       mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        @include icon-size(18px);
         margin-right: 4px;
       }
     }
@@ -139,6 +137,37 @@
       align-self: center;
       justify-self: end;
       flex-wrap: wrap;
+    }
+  }
+}
+
+@media (max-width: 390px) {
+  .backup-card .mat-mdc-card-content {
+    padding: 12px !important;
+  }
+
+  .backup-section {
+    padding: 0;
+  }
+
+  .backup-content {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    .backup-icon {
+      min-width: 48px;
+      min-height: 48px;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      padding: 10px;
+    }
+
+    .backup-actions {
+      justify-self: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
     }
   }
 }
