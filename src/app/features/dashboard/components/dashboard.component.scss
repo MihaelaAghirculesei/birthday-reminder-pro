@@ -1,3 +1,5 @@
+@use '../../../../styles/shared' as *;
+
 .dashboard-container {
   padding: 32px;
   max-width: var(--content-max-width);
@@ -100,9 +102,7 @@
   }
 
   mat-icon {
-    font-size: 28px;
-    width: 28px;
-    height: 28px;
+    @include icon-size(28px);
   }
 }
 
@@ -120,9 +120,7 @@
   min-height: 100px;
 
   mat-icon {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
+    @include icon-size(32px);
     opacity: 0.7;
   }
 }
@@ -169,9 +167,62 @@
     }
 
     mat-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
+      @include icon-size(24px);
+    }
+  }
+}
+
+@media (max-width: 390px) {
+  .dashboard-container {
+    padding: 6px;
+  }
+
+  .dashboard-section {
+    margin-bottom: 16px;
+  }
+
+  .dashboard-section-header {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-section-title {
+    gap: 8px;
+    font-size: 1.05rem;
+  }
+
+  .dashboard-title-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .dashboard-section-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .full-width-section {
+    margin: 16px 0;
+  }
+
+  .schedule-message-fab {
+    bottom: 80px;
+    right: 10px;
+    transform: scale(0.8);
+
+    &:hover {
+      transform: scale(0.9);
+    }
+  }
+
+  .calendar-sync-placeholder,
+  .calendar-sync-loading {
+    padding: 16px;
+    font-size: 0.85rem;
+    min-height: 60px;
+    gap: 8px;
+
+    mat-icon {
+      @include icon-size(24px);
     }
   }
 }
