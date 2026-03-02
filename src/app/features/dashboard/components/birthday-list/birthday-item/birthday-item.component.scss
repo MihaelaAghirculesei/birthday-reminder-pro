@@ -22,9 +22,7 @@
   }
 
   .dashboard-default-icon {
-    font-size: clamp(40px, 12vw, 100px);
-    width: clamp(40px, 12vw, 100px);
-    height: clamp(40px, 12vw, 100px);
+    @include icon-size(clamp(40px, 12vw, 100px));
     background: var(--primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -40,38 +38,38 @@
   padding: 16px;
   margin: 0 16px;
   position: relative;
-  background: #d2d4d7;
+  background: $item-bg-light;
   border-radius: 8px;
-  border-left: 8px solid #4c3fd9;
   border: 1px solid transparent;
+  border-left: 8px solid $item-border-accent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
 
   :host-context(body.dark-theme) & {
-    background: #2a2a2a;
+    background: $dark-bg;
   }
 
   &:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    border: 3px solid #6c757d;
-    border-left: 8px solid #4c3fd9;
-    background: #f1f3f4;
+    border: 3px solid $item-border-hover;
+    border-left: 8px solid $item-border-accent;
+    background: $item-bg-hover;
 
     :host-context(body.dark-theme) & {
-      background: #333333;
+      background: $dark-bg-secondary;
     }
   }
 
   &:focus,
   &:focus-within {
     outline: none;
-    border: 1px solid #6c757d;
-    border-left: 8px solid #4c3fd9;
+    border: 1px solid $item-border-hover;
+    border-left: 8px solid $item-border-accent;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     background: #ffffff;
 
     :host-context(body.dark-theme) & {
-      background: #3a3a3a;
+      background: $dark-bg-elevated;
     }
   }
 
@@ -117,7 +115,7 @@
   color: white;
   border-radius: 20px;
   box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
   width: fit-content;
 
   &:hover {
@@ -141,9 +139,7 @@
   margin: 4px 0;
 
   .small-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    @include icon-size(16px);
     color: var(--text-secondary);
   }
 }
@@ -203,7 +199,7 @@
 }
 
 .edit-button-circle {
-  @include circular-button(55px, #007bff, #0056b3);
+  @include circular-button(55px, $btn-edit-start, $btn-edit-end);
 
   :host-context(body.dark-theme) & {
     background: var(--button-edit) !important;
@@ -220,7 +216,7 @@
 }
 
 .delete-button-circle {
-  @include circular-button(55px, #dc3545, #c82333, 34px);
+  @include circular-button(55px, $btn-delete-start, $btn-delete-end, 34px);
 
   :host-context(body.dark-theme) & {
     background: var(--button-delete) !important;
@@ -302,11 +298,11 @@
   }
 
   .edit-button-circle {
-    @include circular-button(45px, #007bff, #0056b3);
+    @include circular-button(45px, $btn-edit-start, $btn-edit-end);
   }
 
   .delete-button-circle {
-    @include circular-button(45px, #dc3545, #c82333, 28px);
+    @include circular-button(45px, $btn-delete-start, $btn-delete-end, 28px);
   }
 
   ::ng-deep .dashboard-toolbar {
@@ -337,9 +333,7 @@
   color: var(--text-secondary);
 
   mat-icon {
-    font-size: 22px;
-    width: 22px;
-    height: 22px;
+    @include icon-size(22px);
   }
 }
 
@@ -347,7 +341,7 @@
 // Menu panel styles — same as header burger menu
 ::ng-deep .birthday-item-menu.mat-mdc-menu-panel {
   min-width: 180px;
-  background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+  background: $dark-theme-gradient;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
 
@@ -394,9 +388,7 @@
       }
 
       .mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        @include icon-size(18px);
       }
     }
   }
@@ -420,16 +412,11 @@
   }
 
   .dashboard-avatar {
-    width: 56px !important;
-    height: 56px !important;
-    min-width: 56px !important;
-    min-height: 56px !important;
+    @include square-size(56px, true);
   }
 
   .dashboard-default-icon {
-    font-size: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
+    @include icon-size(28px, true);
   }
 
   .dashboard-name {
@@ -465,5 +452,60 @@
 
   .dashboard-actions {
     height: auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .dashboard-birthday-item {
+    padding: 10px 36px 10px 8px;
+    margin: 0 2px;
+    gap: 8px;
+    border-left-width: 5px;
+
+    &:hover {
+      border-left-width: 5px;
+    }
+  }
+
+  .dashboard-avatar {
+    @include square-size(48px, true);
+  }
+
+  .dashboard-default-icon {
+    @include icon-size(24px, true);
+  }
+
+  .dashboard-name {
+    font-size: 0.95rem;
+  }
+
+  .dashboard-age,
+  .dashboard-notes {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-birth-date {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+
+  .birthday-days-circle {
+    width: 44px;
+    height: 44px;
+
+    .days-number {
+      font-size: 0.75rem;
+    }
+  }
+
+  .compact-menu-btn {
+    top: 4px;
+    right: 4px;
+    width: 32px !important;
+    height: 32px !important;
+
+    mat-icon {
+      @include icon-size(20px);
+    }
   }
 }
