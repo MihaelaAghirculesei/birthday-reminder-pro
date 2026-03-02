@@ -3,7 +3,7 @@
 .chart-card {
   @include surface-card;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: $transition-smooth;
 
   &:hover {
     transform: translateY(-6px);
@@ -88,7 +88,7 @@
 .bar-value {
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
@@ -173,5 +173,35 @@
 
   .bar {
     width: 20px;
+  }
+}
+
+@media (max-width: 390px) {
+  .chart-card .mat-mdc-card-content {
+    padding: 12px !important;
+  }
+
+  .bar {
+    width: 14px;
+  }
+
+  .bar-label {
+    font-size: 0.75rem;
+  }
+
+  .bar-value {
+    font-size: 0.7rem;
+  }
+
+  .bar-container {
+    height: 60px;
+  }
+
+  .chart-legend {
+    padding: 12px;
+
+    .no-data-text {
+      font-size: 0.85rem;
+    }
   }
 }
