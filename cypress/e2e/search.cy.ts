@@ -16,16 +16,26 @@ describe('Search Functionality', () => {
       cy.expandBirthdayForm();
 
       cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 })
-        .should('be.visible')
-        .clear()
+        .should('exist')
+        .should('be.visible');
+      cy.get('[data-testid="birthday-name-input"]')
+        .clear();
+      cy.get('[data-testid="birthday-name-input"]')
+        .should('exist')
         .type(birthday.name);
 
       cy.get('[data-testid="birthday-date-input"]')
-        .should('be.visible')
-        .clear()
+        .should('exist')
+        .should('be.visible');
+      cy.get('[data-testid="birthday-date-input"]')
+        .clear();
+      cy.get('[data-testid="birthday-date-input"]')
+        .should('exist')
         .type(birthday.date);
 
-      cy.get('[data-testid="save-birthday-button"]').click();
+      cy.get('[data-testid="save-birthday-button"]')
+        .should('exist')
+        .click();
       // Wait for form close animation to complete before next iteration
       cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.be.visible');
     });
@@ -39,7 +49,9 @@ describe('Search Functionality', () => {
     cy.contains('Bob Smith').should('exist');
     cy.contains('Charlie Brown').should('exist');
 
-    cy.get('.dashboard-search-field input').type('Alice', { force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .type('Alice', { force: true });
 
     cy.contains('Alice Johnson').should('exist');
     cy.contains('Bob Smith').should('not.exist');
@@ -47,10 +59,14 @@ describe('Search Functionality', () => {
   });
 
   it('should clear search and show all birthdays', () => {
-    cy.get('.dashboard-search-field input').type('Alice', { force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .type('Alice', { force: true });
     cy.contains('Bob Smith').should('not.exist');
 
-    cy.get('.dashboard-search-field input').clear({ force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .clear({ force: true });
 
     cy.contains('Alice Johnson').should('exist');
     cy.contains('Bob Smith').should('exist');
@@ -58,16 +74,25 @@ describe('Search Functionality', () => {
   });
 
   it('should show no results message for non-existent search', () => {
-    cy.get('.dashboard-search-field input').type('NonExistent', { force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .type('NonExistent', { force: true });
 
     cy.contains('No birthdays found').should('be.visible');
   });
 
   it('should be case insensitive', () => {
-    cy.get('.dashboard-search-field input').type('alice', { force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .type('alice', { force: true });
     cy.contains('Alice Johnson').should('be.visible');
 
-    cy.get('.dashboard-search-field input').clear({ force: true }).type('ALICE', { force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .clear({ force: true });
+    cy.get('.dashboard-search-field input')
+      .should('exist')
+      .type('ALICE', { force: true });
     cy.contains('Alice Johnson').should('be.visible');
   });
 });
