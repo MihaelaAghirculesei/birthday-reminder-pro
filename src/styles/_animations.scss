@@ -11,19 +11,10 @@
 
 @keyframes pulse-undo {
   0%, 100% {
-    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    box-shadow: 0 4px 15px var(--pulse-undo-color, rgba(255, 107, 107, 0.4));
   }
   50% {
-    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.7);
-  }
-}
-
-@keyframes pulse-undo-dark {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(248, 113, 113, 0.5);
-  }
-  50% {
-    box-shadow: 0 6px 25px rgba(248, 113, 113, 0.8);
+    box-shadow: 0 6px 25px var(--pulse-undo-color-strong, rgba(255, 107, 107, 0.7));
   }
 }
 

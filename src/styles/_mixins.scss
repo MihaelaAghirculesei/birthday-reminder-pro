@@ -166,6 +166,26 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
+@mixin glass-form-field-colors {
+  .mat-mdc-text-field-wrapper {
+    background: transparent !important;
+    .mat-mdc-form-field-flex { background: transparent; }
+    .mat-mdc-form-field-infix { padding-left: 12px !important; }
+  }
+
+  .mat-mdc-form-field-hint-wrapper,
+  .mat-mdc-form-field-hint-spacer,
+  .mat-mdc-form-field-subscript-wrapper { background: transparent !important; }
+  .mat-mdc-form-field-hint-wrapper { padding: 4px 8px; }
+
+  .mat-mdc-form-field-label,
+  .mdc-floating-label { color: white !important; line-height: 24px !important; }
+  .mat-mdc-select-value,
+  .mat-mdc-input-element { color: white !important; }
+  .mat-mdc-form-field-hint { color: $white-70 !important; }
+  .mat-mdc-select-arrow { color: $white-80; }
+}
+
 @mixin glass-panel($bg-opacity: 0.15, $border-opacity: 0.3) {
   background: rgba(255, 255, 255, $bg-opacity) !important;
   border: 2px solid rgba(255, 255, 255, $border-opacity);
