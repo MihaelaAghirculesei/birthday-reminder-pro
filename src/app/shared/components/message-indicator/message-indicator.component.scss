@@ -5,21 +5,14 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  border: 3px solid #9b59b6;
+  border: 3px solid var(--scheduler-accent);
   background: white;
   cursor: help;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  line-height: 1;
-  text-align: center;
-  vertical-align: middle;
 
   &:hover {
     transform: scale(1.1);
-  }
-
-  &:focus {
-    outline: none;
   }
 }
 
@@ -79,7 +72,7 @@
   padding: 10px 14px !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid #9b59b6 !important;
+  border: 1px solid var(--scheduler-accent) !important;
 }
 
 :host ::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {

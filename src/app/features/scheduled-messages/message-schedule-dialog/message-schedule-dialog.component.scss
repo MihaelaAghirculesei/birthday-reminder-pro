@@ -203,36 +203,25 @@
   }
 
   ::ng-deep .mat-mdc-form-field {
-    .mat-mdc-text-field-wrapper {
-      background: transparent !important;
-      .mat-mdc-form-field-flex { background: transparent; }
-      .mat-mdc-form-field-infix { padding-left: 12px !important; }
+    @include glass-form-field-colors;
 
-      .mdc-notched-outline {
-        .mdc-notched-outline__leading { display: none !important; }
-        .mdc-notched-outline__notch {
-          border: 2px solid $white-50 !important;
-          border-right: none !important;
-          border-radius: 12px 0 0 12px !important;
-          padding-left: 20px !important;
-        }
-        .mdc-notched-outline__trailing {
-          border: 2px solid $white-50 !important;
-          border-left: none !important;
-          border-radius: 0 12px 12px 0 !important;
-        }
+    .mat-mdc-text-field-wrapper .mdc-notched-outline {
+      .mdc-notched-outline__leading { display: none !important; }
+      .mdc-notched-outline__notch {
+        border: 2px solid $white-50 !important;
+        border-right: none !important;
+        border-radius: 12px 0 0 12px !important;
+        padding-left: 20px !important;
+      }
+      .mdc-notched-outline__trailing {
+        border: 2px solid $white-50 !important;
+        border-left: none !important;
+        border-radius: 0 12px 12px 0 !important;
       }
     }
 
-    .mat-mdc-form-field-hint-wrapper,
-    .mat-mdc-form-field-hint-spacer,
-    .mat-mdc-form-field-subscript-wrapper { background: transparent !important; }
-    .mat-mdc-form-field-hint-wrapper { padding: 4px 8px; }
-
-    .mat-mdc-form-field-label, .mdc-floating-label { color: white !important; line-height: 24px !important; }
-    .mat-mdc-select-value, .mat-mdc-input-element { color: white !important; }
-    .mat-mdc-form-field-hint { color: $white-70 !important; }
-    .mat-mdc-select-arrow, .mat-mdc-form-field-icon-prefix, .mat-mdc-form-field-icon-suffix { color: $white-80; }
+    .mat-mdc-form-field-icon-prefix,
+    .mat-mdc-form-field-icon-suffix { color: $white-80; }
 
     &.mat-focused .mdc-notched-outline {
       .mdc-notched-outline__notch, .mdc-notched-outline__trailing { border-color: $white-90 !important; }

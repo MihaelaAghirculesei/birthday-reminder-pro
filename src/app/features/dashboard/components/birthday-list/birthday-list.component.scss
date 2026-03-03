@@ -56,7 +56,8 @@
 
   :host-context(body.dark-theme) & {
     background: var(--button-undo) !important;
-    animation: pulse-undo-dark 2s infinite;
+    --pulse-undo-color: rgba(248, 113, 113, 0.5);
+    --pulse-undo-color-strong: rgba(248, 113, 113, 0.8);
   }
 
   mat-icon {
@@ -190,6 +191,12 @@
       grid-column: 1;
       grid-row: 1;
       justify-self: center;
+      min-width: 64px;
+      min-height: 64px;
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      padding: 12px;
     }
 
     .clear-info {
@@ -207,21 +214,32 @@
   }
 }
 
-@media (max-width: 570px) {
+@media (max-width: 390px) {
   .clear-data-content {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr;
 
     .clear-icon {
-      justify-self: center;
+      grid-column: 1;
+      grid-row: 1;
+      justify-self: start;
+      min-width: 48px;
+      min-height: 48px;
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+      padding: 10px;
     }
 
     .clear-info {
-      text-align: center;
+      grid-column: 2;
+      grid-row: 1;
+      text-align: left;
+      align-self: center;
     }
 
     .clear-all-btn {
-      grid-column: 1;
-      grid-row: 3;
+      grid-column: 1 / -1;
+      grid-row: 2;
       justify-self: center;
     }
   }

@@ -1,7 +1,7 @@
 <button
   class="message-indicator-button"
   [matTooltip]="tooltipText"
-  [ngStyle]="{ 'border-color': hasActiveMessages ? '#9b59b6' : '#95a5a6' }"
+  [style.border-color]="hasActiveMessages ? 'var(--scheduler-accent)' : '#95a5a6'"
   type="button"
   >
   @if (hasActiveMessages) {

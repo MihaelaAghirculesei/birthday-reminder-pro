@@ -18,9 +18,7 @@
     backdrop-filter: blur(10px);
 
     .warning-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
+      @include icon-size(32px);
       color: $white-90;
     }
 
@@ -55,19 +53,20 @@
       margin-bottom: 24px;
 
       .count-warning {
-        font-size: 16px;
+        font-size: 1rem;
         margin: 0 0 8px 0;
         color: white;
 
         strong {
           color: white;
-          font-size: 18px;
+          font-size: 1.125rem;
           font-weight: 700;
         }
       }
 
       .info-text {
         margin: 0;
+        font-size: 0.9rem;
         color: $white-90;
       }
     }
@@ -78,7 +77,7 @@
       padding: 16px;
 
       h3 {
-        font-size: 16px;
+        font-size: 1rem;
         margin: 0 0 12px 0;
         color: white;
         font-weight: 600;
@@ -93,13 +92,11 @@
           gap: 12px;
 
           mat-icon {
-            font-size: 20px;
-            width: 20px;
-            height: 20px;
+            @include icon-size(20px);
           }
 
           span {
-            font-size: 14px;
+            font-size: 0.875rem;
           }
         }
       }
@@ -112,79 +109,39 @@
 
       .alternative-text {
         margin: 0;
-        font-size: 14px;
+        font-size: 0.875rem;
         color: $white-90;
       }
     }
   }
 
-  // Material form fields styling for purple gradient background
   ::ng-deep {
     .mat-mdc-form-field {
-      .mat-mdc-text-field-wrapper {
-        background: transparent !important;
+      @include glass-form-field-colors;
 
-        .mat-mdc-form-field-flex {
-          background: transparent;
+      .mat-mdc-text-field-wrapper .mdc-notched-outline {
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+          border-color: $white-50 !important;
+          border-width: 2px !important;
         }
 
-        .mat-mdc-form-field-infix {
-          padding-left: 12px !important;
+        .mdc-notched-outline__leading {
+          border-radius: 12px 0 0 12px !important;
+          width: 12px !important;
         }
 
-        .mdc-notched-outline {
-          .mdc-notched-outline__leading,
-          .mdc-notched-outline__notch,
-          .mdc-notched-outline__trailing {
-            border-color: $white-50 !important;
-            border-width: 2px !important;
-          }
-
-          .mdc-notched-outline__leading {
-            border-radius: 12px 0 0 12px !important;
-            width: 12px !important;
-          }
-
-          .mdc-notched-outline__notch {
-            border-left: none !important;
-            border-right: none !important;
-            max-width: 0 !important;
-            padding: 0 !important;
-          }
-
-          .mdc-notched-outline__trailing {
-            border-radius: 0 12px 12px 0 !important;
-          }
+        .mdc-notched-outline__notch {
+          border-left: none !important;
+          border-right: none !important;
+          max-width: 0 !important;
+          padding: 0 !important;
         }
-      }
 
-      .mat-mdc-form-field-hint-wrapper,
-      .mat-mdc-form-field-hint-spacer {
-        background: transparent !important;
-        padding: 4px 8px;
-      }
-
-      .mat-mdc-form-field-subscript-wrapper {
-        background: transparent !important;
-      }
-
-      .mat-mdc-form-field-label,
-      .mdc-floating-label {
-        color: white !important;
-        line-height: 24px !important;
-      }
-
-      .mat-mdc-select-value,
-      .mat-mdc-input-element {
-        color: white !important;
-      }
-
-      .mat-mdc-form-field-hint {
-        color: $white-70 !important;
-      }
-
-      .mat-mdc-select-arrow {
-        color: $white-80;
+        .mdc-notched-outline__trailing {
+          border-radius: 0 12px 12px 0 !important;
+        }
       }
 
       &.mat-focused {
@@ -221,6 +178,7 @@
       border: 2px solid $white-50 !important;
       background: white !important;
       border-radius: 4px !important;
+      padding: 5px 15px !important;
 
       .mdc-button__label {
         color: #764ba2 !important;
@@ -229,9 +187,7 @@
       mat-icon {
         color: #764ba2 !important;
         margin-right: 4px;
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        @include icon-size(18px);
       }
 
       &:hover {
@@ -426,13 +382,11 @@
       padding: 12px 16px;
 
       h2 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
       }
 
       .warning-icon {
-        font-size: 28px;
-        width: 28px;
-        height: 28px;
+        @include icon-size(28px);
       }
     }
 
@@ -445,6 +399,146 @@
     ::ng-deep .mat-mdc-dialog-actions {
       padding: 12px 16px;
       flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    mat-dialog-content {
+      .count-warning {
+        font-size: 0.95rem;
+
+        strong {
+          font-size: 1.05rem;
+        }
+      }
+
+      .info-text {
+        font-size: 0.875rem;
+      }
+
+      .reassign-section h3 {
+        font-size: 0.95rem;
+      }
+
+      .alternative-text {
+        font-size: 0.85rem;
+      }
+    }
+
+  }
+}
+
+@media (max-width: 440px) {
+  .category-reassign-dialog {
+    width: 100%;
+
+    mat-dialog-content .reassign-section {
+      overflow: visible;
+      padding-bottom: 24px;
+
+      .category-select {
+        overflow: visible;
+      }
+    }
+  }
+}
+
+@media (max-width: 390px) {
+  .category-reassign-dialog {
+    .dialog-header {
+      padding: 10px 12px;
+      gap: 8px;
+
+      h2 {
+        font-size: 0.95rem;
+      }
+
+      .warning-icon {
+        @include icon-size(22px);
+      }
+    }
+
+    ::ng-deep .mat-mdc-dialog-content {
+      padding: 10px !important;
+    }
+
+    ::ng-deep .mat-mdc-dialog-actions {
+      padding: 8px 10px;
+      gap: 6px;
+    }
+
+    mat-dialog-content {
+      .warning-message {
+        padding: 10px;
+        margin-bottom: 12px;
+
+        .count-warning {
+          font-size: 0.85rem;
+
+          strong {
+            font-size: 0.9rem;
+          }
+        }
+
+        .info-text {
+          font-size: 0.8rem;
+        }
+      }
+
+      .reassign-section {
+        padding: 10px;
+        padding-bottom: 24px;
+        margin-bottom: 12px;
+
+        h3 {
+          font-size: 0.85rem;
+          margin-bottom: 8px;
+        }
+
+        .category-option {
+          gap: 8px;
+
+          mat-icon {
+            @include icon-size(16px);
+          }
+
+          span {
+            font-size: 0.8rem;
+          }
+        }
+      }
+
+      .alternative-section {
+        padding: 10px;
+
+        .alternative-text {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    ::ng-deep .mat-mdc-form-field-hint {
+      font-size: 0.75rem !important;
+    }
+  }
+
+  ::ng-deep .mat-mdc-select-panel .mat-mdc-option {
+    font-size: 0.8rem;
+    min-height: 40px;
+    margin: 2px 4px !important;
+
+    .category-option {
+      gap: 8px;
+
+      mat-icon {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 14px !important;
+        padding: 4px;
+      }
+
+      span {
+        font-size: 0.8rem !important;
+      }
     }
   }
 }

@@ -138,7 +138,6 @@ body {
   font-weight: 400;
 }
 
-// Smooth theme transition: morph colors when toggling dark ↔ light
 body,
 body *,
 body *::before,
@@ -151,7 +150,6 @@ body *::after {
               stroke 0.5s ease;
 }
 
-// Overlay flash on theme toggle
 body::after {
   content: '';
   position: fixed;
@@ -165,12 +163,10 @@ body.theme-transitioning::after {
   animation: theme-flash 0.6s ease-out;
 }
 
-// Light → Dark: purple-tinted flash
 body.theme-transitioning.dark-theme::after {
   background: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.15), transparent 70%);
 }
 
-// Dark → Light: blue-tinted flash
 body.theme-transitioning:not(.dark-theme)::after {
   background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.15), transparent 70%);
 }
@@ -293,20 +289,16 @@ body.dark-theme .mat-mdc-card-content .add-test-btn * {
   border: 0;
 }
 
-// WCAG 2.1 AA Focus Visibility
-// High contrast focus ring for keyboard navigation
 *:focus-visible {
   outline: 3px solid #667eea;
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-// Dark theme focus
 body.dark-theme *:focus-visible {
   outline-color: #a855f7;
 }
 
-// Remove default focus ring, use focus-visible instead
 button:focus:not(:focus-visible),
 a:focus:not(:focus-visible),
 input:focus:not(:focus-visible),
@@ -315,7 +307,6 @@ textarea:focus:not(:focus-visible) {
   outline: none;
 }
 
-// Enhanced focus for interactive cards
 .category-stat-card:focus-visible,
 .dashboard-birthday-item:focus-visible {
   outline: 3px solid #667eea;
@@ -329,7 +320,6 @@ body.dark-theme .dashboard-birthday-item:focus-visible {
   box-shadow: 0 0 0 6px rgba(168, 85, 247, 0.2);
 }
 
-// Reduced motion preference
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -341,7 +331,28 @@ body.dark-theme .dashboard-birthday-item:focus-visible {
   }
 }
 
-// High contrast mode support
+@media (max-width: 440px) {
+  .cdk-overlay-connected-position-bounding-box {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .cdk-overlay-connected-position-bounding-box .cdk-overlay-pane {
+    position: static !important;
+    max-width: 95vw !important;
+  }
+}
+
+@media (max-width: 331px) {
+  .cdk-overlay-connected-position-bounding-box .cdk-overlay-pane {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
 @media (prefers-contrast: more) {
   :root {
     --border: #000000;
