@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -288,16 +289,12 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
     }
 
     .hero-subtitle {
-      font-size: clamp(0.75rem, 2.5vw, 0.95rem);
+      font-size: clamp(0.75rem, 2.5vw, 1.1rem);
       margin: 0.25rem auto 0;
       max-width: var(--content-max-width);
       opacity: 0.85;
       font-weight: 300;
-      color: #1a1a1a;
-
-      :host-context(body.dark-theme) & {
-        color: #ffffff;
-      }
+      color: var(--text-primary);
     }
 
     .header-controls {
@@ -704,6 +701,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly el = inject(ElementRef);
   public readonly themeService = inject(ThemeService);
   private readonly permissionService = inject(NotificationPermissionService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
@@ -716,10 +714,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       this.notificationsGranted = this.permissionService.getCurrentPermission() === 'granted';
       this.notificationsEnabled = this.permissionService.isNotificationsEnabled();
-      this.permissionService.permissionStatus.subscribe(status => {
+      this.permissionService.permissionStatus.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
         this.notificationsGranted = status === 'granted';
       });
-      this.permissionService.notificationsEnabled.subscribe(enabled => {
+      this.permissionService.notificationsEnabled.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
         this.notificationsEnabled = enabled;
       });
       this.lastScrollY = this.getScrollY();
