@@ -170,8 +170,8 @@
     transform: translateY(-4px) scale(1.05);
 
     :host-context(body.dark-theme) & {
-      background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%) !important;
-      border-color: #5a5a5a !important;
+      background: linear-gradient(135deg, var(--surface-hover) 0%, var(--border-light) 100%) !important;
+      border-color: var(--border-light) !important;
       box-shadow: 0 8px 32px rgba(90, 90, 90, 0.5) !important;
     }
 

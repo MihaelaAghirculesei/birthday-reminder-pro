@@ -195,56 +195,36 @@
             font-weight: bold;
 
             &.priority-low {
-              background: #d1ecf1;
-              color: #0c5460;
-
-              :host-context(body.dark-theme) & {
-                background: #4a5568;
-                color: #ffffff;
-              }
+              background: var(--status-info-bg);
+              color: var(--status-info-text);
             }
 
             &.priority-normal {
-              background: #fff3cd;
-              color: #856404;
-
-              :host-context(body.dark-theme) & {
-                background: #4a5568;
-                color: #ffffff;
-              }
+              background: var(--status-warning-bg);
+              color: var(--status-warning-text);
             }
 
             &.priority-high {
-              background: #f8d7da;
-              color: #721c24;
-
-              :host-context(body.dark-theme) & {
-                background: #4a5568;
-                color: #ffffff;
-              }
+              background: var(--status-error-bg);
+              color: var(--status-error-text);
             }
           }
 
           .time-badge {
             padding: 4px 8px;
-            background: #e8d5ff;
-            color: #6b4c93;
+            background: var(--scheduler-highlight);
+            color: var(--scheduler-text);
             border-radius: 12px;
             font-size: 11px;
             font-weight: bold;
-
-            :host-context(body.dark-theme) & {
-              background: #4a5568;
-              color: #ffffff;
-            }
           }
 
           .status-icon {
             font-size: 20px;
-            color: #6c757d;
+            color: var(--scheduler-muted);
 
             &.active {
-              color: #28a745;
+              color: var(--success-color);
             }
           }
         }
@@ -255,7 +235,7 @@
         gap: 16px;
 
         small {
-          color: #6c757d;
+          color: var(--scheduler-muted);
         }
       }
     }

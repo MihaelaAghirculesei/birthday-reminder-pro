@@ -66,11 +66,7 @@
     border: 1px solid $item-border-hover;
     border-left: 8px solid $item-border-accent;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    background: #ffffff;
-
-    :host-context(body.dark-theme) & {
-      background: $dark-bg-elevated;
-    }
+    background: var(--surface);
   }
 
   &:last-child {

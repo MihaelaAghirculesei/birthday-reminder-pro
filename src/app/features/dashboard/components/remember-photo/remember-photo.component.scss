@@ -5,20 +5,20 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 3px solid #dc3545;
+  border: 3px solid var(--status-error-border);
   flex-shrink: 0;
   position: relative;
 
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 8px #dc3545;
-    border-color: #c82333;
+    box-shadow: 0 0 8px var(--status-error-border);
+    border-color: var(--error-color-hover);
   }
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 12px #dc3545;
-    border-color: #c82333;
+    box-shadow: 0 0 12px var(--status-error-border);
+    border-color: var(--error-color-hover);
   }
 }
 

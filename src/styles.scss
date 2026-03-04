@@ -4,7 +4,7 @@
 @use 'styles/form-components';
 
 :root {
-  --content-max-width: 1400px;
+  --content-max-width: 1440px;
   --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --primary-dark: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
   --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -41,6 +41,25 @@
   --scheduler-highlight: #e8d5ff;
   --scheduler-muted: #6c757d;
   --scheduler-header: linear-gradient(135deg, #9b59b6 0%, #bb8fce 100%);
+
+  --primary-solid: #667eea;
+  --primary-solid-hover: #5568d3;
+  --error-color: #f44336;
+  --error-color-hover: #d32f2f;
+  --success-color: #28a745;
+
+  --status-success-bg: #d4edda;
+  --status-success-border: #28a745;
+  --status-success-text: #155724;
+  --status-error-bg: #f8d7da;
+  --status-error-border: #dc3545;
+  --status-error-text: #721c24;
+  --status-warning-bg: #fff3cd;
+  --status-warning-border: #ffc107;
+  --status-warning-text: #856404;
+  --status-info-bg: #d1ecf1;
+  --status-info-border: #17a2b8;
+  --status-info-text: #0c5460;
 
   --mdc-outlined-text-field-outline-color: #94a3b8;
   --mdc-outlined-text-field-hover-outline-color: #64748b;
@@ -86,6 +105,25 @@ body.dark-theme {
   --scheduler-highlight: var(--surface-elevated);
   --scheduler-muted: var(--text-secondary);
   --scheduler-header: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+
+  --primary-solid: #a855f7;
+  --primary-solid-hover: #9333ea;
+  --error-color: #ef4444;
+  --error-color-hover: #dc2626;
+  --success-color: #4ade80;
+
+  --status-success-bg: #1a3a2a;
+  --status-success-border: #4ade80;
+  --status-success-text: #86efac;
+  --status-error-bg: #3a1a1a;
+  --status-error-border: #f87171;
+  --status-error-text: #fca5a5;
+  --status-warning-bg: #3a2f1a;
+  --status-warning-border: #fbbf24;
+  --status-warning-text: #fde68a;
+  --status-info-bg: #1a2a3a;
+  --status-info-border: #38bdf8;
+  --status-info-text: #7dd3fc;
 
   --mdc-outlined-text-field-outline-color: #666666;
   --mdc-outlined-text-field-hover-outline-color: #888888;
@@ -290,13 +328,9 @@ body.dark-theme .mat-mdc-card-content .add-test-btn * {
 }
 
 *:focus-visible {
-  outline: 3px solid #667eea;
+  outline: 3px solid var(--primary-solid);
   outline-offset: 2px;
   border-radius: 4px;
-}
-
-body.dark-theme *:focus-visible {
-  outline-color: #a855f7;
 }
 
 button:focus:not(:focus-visible),
@@ -309,15 +343,9 @@ textarea:focus:not(:focus-visible) {
 
 .category-stat-card:focus-visible,
 .dashboard-birthday-item:focus-visible {
-  outline: 3px solid #667eea;
+  outline: 3px solid var(--primary-solid);
   outline-offset: 4px;
   box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2);
-}
-
-body.dark-theme .category-stat-card:focus-visible,
-body.dark-theme .dashboard-birthday-item:focus-visible {
-  outline-color: #a855f7;
-  box-shadow: 0 0 0 6px rgba(168, 85, 247, 0.2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -332,21 +360,21 @@ body.dark-theme .dashboard-birthday-item:focus-visible {
 }
 
 @media (max-width: 440px) {
-  .cdk-overlay-connected-position-bounding-box {
+  .cdk-overlay-connected-position-bounding-box:not(:has(.nav-menu-panel, .nav-strip-dropdown)) {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
     align-items: center !important;
   }
 
-  .cdk-overlay-connected-position-bounding-box .cdk-overlay-pane {
+  .cdk-overlay-connected-position-bounding-box:not(:has(.nav-menu-panel, .nav-strip-dropdown)) .cdk-overlay-pane {
     position: static !important;
     max-width: 95vw !important;
   }
 }
 
 @media (max-width: 331px) {
-  .cdk-overlay-connected-position-bounding-box .cdk-overlay-pane {
+  .cdk-overlay-connected-position-bounding-box:not(:has(.nav-menu-panel, .nav-strip-dropdown)) .cdk-overlay-pane {
     position: absolute !important;
     left: 50% !important;
     transform: translateX(-50%) !important;

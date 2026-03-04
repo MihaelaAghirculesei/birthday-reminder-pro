@@ -28,7 +28,7 @@
   position: absolute;
   top: -6px;
   right: -6px;
-  background: #e74c3c;
+  background: var(--error-color);
   color: white;
   border-radius: 50%;
   width: 18px;
@@ -65,8 +65,8 @@
 }
 
 :host ::ng-deep .mat-mdc-tooltip {
-  background-color: #f8f4ff !important;
-  color: #2d1838 !important;
+  background-color: var(--scheduler-bg) !important;
+  color: var(--scheduler-text) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   padding: 10px 14px !important;
@@ -76,10 +76,10 @@
 }
 
 :host ::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {
-  background-color: #f8f4ff !important;
-  color: #2d1838 !important;
+  background-color: var(--scheduler-bg) !important;
+  color: var(--scheduler-text) !important;
 }
 
 :host ::ng-deep .mat-mdc-tooltip * {
-  color: #2d1838 !important;
+  color: var(--scheduler-text) !important;
 }

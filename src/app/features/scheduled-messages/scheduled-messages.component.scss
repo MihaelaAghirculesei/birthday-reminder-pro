@@ -15,7 +15,7 @@
 
     h2 {
       margin: 0;
-      color: #ffffff;
+      color: white;
       font-weight: 600;
       font-size: clamp(1.1rem, 4vw, 1.75rem);
 
@@ -155,8 +155,8 @@
               border-radius: var(--radius-sm);
 
               :host-context(body.dark-theme) & {
-                background: #4a5568;
-                color: #ffffff;
+                background: var(--surface-hover);
+                color: var(--text-primary);
               }
 
               .small-icon {
@@ -188,33 +188,18 @@
               text-transform: uppercase;
 
               &.priority-low {
-                background: rgba(76, 175, 80, 0.15);
-                color: var(--success);
-
-                :host-context(body.dark-theme) & {
-                  background: #4a5568;
-                  color: #ffffff;
-                }
+                background: var(--status-success-bg);
+                color: var(--status-success-text);
               }
 
               &.priority-normal {
-                background: rgba(33, 150, 243, 0.15);
-                color: var(--primary);
-
-                :host-context(body.dark-theme) & {
-                  background: #4a5568;
-                  color: #ffffff;
-                }
+                background: var(--status-info-bg);
+                color: var(--status-info-text);
               }
 
               &.priority-high {
-                background: rgba(244, 67, 54, 0.15);
-                color: var(--error);
-
-                :host-context(body.dark-theme) & {
-                  background: #4a5568;
-                  color: #ffffff;
-                }
+                background: var(--status-error-bg);
+                color: var(--status-error-text);
               }
             }
 
@@ -223,22 +208,12 @@
               border-radius: var(--radius-sm);
               font-size: 0.75rem;
               font-weight: 600;
-              background: rgba(158, 158, 158, 0.15);
+              background: var(--surface-elevated);
               color: var(--text-secondary);
 
-              :host-context(body.dark-theme) & {
-                background: #4a5568;
-                color: #ffffff;
-              }
-
               &.active {
-                background: rgba(76, 175, 80, 0.15);
-                color: var(--success);
-
-                :host-context(body.dark-theme) & {
-                  background: #4a5568;
-                  color: #ffffff;
-                }
+                background: var(--status-success-bg);
+                color: var(--status-success-text);
               }
             }
 
@@ -278,7 +253,7 @@
       margin-bottom: 16px;
 
       :host-context(body.dark-theme) & {
-        color: #ccc;
+        color: var(--text-muted);
       }
     }
 
@@ -286,7 +261,7 @@
       margin: 16px 0 8px 0;
       font-size: clamp(0.95rem, 3.5vw, 1.5rem);
       font-weight: 400;
-      color: #ffffff !important;
+      color: white !important;
     }
 
     p {

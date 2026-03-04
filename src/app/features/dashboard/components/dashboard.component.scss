@@ -87,22 +87,23 @@
 .schedule-message-fab {
   position: fixed !important;
   bottom: 140px;
-  right: 32px;
+  right: max(32px, calc((100vw - var(--content-max-width)) / 2 + 32px));
   z-index: 1000;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
   transition: all 0.3s ease !important;
+  transform: scale(0.85);
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(0.95);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.8);
   }
 
   mat-icon {
-    @include icon-size(28px);
+    @include icon-size(24px);
   }
 }
 
@@ -135,6 +136,12 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .schedule-message-fab {
+    transform: scale(0.9);
   }
 }
 

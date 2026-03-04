@@ -3,11 +3,7 @@
 .dialog-container {
   width: 100%;
   max-width: 700px;
-  background: white;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface);
-  }
+  background: var(--surface);
 }
 
 ::ng-deep .mat-mdc-dialog-title,
@@ -17,24 +13,15 @@ h2[mat-dialog-title] {
   gap: 12px;
   margin: 0;
   padding: 24px 24px 16px;
-  background: white !important;
-  color: #1a1a1a !important;
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
   border-radius: 4px 4px 0 0;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface) !important;
-    color: var(--text-primary) !important;
-  }
 
   mat-icon {
     font-size: 28px;
     width: 28px;
     height: 28px;
-    color: #1a1a1a !important;
-
-    :host-context(body.dark-theme) & {
-      color: var(--text-primary) !important;
-    }
+    color: var(--text-primary) !important;
   }
 }
 
@@ -42,13 +29,8 @@ h2[mat-dialog-title] {
   padding: 24px !important;
   max-height: 70vh;
   overflow-y: auto;
-  background: white;
-  color: #1a1a1a;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface);
-    color: var(--text-primary);
-  }
+  background: var(--surface);
+  color: var(--text-primary);
 
   @include custom-scrollbar;
 }
@@ -75,36 +57,18 @@ h2[mat-dialog-title] {
   ::ng-deep {
     .mat-mdc-form-field-label,
     .mat-mdc-floating-label {
-      color: rgba(0, 0, 0, 0.6) !important;
+      color: var(--text-secondary) !important;
     }
 
     .mat-mdc-input-element,
     input,
     textarea,
     .mat-mdc-select-value-text {
-      color: #1a1a1a !important;
+      color: var(--text-primary) !important;
     }
 
     .mat-mdc-form-field-icon-prefix mat-icon {
-      color: rgba(0, 0, 0, 0.54) !important;
-    }
-
-    :host-context(body.dark-theme) & {
-      .mat-mdc-form-field-label,
-      .mat-mdc-floating-label {
-        color: rgba(255, 255, 255, 0.7) !important;
-      }
-
-      .mat-mdc-input-element,
-      input,
-      textarea,
-      .mat-mdc-select-value-text {
-        color: #ffffff !important;
-      }
-
-      .mat-mdc-form-field-icon-prefix mat-icon {
-        color: rgba(255, 255, 255, 0.7) !important;
-      }
+      color: var(--text-muted) !important;
     }
   }
 }
@@ -127,14 +91,9 @@ h2[mat-dialog-title] {
 .contact-section,
 .photo-section,
 .scheduler-section {
-  background: #f9f9f9;
+  background: var(--surface-elevated);
   border-radius: var(--radius);
-  border: 1px solid #e0e0e0;
-
-  :host-context(body.dark-theme) & {
-    background: var(--surface-elevated);
-    border-color: var(--border-light);
-  }
+  border: 1px solid var(--border-light);
 }
 
 .contact-section {
@@ -163,13 +122,9 @@ h2[mat-dialog-title] {
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  color: #1a1a1a;
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 1rem;
-
-  :host-context(body.dark-theme) & {
-    color: var(--text-primary);
-  }
 
   mat-icon {
     color: var(--primary);
@@ -188,21 +143,17 @@ h2[mat-dialog-title] {
   }
 
   small {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 400;
     margin-left: 0;
-
-    :host-context(body.dark-theme) & {
-      color: var(--text-secondary);
-    }
   }
 }
 
 .contact-error ::ng-deep .mdc-notched-outline__leading,
 .contact-error ::ng-deep .mdc-notched-outline__notch,
 .contact-error ::ng-deep .mdc-notched-outline__trailing {
-  border-color: #f44336 !important;
+  border-color: var(--error-color) !important;
   border-width: 2px !important;
 }
 
@@ -229,14 +180,9 @@ h2[mat-dialog-title] {
 
 .dialog-actions {
   padding: 16px 24px !important;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-light);
   gap: 12px;
-  background: white;
-
-  :host-context(body.dark-theme) & {
-    border-top-color: var(--border-light);
-    background: var(--surface);
-  }
+  background: var(--surface);
 
   button {
     min-width: 120px;
