@@ -56,6 +56,12 @@ describe('GoogleCalendarService', () => {
 
     return {
       accounts: {
+        id: {
+          initialize: jasmine.createSpy('initialize'),
+          prompt: jasmine.createSpy('prompt'),
+          renderButton: jasmine.createSpy('renderButton'),
+          disableAutoSelect: jasmine.createSpy('disableAutoSelect')
+        },
         oauth2: mockOauth2
       }
     };

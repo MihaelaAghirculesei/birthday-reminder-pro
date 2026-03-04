@@ -1,6 +1,7 @@
 import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
+  Auth,
   User,
   GoogleAuthProvider,
   signInWithPopup,
@@ -160,11 +161,9 @@ export class FirebaseAuthService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private signInWithGIS(auth: any): Promise<AuthUser> {
+  private signInWithGIS(auth: Auth): Promise<AuthUser> {
     return new Promise<AuthUser>((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const gis = (window as any).google?.accounts?.id;
+      const gis = window.google?.accounts?.id;
       if (!gis) {
         reject(new Error('GIS_NOT_LOADED'));
         return;
@@ -184,7 +183,6 @@ export class FirebaseAuthService {
           }
         },
         auto_select: true,
-        use_fedcm_for_prompt: true,
       });
 
       gis.prompt();

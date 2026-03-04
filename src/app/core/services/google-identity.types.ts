@@ -42,6 +42,17 @@ export interface RevokeResponse {
   error_description?: string;
 }
 
+export interface GoogleAccountsId {
+  initialize(config: {
+    client_id: string;
+    callback: (response: { credential: string }) => void;
+    auto_select?: boolean;
+  }): void;
+  prompt(): void;
+  renderButton(parent: HTMLElement, options: Record<string, unknown>): void;
+  disableAutoSelect(): void;
+}
+
 export interface GoogleAccountsOAuth2 {
   initTokenClient(config: TokenClientConfig): TokenClient;
   revoke(accessToken: string, callback?: (response: RevokeResponse) => void): void;
@@ -50,13 +61,16 @@ export interface GoogleAccountsOAuth2 {
 }
 
 export interface GoogleAccounts {
+  id: GoogleAccountsId;
   oauth2: GoogleAccountsOAuth2;
+}
+
+export interface Google {
+  accounts: GoogleAccounts;
 }
 
 declare global {
   interface Window {
-    google?: {
-      accounts: GoogleAccounts;
-    };
+    google?: Google;
   }
 }
