@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 
 
 @Component({
@@ -7,7 +8,14 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <footer class="app-footer">
-      <img src="assets/logo.png" alt="Mihaela Melania Aghirculesei" class="footer-logo" />
+      <img src="assets/logo.png"
+           alt="Back to top"
+           class="footer-logo"
+           role="button"
+           tabindex="0"
+           aria-label="Scroll to top"
+           (click)="scrollToTop()"
+           (keydown.enter)="scrollToTop()" />
 
       <div class="footer-center">
         <p class="footer-tagline">Made with ❤️ to never forget special moments</p>
@@ -29,6 +37,12 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       display: block;
       position: relative;
       z-index: 1;
+      background: rgba(75, 0, 130, 0.6);
+    }
+
+    :host-context(body.dark-theme) {
+      background: var(--surface-elevated);
+      border-top: 1px solid var(--border);
     }
 
     .app-footer {
@@ -39,34 +53,39 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       max-width: var(--content-max-width);
       margin: 0 auto;
       padding: 0 32px;
-      background: rgba(75, 0, 130, 0.6);
-      border-radius: 12px;
-    }
-
-    :host-context(body.dark-theme) .app-footer {
-      background: transparent;
     }
 
     .footer-logo {
       height: 100px;
       width: auto;
+      cursor: pointer;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+
+      &:hover {
+        transform: scale(1.08) translateY(-4px);
+        filter: drop-shadow(0 8px 16px rgba(255, 255, 255, 0.3));
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
     }
 
-    .footer-center {
+.footer-center {
       flex: 1;
       text-align: center;
     }
 
     .footer-tagline {
       color: rgba(255, 255, 255, 0.85);
-      font-size: 0.85rem;
+      font-size: clamp(0.85rem, 1.2vw, 1.1rem);
       font-style: italic;
       margin: 0;
     }
 
     .footer-copyright {
       color: rgba(255, 255, 255, 0.6);
-      font-size: 0.75rem;
+      font-size: clamp(0.75rem, 1vw, 0.95rem);
       margin: 0.25rem 0 0;
     }
 
@@ -128,5 +147,13 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   `]
 })
 export class FooterComponent {
+    private readonly document = inject(DOCUMENT);
+    private readonly platformId = inject(PLATFORM_ID);
     currentYear = new Date().getFullYear();
+
+    scrollToTop(): void {
+      if (!isPlatformBrowser(this.platformId)) return;
+      this.document.querySelector('.app-container')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
