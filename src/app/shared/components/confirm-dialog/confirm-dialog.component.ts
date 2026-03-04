@@ -129,15 +129,15 @@ export interface ConfirmDialogData {
       }
 
       &.warn {
-        background: #f44336 !important;
+        background: var(--error-color) !important;
         color: white !important;
-        border-color: #f44336 !important;
+        border-color: var(--error-color) !important;
         .mdc-button__label { color: white !important; }
         mat-icon { color: white !important; }
 
         &:hover {
-          background: #d32f2f !important;
-          border-color: #d32f2f !important;
+          background: var(--error-color-hover) !important;
+          border-color: var(--error-color-hover) !important;
           box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
         }
       }
@@ -187,14 +187,14 @@ export interface ConfirmDialogData {
         }
 
         &.warn {
-          background: #f44336 !important;
+          background: var(--error-color) !important;
           color: white !important;
           border-color: rgba(244, 67, 54, 0.6) !important;
           .mdc-button__label { color: white !important; }
           mat-icon { color: white !important; }
 
           &:hover {
-            background: #d32f2f !important;
+            background: var(--error-color-hover) !important;
             border-color: rgba(211, 47, 47, 0.8) !important;
             box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
           }

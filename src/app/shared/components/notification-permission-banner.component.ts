@@ -65,7 +65,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
     }
 
     .permission-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--primary);
       color: white;
     }
 

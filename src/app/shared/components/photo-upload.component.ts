@@ -174,7 +174,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .delete-button-circle {
       width: 40px !important;
       height: 40px !important;
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+      background: linear-gradient(135deg, var(--status-error-border) 0%, var(--error-color-hover) 100%) !important;
       color: white !important;
       border-radius: 50% !important;
       box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;

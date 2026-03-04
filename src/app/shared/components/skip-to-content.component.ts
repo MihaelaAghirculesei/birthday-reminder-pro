@@ -14,7 +14,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       position: absolute;
       top: -40px;
       left: 0;
-      background: #667eea;
+      background: var(--primary-solid);
       color: white;
       padding: 8px 16px;
       text-decoration: none;
@@ -30,7 +30,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       }
 
       &:hover:focus {
-        background: #5568d3;
+        background: var(--primary-solid-hover);
       }
     }
   `]

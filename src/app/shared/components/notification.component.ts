@@ -25,7 +25,7 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
           data-testid="notification">
           <mat-icon class="notification-icon">{{ getIcon(notification.type) }}</mat-icon>
           <span class="notification-message">{{ notification.message }}</span>
-          <button mat-icon-button class="close-btn" (click)="close(notification.id)" data-testid="close-notification">
+          <button mat-icon-button class="close-btn" (click)="close(notification.id)" aria-label="Close notification" data-testid="close-notification">
             <mat-icon>close</mat-icon>
           </button>
         </div>
@@ -66,27 +66,27 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
     }
 
     .notification-success {
-      background: #d4edda;
-      border-left: 4px solid #28a745;
-      color: #155724;
+      background: var(--status-success-bg);
+      border-left: 4px solid var(--status-success-border);
+      color: var(--status-success-text);
     }
 
     .notification-error {
-      background: #f8d7da;
-      border-left: 4px solid #dc3545;
-      color: #721c24;
+      background: var(--status-error-bg);
+      border-left: 4px solid var(--status-error-border);
+      color: var(--status-error-text);
     }
 
     .notification-warning {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      color: #856404;
+      background: var(--status-warning-bg);
+      border-left: 4px solid var(--status-warning-border);
+      color: var(--status-warning-text);
     }
 
     .notification-info {
-      background: #d1ecf1;
-      border-left: 4px solid #17a2b8;
-      color: #0c5460;
+      background: var(--status-info-bg);
+      border-left: 4px solid var(--status-info-border);
+      color: var(--status-info-text);
     }
 
     .notification-icon {

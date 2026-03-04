@@ -10,6 +10,7 @@ import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
     <button class="zodiac-button"
             [class]="'zodiac-' + zodiacSign?.toLowerCase()"
             [title]="tooltipText"
+            [attr.aria-label]="tooltipText"
             type="button">
       {{ symbol }}
     </button>
