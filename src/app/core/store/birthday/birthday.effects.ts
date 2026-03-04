@@ -2,7 +2,7 @@ import { inject, Injectable, Injector } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { of, from } from 'rxjs';
-import { catchError, mergeMap, tap, switchMap, withLatestFrom } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap, switchMap, withLatestFrom } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
@@ -355,15 +355,18 @@ export class BirthdayEffects {
       ofType(BirthdayActions.loadTestData),
       switchMap(() =>
         from(import('../../../testing').then(m => m.generateMockBirthdays)).pipe(
-          mergeMap(generateMockBirthdays => {
+          switchMap(generateMockBirthdays => {
             const testBirthdays = generateMockBirthdays(() => this.idGenerator.generateId());
-            const addActions = testBirthdays.map(birthday =>
-              BirthdayActions.addBirthday({ birthday })
+            const processedBirthdays: Birthday[] = testBirthdays.map(b => ({
+              ...b,
+              id: this.idGenerator.generateId(),
+              zodiacSign: b.zodiacSign || getZodiacSign(b.birthDate).name,
+              category: this.normalizeCategoryId(b.category || DEFAULT_CATEGORY),
+              ...createSyncMetadata(null)
+            }));
+            return from(this.offlineStorage.saveBirthdays(processedBirthdays)).pipe(
+              map(() => BirthdayActions.loadTestDataSuccess({ birthdays: processedBirthdays }))
             );
-            return [
-              ...addActions,
-              BirthdayActions.loadTestDataSuccess({ birthdays: testBirthdays })
-            ];
           }),
           catchError(error => of(BirthdayActions.loadTestDataFailure({ error: error.message })))
         )

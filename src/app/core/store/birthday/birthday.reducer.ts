@@ -274,11 +274,13 @@ export const birthdayReducer = createReducer(
     error: null
   })),
 
-  on(BirthdayActions.loadTestDataSuccess, (state) => ({
-    ...state,
-    loading: false,
-    error: null
-  })),
+  on(BirthdayActions.loadTestDataSuccess, (state, { birthdays }) =>
+    birthdayAdapter.setAll(birthdays, {
+      ...state,
+      loading: false,
+      error: null
+    })
+  ),
 
   on(BirthdayActions.loadTestDataFailure, (state, { error }) => ({
     ...state,

@@ -57,6 +57,7 @@ describe('BirthdayEffects', () => {
       'updateBirthday',
       'deleteBirthday',
       'clear',
+      'saveBirthdays',
       'saveScheduledMessage',
       'getScheduledMessagesByBirthday',
       'updateScheduledMessage',
@@ -392,26 +393,14 @@ describe('BirthdayEffects', () => {
 
   describe('loadTestData$', () => {
     it('should load test data successfully', (done) => {
-      offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
+      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
 
       actions$ = of(BirthdayActions.loadTestData());
 
-      let actionCount = 0;
-      let foundSuccess = false;
-
       effects.loadTestData$.subscribe(action => {
-        actionCount++;
-        if (action.type === BirthdayActions.loadTestDataSuccess.type) {
-          foundSuccess = true;
-          const successAction = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
-          expect(successAction.birthdays.length).toBeGreaterThan(0);
-        }
-        if (action.type === BirthdayActions.addBirthday.type) {
-          expect(action.type).toBe(BirthdayActions.addBirthday.type);
-        }
-      }, undefined, () => {
-        expect(foundSuccess).toBeTrue();
-        expect(actionCount).toBeGreaterThan(1);
+        expect(action.type).toBe(BirthdayActions.loadTestDataSuccess.type);
+        const successAction = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
+        expect(successAction.birthdays.length).toBeGreaterThan(0);
         done();
       });
     });
