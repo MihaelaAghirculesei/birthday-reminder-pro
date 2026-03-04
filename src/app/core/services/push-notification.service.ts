@@ -1,4 +1,5 @@
-import { Injectable, inject, DestroyRef } from '@angular/core';
+import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { interval, Subject } from 'rxjs';
@@ -23,11 +24,16 @@ export interface BirthdayNotificationData {
 })
 export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
   private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   private readonly permissionService = inject(NotificationPermissionService);
+
+  private get isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
+  }
 
   constructor(
     private storage: IndexedDBStorageService,
@@ -44,8 +50,8 @@ export class PushNotificationService {
         }
         this.browserTimeouts.clear();
       });
-    } catch {
-      // Guard against destroyed injector in test environments
+    } catch (e) {
+      this.logger.warn('[PushNotification] DestroyRef not available:', e);
     }
     this.initializeNotifications();
   }
@@ -68,7 +74,7 @@ export class PushNotificationService {
   }
 
   private async initializeBrowserNotifications(): Promise<void> {
-    if (typeof window === 'undefined') return;
+    if (!this.isBrowser) return;
 
     if ('Notification' in window &&
         typeof Notification.requestPermission === 'function' &&
@@ -104,7 +110,7 @@ export class PushNotificationService {
   }
 
   private async checkBrowserNotifications(): Promise<void> {
-    if (typeof window === 'undefined') return;
+    if (!this.isBrowser) return;
     if (!('Notification' in window) || Notification.permission !== 'granted' || !this.permissionService.isNotificationsEnabled()) {
       return;
     }

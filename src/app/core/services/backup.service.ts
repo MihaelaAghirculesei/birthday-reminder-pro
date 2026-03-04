@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Birthday } from '../../shared';
 import { z } from 'zod';
 import { LoggerService } from './logger.service';
@@ -33,6 +34,9 @@ const BackupSchema = z.object({
 })
 export class BackupService {
   private readonly BACKUP_VERSION = 1;
+
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
 
   constructor(private logger: LoggerService) {}
 
@@ -189,8 +193,9 @@ export class BackupService {
   }
 
   private downloadFile(blob: Blob, filename: string): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = this.document.createElement('a');
     a.href = url;
     a.download = filename;
     a.click();
