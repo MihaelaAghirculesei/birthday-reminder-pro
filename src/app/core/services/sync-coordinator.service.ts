@@ -342,8 +342,8 @@ export class SyncCoordinatorService {
         this.destroy$.complete();
         this.teardownCloudListeners();
       });
-    } catch {
-      // Guard against destroyed injector in test environments
+    } catch (e) {
+      this.logger.warn('[SyncCoordinator] DestroyRef not available:', e);
     }
   }
 }
