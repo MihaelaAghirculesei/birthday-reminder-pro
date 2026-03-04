@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs';
 
@@ -24,6 +23,11 @@ import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLin
 import { ScheduledMessageService, MessageTemplate } from '../../../features/scheduled-messages/scheduled-message.service';
 import { NotificationService, BirthdayFacadeService, SenderSettingsService } from '../../../core';
 
+interface EnrichedMessage extends ScheduledMessage {
+  processedMessage: string;
+  wishLinks: WishLink[];
+}
+
 @Component({
     selector: 'app-message-scheduler',
     imports: [
@@ -46,7 +50,6 @@ import { NotificationService, BirthdayFacadeService, SenderSettingsService } fro
 export class MessageSchedulerComponent implements OnInit, OnChanges {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly senderSettings = inject(SenderSettingsService);
   private readonly dialog = inject(MatDialog);
 
@@ -55,6 +58,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   messageForm: FormGroup;
   messages: ScheduledMessage[] = [];
+  enrichedMessages: EnrichedMessage[] = [];
   templates: MessageTemplate[] = [];
   timeSlots: string[] = [];
   isCreatingMessage = false;
@@ -98,6 +102,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthday']) {
       this.updateMessagePreview();
+      this.enrichMessages();
     }
   }
 
@@ -114,6 +119,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(messages => {
           this.messages = messages || [];
+          this.enrichMessages();
           this.cdr.markForCheck();
         });
     }
@@ -187,7 +193,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   testMessage(message: ScheduledMessage): void {
     if (this.birthday) {
-      const processedMessage = this.getProcessedMessage(message);
+      const processedMessage = this.processMessage(message.message, this.birthday);
       this.notificationService.show(
         `🧪 TEST - ${message.title}: ${processedMessage}`,
         'info'
@@ -219,10 +225,18 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     });
   }
 
-  getProcessedMessage(message: ScheduledMessage): string {
-    return this.birthday
-      ? this.processMessage(message.message, this.birthday)
-      : message.message;
+  private enrichMessages(): void {
+    if (!this.birthday) {
+      this.enrichedMessages = [];
+      return;
+    }
+    const senderName = this.senderSettings.getSenderName();
+    const senderFullName = this.senderSettings.getSenderFullName();
+    this.enrichedMessages = this.messages.map(msg => ({
+      ...msg,
+      processedMessage: this.processMessage(msg.message, this.birthday!),
+      wishLinks: getAvailableWishLinks(this.birthday!, msg.message, senderName, senderFullName)
+    }));
   }
 
   private processMessage(template: string, birthday: Birthday): string {
@@ -256,12 +270,4 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     return index;
   }
 
-  getWishLinks(message: ScheduledMessage): WishLink[] {
-    if (!this.birthday) return [];
-    return getAvailableWishLinks(this.birthday, message.message, this.senderSettings.getSenderName(), this.senderSettings.getSenderFullName());
-  }
-
-  safeUrl(url: string): SafeUrl {
-    return this.sanitizer.bypassSecurityTrustUrl(url);
-  }
 }

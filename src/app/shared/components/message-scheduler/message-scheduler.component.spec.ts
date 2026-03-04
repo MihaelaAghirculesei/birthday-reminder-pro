@@ -108,32 +108,41 @@ describe('MessageSchedulerComponent', () => {
     expect(form.valid).toBeTrue();
   });
 
-  it('should process message template with birthday data', () => {
+  it('should pre-compute processed messages in enrichedMessages', () => {
     component.birthday = mockBirthday;
-    const result = component.getProcessedMessage(mockMessage);
+    birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
+    component.loadMessages();
 
-    expect(result).toContain('John Doe');
-    expect(result).toContain('36th');
-    expect(result).not.toContain('{name}');
-    expect(result).not.toContain('{age}');
+    expect(component.enrichedMessages.length).toBe(1);
+    expect(component.enrichedMessages[0].processedMessage).toContain('John Doe');
+    expect(component.enrichedMessages[0].processedMessage).not.toContain('{name}');
+    expect(component.enrichedMessages[0].processedMessage).not.toContain('{age}');
   });
 
-  it('should return unprocessed message when birthday is null', () => {
+  it('should have empty enrichedMessages when birthday is null', () => {
     component.birthday = null;
-    const result = component.getProcessedMessage(mockMessage);
-
-    expect(result).toBe(mockMessage.message);
+    expect(component.enrichedMessages).toEqual([]);
   });
 
-  it('should replace zodiac sign in message', () => {
+  it('should replace zodiac sign in enriched messages', () => {
     component.birthday = mockBirthday;
     const messageWithZodiac: ScheduledMessage = {
       ...mockMessage,
       message: 'You are a {zodiac}!'
     };
-    const result = component.getProcessedMessage(messageWithZodiac);
+    birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([messageWithZodiac]));
+    component.loadMessages();
 
-    expect(result).toBe('You are a Capricorn!');
+    expect(component.enrichedMessages[0].processedMessage).toBe('You are a Capricorn!');
+  });
+
+  it('should pre-compute wishLinks in enrichedMessages', () => {
+    component.birthday = { ...mockBirthday, email: 'test@example.com' };
+    birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
+    component.loadMessages();
+
+    expect(component.enrichedMessages[0].wishLinks).toBeDefined();
+    expect(Array.isArray(component.enrichedMessages[0].wishLinks)).toBeTrue();
   });
 
   it('should format date correctly', () => {

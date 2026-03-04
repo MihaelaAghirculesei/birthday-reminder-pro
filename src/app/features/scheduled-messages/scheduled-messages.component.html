@@ -18,31 +18,31 @@
     <div
       class="messages-list"
       >
-      @for (birthday of birthdaysWithMessages(); track birthday.id) {
+      @for (entry of birthdaysWithMessages(); track entry.birthday.id) {
         <mat-card class="birthday-message-card">
           <mat-card-header>
             <div class="birthday-header">
-              @if (birthday.photo) {
+              @if (entry.birthday.photo) {
                 <div class="birthday-avatar">
-                  <img [src]="birthday.photo" [alt]="birthday.name" width="56" height="56" loading="lazy" decoding="async" />
+                  <img [src]="entry.birthday.photo" [alt]="entry.birthday.name" width="56" height="56" loading="lazy" decoding="async" />
                 </div>
               }
-              @if (!birthday.photo) {
+              @if (!entry.birthday.photo) {
                 <div class="birthday-avatar">
                   <mat-icon>person</mat-icon>
                 </div>
               }
               <div class="birthday-info">
-                <mat-card-title>{{ birthday.name }}</mat-card-title>
+                <mat-card-title>{{ entry.birthday.name }}</mat-card-title>
                 <mat-card-subtitle>
-                  {{ birthday.birthDate | date : "dd MMMM yyyy" }}
+                  {{ entry.birthday.birthDate | date : "dd MMMM yyyy" }}
                 </mat-card-subtitle>
               </div>
             </div>
           </mat-card-header>
           <mat-card-content>
             <div class="messages-for-birthday">
-              @for (message of birthday.scheduledMessages; track message.id) {
+              @for (message of entry.messages; track message.id) {
                 <div
                   class="message-item"
                   [class.inactive]="!message.active"
@@ -62,16 +62,16 @@
                     <span class="status" [class.active]="message.active">
                       {{ message.active ? "Active" : "Inactive" }}
                     </span>
-                    @if (getWishLinks(birthday, message).length > 0) {
+                    @if (message.wishLinks.length > 0) {
                       <div class="wish-actions">
-                        @for (link of getWishLinks(birthday, message); track link.channel) {
+                        @for (link of message.wishLinks; track link.channel) {
                           <a
                             mat-icon-button
-                            [href]="safeUrl(link.url)"
+                            [href]="link.url"
                             target="_blank"
                             rel="noopener"
                             [matTooltip]="'Send via ' + link.label"
-                            [attr.aria-label]="'Send wish via ' + link.label + ' to ' + birthday.name"
+                            [attr.aria-label]="'Send wish via ' + link.label + ' to ' + entry.birthday.name"
                             [style.color]="link.color"
                             >
                             <mat-icon>{{ link.icon }}</mat-icon>
@@ -83,16 +83,16 @@
                       <button
                         mat-icon-button
                         color="primary"
-                        (click)="openScheduleDialog(birthday)"
+                        (click)="openScheduleDialog(entry.birthday)"
                         matTooltip="Edit messages"
-                        [attr.aria-label]="'Edit messages for ' + birthday.name"
+                        [attr.aria-label]="'Edit messages for ' + entry.birthday.name"
                         >
                         <mat-icon>edit</mat-icon>
                       </button>
                       <button
                         mat-icon-button
                         color="warn"
-                        (click)="deleteMessage(birthday.id, message.id)"
+                        (click)="deleteMessage(entry.birthday.id, message.id)"
                         matTooltip="Delete message"
                         [attr.aria-label]="'Delete message: ' + message.title"
                         >

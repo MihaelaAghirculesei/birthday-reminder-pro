@@ -132,10 +132,10 @@
           </form>
         </mat-expansion-panel>
 
-        @if (messages.length > 0) {
+        @if (enrichedMessages.length > 0) {
           <div class="messages-list">
-            <h3>Scheduled Messages ({{ messages.length }})</h3>
-            @for (message of messages; track message.id) {
+            <h3>Scheduled Messages ({{ enrichedMessages.length }})</h3>
+            @for (message of enrichedMessages; track message.id) {
               <div
                 class="message-item"
                 [class.inactive]="!message.active"
@@ -178,7 +178,7 @@
                   </div>
                 </div>
                 <div class="message-content">
-                  <p>{{ getProcessedMessage(message) }}</p>
+                  <p>{{ message.processedMessage }}</p>
                 </div>
                 <div class="message-actions">
                   <button
@@ -208,10 +208,10 @@
                     >
                     <mat-icon>send</mat-icon>
                   </button>
-                  @for (link of getWishLinks(message); track link.channel) {
+                  @for (link of message.wishLinks; track link.channel) {
                     <a
                       mat-icon-button
-                      [href]="safeUrl(link.url)"
+                      [href]="link.url"
                       target="_blank"
                       rel="noopener"
                       [title]="'Send via ' + link.label"
@@ -236,7 +236,7 @@
           </div>
         }
 
-        @if (messages.length === 0) {
+        @if (enrichedMessages.length === 0) {
           <div class="empty-state">
             <mat-icon>schedule_send</mat-icon>
             <h3>No scheduled messages</h3>

@@ -96,25 +96,37 @@ describe('ScheduledMessagesComponent', () => {
   describe('birthdaysWithMessages computed signal', () => {
     it('should return only birthdays with scheduled messages', () => {
       const birthdaysWithMsgs = component.birthdaysWithMessages();
+      const birthdayIds = birthdaysWithMsgs.map(entry => entry.birthday.id);
 
       expect(birthdaysWithMsgs.length).toBe(2);
-      expect(birthdaysWithMsgs).toContain(mockBirthdays[0]);
-      expect(birthdaysWithMsgs).toContain(mockBirthdays[2]);
-      expect(birthdaysWithMsgs).not.toContain(mockBirthdays[1]);
-      expect(birthdaysWithMsgs).not.toContain(mockBirthdays[3]);
+      expect(birthdayIds).toContain('1');
+      expect(birthdayIds).toContain('3');
+      expect(birthdayIds).not.toContain('2');
+      expect(birthdayIds).not.toContain('4');
+    });
+
+    it('should include pre-computed wishLinks in messages', () => {
+      const birthdaysWithMsgs = component.birthdaysWithMessages();
+
+      birthdaysWithMsgs.forEach(entry => {
+        entry.messages.forEach(msg => {
+          expect(msg.wishLinks).toBeDefined();
+          expect(Array.isArray(msg.wishLinks)).toBeTrue();
+        });
+      });
     });
 
     it('should handle empty messages array', () => {
       const birthdaysWithMsgs = component.birthdaysWithMessages();
 
-      const birthdayWithEmptyMessages = birthdaysWithMsgs.find(b => b.id === '2');
+      const birthdayWithEmptyMessages = birthdaysWithMsgs.find(entry => entry.birthday.id === '2');
       expect(birthdayWithEmptyMessages).toBeUndefined();
     });
 
     it('should handle birthdays without scheduledMessages property', () => {
       const birthdaysWithMsgs = component.birthdaysWithMessages();
 
-      const birthdayWithoutProperty = birthdaysWithMsgs.find(b => b.id === '4');
+      const birthdayWithoutProperty = birthdaysWithMsgs.find(entry => entry.birthday.id === '4');
       expect(birthdayWithoutProperty).toBeUndefined();
     });
   });
@@ -276,9 +288,10 @@ describe('ScheduledMessagesComponent', () => {
       const birthdaysWithMsgs = component.birthdaysWithMessages();
 
       expect(birthdaysWithMsgs.length).toBe(2);
-      birthdaysWithMsgs.forEach(birthday => {
-        expect(birthday.scheduledMessages).toBeDefined();
-        expect(birthday.scheduledMessages!.length).toBeGreaterThan(0);
+      birthdaysWithMsgs.forEach(entry => {
+        expect(entry.birthday.scheduledMessages).toBeDefined();
+        expect(entry.birthday.scheduledMessages!.length).toBeGreaterThan(0);
+        expect(entry.messages.length).toBeGreaterThan(0);
       });
     });
   });
