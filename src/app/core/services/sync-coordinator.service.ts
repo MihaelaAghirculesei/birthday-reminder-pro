@@ -1,7 +1,7 @@
 import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { Subject, Subscription, take } from 'rxjs';
+import { Subject, Subscription, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { FirebaseAuthService } from './firebase-auth.service';
@@ -40,11 +40,9 @@ export class SyncCoordinatorService {
 
     this.isInitialized = true;
 
-    // Initialize pending changes from IndexedDB
     await this.pendingChanges.initialize();
     this.updatePendingCount();
 
-    // Monitor network status
     this.networkService.online$
       .pipe(takeUntil(this.destroy$))
       .subscribe((isOnline) => {
@@ -54,7 +52,6 @@ export class SyncCoordinatorService {
         }
       });
 
-    // Monitor auth state and setup listeners when authenticated
     this.store.select(AuthSelectors.selectAuthUser)
       .pipe(takeUntil(this.destroy$))
       .subscribe((user) => {
@@ -66,7 +63,6 @@ export class SyncCoordinatorService {
         }
       });
 
-    // Monitor pending changes count
     this.pendingChanges.changes$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -80,7 +76,6 @@ export class SyncCoordinatorService {
     this.firestoreService.subscribeToBirthdays(userId);
     this.firestoreService.subscribeToCategories(userId);
 
-    // Handle incoming cloud updates
     const birthdaysSub = this.firestoreService.birthdays$
       .pipe(takeUntil(this.destroy$))
       .subscribe((birthdays) => {
@@ -110,15 +105,12 @@ export class SyncCoordinatorService {
 
   private async checkForMigration(userId: string): Promise<void> {
     try {
-      // Check if user has data in cloud
-      const cloudBirthdays = await this.firestoreService.getBirthdays(userId).pipe(take(1)).toPromise();
+      const cloudBirthdays = await firstValueFrom(this.firestoreService.getBirthdays(userId));
 
       if (cloudBirthdays && cloudBirthdays.length > 0) {
-        // User has cloud data - merge with local
         this.logger.info('[SyncCoordinator] User has cloud data, merging...');
         await this.mergeCloudWithLocal(cloudBirthdays, userId);
       } else {
-        // User has no cloud data - migrate local to cloud
         const localBirthdays = await this.offlineStorage.getBirthdays();
         if (localBirthdays.length > 0) {
           this.logger.info('[SyncCoordinator] Migrating local data to cloud...');
@@ -133,22 +125,18 @@ export class SyncCoordinatorService {
   private async mergeCloudWithLocal(cloudBirthdays: Birthday[], userId: string): Promise<void> {
     const localBirthdays = await this.offlineStorage.getBirthdays();
 
-    // Create map for quick lookup
     const cloudMap = new Map(cloudBirthdays.map((b) => [b.id, b]));
     const localMap = new Map(localBirthdays.map((b) => [b.id, b]));
 
     const merged: Birthday[] = [];
     const toUpload: Birthday[] = [];
 
-    // Process cloud items
     for (const cloudItem of cloudBirthdays) {
       const localItem = localMap.get(cloudItem.id);
 
       if (!localItem) {
-        // Cloud-only item
         merged.push(cloudItem);
       } else {
-        // Exists in both - use last-write-wins
         const winner = this.resolveConflict(localItem, cloudItem);
         merged.push(winner);
 
@@ -158,7 +146,6 @@ export class SyncCoordinatorService {
       }
     }
 
-    // Add local-only items (need to upload)
     for (const localItem of localBirthdays) {
       if (!cloudMap.has(localItem.id)) {
         merged.push(localItem);
@@ -166,44 +153,50 @@ export class SyncCoordinatorService {
       }
     }
 
-    // Save merged data locally
-    await this.offlineStorage.saveBirthdays(merged);
+    const deduped = this.deduplicateByName(merged);
 
-    // Upload local-only items to cloud
+    await this.offlineStorage.saveBirthdays(deduped);
+
     if (toUpload.length > 0 && this.networkService.isOnline) {
-      await this.firestoreService.saveBirthdaysBatch(userId, toUpload).pipe(take(1)).toPromise();
+      await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, toUpload));
     }
 
     this.store.dispatch(SyncActions.syncSuccess({ timestamp: Date.now() }));
     this.logger.info('[SyncCoordinator] Merge complete. Total:', merged.length);
   }
 
+  private deduplicateByName(birthdays: Birthday[]): Birthday[] {
+    const seen = new Map<string, Birthday>();
+    for (const b of birthdays) {
+      const key = `${b.name.trim().toLowerCase()}|${new Date(b.birthDate).toISOString().slice(0, 10)}`;
+      const existing = seen.get(key);
+      if (!existing || (b.updatedAt || 0) > (existing.updatedAt || 0)) {
+        seen.set(key, b);
+      }
+    }
+    return Array.from(seen.values());
+  }
+
   private resolveConflict(local: Birthday, cloud: Birthday): Birthday {
     const localTime = local.updatedAt || 0;
     const cloudTime = cloud.updatedAt || 0;
 
-    // If timestamps are equal, prefer cloud (server authority)
     if (localTime === cloudTime) {
       return cloud;
     }
 
-    // If timestamps differ significantly (>1s), use last-write-wins
     if (Math.abs(localTime - cloudTime) > 1000) {
       return localTime > cloudTime ? local : cloud;
     }
 
-    // Near-simultaneous edits: merge fields, prefer newer non-empty values
     const winner = localTime > cloudTime ? local : cloud;
     const loser = localTime > cloudTime ? cloud : local;
 
     return {
       ...loser,
       ...winner,
-      // Preserve notes from both if winner has none
       notes: winner.notes || loser.notes,
-      // Preserve category if winner lost it
       category: winner.category || loser.category,
-      // Keep the latest updatedAt
       updatedAt: Math.max(localTime, cloudTime),
       syncStatus: 'synced' as const
     };
@@ -220,7 +213,6 @@ export class SyncCoordinatorService {
       return 0;
     }
 
-    // Add sync metadata to local birthdays
     const birthdaysWithMeta: Birthday[] = localBirthdays.map((b) => ({
       ...b,
       ownerId: userId,
@@ -228,10 +220,8 @@ export class SyncCoordinatorService {
       syncStatus: 'synced' as const
     }));
 
-    // Upload to cloud
-    await this.firestoreService.saveBirthdaysBatch(userId, birthdaysWithMeta).pipe(take(1)).toPromise();
+    await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, birthdaysWithMeta));
 
-    // Update local storage with sync metadata
     await this.offlineStorage.saveBirthdays(birthdaysWithMeta);
 
     this.logger.info('[SyncCoordinator] Migration complete:', birthdaysWithMeta.length, 'items');
@@ -246,7 +236,6 @@ export class SyncCoordinatorService {
   ): Promise<void> {
     await this.pendingChanges.addChange(entityType, entityId, changeType, data);
 
-    // If online and authenticated, process immediately
     if (this.networkService.isOnline && this.authService.isAuthenticated) {
       this.processPendingChanges();
     }
@@ -298,16 +287,10 @@ export class SyncCoordinatorService {
     switch (change.changeType) {
       case 'create':
       case 'update':
-        await this.firestoreService
-          .saveBirthday(userId, change.data as Birthday)
-          .pipe(take(1))
-          .toPromise();
+        await firstValueFrom(this.firestoreService.saveBirthday(userId, change.data as Birthday));
         break;
       case 'delete':
-        await this.firestoreService
-          .deleteBirthday(userId, change.entityId)
-          .pipe(take(1))
-          .toPromise();
+        await firstValueFrom(this.firestoreService.deleteBirthday(userId, change.entityId));
         break;
     }
   }
@@ -316,16 +299,10 @@ export class SyncCoordinatorService {
     switch (change.changeType) {
       case 'create':
       case 'update':
-        await this.firestoreService
-          .saveCategory(userId, change.data as Category)
-          .pipe(take(1))
-          .toPromise();
+        await firstValueFrom(this.firestoreService.saveCategory(userId, change.data as Category));
         break;
       case 'delete':
-        await this.firestoreService
-          .deleteCategory(userId, change.entityId)
-          .pipe(take(1))
-          .toPromise();
+        await firstValueFrom(this.firestoreService.deleteCategory(userId, change.entityId));
         break;
     }
   }
