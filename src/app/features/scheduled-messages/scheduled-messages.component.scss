@@ -95,18 +95,6 @@
 
         .birthday-info {
           flex: 1;
-
-          ::ng-deep .mat-mdc-card-title {
-            font-size: clamp(1rem, 3.5vw, 1.25rem);
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--text-primary);
-          }
-
-          ::ng-deep .mat-mdc-card-subtitle {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-          }
         }
       }
 
@@ -314,11 +302,6 @@
             }
           }
 
-          .birthday-info {
-            ::ng-deep .mat-mdc-card-subtitle {
-              font-size: 0.85rem;
-            }
-          }
         }
 
         .messages-for-birthday {

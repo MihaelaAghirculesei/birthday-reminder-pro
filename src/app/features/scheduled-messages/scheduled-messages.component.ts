@@ -59,7 +59,7 @@ export class ScheduledMessagesComponent {
       maxHeight: '90vh',
       data: { birthday },
       autoFocus: 'dialog',
-      restoreFocus: true
+      restoreFocus: true,
     });
   }
 
