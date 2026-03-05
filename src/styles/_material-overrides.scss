@@ -52,3 +52,155 @@
     border-color: var(--primary) !important;
   }
 }
+
+app-scheduled-messages .birthday-info .mat-mdc-card-title {
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
+    font-size: 0.85rem;
+  }
+}
+
+.birthday-select-panel {
+  .mat-mdc-option {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    min-height: 56px !important;
+
+    .birthday-option {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      padding: 4px 0;
+
+      .birthday-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .birthday-date,
+      .birthday-contact-info {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+
+      .no-contact-hint {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8rem;
+        color: #d32f2f;
+        font-style: italic;
+        margin-top: 2px;
+
+        .no-contact-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: #d32f2f;
+        }
+      }
+    }
+
+    &.mdc-list-item--disabled {
+      opacity: 1 !important;
+
+      .mdc-list-item__primary-text {
+        opacity: 1 !important;
+      }
+
+      .birthday-name { color: #b71c1c !important; }
+
+      .no-contact-hint {
+        color: #b71c1c !important;
+
+        .no-contact-icon { color: #b71c1c !important; }
+      }
+    }
+  }
+
+  body.dark-theme & {
+    .mat-mdc-option {
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+
+      .birthday-option {
+        .birthday-name { color: #fff !important; }
+        .birthday-date,
+        .birthday-contact-info { color: rgba(255, 255, 255, 0.7) !important; }
+      }
+
+      &.mdc-list-item--disabled {
+        opacity: 1 !important;
+
+        .mdc-list-item__primary-text {
+          opacity: 1 !important;
+        }
+
+        .birthday-name { color: #ff6b6b !important; }
+
+        .no-contact-hint {
+          color: #ff6b6b !important;
+
+          .no-contact-icon { color: #ff6b6b !important; }
+        }
+      }
+    }
+  }
+}
+
+app-category-dialog .mdc-floating-label {
+  color: var(--text-primary) !important;
+}
+
+app-category-dialog [mat-dialog-title] {
+  font-family: 'Roboto', sans-serif !important;
+}
+
+.auth-button .mdc-button__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-button .mat-mdc-button-touch-target {
+  height: 100%;
+}
+
+.user-menu .mat-mdc-menu-item[disabled] {
+  opacity: 1;
+}
+
+app-google-calendar-sync .mat-slide-toggle-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.message-indicator-tooltip.mat-mdc-tooltip {
+  background-color: var(--scheduler-bg) !important;
+  color: var(--scheduler-text) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid var(--scheduler-accent) !important;
+
+  .mdc-tooltip__surface {
+    background-color: var(--scheduler-bg) !important;
+    color: var(--scheduler-text) !important;
+  }
+
+  * {
+    color: var(--scheduler-text) !important;
+  }
+}
