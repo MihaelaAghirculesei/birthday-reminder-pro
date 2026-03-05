@@ -241,11 +241,6 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
 
       .sync-toggle {
         margin-bottom: 16px;
-
-        ::ng-deep .mat-slide-toggle-label {
-          font-size: 1.1rem;
-          font-weight: 600;
-        }
       }
 
       .settings-content {
@@ -494,7 +489,4 @@ export class GoogleCalendarSyncComponent implements OnInit {
     }
   }
 
-  trackByCalendar(index: number, calendar: GoogleCalendarItem): string {
-    return calendar.id;
-  }
 }

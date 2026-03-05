@@ -304,16 +304,6 @@ describe('GoogleCalendarSyncComponent', () => {
     });
   });
 
-  describe('trackByCalendar', () => {
-    it('should return calendar id', () => {
-      const calendar: GoogleCalendarItem = { id: 'cal123', summary: 'Test' };
-
-      const result = component.trackByCalendar(0, calendar);
-
-      expect(result).toBe('cal123');
-    });
-  });
-
   describe('cleanup', () => {
     it('should use DestroyRef for subscription cleanup', () => {
       fixture.detectChanges();
