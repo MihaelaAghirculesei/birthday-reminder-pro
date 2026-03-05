@@ -2,8 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { signal } from '@angular/core';
 import { of } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog.component';
-import { BirthdayFacadeService } from '../../../core';
+import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
 import { Birthday } from '../../../shared/models';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -12,6 +13,8 @@ describe('MessageScheduleDialogComponent', () => {
   let fixture: ComponentFixture<MessageScheduleDialogComponent>;
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<MessageScheduleDialogComponent>>;
   let mockBirthdayFacade: jasmine.SpyObj<BirthdayFacadeService>;
+  let mockCategoryFacade: jasmine.SpyObj<CategoryFacadeService>;
+  let mockDialog: jasmine.SpyObj<MatDialog>;
 
   const mockBirthdays: Birthday[] = [
     {
@@ -40,7 +43,9 @@ describe('MessageScheduleDialogComponent', () => {
       providers: [
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: data },
-        { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
+        { provide: BirthdayFacadeService, useValue: mockBirthdayFacade },
+        { provide: CategoryFacadeService, useValue: mockCategoryFacade },
+        { provide: MatDialog, useValue: mockDialog }
       ]
     });
 
@@ -54,11 +59,16 @@ describe('MessageScheduleDialogComponent', () => {
       'getMessagesByBirthday',
       'addMessageToBirthday',
       'updateMessageForBirthday',
-      'deleteMessageFromBirthday'
+      'deleteMessageFromBirthday',
+      'updateBirthday'
     ], {
       birthdays: signal(mockBirthdays)
     });
     mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
+    mockCategoryFacade = jasmine.createSpyObj('CategoryFacadeService', [], {
+      categories: signal([])
+    });
+    mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
   });
 
   describe('Component Creation', () => {
@@ -230,14 +240,14 @@ describe('MessageScheduleDialogComponent', () => {
   });
 
   describe('allBirthdays signal', () => {
-    it('should return birthdays from facade', () => {
+    it('should return birthdays from facade sorted by nearest birthday', () => {
       createComponent();
       fixture.detectChanges();
 
       const birthdays = component.allBirthdays();
 
-      expect(birthdays).toEqual(mockBirthdays);
       expect(birthdays.length).toBe(3);
+      expect(birthdays.map(b => b.id)).toEqual(jasmine.arrayWithExactContents(['1', '2', '3']));
     });
   });
 

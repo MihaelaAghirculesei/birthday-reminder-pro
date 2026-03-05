@@ -1,8 +1,8 @@
 <div class="message-schedule-dialog">
   <div class="dialog-header">
-    <h2 mat-dialog-title>
+    <h2 class="dialog-title">
       <mat-icon>schedule_send</mat-icon>
-      Schedule Birthday Messages
+      <span>Schedule Birthday Messages</span>
     </h2>
     <button mat-icon-button (click)="close()" class="close-button" aria-label="Close dialog">
       <mat-icon>close</mat-icon>
@@ -20,17 +20,19 @@
       <div class="birthday-selector">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Select a Birthday</mat-label>
-          <mat-select [(ngModel)]="selectedBirthdayId" (selectionChange)="onBirthdaySelected()">
+          <mat-select [(ngModel)]="selectedBirthdayId" (selectionChange)="onBirthdaySelected()" panelClass="birthday-select-panel">
             @for (birthday of allBirthdays(); track birthday.id) {
-              <mat-option [value]="birthday.id" [disabled]="!hasContact(birthday)">
-                <div class="birthday-option">
-                  <span class="birthday-name">
-                    {{ birthday.name }}
-                    @if (!hasContact(birthday)) {
-                      <mat-icon class="no-contact-icon" matTooltip="No contact info">warning</mat-icon>
-                    }
-                  </span>
-                  <span class="birthday-date">{{ birthday.birthDate | date: 'dd MMM yyyy' }}</span>
+              <mat-option [value]="birthday.id" (click)="onOptionClick($event, birthday)">
+                <div class="birthday-option" [class.no-contact]="!hasContact(birthday)">
+                  <span class="birthday-name">{{ birthday.name }}</span>
+                  @if (hasContact(birthday)) {
+                    <span class="birthday-contact-info">{{ getContactInfo(birthday) }}</span>
+                  } @else {
+                    <span class="no-contact-hint">
+                      <mat-icon class="no-contact-icon">warning</mat-icon>
+                      No contact info — click to add
+                    </span>
+                  }
                 </div>
               </mat-option>
             }

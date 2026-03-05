@@ -30,7 +30,7 @@
       font-weight: 700;
       color: white;
 
-      mat-icon { font-size: 28px; width: 28px; height: 28px; color: white; }
+      mat-icon { font-size: 28px; width: 28px; height: 28px; color: white; flex-shrink: 0; }
     }
 
     .close-button mat-icon {
@@ -59,29 +59,6 @@
 
   .birthday-selector {
     .full-width { width: 100%; }
-
-    .birthday-option {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      padding: 4px 0;
-      .birthday-name {
-        font-weight: 600;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        .no-contact-icon {
-          font-size: 18px;
-          width: 18px;
-          height: 18px;
-          color: var(--error-color);
-        }
-      }
-      .birthday-date { font-size: 0.85rem; color: var(--text-secondary); }
-    }
 
     .selector-help {
       display: flex;
@@ -218,6 +195,10 @@
         border-left: none !important;
         border-radius: 0 12px 12px 0 !important;
       }
+
+      &.mdc-notched-outline--notched .mdc-notched-outline__notch {
+        border-top: none !important;
+      }
     }
 
     .mat-mdc-form-field-icon-prefix,
@@ -233,8 +214,6 @@
   }
 
   ::ng-deep {
-    .mat-mdc-option { background: white; color: var(--text-primary); }
-
     button[mat-stroked-button] {
       color: #764ba2 !important;
       border-color: $white-50 !important;
@@ -254,7 +233,10 @@
 
     .dialog-header {
       padding: 12px 16px;
-      h2 { font-size: 1.2rem;
+      align-items: flex-start;
+
+      h2 {
+        font-size: 1.1rem;
         mat-icon { font-size: 24px; width: 24px; height: 24px; }
       }
     }
