@@ -66,12 +66,18 @@
   </button>
 
   <div class="full-width-section">
-    <app-birthday-chart
-      [chartData]="facade.chartData()"
-      [maxCount]="facade.maxCount()"
-      [currentMonth]="currentMonth"
-      [totalBirthdays]="facade.totalBirthdays()"
-    ></app-birthday-chart>
+    @defer (on viewport) {
+      <app-birthday-chart
+        [chartData]="facade.chartData()"
+        [maxCount]="facade.maxCount()"
+        [currentMonth]="currentMonth"
+        [totalBirthdays]="facade.totalBirthdays()"
+      ></app-birthday-chart>
+    } @placeholder {
+      <div class="chart-placeholder" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+        <mat-icon>bar_chart</mat-icon>
+      </div>
+    }
   </div>
 
   <div class="full-width-section">

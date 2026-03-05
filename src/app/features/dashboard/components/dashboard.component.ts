@@ -1,5 +1,7 @@
-import { Component, HostListener, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, DestroyRef, NgZone, OnInit } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,13 +35,24 @@ import { BirthdayEditService, CategoryManagerService, DashboardFacadeService } f
   styleUrls: ['./dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   readonly facade = inject(DashboardFacadeService);
   readonly editService = inject(BirthdayEditService);
   private readonly dialog = inject(MatDialog);
   private readonly categoryManager = inject(CategoryManagerService);
+  private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
 
   readonly currentMonth = new Date().getMonth();
+
+  ngOnInit(): void {
+    this.ngZone.runOutsideAngular(() => {
+      fromEvent<MouseEvent>(this.document, 'click')
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(event => this.handleDocumentClick(event));
+    });
+  }
 
   onCategorySelect(categoryId: string): void {
     this.facade.selectCategory(categoryId);
@@ -72,7 +85,7 @@ export class DashboardComponent {
       maxWidth: '95vw',
       maxHeight: '90vh',
       autoFocus: 'dialog',
-      restoreFocus: true
+      restoreFocus: true,
     });
   }
 
@@ -104,8 +117,7 @@ export class DashboardComponent {
     this.facade.deleteBirthday(birthday);
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
+  private handleDocumentClick(event: MouseEvent): void {
     if (!this.editService.currentEditingId) return;
 
     const target = event.target as HTMLElement;
@@ -123,10 +135,10 @@ export class DashboardComponent {
     if (clickedBirthdayItem) {
       const isInEditMode = clickedBirthdayItem.querySelector('.edit-name-input, .dashboard-category-edit, .dashboard-photo-edit');
       if (!isInEditMode) {
-        this.editService.cancelEdit();
+        this.ngZone.run(() => this.editService.cancelEdit());
       }
     } else {
-      this.editService.cancelEdit();
+      this.ngZone.run(() => this.editService.cancelEdit());
     }
   }
 }

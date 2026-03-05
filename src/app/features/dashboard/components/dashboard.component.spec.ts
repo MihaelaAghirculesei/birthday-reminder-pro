@@ -281,14 +281,17 @@ describe('DashboardComponent', () => {
     });
   });
 
-  describe('Edit mode click handler', () => {
+  describe('Edit mode click handler (document listener)', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
     it('should not cancel edit if no editing ID', () => {
       Object.defineProperty(editServiceSpy, 'currentEditingId', {
         get: () => null,
         configurable: true
       });
-      const event = new MouseEvent('click');
-      component.onDocumentClick(event);
+      document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
     });
 
@@ -298,10 +301,9 @@ describe('DashboardComponent', () => {
         configurable: true
       });
       const div = document.createElement('div');
-      const event = new MouseEvent('click');
-      Object.defineProperty(event, 'target', { value: div, enumerable: true });
-
-      component.onDocumentClick(event);
+      document.body.appendChild(div);
+      div.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(div);
       expect(editServiceSpy.cancelEdit).toHaveBeenCalled();
     });
 
@@ -312,10 +314,9 @@ describe('DashboardComponent', () => {
       });
       const header = document.createElement('div');
       header.className = 'collapsible-header';
-      const event = new MouseEvent('click');
-      Object.defineProperty(event, 'target', { value: header, enumerable: true });
-
-      component.onDocumentClick(event);
+      document.body.appendChild(header);
+      header.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(header);
       expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
     });
 
@@ -325,10 +326,9 @@ describe('DashboardComponent', () => {
         configurable: true
       });
       const button = document.createElement('button');
-      const event = new MouseEvent('click');
-      Object.defineProperty(event, 'target', { value: button, enumerable: true });
-
-      component.onDocumentClick(event);
+      document.body.appendChild(button);
+      button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(button);
       expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
     });
   });
