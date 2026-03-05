@@ -44,8 +44,11 @@
           </app-photo-upload>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Name</mat-label>
-            <input matInput formControlName="name" placeholder="e.g. John Doe" data-testid="birthday-name-input">
+            <input matInput formControlName="name" placeholder="e.g. John Doe" data-testid="birthday-name-input" maxlength="50">
             <mat-icon matSuffix>person</mat-icon>
+            @if (birthdayForm.get('name')?.hasError('minlength')) {
+              <mat-error>Name must be at least 2 characters</mat-error>
+            }
           </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Birth Date</mat-label>

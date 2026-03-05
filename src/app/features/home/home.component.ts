@@ -76,10 +76,10 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor() {
     this.birthdayForm = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       birthDate: ['', [Validators.required, this.pastDateValidator]],
       category: [DEFAULT_CATEGORY, Validators.required],
-      notes: [''],
+      notes: ['', Validators.maxLength(500)],
       reminderDays: [7, [Validators.min(1), Validators.max(365)]],
       photo: [null],
     });
