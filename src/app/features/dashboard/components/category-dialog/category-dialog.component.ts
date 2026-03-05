@@ -60,7 +60,7 @@ export class CategoryDialogComponent {
     @Inject(MAT_DIALOG_DATA) public data: CategoryDialogData
   ) {
     this.categoryForm = this.fb.group({
-      name: [data?.category?.name || '', [Validators.required, Validators.minLength(2)]],
+      name: [data?.category?.name || '', [Validators.required, Validators.minLength(2), Validators.maxLength(30)]],
       icon: [data?.category?.icon || 'star', Validators.required],
       color: [data?.category?.color || '#2196F3', Validators.required]
     });

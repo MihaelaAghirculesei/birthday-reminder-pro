@@ -350,8 +350,8 @@ describe('CategoryDialogComponent', () => {
       const longName = 'A'.repeat(100);
       component.categoryForm.patchValue({ name: longName });
 
-      expect(component.categoryForm.valid).toBe(true);
-      expect(component.categoryForm.get('name')?.value).toBe(longName);
+      expect(component.categoryForm.valid).toBe(false);
+      expect(component.categoryForm.get('name')?.hasError('maxlength')).toBe(true);
     });
 
     it('should handle special characters in name', () => {

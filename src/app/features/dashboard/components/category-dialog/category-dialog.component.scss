@@ -11,10 +11,6 @@
 
 .full-width {
   width: 100%;
-
-  ::ng-deep .mdc-floating-label {
-    color: var(--text-primary) !important;
-  }
 }
 
 .icon-section,
@@ -30,7 +26,6 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 8px;
-  font-family: 'Roboto', sans-serif;
 }
 
 .icon-grid {
@@ -137,21 +132,12 @@
     font-size: 14px;
     font-weight: 700;
     color: var(--text-primary);
-    font-family: 'Roboto', sans-serif;
   }
-}
-
-::ng-deep [mat-dialog-title] {
-  font-family: 'Roboto', sans-serif !important;
 }
 
 mat-dialog-actions {
   padding: 16px 24px !important;
   gap: 8px;
-
-  button {
-    font-family: 'Roboto', sans-serif;
-  }
 }
 
 @media (max-width: 680px) {
