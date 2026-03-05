@@ -45,8 +45,12 @@
                 matInput
                 formControlName="title"
                 placeholder="e.g. Happy Birthday!"
+                maxlength="100"
                 />
               <mat-icon matSuffix>title</mat-icon>
+              @if (messageForm.get('title')?.hasError('minlength')) {
+                <mat-error>Title must be at least 2 characters</mat-error>
+              }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="time-field">
@@ -90,11 +94,15 @@
               matInput
               formControlName="message"
               rows="4"
+              maxlength="1000"
               placeholder="Write your personalized message..."
             ></textarea>
             <mat-hint>
               Variables: {{ "{" }}name{{ "}" }}, {{ "{" }}age{{ "}" }}, {{ "{" }}zodiac{{ "}" }}, {{ "{" }}sender{{ "}" }}, {{ "{" }}senderFull{{ "}" }}
             </mat-hint>
+            @if (messageForm.get('message')?.hasError('minlength')) {
+              <mat-error>Message must be at least 5 characters</mat-error>
+            }
           </mat-form-field>
 
           @if (messageForm.get('message')?.value) {

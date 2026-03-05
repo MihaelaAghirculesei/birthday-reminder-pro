@@ -39,7 +39,6 @@ describe('MessageSchedulerComponent', () => {
   beforeEach(async () => {
     scheduledMessageServiceMock = jasmine.createSpyObj('ScheduledMessageService', [
       'getMessageTemplates',
-      'getTimeSlots',
       'createMessage'
     ]);
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
@@ -55,7 +54,6 @@ describe('MessageSchedulerComponent', () => {
       { title: 'Birthday', message: 'Happy birthday {name}!' },
       { title: 'Reminder', message: 'Don\'t forget {name}\'s birthday!' }
     ]);
-    scheduledMessageServiceMock.getTimeSlots.and.returnValue(['09:00', '12:00', '18:00']);
     birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
@@ -89,11 +87,9 @@ describe('MessageSchedulerComponent', () => {
     expect(component.messageForm.get('active')?.value).toBe(true);
   });
 
-  it('should load templates and time slots on construction', () => {
+  it('should load templates on construction', () => {
     expect(component.templates.length).toBe(2);
-    expect(component.timeSlots.length).toBe(3);
     expect(scheduledMessageServiceMock.getMessageTemplates).toHaveBeenCalled();
-    expect(scheduledMessageServiceMock.getTimeSlots).toHaveBeenCalled();
   });
 
   it('should validate required fields', () => {
@@ -157,23 +153,6 @@ describe('MessageSchedulerComponent', () => {
   it('should track messages by id', () => {
     const result = component.trackByMessageId(0, mockMessage);
     expect(result).toBe('msg1');
-  });
-
-  it('should track templates by title', () => {
-    const template = { title: 'Test', message: 'Test msg' };
-    const result = component.trackByTemplate(0, template);
-    expect(result).toBe('Test');
-  });
-
-  it('should track by index when template has no title', () => {
-    const template = { title: '', message: 'Test' };
-    const result = component.trackByTemplate(5, template);
-    expect(result).toBe('5');
-  });
-
-  it('should track by index', () => {
-    const result = component.trackByIndex(3);
-    expect(result).toBe(3);
   });
 
   it('should start creating message with default values', () => {

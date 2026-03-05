@@ -60,7 +60,6 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   messages: ScheduledMessage[] = [];
   enrichedMessages: EnrichedMessage[] = [];
   templates: MessageTemplate[] = [];
-  timeSlots: string[] = [];
   isCreatingMessage = false;
   editingMessage: ScheduledMessage | null = null;
 
@@ -78,15 +77,14 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     private birthdayFacade: BirthdayFacadeService
   ) {
     this.messageForm = this.fb.group({
-      title: ['', Validators.required],
-      message: ['', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
+      message: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1000)]],
       scheduledTime: ['09:00', Validators.required],
       priority: ['normal', Validators.required],
       active: [true],
     });
 
     this.templates = this.scheduledMessageService.getMessageTemplates();
-    this.timeSlots = this.scheduledMessageService.getTimeSlots();
   }
 
   ngOnInit(): void {
@@ -260,14 +258,6 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   trackByMessageId(_index: number, message: ScheduledMessage): string {
     return message.id;
-  }
-
-  trackByTemplate(index: number, template: MessageTemplate): string {
-    return template.title || index.toString();
-  }
-
-  trackByIndex(index: number): number {
-    return index;
   }
 
 }
