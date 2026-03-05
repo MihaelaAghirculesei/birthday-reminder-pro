@@ -7,23 +7,26 @@ export interface MockBirthdayData {
   category: string;
   photo: string | null;
   notes: string;
+  email?: string;
+  phone?: string;
+  telegramUsername?: string;
 }
 
 export const MOCK_BIRTHDAY_RAW_DATA: MockBirthdayData[] = [
-  { name: 'Uwe Müller', date: new Date(1990, 2, 15), category: 'family', photo: 'https://i.pravatar.cc/200?img=1', notes: 'Loves reading fantasy books, coffee enthusiast, collects vinyl records' },
-  { name: 'Bob Smith', date: new Date(1985, 5, 22), category: 'friends', photo: 'https://i.pravatar.cc/200?img=12', notes: 'Passionate about photography, likes Canon gear, favorite color blue' },
+  { name: 'Uwe Müller', date: new Date(1990, 2, 15), category: 'family', photo: 'https://i.pravatar.cc/200?img=1', notes: 'Loves reading fantasy books, coffee enthusiast, collects vinyl records', email: 'uwe.mueller@email.com', phone: '+49 170 1234567' },
+  { name: 'Bob Smith', date: new Date(1985, 5, 22), category: 'friends', photo: 'https://i.pravatar.cc/200?img=12', notes: 'Passionate about photography, likes Canon gear, favorite color blue', email: 'bob.smith@gmail.com' },
   { name: 'Charlie Brown', date: new Date(1992, 8, 10), category: 'colleagues', photo: 'https://i.pravatar.cc/200?img=13', notes: 'Gym fanatic, loves protein supplements, enjoys Marvel movies' },
-  { name: 'Diana Prince', date: new Date(1988, 11, 5), category: 'friends', photo: 'https://i.pravatar.cc/200?img=5', notes: 'Plays guitar, into rock music, follows Formula 1' },
+  { name: 'Diana Prince', date: new Date(1988, 11, 5), category: 'friends', photo: 'https://i.pravatar.cc/200?img=5', notes: 'Plays guitar, into rock music, follows Formula 1', telegramUsername: 'diana_prince' },
   { name: 'Edward Norton', date: new Date(1995, 1, 28), category: 'family', photo: 'https://i.pravatar.cc/200?img=14', notes: 'Gardening lover, prefers succulents, allergic to cats' },
-  { name: 'Fiona Apple', date: new Date(1987, 6, 18), category: 'romantic', photo: 'https://i.pravatar.cc/200?img=9', notes: 'Yoga instructor, loves organic tea, into meditation apps, gluten-free diet' },
+  { name: 'Fiona Apple', date: new Date(1987, 6, 18), category: 'romantic', photo: 'https://i.pravatar.cc/200?img=9', notes: 'Yoga instructor, loves organic tea, into meditation apps, gluten-free diet', email: 'fiona.apple@yoga.com', phone: '+44 7911 123456', telegramUsername: 'fiona_yoga' },
   { name: 'George Martin', date: new Date(1993, 9, 3), category: 'colleagues', photo: 'https://i.pravatar.cc/200?img=15', notes: 'Gaming PC builder, plays FPS games, favorite: Call of Duty' },
-  { name: 'Hannah Montana', date: new Date(1991, 3, 12), category: 'friends', photo: 'https://i.pravatar.cc/200?img=10', notes: 'Vegetarian, loves Italian food, enjoys white wine' },
-  { name: 'Isabella Garcia', date: new Date(1994, 0, 8), category: 'family', photo: 'https://i.pravatar.cc/200?img=16', notes: 'Fashion enthusiast, wears size S, prefers minimalist style' },
-  { name: 'Jack Thompson', date: new Date(1989, 4, 19), category: 'acquaintances', photo: 'https://i.pravatar.cc/200?img=17', notes: 'Tech geek, uses iPhone 15, wants AirPods Pro' },
+  { name: 'Hannah Montana', date: new Date(1991, 3, 12), category: 'friends', photo: 'https://i.pravatar.cc/200?img=10', notes: 'Vegetarian, loves Italian food, enjoys white wine', phone: '+1 555 0199' },
+  { name: 'Isabella Garcia', date: new Date(1994, 0, 8), category: 'family', photo: 'https://i.pravatar.cc/200?img=16', notes: 'Fashion enthusiast, wears size S, prefers minimalist style', email: 'isabella.garcia@outlook.com' },
+  { name: 'Jack Thompson', date: new Date(1989, 4, 19), category: 'acquaintances', photo: 'https://i.pravatar.cc/200?img=17', notes: 'Tech geek, uses iPhone 15, wants AirPods Pro', email: 'jack.t@techmail.com', telegramUsername: 'jacktech' },
   { name: 'Katherine Lee', date: new Date(1996, 7, 25), category: 'colleagues', photo: 'https://i.pravatar.cc/200?img=20', notes: 'Works in finance, lives in London, has 1 dog' },
   { name: 'Liam O\'Connor', date: new Date(1986, 10, 14), category: 'friends', photo: 'https://i.pravatar.cc/200?img=33', notes: 'Studying law, energy drink addict, night owl' },
-  { name: 'Maya Patel', date: new Date(1993, 1, 28), category: 'family', photo: 'https://i.pravatar.cc/200?img=21', notes: 'Recently moved to NYC, learning Spanish, loves hiking' },
-  { name: 'Olivia Martinez', date: new Date(1997, 9, 21), category: 'friends', photo: 'https://i.pravatar.cc/200?img=47', notes: 'Software developer, mechanical keyboard fan, plays chess online' },
+  { name: 'Maya Patel', date: new Date(1993, 1, 28), category: 'family', photo: 'https://i.pravatar.cc/200?img=21', notes: 'Recently moved to NYC, learning Spanish, loves hiking', email: 'maya.patel@nyc.com' },
+  { name: 'Olivia Martinez', date: new Date(1997, 9, 21), category: 'friends', photo: 'https://i.pravatar.cc/200?img=47', notes: 'Software developer, mechanical keyboard fan, plays chess online', telegramUsername: 'olivia_dev' },
   { name: 'Patrick Anderson', date: new Date(1984, 1, 16), category: 'acquaintances', photo: null, notes: 'Marathon runner, vegan diet, prefers Nike running shoes' },
   { name: 'Quinn Roberts', date: new Date(1992, 6, 11), category: 'family', photo: 'https://i.pravatar.cc/200?img=23', notes: 'Baker, loves desserts, watches cooking shows' },
   { name: 'Rachel Green', date: new Date(1990, 8, 4), category: 'friends', photo: 'https://i.pravatar.cc/200?img=24', notes: 'Travel blogger, visited 40 countries, wants to go to Japan' },
@@ -63,7 +66,7 @@ export function generateAvatarUrl(name: string): string {
 }
 
 export function generateMockBirthdays(idGenerator: () => string): Birthday[] {
-  return MOCK_BIRTHDAY_RAW_DATA.map(({ name, date, category, photo, notes }) => ({
+  return MOCK_BIRTHDAY_RAW_DATA.map(({ name, date, category, photo, notes, email, phone, telegramUsername }) => ({
     id: idGenerator(),
     name,
     birthDate: date,
@@ -72,7 +75,10 @@ export function generateMockBirthdays(idGenerator: () => string): Birthday[] {
     category,
     notes,
     photo: photo || generateAvatarUrl(name),
-    scheduledMessages: []
+    scheduledMessages: [],
+    ...(email && { email }),
+    ...(phone && { phone }),
+    ...(telegramUsername && { telegramUsername })
   }));
 }
 
