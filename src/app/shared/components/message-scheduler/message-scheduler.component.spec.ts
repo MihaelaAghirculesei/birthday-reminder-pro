@@ -141,13 +141,13 @@ describe('MessageSchedulerComponent', () => {
     expect(Array.isArray(component.enrichedMessages[0].wishLinks)).toBeTrue();
   });
 
-  it('should format date correctly', () => {
-    const date = new Date(2024, 0, 15, 14, 30);
-    const result = component.formatDate(date);
+  it('should pre-compute formatted dates in enrichedMessages', () => {
+    component.birthday = mockBirthday;
+    birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
+    component.loadMessages();
 
-    expect(result).toContain('15');
-    expect(result).toContain('01');
-    expect(result).toContain('2024');
+    expect(component.enrichedMessages[0].formattedCreatedDate).toBeDefined();
+    expect(component.enrichedMessages[0].formattedCreatedDate).toContain(new Date().getFullYear().toString());
   });
 
   it('should track messages by id', () => {

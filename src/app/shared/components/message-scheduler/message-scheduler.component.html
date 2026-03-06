@@ -177,10 +177,10 @@
                     </div>
                   </div>
                   <div class="message-meta">
-                    <small>Created: {{ formatDate(message.createdDate) }}</small>
-                    @if (message.lastSentDate) {
+                    <small>Created: {{ message.formattedCreatedDate }}</small>
+                    @if (message.formattedLastSentDate) {
                       <small>
-                        Last sent: {{ formatDate(message.lastSentDate) }}
+                        Last sent: {{ message.formattedLastSentDate }}
                       </small>
                     }
                   </div>

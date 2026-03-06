@@ -26,6 +26,8 @@ import { NotificationService, BirthdayFacadeService, SenderSettingsService } fro
 interface EnrichedMessage extends ScheduledMessage {
   processedMessage: string;
   wishLinks: WishLink[];
+  formattedCreatedDate: string;
+  formattedLastSentDate: string | null;
 }
 
 @Component({
@@ -233,7 +235,9 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     this.enrichedMessages = this.messages.map(msg => ({
       ...msg,
       processedMessage: this.processMessage(msg.message, this.birthday!),
-      wishLinks: getAvailableWishLinks(this.birthday!, msg.message, senderName, senderFullName)
+      wishLinks: getAvailableWishLinks(this.birthday!, msg.message, senderName, senderFullName),
+      formattedCreatedDate: this.formatDate(msg.createdDate),
+      formattedLastSentDate: msg.lastSentDate ? this.formatDate(msg.lastSentDate) : null
     }));
   }
 
@@ -246,7 +250,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
       .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
   }
 
-  formatDate(date: Date): string {
+  private formatDate(date: Date): string {
     return new Intl.DateTimeFormat('it-IT', {
       day: '2-digit',
       month: '2-digit',
