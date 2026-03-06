@@ -56,8 +56,10 @@ Cypress.Commands.add('expandBirthdayForm', () => {
 
   function attemptExpand(attempt: number): void {
     cy.get('body').then(($body) => {
-      if ($body.find('[data-testid="birthday-name-input"]:visible').length > 0) {
-        return; // Form already expanded
+      // Check the element is truly visible and not mid-animation
+      const $input = $body.find('[data-testid="birthday-name-input"]');
+      if ($input.length > 0 && $input.is(':visible') && $input.closest('[style]').css('height') !== '0px') {
+        return; // Form already expanded and stable
       }
 
       cy.get('[data-testid="add-birthday-button"]').click({ force: true });

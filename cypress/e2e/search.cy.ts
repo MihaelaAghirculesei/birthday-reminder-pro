@@ -13,31 +13,23 @@ describe('Search Functionality', () => {
     ];
 
     birthdays.forEach((birthday) => {
+      // Wait for form to be fully removed from DOM before expanding again
+      cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.exist');
       cy.expandBirthdayForm();
 
       cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 })
-        .should('exist')
-        .should('be.visible');
-      cy.get('[data-testid="birthday-name-input"]')
-        .clear();
-      cy.get('[data-testid="birthday-name-input"]')
-        .should('exist')
+        .should('be.visible')
+        .clear()
         .type(birthday.name);
 
-      cy.get('[data-testid="birthday-date-input"]')
-        .should('exist')
-        .should('be.visible');
-      cy.get('[data-testid="birthday-date-input"]')
-        .clear();
-      cy.get('[data-testid="birthday-date-input"]')
-        .should('exist')
+      cy.get('[data-testid="birthday-date-input"]', { timeout: 10000 })
+        .should('be.visible')
+        .clear()
         .type(birthday.date);
 
       cy.get('[data-testid="save-birthday-button"]')
-        .should('exist')
+        .should('be.visible')
         .click();
-      // Wait for form close animation to complete before next iteration
-      cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.be.visible');
     });
 
     cy.get('.dashboard-container', { timeout: 15000 }).should('exist');
