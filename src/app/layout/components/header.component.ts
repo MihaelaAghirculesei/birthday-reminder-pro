@@ -66,7 +66,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
             <div mat-menu-item disabled class="user-info-menu-item">
               @if (userPhotoURL()) {
                 <mat-icon class="avatar-icon">
-                  <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="menu-user-avatar" referrerpolicy="no-referrer" />
+                  <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="menu-user-avatar" width="24" height="24" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
                 </mat-icon>
               } @else {
                 <mat-icon>account_circle</mat-icon>
@@ -166,7 +166,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
           <div class="nav-strip-spacer"></div>
           <div class="nav-strip-user">
             @if (userPhotoURL()) {
-              <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" referrerpolicy="no-referrer" />
+              <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" width="28" height="28" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
             } @else {
               <mat-icon class="nav-strip-user-icon">account_circle</mat-icon>
             }
@@ -440,7 +440,6 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       position: static;
     }
 
-    /* Strip dropdown glassmorphism */
     ::ng-deep .nav-strip-dropdown.mat-mdc-menu-panel {
       background: rgba(102, 126, 234, 0.5);
       backdrop-filter: blur(20px);
@@ -511,7 +510,6 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       }
     }
 
-    /* Nav strip */
     .nav-strip {
       display: flex;
       align-items: center;
