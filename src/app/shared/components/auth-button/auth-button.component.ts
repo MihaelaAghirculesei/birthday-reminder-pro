@@ -53,22 +53,12 @@ import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
       box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
     }
 
-    ::ng-deep .auth-button .mdc-button__label {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     .google-icon {
       flex-shrink: 0;
     }
 
     .spinner {
       margin-right: 4px;
-    }
-
-    ::ng-deep .auth-button .mat-mdc-button-touch-target {
-      height: 100%;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush

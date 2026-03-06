@@ -21,7 +21,7 @@ import { NotificationService } from '../../core/services/notification.service';
     
         @if (currentPhoto) {
           <div class="photo-display">
-            <img [src]="currentPhoto" alt="Contact photo" class="contact-photo">
+            <img [src]="currentPhoto" alt="Contact photo" class="contact-photo" width="120" height="120" loading="lazy" decoding="async">
             <div class="photo-overlay">
               <mat-icon>edit</mat-icon>
               <span>Change Photo</span>
@@ -52,7 +52,7 @@ import { NotificationService } from '../../core/services/notification.service';
             class="delete-button-circle"
             (click)="removePhoto($event)"
             matTooltip="Remove photo">
-            <img src="assets/icons/delete-button.png" alt="Delete" class="delete-icon">
+            <img src="assets/icons/delete-button.png" alt="Delete" class="delete-icon" width="24" height="24" loading="lazy" decoding="async">
           </button>
         }
       </div>

@@ -34,6 +34,10 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
           [src]="photoURL()"
           [alt]="displayName() || 'User'"
           class="user-avatar"
+          width="32"
+          height="32"
+          loading="lazy"
+          decoding="async"
           referrerpolicy="no-referrer"
         />
       } @else {
@@ -48,6 +52,10 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
             [src]="photoURL()"
             [alt]="displayName() || 'User'"
             class="menu-avatar"
+            width="40"
+            height="40"
+            loading="lazy"
+            decoding="async"
             referrerpolicy="no-referrer"
           />
         } @else {
@@ -135,9 +143,6 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
       pointer-events: none;
     }
 
-    ::ng-deep .user-menu .mat-mdc-menu-item[disabled] {
-      opacity: 1;
-    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

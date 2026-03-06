@@ -63,23 +63,3 @@
     right: -4px;
   }
 }
-
-:host ::ng-deep .mat-mdc-tooltip {
-  background-color: var(--scheduler-bg) !important;
-  color: var(--scheduler-text) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  padding: 10px 14px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid var(--scheduler-accent) !important;
-}
-
-:host ::ng-deep .mat-mdc-tooltip .mdc-tooltip__surface {
-  background-color: var(--scheduler-bg) !important;
-  color: var(--scheduler-text) !important;
-}
-
-:host ::ng-deep .mat-mdc-tooltip * {
-  color: var(--scheduler-text) !important;
-}
