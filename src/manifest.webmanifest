@@ -2,11 +2,14 @@
   "name": "Birthday Reminder",
   "short_name": "Birthdays",
   "description": "Never forget a birthday again with calendar sync, notifications, and offline support",
+  "id": "/",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
+  "orientation": "any",
   "scope": "./",
   "start_url": "./",
+  "categories": ["lifestyle", "utilities"],
   "icons": [
     {
       "src": "assets/icons/manifest-icon-192.maskable.png",
@@ -31,6 +34,46 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/icons/manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Birthday Reminder Dashboard"
+    },
+    {
+      "src": "assets/icons/manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Birthday Reminder Mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Birthday",
+      "short_name": "Add",
+      "url": "./?action=add",
+      "icons": [
+        {
+          "src": "assets/icons/manifest-icon-192.maskable.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Scheduled Messages",
+      "short_name": "Messages",
+      "url": "./scheduled-messages",
+      "icons": [
+        {
+          "src": "assets/icons/manifest-icon-192.maskable.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
