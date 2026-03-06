@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,6 +20,7 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
+    NgOptimizedImage,
     SyncStatusComponent
   ],
   template: `
@@ -31,13 +32,11 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
     >
       @if (photoURL()) {
         <img
-          [src]="photoURL()"
+          [ngSrc]="photoURL()!"
           [alt]="displayName() || 'User'"
           class="user-avatar"
           width="32"
           height="32"
-          loading="lazy"
-          decoding="async"
           referrerpolicy="no-referrer"
         />
       } @else {
@@ -49,13 +48,11 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
       <div class="user-info" mat-menu-item disabled>
         @if (photoURL()) {
           <img
-            [src]="photoURL()"
+            [ngSrc]="photoURL()!"
             [alt]="displayName() || 'User'"
             class="menu-avatar"
             width="40"
             height="40"
-            loading="lazy"
-            decoding="async"
             referrerpolicy="no-referrer"
           />
         } @else {

@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -30,7 +30,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
       MatIconModule,
       MatButtonModule,
       MatMenuModule,
-      MatDividerModule
+      MatDividerModule,
+      NgOptimizedImage
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
@@ -66,7 +67,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
             <div mat-menu-item disabled class="user-info-menu-item">
               @if (userPhotoURL()) {
                 <mat-icon class="avatar-icon">
-                  <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="menu-user-avatar" width="24" height="24" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                  <img [ngSrc]="userPhotoURL()!" [alt]="userDisplayName() || 'User'" class="menu-user-avatar" width="24" height="24" referrerpolicy="no-referrer" />
                 </mat-icon>
               } @else {
                 <mat-icon>account_circle</mat-icon>
@@ -166,7 +167,7 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
           <div class="nav-strip-spacer"></div>
           <div class="nav-strip-user">
             @if (userPhotoURL()) {
-              <img [src]="userPhotoURL()" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" width="28" height="28" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+              <img [ngSrc]="userPhotoURL()!" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" width="28" height="28" referrerpolicy="no-referrer" />
             } @else {
               <mat-icon class="nav-strip-user-icon">account_circle</mat-icon>
             }
