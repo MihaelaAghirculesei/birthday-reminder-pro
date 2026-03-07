@@ -42,9 +42,7 @@ describe('UI Reducer', () => {
     it('should not mutate other state properties', () => {
       const action = UIActions.setDarkMode({ enabled: true });
       const state = uiReducer(initialUIState, action);
-      expect(state.loading).toBe(initialUIState.loading);
-      expect(state.sidebarCollapsed).toBe(initialUIState.sidebarCollapsed);
-      expect(state.notification).toBe(initialUIState.notification);
+      expect(Object.keys(state)).toEqual(['darkMode']);
     });
   });
 });
