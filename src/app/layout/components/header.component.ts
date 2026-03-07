@@ -116,8 +116,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
             <span>Message Signature</span>
           </button>
           <button mat-menu-item (click)="toggleNotifications()">
-            <mat-icon>{{ notificationsGranted && notificationsEnabled ? 'notifications_active' : notificationsGranted && !notificationsEnabled ? 'notifications_off' : 'notifications' }}</mat-icon>
-            <span>{{ notificationsGranted && notificationsEnabled ? 'Disable Notifications' : 'Enable Notifications' }}</span>
+            <mat-icon>{{ notificationIcon }}</mat-icon>
+            <span>{{ notificationLabel }}</span>
           </button>
           <button mat-menu-item (click)="themeService.toggleDarkMode()">
             <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -706,6 +706,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   notificationsGranted = false;
   notificationsEnabled = false;
+  notificationIcon = 'notifications';
+  notificationLabel = 'Enable Notifications';
   private lastScrollY = 0;
   private readonly scrollThreshold = 10;
 
@@ -713,11 +715,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       this.notificationsGranted = this.permissionService.getCurrentPermission() === 'granted';
       this.notificationsEnabled = this.permissionService.isNotificationsEnabled();
+      this.updateNotificationUI();
       this.permissionService.permissionStatus.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
         this.notificationsGranted = status === 'granted';
+        this.updateNotificationUI();
       });
       this.permissionService.notificationsEnabled.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
         this.notificationsEnabled = enabled;
+        this.updateNotificationUI();
       });
       this.lastScrollY = this.getScrollY();
       this.ngZone.runOutsideAngular(() => {
@@ -781,6 +786,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   signOut(): void {
     this.store.dispatch(AuthActions.signOut());
+  }
+
+  private updateNotificationUI(): void {
+    if (this.notificationsGranted && this.notificationsEnabled) {
+      this.notificationIcon = 'notifications_active';
+      this.notificationLabel = 'Disable Notifications';
+    } else {
+      this.notificationIcon = this.notificationsGranted ? 'notifications_off' : 'notifications';
+      this.notificationLabel = 'Enable Notifications';
+    }
   }
 
   async toggleNotifications(): Promise<void> {

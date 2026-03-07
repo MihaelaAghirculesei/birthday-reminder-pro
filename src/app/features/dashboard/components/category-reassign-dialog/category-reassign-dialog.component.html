@@ -19,7 +19,7 @@
     <div class="reassign-section">
       <h3>Choose a new category</h3>
       <mat-form-field appearance="outline" class="category-select">
-        <mat-select [(ngModel)]="selectedCategoryId">
+        <mat-select [(ngModel)]="selectedCategoryId" panelClass="category-reassign-select-panel">
           @for (category of availableCategories; track category.id) {
             <mat-option [value]="category.id">
               <div class="category-option">
