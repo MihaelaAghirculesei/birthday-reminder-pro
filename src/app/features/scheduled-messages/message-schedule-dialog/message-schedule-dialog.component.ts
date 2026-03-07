@@ -19,6 +19,20 @@ interface MessageScheduleDialogData {
   birthdayId?: string;
 }
 
+interface BirthdayOptionView {
+  birthday: Birthday;
+  hasContact: boolean;
+  contactInfo: string;
+}
+
+function buildContactInfo(b: Birthday): string {
+  const parts: string[] = [];
+  if (b.email?.trim()) parts.push(b.email.trim());
+  if (b.phone?.trim()) parts.push(b.phone.trim());
+  if (b.telegramUsername?.trim()) parts.push('@' + b.telegramUsername.trim());
+  return parts.join(' · ');
+}
+
 @Component({
     selector: 'app-message-schedule-dialog',
     imports: [
@@ -42,6 +56,13 @@ export class MessageScheduleDialogComponent implements OnInit {
     [...this.birthdayFacade.birthdays()].sort(
       (a, b) => getDaysUntilBirthday(new Date(a.birthDate)) - getDaysUntilBirthday(new Date(b.birthDate))
     )
+  );
+  birthdayOptions: Signal<BirthdayOptionView[]> = computed(() =>
+    this.allBirthdays().map(b => ({
+      birthday: b,
+      hasContact: !!(b.email?.trim() || b.phone?.trim() || b.telegramUsername?.trim()),
+      contactInfo: buildContactInfo(b)
+    }))
   );
   noBirthdays: Signal<boolean> = computed(() => this.allBirthdays().length === 0);
   selectedBirthdayId = '';
@@ -68,14 +89,14 @@ export class MessageScheduleDialogComponent implements OnInit {
     }
   }
 
-  onOptionClick(event: MouseEvent, birthday: Birthday): void {
-    if (this.hasContact(birthday)) return;
+  onOptionClick(event: MouseEvent, option: BirthdayOptionView): void {
+    if (option.hasContact) return;
 
     event.stopPropagation();
     this.selectedBirthdayId = '';
 
     const dialogData: BirthdayEditDialogData = {
-      birthday,
+      birthday: option.birthday,
       categories: this.categoryFacade.categories()
     };
 
@@ -113,18 +134,6 @@ export class MessageScheduleDialogComponent implements OnInit {
         this.showBirthdaySelector = false;
       }
     }
-  }
-
-  hasContact(birthday: Birthday): boolean {
-    return !!(birthday.email?.trim() || birthday.phone?.trim() || birthday.telegramUsername?.trim());
-  }
-
-  getContactInfo(birthday: Birthday): string {
-    const parts: string[] = [];
-    if (birthday.email?.trim()) parts.push(birthday.email.trim());
-    if (birthday.phone?.trim()) parts.push(birthday.phone.trim());
-    if (birthday.telegramUsername?.trim()) parts.push('@' + birthday.telegramUsername.trim());
-    return parts.join(' · ');
   }
 
   changeBirthday(): void {

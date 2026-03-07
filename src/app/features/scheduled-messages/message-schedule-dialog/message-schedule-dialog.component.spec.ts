@@ -251,36 +251,51 @@ describe('MessageScheduleDialogComponent', () => {
     });
   });
 
-  describe('hasContact', () => {
-    it('should return false for birthday without contact info', () => {
+  describe('birthdayOptions computed signal', () => {
+    it('should pre-compute hasContact as false for birthday without contact info', () => {
       createComponent();
       fixture.detectChanges();
 
-      expect(component.hasContact(mockBirthdays[0])).toBeFalse();
+      const options = component.birthdayOptions();
+      expect(options.every(o => o.hasContact)).toBeFalse();
     });
 
-    it('should return true for birthday with email', () => {
+    it('should pre-compute hasContact as true for birthday with email', () => {
+      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
+        'getMessagesByBirthday', 'addMessageToBirthday', 'updateMessageForBirthday',
+        'deleteMessageFromBirthday', 'updateBirthday'
+      ], {
+        birthdays: signal([{ ...mockBirthdays[0], email: 'test@example.com' }])
+      });
+      mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
+      TestBed.resetTestingModule();
       createComponent();
       fixture.detectChanges();
 
-      const birthdayWithEmail = { ...mockBirthdays[0], email: 'test@example.com' };
-      expect(component.hasContact(birthdayWithEmail)).toBeTrue();
+      expect(component.birthdayOptions()[0].hasContact).toBeTrue();
     });
 
-    it('should return true for birthday with phone', () => {
+    it('should pre-compute contactInfo with all contact details', () => {
+      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
+        'getMessagesByBirthday', 'addMessageToBirthday', 'updateMessageForBirthday',
+        'deleteMessageFromBirthday', 'updateBirthday'
+      ], {
+        birthdays: signal([{
+          ...mockBirthdays[0],
+          email: 'test@example.com',
+          phone: '+1234567890',
+          telegramUsername: 'testuser'
+        }])
+      });
+      mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
+      TestBed.resetTestingModule();
       createComponent();
       fixture.detectChanges();
 
-      const birthdayWithPhone = { ...mockBirthdays[0], phone: '+1234567890' };
-      expect(component.hasContact(birthdayWithPhone)).toBeTrue();
-    });
-
-    it('should return true for birthday with telegram', () => {
-      createComponent();
-      fixture.detectChanges();
-
-      const birthdayWithTelegram = { ...mockBirthdays[0], telegramUsername: 'testuser' };
-      expect(component.hasContact(birthdayWithTelegram)).toBeTrue();
+      const info = component.birthdayOptions()[0].contactInfo;
+      expect(info).toContain('test@example.com');
+      expect(info).toContain('+1234567890');
+      expect(info).toContain('@testuser');
     });
   });
 

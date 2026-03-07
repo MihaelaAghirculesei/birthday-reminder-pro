@@ -21,12 +21,12 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Select a Birthday</mat-label>
           <mat-select [(ngModel)]="selectedBirthdayId" (selectionChange)="onBirthdaySelected()" panelClass="birthday-select-panel">
-            @for (birthday of allBirthdays(); track birthday.id) {
-              <mat-option [value]="birthday.id" (click)="onOptionClick($event, birthday)">
-                <div class="birthday-option" [class.no-contact]="!hasContact(birthday)">
-                  <span class="birthday-name">{{ birthday.name }}</span>
-                  @if (hasContact(birthday)) {
-                    <span class="birthday-contact-info">{{ getContactInfo(birthday) }}</span>
+            @for (option of birthdayOptions(); track option.birthday.id) {
+              <mat-option [value]="option.birthday.id" (click)="onOptionClick($event, option)">
+                <div class="birthday-option" [class.no-contact]="!option.hasContact">
+                  <span class="birthday-name">{{ option.birthday.name }}</span>
+                  @if (option.hasContact) {
+                    <span class="birthday-contact-info">{{ option.contactInfo }}</span>
                   } @else {
                     <span class="no-contact-hint">
                       <mat-icon class="no-contact-icon">warning</mat-icon>
@@ -52,16 +52,13 @@
     @if (selectedBirthday && !showBirthdaySelector) {
       <div class="selected-birthday-section">
         <div class="selected-birthday-card">
-          @if (selectedBirthday.photo) {
-            <div class="birthday-avatar">
+          <div class="birthday-avatar" [class.no-photo]="!selectedBirthday.photo">
+            @if (selectedBirthday.photo) {
               <img [src]="selectedBirthday.photo" [alt]="selectedBirthday.name" width="60" height="60" loading="lazy" decoding="async" />
-            </div>
-          }
-          @if (!selectedBirthday.photo) {
-            <div class="birthday-avatar no-photo">
+            } @else {
               <mat-icon>person</mat-icon>
-            </div>
-          }
+            }
+          </div>
           <div class="birthday-details">
             <h3>{{ selectedBirthday.name }}</h3>
             <p class="birth-date">
