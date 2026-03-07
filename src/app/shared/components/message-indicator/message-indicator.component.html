@@ -4,6 +4,7 @@
   matTooltipClass="message-indicator-tooltip"
   [style.border-color]="hasActiveMessages ? 'var(--scheduler-accent)' : '#95a5a6'"
   type="button"
+  aria-label="Message configuration status"
   >
   @if (hasActiveMessages) {
     <picture>
@@ -18,9 +19,7 @@
         decoding="async"
         />
     </picture>
-  }
-
-  @if (!hasActiveMessages) {
+  } @else {
     <picture>
       <source srcset="assets/icons/not-configured-message.webp" type="image/webp" width="36" height="36">
       <img
@@ -36,9 +35,7 @@
   }
 
   @if (hasActiveMessages && activeMessageCount > 1) {
-    <span
-      class="message-count"
-      >
+    <span class="message-count">
       {{ activeMessageCount }}
     </span>
   }
