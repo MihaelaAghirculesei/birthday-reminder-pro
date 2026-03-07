@@ -33,6 +33,7 @@ export class BirthdayItemComponent implements OnChanges {
 
   daysText = '';
   daysChipClass = 'green-safe';
+  age = 0;
 
   @Output() edit = new EventEmitter<Birthday>();
   @Output() deleted = new EventEmitter<Birthday>();
@@ -42,6 +43,9 @@ export class BirthdayItemComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['daysUntilBirthday']) {
       this.updateDaysData();
+    }
+    if (changes['birthday']) {
+      this.age = calculateAge(this.birthday.birthDate);
     }
   }
 
@@ -63,10 +67,6 @@ export class BirthdayItemComponent implements OnChanges {
     } else {
       this.daysChipClass = 'green-safe';
     }
-  }
-
-  getAge(birthDate: Date): number {
-    return calculateAge(birthDate);
   }
 
   onEdit(event: Event): void {

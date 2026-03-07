@@ -301,7 +301,7 @@
     @include circular-button(45px, $btn-delete-start, $btn-delete-end, 28px);
   }
 
-  ::ng-deep .dashboard-toolbar {
+  .dashboard-toolbar {
     app-category-icon,
     app-zodiac-icon,
     app-message-indicator,
@@ -333,62 +333,6 @@
   }
 }
 
-
-// Menu panel styles — same as header burger menu
-::ng-deep .birthday-item-menu.mat-mdc-menu-panel {
-  min-width: 180px;
-  background: $dark-theme-gradient;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-
-  .mat-mdc-menu-content {
-    color: white;
-  }
-
-  .mat-mdc-menu-item {
-    color: white !important;
-
-    .mat-icon {
-      color: rgba(255, 255, 255, 0.7) !important;
-    }
-
-    .mdc-list-item__primary-text {
-      color: white !important;
-    }
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    &[disabled] {
-      opacity: 1 !important;
-      color: white !important;
-
-      .mdc-list-item__primary-text {
-        color: white !important;
-      }
-    }
-  }
-
-  mat-divider, .mat-divider {
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
-  }
-
-  @media (max-width: 400px) {
-    .mat-mdc-menu-item {
-      min-height: 36px;
-      font-size: 14px;
-
-      .mdc-list-item__primary-text {
-        font-size: 14px !important;
-      }
-
-      .mat-icon {
-        @include icon-size(18px);
-      }
-    }
-  }
-}
 
 @media (max-width: 660px) {
   .compact-hide {

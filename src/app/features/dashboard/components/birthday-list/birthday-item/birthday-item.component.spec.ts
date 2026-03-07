@@ -149,23 +149,13 @@ describe('BirthdayItemComponent', () => {
     });
   });
 
-  describe('getAge', () => {
-    it('should calculate age correctly', () => {
-      const birthDate = new Date('1990-01-15');
-      const age = component.getAge(birthDate);
+  describe('age', () => {
+    it('should pre-compute age on birthday input change', () => {
+      component.birthday = { ...component.birthday, birthDate: new Date('1990-01-15') };
+      component.ngOnChanges({ birthday: new SimpleChange(null, component.birthday, false) });
 
-      expect(age).toBeGreaterThan(30);
-      expect(typeof age).toBe('number');
-    });
-
-    it('should return age for different birth dates', () => {
-      const birthDate1 = new Date('2000-06-10');
-      const birthDate2 = new Date('1985-12-25');
-
-      const age1 = component.getAge(birthDate1);
-      const age2 = component.getAge(birthDate2);
-
-      expect(age1).toBeLessThan(age2);
+      expect(component.age).toBeGreaterThan(30);
+      expect(typeof component.age).toBe('number');
     });
   });
 

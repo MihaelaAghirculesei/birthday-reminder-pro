@@ -1,6 +1,6 @@
 <div class="dashboard-birthday-item" tabindex="0" role="article" [attr.aria-label]="'Birthday card for ' + birthday.name">
-  @if (birthday.photo) {
-    <div class="dashboard-avatar">
+  <div class="dashboard-avatar">
+    @if (birthday.photo) {
       <img
         [src]="birthday.photo"
         [alt]="birthday.name"
@@ -10,13 +10,10 @@
         loading="lazy"
         decoding="async"
         />
-    </div>
-  }
-  @if (!birthday.photo) {
-    <div class="dashboard-avatar">
+    } @else {
       <mat-icon class="dashboard-default-icon">person</mat-icon>
-    </div>
-  }
+    }
+  </div>
 
   <div class="dashboard-birthday-content">
     <div class="dashboard-birthday-info">
@@ -24,7 +21,7 @@
         {{ birthday.name }}
       </div>
       <div class="dashboard-age compact-hide">
-        {{ getAge(birthday.birthDate) }} years old
+        {{ age }} years old
       </div>
     </div>
 
@@ -65,10 +62,10 @@
     >
     <mat-icon>more_vert</mat-icon>
   </button>
-  <mat-menu #itemMenu="matMenu" class="birthday-item-menu">
+  <mat-menu #itemMenu="matMenu" panelClass="birthday-item-menu">
     <div mat-menu-item disabled class="menu-info-item">
       <mat-icon>person</mat-icon>
-      <span>{{ getAge(birthday.birthDate) }} years old</span>
+      <span>{{ age }} years old</span>
     </div>
     <div mat-menu-item disabled class="menu-info-item">
       <mat-icon>cake</mat-icon>
