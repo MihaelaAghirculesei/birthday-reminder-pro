@@ -109,7 +109,7 @@ describe('SyncStatusComponent', () => {
     expect(el.textContent).toContain('3 pending');
   });
 
-  describe('tooltipText', () => {
+  describe('tooltip', () => {
     it('should return All data synced when everything is fine', () => {
       store.overrideSelector(SyncSelectors.selectSyncSummary, {
         state: 'idle',
@@ -121,7 +121,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toBe('All data synced');
+      expect(component.tooltip()).toBe('All data synced');
     });
 
     it('should include last sync time', () => {
@@ -136,7 +136,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toContain('Last sync: just now');
+      expect(component.tooltip()).toContain('Last sync: just now');
     });
 
     it('should include pending count in tooltip', () => {
@@ -150,7 +150,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toContain('5 changes pending upload');
+      expect(component.tooltip()).toContain('5 changes pending upload');
     });
 
     it('should include offline message', () => {
@@ -164,7 +164,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toContain('Working offline');
+      expect(component.tooltip()).toContain('Working offline');
     });
 
     it('should include error message', () => {
@@ -178,7 +178,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toContain('Sync encountered an error');
+      expect(component.tooltip()).toContain('Sync encountered an error');
     });
 
     it('should return empty string when no summary', () => {
@@ -186,7 +186,7 @@ describe('SyncStatusComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.tooltipText()).toBe('');
+      expect(component.tooltip()).toBe('');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,7 +18,7 @@ import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
     MatProgressSpinnerModule
   ],
   template: `
-    <div class="sync-status" [matTooltip]="tooltipText()">
+    <div class="sync-status" [matTooltip]="tooltip()">
       @switch (syncSummary()?.state) {
         @case ('syncing') {
           <mat-spinner diameter="16" class="syncing"></mat-spinner>
@@ -112,7 +112,7 @@ export class SyncStatusComponent {
     { initialValue: null }
   );
 
-  tooltipText(): string {
+  tooltip = computed(() => {
     const summary = this.syncSummary();
     if (!summary) return '';
 
@@ -121,36 +121,32 @@ export class SyncStatusComponent {
     if (summary.lastSync) {
       parts.push(`Last sync: ${this.formatTime(summary.lastSync)}`);
     }
-
     if (summary.pendingCount > 0) {
       parts.push(`${summary.pendingCount} changes pending upload`);
     }
-
     if (!summary.isOnline) {
       parts.push('Working offline - changes will sync when online');
     }
-
     if (summary.hasError) {
       parts.push('Sync encountered an error. Will retry automatically.');
     }
 
     return parts.join('\n') || 'All data synced';
-  }
+  });
 
   private formatTime(date: Date): string {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 60000) {
-      return 'just now';
-    } else if (diff < 3600000) {
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) {
       const mins = Math.floor(diff / 60000);
       return `${mins} minute${mins > 1 ? 's' : ''} ago`;
-    } else if (diff < 86400000) {
+    }
+    if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000);
       return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    } else {
-      return date.toLocaleDateString();
     }
+    return date.toLocaleDateString();
   }
 }
