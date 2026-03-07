@@ -92,11 +92,17 @@
 
 @if (totalBirthdays > 0) {
   <div class="data-management-sections">
-    <app-birthday-import-export
-      [totalBirthdays]="totalBirthdays"
-      [allBirthdays]="birthdays"
-      (birthdaysImported)="onBirthdaysImported($event)"
-    ></app-birthday-import-export>
+    @defer (on viewport) {
+      <app-birthday-import-export
+        [totalBirthdays]="totalBirthdays"
+        [allBirthdays]="birthdays"
+        (birthdaysImported)="onBirthdaysImported($event)"
+      ></app-birthday-import-export>
+    } @placeholder {
+      <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
+        <mat-icon>import_export</mat-icon>
+      </div>
+    }
 
     <div class="clear-data-section">
       <mat-card class="clear-data-card">

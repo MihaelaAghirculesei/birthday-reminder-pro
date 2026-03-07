@@ -10,9 +10,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { take, switchMap, EMPTY, map } from 'rxjs';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
-import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { BirthdayFacadeService } from '../../../../core';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
+import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
 
 interface EnrichedBirthday extends Birthday {
@@ -30,7 +30,7 @@ interface EnrichedBirthday extends Birthday {
         MatButtonModule,
         MatTooltipModule,
         BirthdayItemComponent,
-        BirthdayImportExportComponent
+        BirthdayImportExportComponent,
     ],
     templateUrl: './birthday-list.component.html',
     styleUrls: ['./birthday-list.component.scss'],
