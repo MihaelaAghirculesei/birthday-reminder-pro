@@ -57,7 +57,7 @@
                   <div class="message-content">{{ message.message }}</div>
                   <div class="message-footer">
                     <span class="priority" [class]="'priority-' + message.priority">
-                      {{ getPriorityLabel(message.priority) }}
+                      {{ message.priorityLabel }}
                     </span>
                     <span class="status" [class.active]="message.active">
                       {{ message.active ? "Active" : "Inactive" }}

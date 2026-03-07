@@ -11,10 +11,21 @@ import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
 import { BirthdayFacadeService, SenderSettingsService } from '../../core';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 
+interface EnrichedMessage extends ScheduledMessage {
+  wishLinks: WishLink[];
+  priorityLabel: string;
+}
+
 interface BirthdayMessageView {
   birthday: Birthday;
-  messages: (ScheduledMessage & { wishLinks: WishLink[] })[];
+  messages: EnrichedMessage[];
 }
+
+const PRIORITY_LABELS: Record<string, string> = {
+  low: 'Low',
+  normal: 'Normal',
+  high: 'High'
+};
 
 @Component({
     selector: 'app-scheduled-messages',
@@ -40,7 +51,8 @@ export class ScheduledMessagesComponent {
         birthday: b,
         messages: (b.scheduledMessages || []).map(msg => ({
           ...msg,
-          wishLinks: getAvailableWishLinks(b, msg.message, senderName, senderFullName)
+          wishLinks: getAvailableWishLinks(b, msg.message, senderName, senderFullName),
+          priorityLabel: PRIORITY_LABELS[msg.priority] || msg.priority
         }))
       }));
   });
@@ -80,19 +92,6 @@ export class ScheduledMessagesComponent {
         this.birthdayFacade.deleteMessageFromBirthday(birthdayId, messageId);
       }
     });
-  }
-
-  getPriorityLabel(priority: string): string {
-    switch (priority) {
-      case 'low':
-        return 'Low';
-      case 'normal':
-        return 'Normal';
-      case 'high':
-        return 'High';
-      default:
-        return priority;
-    }
   }
 
   trackByBirthday(_index: number, birthday: Birthday): string {

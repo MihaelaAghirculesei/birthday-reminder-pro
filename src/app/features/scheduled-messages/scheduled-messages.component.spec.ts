@@ -205,39 +205,6 @@ describe('ScheduledMessagesComponent', () => {
     });
   });
 
-  describe('getPriorityLabel', () => {
-    it('should return "Low" for low priority', () => {
-      const result = component.getPriorityLabel('low');
-      expect(result).toBe('Low');
-    });
-
-    it('should return "Normal" for normal priority', () => {
-      const result = component.getPriorityLabel('normal');
-      expect(result).toBe('Normal');
-    });
-
-    it('should return "High" for high priority', () => {
-      const result = component.getPriorityLabel('high');
-      expect(result).toBe('High');
-    });
-
-    it('should return original value for unknown priority', () => {
-      const result = component.getPriorityLabel('urgent');
-      expect(result).toBe('urgent');
-    });
-
-    it('should handle empty string', () => {
-      const result = component.getPriorityLabel('');
-      expect(result).toBe('');
-    });
-
-    it('should handle case sensitivity', () => {
-      expect(component.getPriorityLabel('Low')).toBe('Low');
-      expect(component.getPriorityLabel('HIGH')).toBe('HIGH');
-      expect(component.getPriorityLabel('Normal')).toBe('Normal');
-    });
-  });
-
   describe('trackByBirthday', () => {
     it('should return birthday id', () => {
       const birthday = mockBirthdays[0];
