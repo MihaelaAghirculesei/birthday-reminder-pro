@@ -8,14 +8,9 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <footer class="app-footer">
-      <img src="assets/logo.png"
-           alt="Back to top"
-           class="footer-logo"
-           role="button"
-           tabindex="0"
-           aria-label="Scroll to top"
-           (click)="scrollToTop()"
-           (keydown.enter)="scrollToTop()" />
+      <button class="footer-logo-btn" (click)="scrollToTop()" aria-label="Scroll to top">
+        <img src="assets/logo.png" alt="" class="footer-logo" />
+      </button>
 
       <div class="footer-center">
         <p class="footer-tagline">Made with ❤️ to never forget special moments</p>
@@ -55,9 +50,10 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
       padding: 0 32px;
     }
 
-    .footer-logo {
-      height: 100px;
-      width: auto;
+    .footer-logo-btn {
+      background: none;
+      border: none;
+      padding: 0;
       cursor: pointer;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
 
@@ -69,6 +65,12 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
       &:active {
         transform: scale(0.95);
       }
+    }
+
+    .footer-logo {
+      height: 100px;
+      width: auto;
+      display: block;
     }
 
 .footer-center {
@@ -124,6 +126,12 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 
       .footer-logo {
         height: 60px;
+      }
+
+      .footer-logo-btn {
+        &:hover {
+          filter: drop-shadow(0 4px 8px rgba(255, 255, 255, 0.3));
+        }
       }
 
       .footer-tagline {
