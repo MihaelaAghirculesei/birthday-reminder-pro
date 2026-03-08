@@ -44,57 +44,23 @@ export class BirthdayImportExportComponent {
     this.notificationService.show(`Exported ${birthdays.length} birthdays to CSV`, 'success');
   }
 
-  async onImportBackup(event: Event): Promise<void> {
+  onImportBackup(event: Event): Promise<void> { return this.handleImport(event, f => this.backupService.importFromFile(f), '', 'Invalid backup file'); }
+  onImportCSV(event: Event): Promise<void> { return this.handleImport(event, f => this.backupService.importFromCSV(f), ' from CSV', 'Invalid CSV file'); }
+  onImportVCard(event: Event): Promise<void> { return this.handleImport(event, f => this.backupService.importFromVCard(f), ' from vCard', 'Invalid vCard file'); }
+
+  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, suffix: string, errorMsg: string): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
     this.isImporting.set(true);
     try {
-      const birthdays = await this.backupService.importFromFile(file);
+      const birthdays = await importer(file);
       this.birthdaysImported.emit(birthdays);
-      this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
+      this.notificationService.show(`Imported ${birthdays.length} birthdays${suffix}`, 'success');
     } catch (error) {
       this.logger.error('Import failed:', error);
-      this.notificationService.show('Invalid backup file', 'error');
-    } finally {
-      this.isImporting.set(false);
-      input.value = '';
-    }
-  }
-
-  async onImportCSV(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    this.isImporting.set(true);
-    try {
-      const birthdays = await this.backupService.importFromCSV(file);
-      this.birthdaysImported.emit(birthdays);
-      this.notificationService.show(`Imported ${birthdays.length} birthdays from CSV`, 'success');
-    } catch (error) {
-      this.logger.error('CSV import failed:', error);
-      this.notificationService.show('Invalid CSV file', 'error');
-    } finally {
-      this.isImporting.set(false);
-      input.value = '';
-    }
-  }
-
-  async onImportVCard(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    this.isImporting.set(true);
-    try {
-      const birthdays = await this.backupService.importFromVCard(file);
-      this.birthdaysImported.emit(birthdays);
-      this.notificationService.show(`Imported ${birthdays.length} birthdays from vCard`, 'success');
-    } catch (error) {
-      this.logger.error('vCard import failed:', error);
-      this.notificationService.show('Invalid vCard file', 'error');
+      this.notificationService.show(errorMsg, 'error');
     } finally {
       this.isImporting.set(false);
       input.value = '';

@@ -17,6 +17,7 @@ import { SenderSettingsDialogComponent } from '../../shared/components/sender-se
 import { ThemeService, BirthdayFacadeService, NotificationService } from '../../core';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { BackupService } from '../../core/services/backup.service';
+import { Birthday } from '../../shared/models';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
 
@@ -732,8 +733,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
   }
 
- 
-
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       window.removeEventListener('scroll', this.onScroll);
@@ -820,67 +819,34 @@ export class HeaderComponent implements OnInit, OnDestroy {
     });
   }
 
-  exportJSON(): void {
+  exportJSON(): void { this.handleExport(b => this.backupService.exportToJSON(b), 'Exported to JSON'); }
+  exportCSV(): void { this.handleExport(b => this.backupService.exportToCSV(b), 'Exported to CSV'); }
+
+  onImportJSON(event: Event): void { this.handleImport(event, f => this.backupService.importFromFile(f), 'Invalid backup file'); }
+  onImportCSV(event: Event): void { this.handleImport(event, f => this.backupService.importFromCSV(f), 'Invalid CSV file'); }
+  onImportVCard(event: Event): void { this.handleImport(event, f => this.backupService.importFromVCard(f), 'Invalid vCard file'); }
+
+  private handleExport(exporter: (b: Birthday[]) => void, successMsg: string): void {
     const birthdays = this.birthdayFacade.birthdays();
     if (birthdays.length === 0) {
       this.notificationService.show('No birthdays to export', 'warning');
       return;
     }
-    this.backupService.exportToJSON(birthdays);
-    this.notificationService.show('Exported to JSON', 'success');
+    exporter(birthdays);
+    this.notificationService.show(successMsg, 'success');
   }
 
-  exportCSV(): void {
-    const birthdays = this.birthdayFacade.birthdays();
-    if (birthdays.length === 0) {
-      this.notificationService.show('No birthdays to export', 'warning');
-      return;
-    }
-    this.backupService.exportToCSV(birthdays);
-    this.notificationService.show('Exported to CSV', 'success');
-  }
-
-  async onImportJSON(event: Event): Promise<void> {
+  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, errorMsg: string): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     try {
-      const birthdays = await this.backupService.importFromFile(file);
+      const birthdays = await importer(file);
       for (const birthday of birthdays) {
         this.birthdayFacade.addBirthday(birthday);
       }
       this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
     } catch {
-      this.notificationService.show('Invalid backup file', 'error');
-    }
-    (event.target as HTMLInputElement).value = '';
-  }
-
-  async onImportCSV(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    try {
-      const birthdays = await this.backupService.importFromCSV(file);
-      for (const birthday of birthdays) {
-        this.birthdayFacade.addBirthday(birthday);
-      }
-      this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
-    } catch {
-      this.notificationService.show('Invalid CSV file', 'error');
-    }
-    (event.target as HTMLInputElement).value = '';
-  }
-
-  async onImportVCard(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    try {
-      const birthdays = await this.backupService.importFromVCard(file);
-      for (const birthday of birthdays) {
-        this.birthdayFacade.addBirthday(birthday);
-      }
-      this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
-    } catch {
-      this.notificationService.show('Invalid vCard file', 'error');
+      this.notificationService.show(errorMsg, 'error');
     }
     (event.target as HTMLInputElement).value = '';
   }
