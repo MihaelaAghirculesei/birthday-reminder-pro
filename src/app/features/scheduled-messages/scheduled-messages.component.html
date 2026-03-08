@@ -22,16 +22,13 @@
         <mat-card class="birthday-message-card">
           <mat-card-header>
             <div class="birthday-header">
-              @if (entry.birthday.photo) {
-                <div class="birthday-avatar">
+              <div class="birthday-avatar">
+                @if (entry.birthday.photo) {
                   <img [src]="entry.birthday.photo" [alt]="entry.birthday.name" width="56" height="56" loading="lazy" decoding="async" />
-                </div>
-              }
-              @if (!entry.birthday.photo) {
-                <div class="birthday-avatar">
+                } @else {
                   <mat-icon>person</mat-icon>
-                </div>
-              }
+                }
+              </div>
               <div class="birthday-info">
                 <mat-card-title>{{ entry.birthday.name }}</mat-card-title>
                 <mat-card-subtitle>
