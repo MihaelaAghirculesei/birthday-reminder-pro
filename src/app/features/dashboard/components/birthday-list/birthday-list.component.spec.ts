@@ -135,12 +135,12 @@ describe('BirthdayListComponent', () => {
       spyOn(component.addTestData, 'emit');
       component.onAddTestData();
 
-      expect(component.isAddingTestData).toBeTrue();
+      expect(component.isAddingTestData()).toBeTrue();
       expect(component.addTestData.emit).toHaveBeenCalled();
 
       tick(2000);
 
-      expect(component.isAddingTestData).toBeFalse();
+      expect(component.isAddingTestData()).toBeFalse();
     }));
 
     it('should emit clearAllData and set clearing state', fakeAsync(() => {
@@ -151,12 +151,12 @@ describe('BirthdayListComponent', () => {
       spyOn(component.clearAllData, 'emit');
       component.onClearAllData();
 
-      expect(component.isClearingData).toBeTrue();
+      expect(component.isClearingData()).toBeTrue();
       expect(component.clearAllData.emit).toHaveBeenCalled();
 
       tick(2000);
 
-      expect(component.isClearingData).toBeFalse();
+      expect(component.isClearingData()).toBeFalse();
     }));
   });
 

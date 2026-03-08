@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -67,7 +67,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   birthdays: Signal<Birthday[]> = this.birthdayFacade.birthdays;
   categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;
   selectedPhoto: string | null = null;
-  isAddingTestData = false;
+  isAddingTestData = signal(false);
   isAddBirthdayExpanded = false;
   private testDataTimer: ReturnType<typeof setTimeout> | null = null;
   private dashboardComponentRef: ComponentRef<unknown> | null = null;
@@ -137,12 +137,11 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   addTestData(): void {
-    this.isAddingTestData = true;
+    this.isAddingTestData.set(true);
     this.birthdayFacade.loadTestData();
     this.testDataTimer = setTimeout(() => {
-      this.isAddingTestData = false;
+      this.isAddingTestData.set(false);
       this.testDataTimer = null;
-      this.cdr.markForCheck();
     }, 1000);
   }
 

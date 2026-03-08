@@ -8,14 +8,13 @@
             <h3>Want to explore the app?</h3>
             <p>Add some sample birthdays to discover all the dashboard features</p>
           </div>
-          <button mat-raised-button color="primary" (click)="addTestData()" [disabled]="isAddingTestData" class="add-test-btn">
-            @if (!isAddingTestData) {
+          <button mat-raised-button color="primary" (click)="addTestData()" [disabled]="isAddingTestData()" class="add-test-btn">
+            @if (isAddingTestData()) {
+              <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+            } @else {
               <mat-icon>visibility</mat-icon>
             }
-            @if (isAddingTestData) {
-              <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
-            }
-            {{ isAddingTestData ? 'Loading...' : 'Show Demo' }}
+            {{ isAddingTestData() ? 'Loading...' : 'Show Demo' }}
           </button>
         </div>
       </mat-card-content>

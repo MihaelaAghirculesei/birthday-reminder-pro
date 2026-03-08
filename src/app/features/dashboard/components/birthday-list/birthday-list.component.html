@@ -78,11 +78,11 @@
             mat-raised-button
             color="primary"
             (click)="onAddTestData()"
-            [disabled]="isAddingTestData"
+            [disabled]="isAddingTestData()"
             class="add-test-btn"
             >
             <mat-icon>add_circle</mat-icon>
-            {{ isAddingTestData ? 'Adding...' : 'Add Test Data' }}
+            {{ isAddingTestData() ? 'Adding...' : 'Add Test Data' }}
           </button>
         </div>
       </mat-card-content>
@@ -117,11 +117,11 @@
               mat-raised-button
               color="warn"
               (click)="onClearAllData()"
-              [disabled]="isClearingData"
+              [disabled]="isClearingData()"
               class="clear-all-btn"
               >
               <mat-icon>delete_forever</mat-icon>
-              {{ isClearingData ? 'Clearing...' : 'Clear All' }}
+              {{ isClearingData() ? 'Clearing...' : 'Clear All' }}
             </button>
           </div>
         </mat-card-content>

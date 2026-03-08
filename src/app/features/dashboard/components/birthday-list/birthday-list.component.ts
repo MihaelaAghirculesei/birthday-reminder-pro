@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -52,8 +52,8 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   @Output() clearAllData = new EventEmitter<void>();
   @Output() birthdaysImported = new EventEmitter<Birthday[]>();
 
-  isAddingTestData = false;
-  isClearingData = false;
+  isAddingTestData = signal(false);
+  isClearingData = signal(false);
   private testDataTimer?: ReturnType<typeof setTimeout>;
   private clearDataTimer?: ReturnType<typeof setTimeout>;
 
@@ -84,11 +84,9 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   }
 
   onAddTestData(): void {
-    this.isAddingTestData = true;
+    this.isAddingTestData.set(true);
     this.addTestData.emit();
-    this.testDataTimer = setTimeout(() => {
-      this.isAddingTestData = false;
-    }, 2000);
+    this.testDataTimer = setTimeout(() => this.isAddingTestData.set(false), 2000);
   }
 
   onClearAllData(): void {
@@ -105,11 +103,9 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
 
     dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
       if (confirmed) {
-        this.isClearingData = true;
+        this.isClearingData.set(true);
         this.clearAllData.emit();
-        this.clearDataTimer = setTimeout(() => {
-          this.isClearingData = false;
-        }, 2000);
+        this.clearDataTimer = setTimeout(() => this.isClearingData.set(false), 2000);
       }
     });
   }
