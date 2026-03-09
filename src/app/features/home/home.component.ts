@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -60,7 +60,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly birthdayFacade = inject(BirthdayFacadeService);
   private readonly categoryFacade = inject(CategoryFacadeService);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly logger = inject(LoggerService);
 
   birthdayForm!: FormGroup;
@@ -162,7 +161,6 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       const { DashboardComponent } = await import('../dashboard');
       this.dashboardComponentRef = this.dashboardContainer.createComponent(DashboardComponent);
       this.isDashboardLoaded = true;
-      this.cdr.markForCheck();
     } catch (error) {
       this.logger.error('Failed to load dashboard component:', error);
     }
