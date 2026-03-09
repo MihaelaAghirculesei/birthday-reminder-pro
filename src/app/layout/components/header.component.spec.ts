@@ -72,7 +72,7 @@ describe('HeaderComponent', () => {
 
   describe('toggleNotifications', () => {
     it('should request permission when not yet granted', async () => {
-      component.notificationsGranted = false;
+      component.notificationsGranted.set(false);
       mockPermissionService.requestPermission.and.returnValue(Promise.resolve(true));
 
       await component.toggleNotifications();
@@ -82,7 +82,7 @@ describe('HeaderComponent', () => {
     });
 
     it('should not show success when permission request is denied', async () => {
-      component.notificationsGranted = false;
+      component.notificationsGranted.set(false);
       mockPermissionService.requestPermission.and.returnValue(Promise.resolve(false));
 
       await component.toggleNotifications();
@@ -92,8 +92,8 @@ describe('HeaderComponent', () => {
     });
 
     it('should disable notifications when granted and currently enabled', async () => {
-      component.notificationsGranted = true;
-      component.notificationsEnabled = true;
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(true);
 
       await component.toggleNotifications();
 
@@ -102,8 +102,8 @@ describe('HeaderComponent', () => {
     });
 
     it('should enable notifications when granted but currently disabled', async () => {
-      component.notificationsGranted = true;
-      component.notificationsEnabled = false;
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(false);
 
       await component.toggleNotifications();
 
@@ -115,12 +115,12 @@ describe('HeaderComponent', () => {
   describe('notification state tracking', () => {
     it('should update notificationsGranted when permission status changes', () => {
       (mockPermissionService.permissionStatus as BehaviorSubject<string>).next('granted');
-      expect(component.notificationsGranted).toBe(true);
+      expect(component.notificationsGranted()).toBe(true);
     });
 
     it('should update notificationsEnabled when toggle changes', () => {
       (mockPermissionService.notificationsEnabled as BehaviorSubject<boolean>).next(true);
-      expect(component.notificationsEnabled).toBe(true);
+      expect(component.notificationsEnabled()).toBe(true);
     });
   });
 });

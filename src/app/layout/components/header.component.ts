@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone, signal, computed } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { CommonModule } from '@angular/common';
@@ -117,8 +117,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
             <span>Message Signature</span>
           </button>
           <button mat-menu-item (click)="toggleNotifications()">
-            <mat-icon>{{ notificationIcon }}</mat-icon>
-            <span>{{ notificationLabel }}</span>
+            <mat-icon>{{ notificationIcon() }}</mat-icon>
+            <span>{{ notificationLabel() }}</span>
           </button>
           <button mat-menu-item (click)="themeService.toggleDarkMode()">
             <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -193,8 +193,8 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
           <span>Message Signature</span>
         </button>
         <button mat-menu-item (click)="toggleNotifications()">
-          <mat-icon>{{ notificationsGranted && notificationsEnabled ? 'notifications_active' : notificationsGranted && !notificationsEnabled ? 'notifications_off' : 'notifications' }}</mat-icon>
-          <span>{{ notificationsGranted && notificationsEnabled ? 'Disable Notifications' : 'Enable Notifications' }}</span>
+          <mat-icon>{{ notificationIcon() }}</mat-icon>
+          <span>{{ notificationLabel() }}</span>
         </button>
         <button mat-menu-item (click)="themeService.toggleDarkMode()">
           <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
@@ -705,25 +705,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
-  notificationsGranted = false;
-  notificationsEnabled = false;
-  notificationIcon = 'notifications';
-  notificationLabel = 'Enable Notifications';
+  notificationsGranted = signal(false);
+  notificationsEnabled = signal(false);
+  notificationIcon = computed(() =>
+    this.notificationsGranted() && this.notificationsEnabled() ? 'notifications_active'
+    : this.notificationsGranted() ? 'notifications_off'
+    : 'notifications'
+  );
+  notificationLabel = computed(() =>
+    this.notificationsGranted() && this.notificationsEnabled() ? 'Disable Notifications' : 'Enable Notifications'
+  );
   private lastScrollY = 0;
   private readonly scrollThreshold = 10;
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.notificationsGranted = this.permissionService.getCurrentPermission() === 'granted';
-      this.notificationsEnabled = this.permissionService.isNotificationsEnabled();
-      this.updateNotificationUI();
+      this.notificationsGranted.set(this.permissionService.getCurrentPermission() === 'granted');
+      this.notificationsEnabled.set(this.permissionService.isNotificationsEnabled());
       this.permissionService.permissionStatus.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
-        this.notificationsGranted = status === 'granted';
-        this.updateNotificationUI();
+        this.notificationsGranted.set(status === 'granted');
       });
       this.permissionService.notificationsEnabled.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
-        this.notificationsEnabled = enabled;
-        this.updateNotificationUI();
+        this.notificationsEnabled.set(enabled);
       });
       this.lastScrollY = this.getScrollY();
       this.ngZone.runOutsideAngular(() => {
@@ -787,23 +790,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.store.dispatch(AuthActions.signOut());
   }
 
-  private updateNotificationUI(): void {
-    if (this.notificationsGranted && this.notificationsEnabled) {
-      this.notificationIcon = 'notifications_active';
-      this.notificationLabel = 'Disable Notifications';
-    } else {
-      this.notificationIcon = this.notificationsGranted ? 'notifications_off' : 'notifications';
-      this.notificationLabel = 'Enable Notifications';
-    }
-  }
-
   async toggleNotifications(): Promise<void> {
-    if (!this.notificationsGranted) {
+    if (!this.notificationsGranted()) {
       const granted = await this.permissionService.requestPermission();
       if (granted) {
         this.notificationService.show('Notifications enabled!', 'success');
       }
-    } else if (this.notificationsEnabled) {
+    } else if (this.notificationsEnabled()) {
       this.permissionService.setNotificationsEnabled(false);
       this.notificationService.show('Notifications disabled', 'info');
     } else {
