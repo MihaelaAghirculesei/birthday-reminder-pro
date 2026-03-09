@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs';
 
@@ -51,7 +51,6 @@ interface EnrichedMessage extends ScheduledMessage {
 })
 export class MessageSchedulerComponent implements OnInit, OnChanges {
   private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly senderSettings = inject(SenderSettingsService);
   private readonly dialog = inject(MatDialog);
 
@@ -60,7 +59,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   messageForm: FormGroup;
   messages: ScheduledMessage[] = [];
-  enrichedMessages: EnrichedMessage[] = [];
+  enrichedMessages = signal<EnrichedMessage[]>([]);
   templates: MessageTemplate[] = [];
   isCreatingMessage = false;
   editingMessage: ScheduledMessage | null = null;
@@ -120,7 +119,6 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
         .subscribe(messages => {
           this.messages = messages || [];
           this.enrichMessages();
-          this.cdr.markForCheck();
         });
     }
   }
@@ -227,18 +225,18 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   private enrichMessages(): void {
     if (!this.birthday) {
-      this.enrichedMessages = [];
+      this.enrichedMessages.set([]);
       return;
     }
     const senderName = this.senderSettings.getSenderName();
     const senderFullName = this.senderSettings.getSenderFullName();
-    this.enrichedMessages = this.messages.map(msg => ({
+    this.enrichedMessages.set(this.messages.map(msg => ({
       ...msg,
       processedMessage: this.processMessage(msg.message, this.birthday!),
       wishLinks: getAvailableWishLinks(this.birthday!, msg.message, senderName, senderFullName),
       formattedCreatedDate: this.formatDate(msg.createdDate),
       formattedLastSentDate: msg.lastSentDate ? this.formatDate(msg.lastSentDate) : null
-    }));
+    })));
   }
 
   private processMessage(template: string, birthday: Birthday): string {

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ChangeDetectionStrategy, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -10,7 +10,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
     imports: [MatCardModule, MatIconModule, MatButtonModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    @if (shouldShow) {
+    @if (shouldShow()) {
       <div class="notification-banner" data-testid="notification-banner">
         <mat-card class="permission-card">
           <mat-card-content>
@@ -27,7 +27,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
                   mat-raised-button
                   color="primary"
                   (click)="requestPermission()"
-                  [disabled]="isRequesting"
+                  [disabled]="isRequesting()"
                   >
                   <mat-icon>check</mat-icon>
                   Enable Notifications
@@ -35,7 +35,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
                 <button
                   mat-button
                   (click)="dismiss()"
-                  [disabled]="isRequesting"
+                  [disabled]="isRequesting()"
                   data-testid="dismiss-notification-banner"
                   >
                   Maybe Later
@@ -142,13 +142,12 @@ import { NotificationPermissionService } from '../../core/services/notification-
 export class NotificationPermissionBannerComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
-  shouldShow = false;
-  isRequesting = false;
+  shouldShow = signal(false);
+  isRequesting = signal(false);
   private dismissed = false;
 
   constructor(
-    private permissionService: NotificationPermissionService,
-    private cdr: ChangeDetectorRef
+    private permissionService: NotificationPermissionService
   ) {}
 
   ngOnInit(): void {
@@ -173,25 +172,23 @@ export class NotificationPermissionBannerComponent implements OnInit {
   private updateShouldShow(): void {
     const supported = this.permissionService.isSupported();
     const permission = this.permissionService.getCurrentPermission();
-    this.shouldShow = supported && permission === 'default' && !this.dismissed;
-    this.cdr.detectChanges();
+    this.shouldShow.set(supported && permission === 'default' && !this.dismissed);
   }
 
   async requestPermission(): Promise<void> {
-    this.isRequesting = true;
+    this.isRequesting.set(true);
     const granted = await this.permissionService.requestPermission();
 
     if (granted) {
       await this.permissionService.showTestNotification();
     }
 
-    this.isRequesting = false;
+    this.isRequesting.set(false);
   }
 
   dismiss(): void {
     this.dismissed = true;
-    this.shouldShow = false;
+    this.shouldShow.set(false);
     localStorage.setItem('notificationBannerDismissed', Date.now().toString());
-    this.cdr.detectChanges();
   }
 }

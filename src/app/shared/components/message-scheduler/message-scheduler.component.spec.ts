@@ -109,15 +109,15 @@ describe('MessageSchedulerComponent', () => {
     birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
     component.loadMessages();
 
-    expect(component.enrichedMessages.length).toBe(1);
-    expect(component.enrichedMessages[0].processedMessage).toContain('John Doe');
-    expect(component.enrichedMessages[0].processedMessage).not.toContain('{name}');
-    expect(component.enrichedMessages[0].processedMessage).not.toContain('{age}');
+    expect(component.enrichedMessages().length).toBe(1);
+    expect(component.enrichedMessages()[0].processedMessage).toContain('John Doe');
+    expect(component.enrichedMessages()[0].processedMessage).not.toContain('{name}');
+    expect(component.enrichedMessages()[0].processedMessage).not.toContain('{age}');
   });
 
   it('should have empty enrichedMessages when birthday is null', () => {
     component.birthday = null;
-    expect(component.enrichedMessages).toEqual([]);
+    expect(component.enrichedMessages()).toEqual([]);
   });
 
   it('should replace zodiac sign in enriched messages', () => {
@@ -129,7 +129,7 @@ describe('MessageSchedulerComponent', () => {
     birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([messageWithZodiac]));
     component.loadMessages();
 
-    expect(component.enrichedMessages[0].processedMessage).toBe('You are a Capricorn!');
+    expect(component.enrichedMessages()[0].processedMessage).toBe('You are a Capricorn!');
   });
 
   it('should pre-compute wishLinks in enrichedMessages', () => {
@@ -137,8 +137,8 @@ describe('MessageSchedulerComponent', () => {
     birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
     component.loadMessages();
 
-    expect(component.enrichedMessages[0].wishLinks).toBeDefined();
-    expect(Array.isArray(component.enrichedMessages[0].wishLinks)).toBeTrue();
+    expect(component.enrichedMessages()[0].wishLinks).toBeDefined();
+    expect(Array.isArray(component.enrichedMessages()[0].wishLinks)).toBeTrue();
   });
 
   it('should pre-compute formatted dates in enrichedMessages', () => {
@@ -146,8 +146,8 @@ describe('MessageSchedulerComponent', () => {
     birthdayFacadeMock.getMessagesByBirthday.and.returnValue(of([mockMessage]));
     component.loadMessages();
 
-    expect(component.enrichedMessages[0].formattedCreatedDate).toBeDefined();
-    expect(component.enrichedMessages[0].formattedCreatedDate).toContain(new Date().getFullYear().toString());
+    expect(component.enrichedMessages()[0].formattedCreatedDate).toBeDefined();
+    expect(component.enrichedMessages()[0].formattedCreatedDate).toContain(new Date().getFullYear().toString());
   });
 
   it('should track messages by id', () => {

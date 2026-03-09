@@ -140,10 +140,10 @@
           </form>
         </mat-expansion-panel>
 
-        @if (enrichedMessages.length > 0) {
+        @if (enrichedMessages().length > 0) {
           <div class="messages-list">
-            <h3>Scheduled Messages ({{ enrichedMessages.length }})</h3>
-            @for (message of enrichedMessages; track message.id) {
+            <h3>Scheduled Messages ({{ enrichedMessages().length }})</h3>
+            @for (message of enrichedMessages(); track message.id) {
               <div
                 class="message-item"
                 [class.inactive]="!message.active"
@@ -244,7 +244,7 @@
           </div>
         }
 
-        @if (enrichedMessages.length === 0) {
+        @if (enrichedMessages().length === 0) {
           <div class="empty-state">
             <mat-icon>schedule_send</mat-icon>
             <h3>No scheduled messages</h3>

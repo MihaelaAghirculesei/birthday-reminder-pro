@@ -49,51 +49,51 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('ngOnInit', () => {
     it('should show banner when supported and permission is default', () => {
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(true);
+      expect(component.shouldShow()).toBe(true);
     });
 
     it('should not show banner when not supported', () => {
       mockPermissionService.isSupported.and.returnValue(false);
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
 
     it('should not show banner when permission is granted', () => {
       mockPermissionService.getCurrentPermission.and.returnValue('granted');
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
 
     it('should not show banner when permission is denied', () => {
       mockPermissionService.getCurrentPermission.and.returnValue('denied');
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
 
     it('should not show banner when dismissed recently', () => {
       const recentTimestamp = Date.now() - (1000 * 60 * 60);
       localStorage.setItem('notificationBannerDismissed', recentTimestamp.toString());
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
 
     it('should show banner when dismissed more than 7 days ago', () => {
       const oldTimestamp = Date.now() - (8 * 24 * 60 * 60 * 1000);
       localStorage.setItem('notificationBannerDismissed', oldTimestamp.toString());
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(true);
+      expect(component.shouldShow()).toBe(true);
       expect(localStorage.getItem('notificationBannerDismissed')).toBeNull();
     });
 
     it('should update shouldShow when permission status changes', (done) => {
       fixture.detectChanges();
-      expect(component.shouldShow).toBe(true);
+      expect(component.shouldShow()).toBe(true);
 
       mockPermissionService.getCurrentPermission.and.returnValue('granted');
       permissionStatusSubject.next('granted');
 
       setTimeout(() => {
-        expect(component.shouldShow).toBe(false);
+        expect(component.shouldShow()).toBe(false);
         done();
       }, 50);
     });
@@ -113,7 +113,7 @@ describe('NotificationPermissionBannerComponent', () => {
 
     it('should set isRequesting to true during request', async () => {
       const requestPromise = component.requestPermission();
-      expect(component.isRequesting).toBe(true);
+      expect(component.isRequesting()).toBe(true);
       await requestPromise;
     });
 
@@ -136,7 +136,7 @@ describe('NotificationPermissionBannerComponent', () => {
 
     it('should set isRequesting to false after completion', async () => {
       await component.requestPermission();
-      expect(component.isRequesting).toBe(false);
+      expect(component.isRequesting()).toBe(false);
     });
   });
 
@@ -151,9 +151,9 @@ describe('NotificationPermissionBannerComponent', () => {
     });
 
     it('should set shouldShow to false', () => {
-      component.shouldShow = true;
+      component.shouldShow.set(true);
       component.dismiss();
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
 
     it('should save dismissed timestamp to localStorage', () => {
@@ -168,11 +168,11 @@ describe('NotificationPermissionBannerComponent', () => {
     });
 
     it('should update component state correctly', () => {
-      component.shouldShow = true;
+      component.shouldShow.set(true);
       component['dismissed'] = false;
       component.dismiss();
       expect(component['dismissed']).toBe(true);
-      expect(component.shouldShow).toBe(false);
+      expect(component.shouldShow()).toBe(false);
     });
   });
 });
