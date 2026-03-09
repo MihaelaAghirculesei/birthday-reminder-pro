@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
@@ -29,16 +29,16 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
       </mat-card-header>
     
       <mat-card-content>
-        <div class="sync-status" [class.connected]="isSignedIn">
-          <mat-icon [color]="isSignedIn ? 'primary' : 'warn'">
-            {{ isSignedIn ? 'cloud_done' : 'cloud_off' }}
+        <div class="sync-status" [class.connected]="isSignedIn()">
+          <mat-icon [color]="isSignedIn() ? 'primary' : 'warn'">
+            {{ isSignedIn() ? 'cloud_done' : 'cloud_off' }}
           </mat-icon>
           <span class="status-text">
-            {{ isSignedIn ? 'Connected to Google Calendar' : 'Not connected' }}
+            {{ isSignedIn() ? 'Connected to Google Calendar' : 'Not connected' }}
           </span>
         </div>
-    
-        @if (!isSignedIn) {
+
+        @if (!isSignedIn()) {
           <div class="auth-section">
             <p class="auth-description">
               Connect your Google account to automatically sync birthdays to your calendar.
@@ -47,15 +47,15 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
             <button mat-raised-button
               color="primary"
               (click)="signIn()"
-              [disabled]="isConnecting"
+              [disabled]="isConnecting()"
               class="submit-button">
               <mat-icon>login</mat-icon>
-              {{ isConnecting ? 'Connecting...' : 'Connect Google Calendar' }}
+              {{ isConnecting() ? 'Connecting...' : 'Connect Google Calendar' }}
             </button>
           </div>
         }
-    
-        @if (isSignedIn) {
+
+        @if (isSignedIn()) {
           <div class="settings-section">
             <form [formGroup]="settingsForm" class="settings-form">
               <mat-slide-toggle
@@ -70,7 +70,7 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
                     <mat-label>Target Calendar</mat-label>
                     <mat-select formControlName="calendarId">
                       <mat-option value="primary">Primary Calendar</mat-option>
-                      @for (calendar of calendars; track calendar.id) {
+                      @for (calendar of calendars(); track calendar.id) {
                         <mat-option [value]="calendar.id">
                           {{ calendar.summary }}
                         </mat-option>
@@ -105,10 +105,10 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
                     <button mat-raised-button
                       color="primary"
                       (click)="syncAllBirthdays()"
-                      [disabled]="isSyncing"
+                      [disabled]="isSyncing()"
                       class="sync-button">
                       <mat-icon>sync</mat-icon>
-                      {{ isSyncing ? 'Syncing...' : 'Sync All Birthdays' }}
+                      {{ isSyncing() ? 'Syncing...' : 'Sync All Birthdays' }}
                     </button>
                     <button mat-stroked-button
                       (click)="saveSettings()"
@@ -118,14 +118,14 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
                       Save Settings
                     </button>
                   </div>
-                  @if (lastSyncResult) {
+                  @if (lastSyncResult(); as result) {
                     <div class="sync-info">
-                      <mat-icon [color]="lastSyncResult.failed > 0 ? 'warn' : 'primary'">
-                        {{ lastSyncResult.failed > 0 ? 'warning' : 'check_circle' }}
+                      <mat-icon [color]="result.failed > 0 ? 'warn' : 'primary'">
+                        {{ result.failed > 0 ? 'warning' : 'check_circle' }}
                       </mat-icon>
                       <span>
-                        Last sync: {{ lastSyncResult.success }} successful,
-                        {{ lastSyncResult.failed }} failed
+                        Last sync: {{ result.success }} successful,
+                        {{ result.failed }} failed
                       </span>
                     </div>
                   }
@@ -378,18 +378,17 @@ import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, Logge
 export class GoogleCalendarSyncComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
-  isSignedIn = false;
-  isConnecting = false;
-  isSyncing = false;
-  calendars: GoogleCalendarItem[] = [];
+  isSignedIn = signal(false);
+  isConnecting = signal(false);
+  isSyncing = signal(false);
+  calendars = signal<GoogleCalendarItem[]>([]);
   settingsForm: FormGroup;
-  lastSyncResult: { success: number; failed: number; errors: string[] } | null = null;
+  lastSyncResult = signal<{ success: number; failed: number; errors: string[] } | null>(null);
 
   constructor(
     private googleCalendarService: GoogleCalendarService,
     private birthdayFacade: BirthdayFacadeService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef,
     private logger: LoggerService
   ) {
     this.settingsForm = this.fb.group({
@@ -408,18 +407,16 @@ export class GoogleCalendarSyncComponent implements OnInit {
     this.googleCalendarService.isSignedIn$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(isSignedIn => {
-        this.isSignedIn = isSignedIn;
+        this.isSignedIn.set(isSignedIn);
         if (isSignedIn) {
           this.loadCalendars();
         }
-        this.cdr.markForCheck();
       });
 
     this.googleCalendarService.settings$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(settings => {
         this.settingsForm.patchValue(settings);
-        this.cdr.markForCheck();
       });
 
     this.settingsForm.valueChanges
@@ -433,24 +430,21 @@ export class GoogleCalendarSyncComponent implements OnInit {
 
 
   async signIn() {
-    this.isConnecting = true;
-    this.cdr.markForCheck();
+    this.isConnecting.set(true);
     try {
       await this.googleCalendarService.signIn();
     } catch (error) {
       this.logger.error('Google Calendar sign in failed:', error);
     } finally {
-      this.isConnecting = false;
-      this.cdr.markForCheck();
+      this.isConnecting.set(false);
     }
   }
 
   async signOut() {
     try {
       await this.googleCalendarService.signOut();
-      this.calendars = [];
-      this.lastSyncResult = null;
-      this.cdr.markForCheck();
+      this.calendars.set([]);
+      this.lastSyncResult.set(null);
     } catch (error) {
       this.logger.error('Google Calendar sign out failed:', error);
     }
@@ -458,27 +452,23 @@ export class GoogleCalendarSyncComponent implements OnInit {
 
   async loadCalendars() {
     try {
-      this.calendars = await this.googleCalendarService.getCalendars();
-      this.cdr.markForCheck();
+      this.calendars.set(await this.googleCalendarService.getCalendars());
     } catch (error) {
       this.logger.error('Loading calendars failed:', error);
     }
   }
 
   async syncAllBirthdays() {
-    this.isSyncing = true;
-    this.cdr.markForCheck();
+    this.isSyncing.set(true);
     try {
       const birthdays = this.birthdayFacade.birthdays();
       if (birthdays) {
-        this.lastSyncResult = await this.googleCalendarService.syncAllBirthdays(birthdays);
-        this.cdr.markForCheck();
+        this.lastSyncResult.set(await this.googleCalendarService.syncAllBirthdays(birthdays));
       }
     } catch (error) {
       this.logger.error('Syncing birthdays failed:', error);
     } finally {
-      this.isSyncing = false;
-      this.cdr.markForCheck();
+      this.isSyncing.set(false);
     }
   }
 

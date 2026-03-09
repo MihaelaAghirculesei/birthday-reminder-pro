@@ -116,10 +116,10 @@ describe('GoogleCalendarSyncComponent', () => {
 
     it('should update isSignedIn when service emits', () => {
       fixture.detectChanges();
-      expect(component.isSignedIn).toBe(false);
+      expect(component.isSignedIn()).toBe(false);
 
       isSignedInSubject.next(true);
-      expect(component.isSignedIn).toBe(true);
+      expect(component.isSignedIn()).toBe(true);
     });
 
     it('should load calendars when signed in', () => {
@@ -168,10 +168,10 @@ describe('GoogleCalendarSyncComponent', () => {
 
     it('should set isConnecting flag during sign in', async () => {
       const signInPromise = component.signIn();
-      expect(component.isConnecting).toBe(true);
+      expect(component.isConnecting()).toBe(true);
 
       await signInPromise;
-      expect(component.isConnecting).toBe(false);
+      expect(component.isConnecting()).toBe(false);
     });
 
     it('should handle sign in error', async () => {
@@ -179,15 +179,15 @@ describe('GoogleCalendarSyncComponent', () => {
 
       await component.signIn();
 
-      expect(component.isConnecting).toBe(false);
+      expect(component.isConnecting()).toBe(false);
     });
   });
 
   describe('Sign out', () => {
     beforeEach(() => {
       fixture.detectChanges();
-      component.calendars = mockCalendars;
-      component.lastSyncResult = { success: 1, failed: 0, errors: [] };
+      component.calendars.set(mockCalendars);
+      component.lastSyncResult.set({ success: 1, failed: 0, errors: [] });
     });
 
     it('should sign out from Google Calendar', async () => {
@@ -199,13 +199,13 @@ describe('GoogleCalendarSyncComponent', () => {
     it('should clear calendars on sign out', async () => {
       await component.signOut();
 
-      expect(component.calendars).toEqual([]);
+      expect(component.calendars()).toEqual([]);
     });
 
     it('should clear last sync result on sign out', async () => {
       await component.signOut();
 
-      expect(component.lastSyncResult).toBeNull();
+      expect(component.lastSyncResult()).toBeNull();
     });
 
     it('should handle sign out error', async () => {
@@ -224,7 +224,7 @@ describe('GoogleCalendarSyncComponent', () => {
       await component.loadCalendars();
 
       expect(googleCalendarServiceSpy.getCalendars).toHaveBeenCalled();
-      expect(component.calendars).toEqual(mockCalendars);
+      expect(component.calendars()).toEqual(mockCalendars);
     });
 
     it('should handle calendar loading error', async () => {
@@ -247,10 +247,10 @@ describe('GoogleCalendarSyncComponent', () => {
 
     it('should set isSyncing flag during sync', async () => {
       const syncPromise = component.syncAllBirthdays();
-      expect(component.isSyncing).toBe(true);
+      expect(component.isSyncing()).toBe(true);
 
       await syncPromise;
-      expect(component.isSyncing).toBe(false);
+      expect(component.isSyncing()).toBe(false);
     });
 
     it('should update last sync result', async () => {
@@ -259,7 +259,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
       await component.syncAllBirthdays();
 
-      expect(component.lastSyncResult).toEqual(syncResult);
+      expect(component.lastSyncResult()).toEqual(syncResult);
     });
 
     it('should handle sync error', async () => {
@@ -267,7 +267,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
       await component.syncAllBirthdays();
 
-      expect(component.isSyncing).toBe(false);
+      expect(component.isSyncing()).toBe(false);
     });
   });
 
