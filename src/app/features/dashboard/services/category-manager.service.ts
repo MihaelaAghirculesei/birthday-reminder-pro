@@ -1,22 +1,29 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
+import { Store } from '@ngrx/store';
 import { take } from 'rxjs';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
-import { BirthdayFacadeService, CategoryFacadeService, NotificationService } from '../../../core';
+import { CategoryFacadeService, NotificationService } from '../../../core';
 import { CategoryDialogComponent } from '../components/category-dialog/category-dialog.component';
 import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
+import { AppState } from '../../../core/store/app.state';
+import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CategoryManagerService {
+  private readonly store = inject(Store<AppState>);
+  private readonly dialog = inject(MatDialog);
+  private readonly categoryFacade = inject(CategoryFacadeService);
+  private readonly notificationService = inject(NotificationService);
 
-  constructor(
-    private dialog: MatDialog,
-    private birthdayFacade: BirthdayFacadeService,
-    private categoryFacade: CategoryFacadeService,
-    private notificationService: NotificationService
-  ) {}
+  private readonly birthdays = toSignal(
+    this.store.select(BirthdaySelectors.selectAllBirthdays),
+    { initialValue: [] }
+  );
 
   addCategory(): void {
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
@@ -78,7 +85,7 @@ export class CategoryManagerService {
 
   deleteCategory(categoryId: string): void {
     const allCategories = this.categoryFacade.categories();
-    const birthdays = this.birthdayFacade.birthdays();
+    const birthdays = this.birthdays();
     const category = allCategories.find(c => c.id === categoryId);
 
     if (!category) return;
@@ -108,7 +115,7 @@ export class CategoryManagerService {
   }
 
   private handleOrphanedCategoryEdit(): void {
-    const birthdays = this.birthdayFacade.birthdays();
+    const birthdays = this.birthdays();
     const allCategories = this.categoryFacade.categories();
     const validCategoryIds = new Set(allCategories.map(c => c.id));
     const uncategorizedBirthdays = birthdays.filter(b => b.category && !validCategoryIds.has(b.category));
@@ -174,7 +181,7 @@ export class CategoryManagerService {
         ...birthday,
         category: newCategoryId
       };
-      this.birthdayFacade.updateBirthday(updatedBirthday);
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday }));
     });
   }
 

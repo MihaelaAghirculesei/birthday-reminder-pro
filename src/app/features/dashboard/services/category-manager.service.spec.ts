@@ -2,8 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CategoryManagerService } from './category-manager.service';
-import { BirthdayFacadeService, CategoryFacadeService, NotificationService } from '../../../core';
+import { CategoryFacadeService, NotificationService } from '../../../core';
 import { Birthday, BirthdayCategory } from '../../../shared';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 interface DialogData {
   mode?: 'add' | 'edit';
@@ -15,7 +17,7 @@ interface DialogData {
 describe('CategoryManagerService', () => {
   let service: CategoryManagerService;
   let dialogSpy: jasmine.SpyObj<MatDialog>;
-  let birthdayFacadeSpy: jasmine.SpyObj<BirthdayFacadeService>;
+  let store: MockStore;
   let categoryFacadeSpy: jasmine.SpyObj<CategoryFacadeService>;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
 
@@ -51,10 +53,6 @@ describe('CategoryManagerService', () => {
   beforeEach(() => {
     const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
     const notificationServiceSpyObj = jasmine.createSpyObj('NotificationService', ['show']);
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', ['updateBirthday'], {
-      birthdays$: of(mockBirthdays),
-      birthdays: jasmine.createSpy('birthdays').and.returnValue(mockBirthdays)
-    });
     const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [
       'addCategory',
       'updateCategory',
@@ -67,16 +65,18 @@ describe('CategoryManagerService', () => {
     TestBed.configureTestingModule({
       providers: [
         CategoryManagerService,
+        provideMockStore(),
         { provide: MatDialog, useValue: dialogSpyObj },
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
         { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
         { provide: NotificationService, useValue: notificationServiceSpyObj }
       ]
     });
 
+    store = TestBed.inject(MockStore);
+    store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
+
     service = TestBed.inject(CategoryManagerService);
     dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    birthdayFacadeSpy = TestBed.inject(BirthdayFacadeService) as jasmine.SpyObj<BirthdayFacadeService>;
     categoryFacadeSpy = TestBed.inject(CategoryFacadeService) as jasmine.SpyObj<CategoryFacadeService>;
     notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
   });
@@ -255,10 +255,11 @@ describe('CategoryManagerService', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(mockResult));
       dialogSpy.open.and.returnValue(mockDialogRef);
+      spyOn(store, 'dispatch');
 
       service.deleteCategory('work');
 
-      expect(birthdayFacadeSpy.updateBirthday).toHaveBeenCalled();
+      expect(store.dispatch).toHaveBeenCalled();
       expect(categoryFacadeSpy.deleteCategory).toHaveBeenCalledWith('work');
     });
 
@@ -270,11 +271,12 @@ describe('CategoryManagerService', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(mockResult));
       dialogSpy.open.and.returnValue(mockDialogRef);
+      spyOn(store, 'dispatch');
 
       service.deleteCategory('work');
 
       expect(categoryFacadeSpy.deleteCategory).toHaveBeenCalledWith('work');
-      expect(birthdayFacadeSpy.updateBirthday).not.toHaveBeenCalled();
+      expect(store.dispatch).not.toHaveBeenCalled();
     });
 
     it('should not delete when reassign dialog is cancelled', () => {
