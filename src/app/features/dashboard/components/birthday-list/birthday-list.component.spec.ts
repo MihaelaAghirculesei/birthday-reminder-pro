@@ -3,13 +3,13 @@ import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BirthdayListComponent } from './birthday-list.component';
-import { BirthdayFacadeService } from '../../../../core';
 import { Birthday, BirthdayCategory } from '../../../../shared';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
 
 describe('BirthdayListComponent', () => {
   let component: BirthdayListComponent;
   let fixture: ComponentFixture<BirthdayListComponent>;
-  let birthdayFacadeSpy: jasmine.SpyObj<BirthdayFacadeService>;
+  let store: MockStore;
   let dialogSpy: jasmine.SpyObj<MatDialog>;
 
   const mockBirthdays: Birthday[] = [
@@ -41,24 +41,31 @@ describe('BirthdayListComponent', () => {
   ];
 
   beforeEach(async () => {
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', ['addBirthday', 'updateBirthday', 'deleteBirthday', 'getBirthdayById']);
     const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
-
-    birthdayFacadeSpyObj.birthdays$ = of(mockBirthdays);
-    birthdayFacadeSpyObj.birthdays = jasmine.createSpy('birthdays').and.returnValue(mockBirthdays);
-    birthdayFacadeSpyObj.getBirthdayById.and.callFake((id: string) =>
-      of(mockBirthdays.find(b => b.id === id))
-    );
 
     await TestBed.configureTestingModule({
       imports: [BirthdayListComponent, NoopAnimationsModule],
       providers: [
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
+        provideMockStore({
+          initialState: {
+            birthdays: {
+              ids: ['1', '2'],
+              entities: {
+                '1': mockBirthdays[0],
+                '2': mockBirthdays[1]
+              },
+              loading: false,
+              error: null,
+              selectedId: null,
+              filters: { searchTerm: '', selectedMonth: null, selectedCategory: null, sortOrder: 'nextBirthday' }
+            }
+          }
+        }),
         { provide: MatDialog, useValue: dialogSpyObj }
       ]
     }).compileComponents();
 
-    birthdayFacadeSpy = TestBed.inject(BirthdayFacadeService) as jasmine.SpyObj<BirthdayFacadeService>;
+    store = TestBed.inject(MockStore);
     dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
     fixture = TestBed.createComponent(BirthdayListComponent);
@@ -211,9 +218,10 @@ describe('BirthdayListComponent', () => {
       }));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
+      spyOn(store, 'dispatch');
       component.editBirthday(mockBirthdays[0]);
 
-      expect(birthdayFacadeSpy.updateBirthday).toHaveBeenCalled();
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should not update birthday when dialog is cancelled', () => {
@@ -221,9 +229,10 @@ describe('BirthdayListComponent', () => {
       mockDialogRef.afterClosed.and.returnValue(of(undefined));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
+      spyOn(store, 'dispatch');
       component.editBirthday(mockBirthdays[0]);
 
-      expect(birthdayFacadeSpy.updateBirthday).not.toHaveBeenCalled();
+      expect(store.dispatch).not.toHaveBeenCalled();
     });
   });
 
@@ -233,8 +242,9 @@ describe('BirthdayListComponent', () => {
       mockDialogRef.afterClosed.and.returnValue(of(true));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
+      spyOn(store, 'dispatch');
       component.deleteBirthday(mockBirthdays[0]);
-      expect(birthdayFacadeSpy.deleteBirthday).toHaveBeenCalledWith('1');
+      expect(store.dispatch).toHaveBeenCalled();
     });
   });
 

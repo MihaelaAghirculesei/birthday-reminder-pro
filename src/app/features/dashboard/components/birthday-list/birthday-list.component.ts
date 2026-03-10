@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,12 +8,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { take, switchMap, EMPTY, map } from 'rxjs';
+import { Store } from '@ngrx/store';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
-import { BirthdayFacadeService } from '../../../../core';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
+import { AppState } from '../../../../core/store/app.state';
+import * as BirthdayActions from '../../../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../../../core/store/birthday/birthday.selectors';
 
 interface EnrichedBirthday extends Birthday {
   daysUntilBirthday: number;
@@ -57,10 +60,8 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   private testDataTimer?: ReturnType<typeof setTimeout>;
   private clearDataTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(
-    public birthdayFacade: BirthdayFacadeService,
-    private dialog: MatDialog
-  ) {}
+  private readonly store = inject(Store<AppState>);
+  private readonly dialog = inject(MatDialog);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthdays']) {
@@ -144,7 +145,7 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
       take(1),
       switchMap(result => {
         if (!result) return EMPTY;
-        return this.birthdayFacade.getBirthdayById(result.birthday.id).pipe(
+        return this.store.select(BirthdaySelectors.selectBirthdayById(result.birthday.id)).pipe(
           take(1),
           map(current => ({ result, current: current || result.birthday }))
         );
@@ -162,7 +163,7 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
         phone: result.editedData.phone.trim() || undefined,
         telegramUsername: result.editedData.telegramUsername.trim() || undefined
       };
-      this.birthdayFacade.updateBirthday(updatedBirthday);
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday }));
     });
   }
 
@@ -180,7 +181,7 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
 
     dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
       if (confirmed) {
-        this.birthdayFacade.deleteBirthday(birthday.id);
+        this.store.dispatch(BirthdayActions.deleteBirthday({ id: birthday.id }));
       }
     });
   }

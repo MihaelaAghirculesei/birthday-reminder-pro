@@ -4,8 +4,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DashboardComponent } from './dashboard.component';
 import { BirthdayEditService, CategoryManagerService, DashboardFacadeService, ChartDataItem } from '../services';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService } from '../services/birthday-stats.service';
+import { provideMockStore } from '@ngrx/store/testing';
 import { Birthday, BirthdayCategory } from '../../../shared';
 import { CategoryStats } from './category-filter/category-filter.component';
 
@@ -98,14 +99,6 @@ describe('DashboardComponent', () => {
       'deleteCategory'
     ]);
 
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', [
-      'loadTestData', 'clearAllBirthdays', 'addBirthday', 'deleteBirthday'
-    ], {
-      birthdays: signal(mockBirthdays),
-      averageAge: signal(30),
-      next5Birthdays: signal([])
-    });
-
     const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [], {
       categories: signal(mockCategories)
     });
@@ -123,7 +116,12 @@ describe('DashboardComponent', () => {
         { provide: BirthdayEditService, useValue: editServiceSpyObj },
         { provide: MatDialog, useValue: dialogSpyObj },
         { provide: CategoryManagerService, useValue: categoryManagerSpyObj },
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
+        provideMockStore({
+          initialState: {
+            birthdays: { ids: [], entities: {}, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedMonth: null, selectedCategory: null, sortOrder: 'nextBirthday' } },
+            auth: { user: null, loading: false, error: null, initialized: false }
+          }
+        }),
         { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
         { provide: BirthdayStatsService, useValue: statsServiceSpyObj }
       ]
