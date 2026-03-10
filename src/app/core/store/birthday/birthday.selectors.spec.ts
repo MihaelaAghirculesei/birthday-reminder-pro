@@ -3,6 +3,34 @@ import { BirthdayState, initialBirthdayFilters } from './birthday.state';
 import { Birthday } from '../../../shared/models/birthday.model';
 
 describe('Birthday Selectors', () => {
+  beforeEach(() => {
+    const selectors = [
+      fromSelectors.selectBirthdayState,
+      fromSelectors.selectAllBirthdays,
+      fromSelectors.selectBirthdayEntities,
+      fromSelectors.selectBirthdayIds,
+      fromSelectors.selectBirthdayTotal,
+      fromSelectors.selectBirthdayLoading,
+      fromSelectors.selectBirthdayError,
+      fromSelectors.selectSelectedBirthdayId,
+      fromSelectors.selectSelectedBirthday,
+      fromSelectors.selectBirthdayFilters,
+      fromSelectors.selectSearchTerm,
+      fromSelectors.selectSelectedMonth,
+      fromSelectors.selectSelectedCategory,
+      fromSelectors.selectSortOrder,
+      fromSelectors.selectFilteredBirthdays,
+      fromSelectors.selectBirthdaysThisMonth,
+      fromSelectors.selectNext5Birthdays,
+      fromSelectors.selectAverageAge,
+      fromSelectors.selectBirthdaysByMonth
+    ];
+    selectors.forEach(s => {
+      s.release();
+      (s as { clearResult?: () => void }).clearResult?.();
+    });
+  });
+
   const mockBirthdays: Birthday[] = [
     {
       id: '1',
@@ -116,43 +144,23 @@ describe('Birthday Selectors', () => {
 
   describe('Individual Filter Selectors', () => {
     it('should select search term', () => {
-      const stateWithSearch = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, searchTerm: 'test' }
-        }
-      };
-      expect(fromSelectors.selectSearchTerm(stateWithSearch)).toBe('test');
+      const filters = { ...initialBirthdayFilters, searchTerm: 'test' };
+      expect(fromSelectors.selectSearchTerm.projector(filters)).toBe('test');
     });
 
     it('should select selected month', () => {
-      const stateWithMonth = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, selectedMonth: 5 }
-        }
-      };
-      expect(fromSelectors.selectSelectedMonth(stateWithMonth)).toBe(5);
+      const filters = { ...initialBirthdayFilters, selectedMonth: 5 };
+      expect(fromSelectors.selectSelectedMonth.projector(filters)).toBe(5);
     });
 
     it('should select selected category', () => {
-      const stateWithCategory = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, selectedCategory: 'family' }
-        }
-      };
-      expect(fromSelectors.selectSelectedCategory(stateWithCategory)).toBe('family');
+      const filters = { ...initialBirthdayFilters, selectedCategory: 'family' };
+      expect(fromSelectors.selectSelectedCategory.projector(filters)).toBe('family');
     });
 
     it('should select sort order', () => {
-      const stateWithSort = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, sortOrder: 'age' as const }
-        }
-      };
-      expect(fromSelectors.selectSortOrder(stateWithSort)).toBe('age');
+      const filters = { ...initialBirthdayFilters, sortOrder: 'age' as const };
+      expect(fromSelectors.selectSortOrder.projector(filters)).toBe('age');
     });
   });
 

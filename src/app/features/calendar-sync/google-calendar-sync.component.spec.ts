@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { GoogleCalendarSyncComponent } from './google-calendar-sync.component';
-import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, SILENT_LOGGER_PROVIDER } from '../../core';
+import { GoogleCalendarService, GoogleCalendarItem, SILENT_LOGGER_PROVIDER } from '../../core';
 import { Birthday } from '../../shared';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 interface GoogleCalendarSettings {
   enabled: boolean;
@@ -17,6 +19,7 @@ describe('GoogleCalendarSyncComponent', () => {
   let component: GoogleCalendarSyncComponent;
   let fixture: ComponentFixture<GoogleCalendarSyncComponent>;
   let googleCalendarServiceSpy: jasmine.SpyObj<GoogleCalendarService>;
+  let store: MockStore;
   let isSignedInSubject: BehaviorSubject<boolean>;
   let settingsSubject: BehaviorSubject<GoogleCalendarSettings>;
 
@@ -71,11 +74,6 @@ describe('GoogleCalendarSyncComponent', () => {
       errors: []
     }));
 
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', [], {
-      birthdays$: of(mockBirthdays),
-      birthdays: jasmine.createSpy('birthdays').and.returnValue(mockBirthdays)
-    });
-
     await TestBed.configureTestingModule({
       imports: [
         GoogleCalendarSyncComponent,
@@ -83,13 +81,15 @@ describe('GoogleCalendarSyncComponent', () => {
         NoopAnimationsModule
       ],
       providers: [
+        provideMockStore(),
         FormBuilder,
         { provide: GoogleCalendarService, useValue: googleCalendarSpyObj },
-        { provide: BirthdayFacadeService, useValue: birthdayFacadeSpyObj },
         SILENT_LOGGER_PROVIDER
       ]
     }).compileComponents();
 
+    store = TestBed.inject(MockStore);
+    store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
     googleCalendarServiceSpy = TestBed.inject(GoogleCalendarService) as jasmine.SpyObj<GoogleCalendarService>;
     fixture = TestBed.createComponent(GoogleCalendarSyncComponent);
     component = fixture.componentInstance;

@@ -8,7 +8,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { GoogleCalendarService, GoogleCalendarItem, BirthdayFacadeService, LoggerService } from '../../core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
+import { GoogleCalendarService, GoogleCalendarItem, LoggerService } from '../../core';
+import { AppState } from '../../core/store/app.state';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 @Component({
     selector: 'app-google-calendar-sync',
@@ -385,9 +389,14 @@ export class GoogleCalendarSyncComponent implements OnInit {
   settingsForm: FormGroup;
   lastSyncResult = signal<{ success: number; failed: number; errors: string[] } | null>(null);
 
+  private readonly store = inject(Store<AppState>);
+  private readonly birthdays = toSignal(
+    this.store.select(BirthdaySelectors.selectAllBirthdays),
+    { initialValue: [] }
+  );
+
   constructor(
     private googleCalendarService: GoogleCalendarService,
-    private birthdayFacade: BirthdayFacadeService,
     private fb: FormBuilder,
     private logger: LoggerService
   ) {
@@ -461,7 +470,7 @@ export class GoogleCalendarSyncComponent implements OnInit {
   async syncAllBirthdays() {
     this.isSyncing.set(true);
     try {
-      const birthdays = this.birthdayFacade.birthdays();
+      const birthdays = this.birthdays();
       if (birthdays) {
         this.lastSyncResult.set(await this.googleCalendarService.syncAllBirthdays(birthdays));
       }
