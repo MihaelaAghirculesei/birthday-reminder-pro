@@ -1,51 +1,37 @@
-import { inject, Injectable, Injector } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
+import { inject, Injectable } from '@angular/core';
+import { Actions, createEffect, ofType, OnInitEffects } from '@ngrx/effects';
+import { Action, Store } from '@ngrx/store';
 import { of, from } from 'rxjs';
 import { catchError, map, mergeMap, tap, switchMap, withLatestFrom } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
-import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
-import { IdGeneratorService } from '../../services/id-generator.service';
-import { LoggerService } from '../../services/logger.service';
+import { BirthdayService } from '../../services/birthday.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { Birthday, createSyncMetadata, updateSyncMetadata } from '../../../shared/models/birthday.model';
-import { getZodiacSign, DEFAULT_CATEGORY } from '../../../shared';
+import { Birthday, updateSyncMetadata } from '../../../shared/models/birthday.model';
 import * as AuthSelectors from '../auth/auth.selectors';
 
 @Injectable()
-export class BirthdayEffects {
+export class BirthdayEffects implements OnInitEffects {
+
+  ngrxOnInitEffects(): Action {
+    return BirthdayActions.loadBirthdays();
+  }
   private readonly actions$ = inject(Actions);
   private readonly store = inject(Store);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly notificationService = inject(NotificationService);
-  private readonly injector = inject(Injector);
   private readonly pushNotificationService = inject(PushNotificationService);
-  private readonly idGenerator = inject(IdGeneratorService);
-  private readonly logger = inject(LoggerService);
+  private readonly birthdayService = inject(BirthdayService);
   private readonly syncCoordinator = inject(SyncCoordinatorService);
-
-  private _googleCalendarService: GoogleCalendarService | null = null;
-
-  private get googleCalendarService(): GoogleCalendarService {
-    if (!this._googleCalendarService) {
-      this._googleCalendarService = this.injector.get(GoogleCalendarService);
-    }
-    return this._googleCalendarService;
-  }
 
   loadBirthdays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.loadBirthdays),
       mergeMap(() =>
         this.offlineStorage.getBirthdays().then(birthdays => {
-          return birthdays.map(b => ({
-            ...b,
-            zodiacSign: b.zodiacSign || getZodiacSign(b.birthDate).name,
-            category: this.normalizeCategoryId(b.category)
-          }));
+          return birthdays.map(b => this.birthdayService.normalizeBirthdayOnLoad(b));
         }).then(birthdays =>
           BirthdayActions.loadBirthdaysSuccess({ birthdays })
         ).catch(error =>
@@ -60,16 +46,9 @@ export class BirthdayEffects {
       ofType(BirthdayActions.addBirthday),
       withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
       mergeMap(([{ birthday }, userId]) => {
-        const syncMeta = createSyncMetadata(userId);
-        const newBirthday: Birthday = {
-          ...birthday,
-          ...syncMeta,
-          id: this.idGenerator.generateId(),
-          category: this.normalizeCategoryId(birthday.category || DEFAULT_CATEGORY),
-          zodiacSign: birthday.zodiacSign || getZodiacSign(birthday.birthDate).name
-        };
+        const newBirthday = this.birthdayService.prepareBirthdayForCreate(birthday, userId);
 
-        return this.syncToGoogleCalendar(newBirthday).then(eventId => {
+        return this.birthdayService.syncToGoogleCalendar(newBirthday).then(eventId => {
           if (eventId) {
             newBirthday.googleCalendarEventId = eventId;
           }
@@ -77,7 +56,6 @@ export class BirthdayEffects {
         }).then(finalBirthday =>
           this.offlineStorage.addBirthday(finalBirthday).then(() => finalBirthday)
         ).then(async finalBirthday => {
-          // Queue for cloud sync if authenticated
           if (userId) {
             await this.syncCoordinator.queueChange('birthday', finalBirthday.id, 'create', finalBirthday);
           }
@@ -107,17 +85,11 @@ export class BirthdayEffects {
       ofType(BirthdayActions.updateBirthday),
       withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
       mergeMap(([{ birthday }, userId]) => {
-        const syncMeta = updateSyncMetadata(birthday, userId);
-        const normalizedBirthday: Birthday = {
-          ...birthday,
-          ...syncMeta,
-          category: this.normalizeCategoryId(birthday.category)
-        };
+        const normalizedBirthday = this.birthdayService.prepareBirthdayForUpdate(birthday, userId);
 
-        return this.updateGoogleCalendar(normalizedBirthday).then(() =>
+        return this.birthdayService.updateGoogleCalendar(normalizedBirthday).then(() =>
           this.offlineStorage.updateBirthday(normalizedBirthday)
         ).then(async () => {
-          // Queue for cloud sync if authenticated
           if (userId) {
             await this.syncCoordinator.queueChange('birthday', normalizedBirthday.id, 'update', normalizedBirthday);
           }
@@ -153,13 +125,12 @@ export class BirthdayEffects {
         }).then(birthday => {
           this.pushNotificationService.cancelAllNotificationsForBirthday(id);
           if (birthday?.googleCalendarEventId) {
-            return this.deleteFromGoogleCalendar(birthday.googleCalendarEventId).then(() => id);
+            return this.birthdayService.deleteFromGoogleCalendar(birthday.googleCalendarEventId).then(() => id);
           }
           return id;
         }).then(birthdayId =>
           this.offlineStorage.deleteBirthday(birthdayId)
         ).then(async () => {
-          // Queue for cloud sync if authenticated
           if (userId) {
             await this.syncCoordinator.queueChange('birthday', id, 'delete', { id });
           }
@@ -215,7 +186,6 @@ export class BirthdayEffects {
             };
             this.pushNotificationService.scheduleNotification(birthday, message);
 
-            // Queue for cloud sync
             if (userId) {
               this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
             }
@@ -264,7 +234,6 @@ export class BirthdayEffects {
               this.pushNotificationService.scheduleNotification(birthday, updatedMsg);
             }
 
-            // Queue for cloud sync
             if (userId) {
               this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
             }
@@ -300,7 +269,6 @@ export class BirthdayEffects {
               scheduledMessages: updatedMessages
             };
 
-            // Queue for cloud sync
             if (userId) {
               this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
             }
@@ -356,14 +324,8 @@ export class BirthdayEffects {
       switchMap(() =>
         from(import('../../../testing').then(m => m.generateMockBirthdays)).pipe(
           switchMap(generateMockBirthdays => {
-            const testBirthdays = generateMockBirthdays(() => this.idGenerator.generateId());
-            const processedBirthdays: Birthday[] = testBirthdays.map(b => ({
-              ...b,
-              id: this.idGenerator.generateId(),
-              zodiacSign: b.zodiacSign || getZodiacSign(b.birthDate).name,
-              category: this.normalizeCategoryId(b.category || DEFAULT_CATEGORY),
-              ...createSyncMetadata(null)
-            }));
+            const testBirthdays = generateMockBirthdays(() => this.birthdayService.generateId());
+            const processedBirthdays: Birthday[] = this.birthdayService.processTestBirthdays(testBirthdays);
             return from(this.offlineStorage.saveBirthdays(processedBirthdays)).pipe(
               map(() => BirthdayActions.loadTestDataSuccess({ birthdays: processedBirthdays }))
             );
@@ -384,58 +346,4 @@ export class BirthdayEffects {
       ),
     { dispatch: false }
   );
-
-
-  private normalizeCategoryId(category?: string): string {
-    if (!category) return DEFAULT_CATEGORY;
-
-    const categoryMap: Record<string, string> = {
-      'Family': 'family',
-      'Friends': 'friends',
-      'Work': 'colleagues',
-      'Colleagues': 'colleagues',
-      'Other': 'other',
-      'Partner/Ex': 'romantic',
-      'Romantic': 'romantic',
-      'Acquaintances': 'acquaintances'
-    };
-
-    if (category === category.toLowerCase()) {
-      return category;
-    }
-
-    return categoryMap[category] || category.toLowerCase();
-  }
-
-  private async syncToGoogleCalendar(birthday: Birthday): Promise<string | null> {
-    if (this.googleCalendarService.isEnabled()) {
-      try {
-        return await this.googleCalendarService.syncBirthdayToCalendar(birthday);
-      } catch (error) {
-        this.logger.error('[BirthdayEffects] Failed to sync to Google Calendar:', error);
-        return null;
-      }
-    }
-    return null;
-  }
-
-  private async updateGoogleCalendar(birthday: Birthday): Promise<void> {
-    if (birthday.googleCalendarEventId && this.googleCalendarService.isEnabled()) {
-      try {
-        await this.googleCalendarService.updateBirthdayInCalendar(birthday, birthday.googleCalendarEventId);
-      } catch (error) {
-        this.logger.error('[BirthdayEffects] Failed to update Google Calendar:', error);
-      }
-    }
-  }
-
-  private async deleteFromGoogleCalendar(eventId: string): Promise<void> {
-    if (this.googleCalendarService.isEnabled()) {
-      try {
-        await this.googleCalendarService.deleteBirthdayFromCalendar(eventId);
-      } catch (error) {
-        this.logger.error('[BirthdayEffects] Failed to delete from Google Calendar:', error);
-      }
-    }
-  }
 }
