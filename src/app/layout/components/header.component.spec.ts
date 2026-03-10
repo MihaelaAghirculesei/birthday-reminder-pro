@@ -8,7 +8,6 @@ import { HeaderComponent } from './header.component';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { BirthdayFacadeService } from '../../core/services/birthday-facade.service';
 import { BackupService } from '../../core/services/backup.service';
 import { BehaviorSubject } from 'rxjs';
 
@@ -50,13 +49,12 @@ describe('HeaderComponent', () => {
         RouterTestingModule
       ],
       providers: [
-        provideMockStore({ initialState: { auth: { user: null, loading: false, error: null } } }),
+        provideMockStore({ initialState: { auth: { user: null, loading: false, error: null }, birthdays: { ids: [], entities: {}, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedMonth: null, selectedCategory: null, sortOrder: 'nextBirthday' } } } }),
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: NotificationPermissionService, useValue: mockPermissionService },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
         { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
-        { provide: BirthdayFacadeService, useValue: { birthdays: () => [] } },
         { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } }
       ]
     }).compileComponents();

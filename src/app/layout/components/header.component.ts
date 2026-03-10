@@ -14,12 +14,15 @@ import { NetworkStatusComponent } from '../../shared/components/network-status.c
 import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
 
 import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
-import { ThemeService, BirthdayFacadeService, NotificationService } from '../../core';
+import { ThemeService, NotificationService } from '../../core';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { BackupService } from '../../core/services/backup.service';
 import { Birthday } from '../../shared/models';
+import { AppState } from '../../core/store/app.state';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
+import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 @Component({
     selector: 'app-header',
@@ -691,11 +694,15 @@ import * as AuthSelectors from '../../core/store/auth/auth.selectors';
   `]
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  private readonly store = inject(Store);
+  private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
   private readonly backupService = inject(BackupService);
-  private readonly birthdayFacade = inject(BirthdayFacadeService);
   private readonly notificationService = inject(NotificationService);
+
+  private readonly birthdays = toSignal(
+    this.store.select(BirthdaySelectors.selectAllBirthdays),
+    { initialValue: [] }
+  );
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly el = inject(ElementRef);
@@ -820,7 +827,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onImportVCard(event: Event): void { this.handleImport(event, f => this.backupService.importFromVCard(f), 'Invalid vCard file'); }
 
   private handleExport(exporter: (b: Birthday[]) => void, successMsg: string): void {
-    const birthdays = this.birthdayFacade.birthdays();
+    const birthdays = this.birthdays();
     if (birthdays.length === 0) {
       this.notificationService.show('No birthdays to export', 'warning');
       return;
@@ -835,7 +842,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     try {
       const birthdays = await importer(file);
       for (const birthday of birthdays) {
-        this.birthdayFacade.addBirthday(birthday);
+        this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
       }
       this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
     } catch {
