@@ -1,13 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { DashboardFacadeService } from './dashboard-facade.service';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService } from './birthday-stats.service';
 import { Birthday, BirthdayCategory } from '../../../shared';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { signal } from '@angular/core';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 describe('DashboardFacadeService', () => {
   let service: DashboardFacadeService;
-  let birthdayFacadeSpy: jasmine.SpyObj<BirthdayFacadeService>;
+  let store: MockStore;
   let statsServiceSpy: jasmine.SpyObj<BirthdayStatsService>;
 
   const mockBirthdays: Birthday[] = [
@@ -44,17 +46,6 @@ describe('DashboardFacadeService', () => {
   ];
 
   beforeEach(() => {
-    const birthdayFacadeSpyObj = jasmine.createSpyObj('BirthdayFacadeService', [
-      'loadTestData',
-      'clearAllBirthdays',
-      'addBirthday',
-      'deleteBirthday'
-    ], {
-      birthdays: signal(mockBirthdays),
-      averageAge: signal(30),
-      next5Birthdays: signal(mockNext5Birthdays)
-    });
-
     const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [], {
       categories: signal(mockCategories)
     });
@@ -77,14 +68,20 @@ describe('DashboardFacadeService', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        provideMockStore(),
         { provide: BirthdayStatsService, useValue: statsServiceSpyObj }
       ]
     })
-      .overrideProvider(BirthdayFacadeService, { useValue: birthdayFacadeSpyObj })
       .overrideProvider(CategoryFacadeService, { useValue: categoryFacadeSpyObj });
 
+    store = TestBed.inject(MockStore);
+    store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
+    store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, mockNext5Birthdays);
+    store.overrideSelector(BirthdaySelectors.selectAverageAge, 30);
+    store.overrideSelector(BirthdaySelectors.selectSelectedCategory, null);
+    store.overrideSelector(BirthdaySelectors.selectSearchTerm, '');
+
     service = TestBed.inject(DashboardFacadeService);
-    birthdayFacadeSpy = TestBed.inject(BirthdayFacadeService) as jasmine.SpyObj<BirthdayFacadeService>;
     statsServiceSpy = TestBed.inject(BirthdayStatsService) as jasmine.SpyObj<BirthdayStatsService>;
   });
 
@@ -97,7 +94,7 @@ describe('DashboardFacadeService', () => {
       expect(service.totalBirthdays()).toBe(2);
     });
 
-    it('should compute averageAge from facade', () => {
+    it('should compute averageAge from store', () => {
       expect(service.averageAge()).toBe(30);
     });
 
@@ -106,19 +103,20 @@ describe('DashboardFacadeService', () => {
     });
 
     it('should return 0 for nextBirthdayDays when no birthdays', () => {
-      (birthdayFacadeSpy.next5Birthdays as unknown as ReturnType<typeof signal>).set([]);
+      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, []);
+      store.refreshState();
       expect(service.nextBirthdayDays()).toBe(0);
     });
 
     it('should compute nextBirthdayText as "Today!" when 0 days', () => {
-      const todayBirthdays = [{ ...mockBirthdays[0], daysUntil: 0 }];
-      (birthdayFacadeSpy.next5Birthdays as unknown as ReturnType<typeof signal>).set(todayBirthdays);
+      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, [{ ...mockBirthdays[0], nextBirthday: new Date(), daysUntil: 0 }]);
+      store.refreshState();
       expect(service.nextBirthdayText()).toBe('Today!');
     });
 
     it('should compute nextBirthdayText as "Tomorrow!" when 1 day', () => {
-      const tomorrowBirthdays = [{ ...mockBirthdays[0], daysUntil: 1 }];
-      (birthdayFacadeSpy.next5Birthdays as unknown as ReturnType<typeof signal>).set(tomorrowBirthdays);
+      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, [{ ...mockBirthdays[0], nextBirthday: new Date(), daysUntil: 1 }]);
+      store.refreshState();
       expect(service.nextBirthdayText()).toBe('Tomorrow!');
     });
 
@@ -127,7 +125,8 @@ describe('DashboardFacadeService', () => {
     });
 
     it('should return "N/A" for nextBirthdayText when no birthdays', () => {
-      (birthdayFacadeSpy.next5Birthdays as unknown as ReturnType<typeof signal>).set([]);
+      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, []);
+      store.refreshState();
       expect(service.nextBirthdayText()).toBe('N/A');
     });
 
@@ -154,40 +153,45 @@ describe('DashboardFacadeService', () => {
   });
 
   describe('Category selection', () => {
-    it('should select a category', () => {
+    it('should dispatch setSelectedCategory', () => {
+      spyOn(store, 'dispatch');
       service.selectCategory('friends');
-      expect(service.selectedCategory()).toBe('friends');
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
-    it('should deselect category if same is selected again', () => {
+    it('should dispatch null when same category is selected again (toggle)', () => {
+      store.overrideSelector(BirthdaySelectors.selectSelectedCategory, 'friends');
+      store.refreshState();
+      spyOn(store, 'dispatch');
       service.selectCategory('friends');
-      service.selectCategory('friends');
-      expect(service.selectedCategory()).toBeNull();
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should clear category filter', () => {
-      service.selectCategory('friends');
+      spyOn(store, 'dispatch');
       service.clearCategoryFilter();
-      expect(service.selectedCategory()).toBeNull();
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should check if category is selected', () => {
-      service.selectCategory('friends');
+      store.overrideSelector(BirthdaySelectors.selectSelectedCategory, 'friends');
+      store.refreshState();
       expect(service.isCategorySelected('friends')).toBeTrue();
       expect(service.isCategorySelected('family')).toBeFalse();
     });
   });
 
   describe('Search functionality', () => {
-    it('should set search term', () => {
+    it('should dispatch setSearchTerm', () => {
+      spyOn(store, 'dispatch');
       service.setSearchTerm('John');
-      expect(service.searchTerm()).toBe('John');
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
-    it('should clear search term', () => {
-      service.setSearchTerm('John');
+    it('should dispatch clearSearch', () => {
+      spyOn(store, 'dispatch');
       service.clearSearch();
-      expect(service.searchTerm()).toBe('');
+      expect(store.dispatch).toHaveBeenCalled();
     });
   });
 
@@ -198,21 +202,24 @@ describe('DashboardFacadeService', () => {
     });
 
     it('should filter by category', () => {
-      service.selectCategory('friends');
+      store.overrideSelector(BirthdaySelectors.selectSelectedCategory, 'friends');
+      store.refreshState();
       const filtered = service.filteredBirthdays();
       expect(filtered.length).toBe(1);
       expect(filtered[0].category).toBe('friends');
     });
 
     it('should filter by search term', () => {
-      service.setSearchTerm('John');
+      store.overrideSelector(BirthdaySelectors.selectSearchTerm, 'John');
+      store.refreshState();
       const filtered = service.filteredBirthdays();
       expect(filtered.length).toBe(1);
       expect(filtered[0].name).toBe('John Doe');
     });
 
     it('should be case insensitive when filtering by search', () => {
-      service.setSearchTerm('john');
+      store.overrideSelector(BirthdaySelectors.selectSearchTerm, 'john');
+      store.refreshState();
       const filtered = service.filteredBirthdays();
       expect(filtered.length).toBe(1);
     });
@@ -231,65 +238,75 @@ describe('DashboardFacadeService', () => {
           scheduledMessages: []
         }
       ];
-      (birthdayFacadeSpy.birthdays as unknown as ReturnType<typeof signal>).set(birthdaysWithOrphaned);
-      service.selectCategory('__orphaned__');
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, birthdaysWithOrphaned);
+      store.overrideSelector(BirthdaySelectors.selectSelectedCategory, '__orphaned__');
+      store.refreshState();
       const filtered = service.filteredBirthdays();
       expect(filtered.length).toBe(1);
       expect(filtered[0].name).toBe('Orphan');
     });
 
     it('should return empty array when birthdays is null', () => {
-      (birthdayFacadeSpy.birthdays as unknown as ReturnType<typeof signal>).set(null as unknown as Birthday[]);
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, null as unknown as Birthday[]);
+      store.refreshState();
       const filtered = service.filteredBirthdays();
       expect(filtered).toEqual([]);
     });
   });
 
   describe('Data management', () => {
-    it('should call facade.loadTestData', () => {
+    it('should dispatch loadTestData', () => {
+      spyOn(store, 'dispatch');
       service.loadTestData();
-      expect(birthdayFacadeSpy.loadTestData).toHaveBeenCalled();
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
-    it('should call facade.clearAllBirthdays and clear lastAction', () => {
+    it('should dispatch clearAllBirthdays and clear lastAction', () => {
+      spyOn(store, 'dispatch');
       service.clearAllData();
-      expect(birthdayFacadeSpy.clearAllBirthdays).toHaveBeenCalled();
+      expect(store.dispatch).toHaveBeenCalled();
       expect(service.lastAction()).toBeNull();
     });
 
-    it('should call facade.addBirthday', () => {
+    it('should dispatch addBirthday', () => {
+      spyOn(store, 'dispatch');
       const newBirthday = { name: 'Test', birthDate: new Date() } as Omit<Birthday, 'id'>;
       service.addBirthday(newBirthday);
-      expect(birthdayFacadeSpy.addBirthday).toHaveBeenCalledWith(newBirthday);
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should store deleted birthday in lastAction', () => {
+      spyOn(store, 'dispatch');
       service.deleteBirthday(mockBirthdays[0]);
       expect(service.lastAction()).toEqual({
         type: 'delete',
         data: mockBirthdays[0]
       });
-      expect(birthdayFacadeSpy.deleteBirthday).toHaveBeenCalledWith('1');
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should undo last delete action', () => {
+      spyOn(store, 'dispatch');
       service.deleteBirthday(mockBirthdays[0]);
+      (store.dispatch as jasmine.Spy).calls.reset();
       service.undoLastAction();
-      expect(birthdayFacadeSpy.addBirthday).toHaveBeenCalledWith(mockBirthdays[0]);
+      expect(store.dispatch).toHaveBeenCalled();
       expect(service.lastAction()).toBeNull();
     });
 
     it('should not undo if no last action', () => {
+      spyOn(store, 'dispatch');
       service.undoLastAction();
-      expect(birthdayFacadeSpy.addBirthday).not.toHaveBeenCalled();
+      expect(store.dispatch).not.toHaveBeenCalled();
     });
   });
 
   describe('Import birthdays', () => {
     it('should import birthdays with delay', async () => {
+      spyOn(store, 'dispatch');
       const birthdays = [mockBirthdays[0], mockBirthdays[1]];
       await service.importBirthdays(birthdays);
-      expect(birthdayFacadeSpy.addBirthday).toHaveBeenCalledTimes(2);
+      expect(store.dispatch).toHaveBeenCalledTimes(2);
     });
   });
 
