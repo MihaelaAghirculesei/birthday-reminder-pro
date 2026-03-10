@@ -19,9 +19,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { Store } from '@ngrx/store';
 import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../..';
 import { ScheduledMessageService, MessageTemplate } from '../../../features/scheduled-messages/scheduled-message.service';
-import { NotificationService, BirthdayFacadeService, SenderSettingsService } from '../../../core';
+import { NotificationService, SenderSettingsService } from '../../../core';
+import { AppState } from '../../../core/store/app.state';
+import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 interface EnrichedMessage extends ScheduledMessage {
   processedMessage: string;
@@ -71,11 +75,12 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     return !!(this.birthday.email?.trim() || this.birthday.phone?.trim() || this.birthday.telegramUsername?.trim());
   }
 
+  private readonly store = inject(Store<AppState>);
+
   constructor(
     private fb: FormBuilder,
     private scheduledMessageService: ScheduledMessageService,
-    private notificationService: NotificationService,
-    private birthdayFacade: BirthdayFacadeService
+    private notificationService: NotificationService
   ) {
     this.messageForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
@@ -114,7 +119,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   loadMessages(): void {
     if (this.birthday) {
-      this.birthdayFacade.getMessagesByBirthday(this.birthday.id)
+      this.store.select(BirthdaySelectors.selectMessagesByBirthday(this.birthday.id))
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(messages => {
           this.messages = messages || [];
@@ -141,14 +146,14 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     });
   }
 
-  async saveMessage(): Promise<void> {
+  saveMessage(): void {
     if (this.messageForm.valid && this.birthday) {
       if (this.editingMessage) {
-        await this.birthdayFacade.updateMessageInBirthday(
-          this.birthday.id,
-          this.editingMessage.id,
-          this.messageForm.value
-        );
+        this.store.dispatch(BirthdayActions.updateMessageInBirthday({
+          birthdayId: this.birthday.id,
+          messageId: this.editingMessage.id,
+          updates: this.messageForm.value
+        }));
         this.notificationService.show('Message updated!', 'success');
       } else {
         const newMessage = this.scheduledMessageService.createMessage({
@@ -156,7 +161,10 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
           birthdayId: this.birthday.id
         });
 
-        await this.birthdayFacade.addMessageToBirthday(this.birthday.id, newMessage);
+        this.store.dispatch(BirthdayActions.addMessageToBirthday({
+          birthdayId: this.birthday.id,
+          message: newMessage
+        }));
         this.notificationService.show('Scheduled message created!', 'success');
       }
 
@@ -180,11 +188,13 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     this.unsavedChanges.emit(false);
   }
 
-  async toggleMessageStatus(message: ScheduledMessage): Promise<void> {
+  toggleMessageStatus(message: ScheduledMessage): void {
     if (this.birthday) {
-      await this.birthdayFacade.updateMessageInBirthday(this.birthday.id, message.id, {
-        active: !message.active,
-      });
+      this.store.dispatch(BirthdayActions.updateMessageInBirthday({
+        birthdayId: this.birthday.id,
+        messageId: message.id,
+        updates: { active: !message.active }
+      }));
       this.loadMessages();
     }
   }
@@ -214,9 +224,12 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
       }
     });
 
-    dialogRef.afterClosed().pipe(take(1)).subscribe(async confirmed => {
+    dialogRef.afterClosed().pipe(take(1)).subscribe(confirmed => {
       if (confirmed) {
-        await this.birthdayFacade.deleteMessageFromBirthday(birthdayId, message.id);
+        this.store.dispatch(BirthdayActions.deleteMessageFromBirthday({
+          birthdayId,
+          messageId: message.id
+        }));
         this.loadMessages();
         this.notificationService.show('Message deleted', 'success');
       }
