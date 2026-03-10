@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal, computed } from '@angular/core';
+import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
@@ -8,11 +8,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { take } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Store } from '@ngrx/store';
 import { MessageSchedulerComponent } from '../../../shared/components/message-scheduler/message-scheduler.component';
 import { Birthday } from '../../../shared/models';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { CategoryFacadeService } from '../../../core';
 import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
+import { AppState } from '../../../core/store/app.state';
+import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 interface MessageScheduleDialogData {
   birthday?: Birthday;
@@ -51,9 +56,18 @@ function buildContactInfo(b: Birthday): string {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageScheduleDialogComponent implements OnInit {
+  private readonly store = inject(Store<AppState>);
+  private readonly categoryFacade = inject(CategoryFacadeService);
+  private readonly dialog = inject(MatDialog);
+
+  private readonly birthdays = toSignal(
+    this.store.select(BirthdaySelectors.selectAllBirthdays),
+    { initialValue: [] }
+  );
+
   selectedBirthday: Birthday | null = null;
   allBirthdays: Signal<Birthday[]> = computed(() =>
-    [...this.birthdayFacade.birthdays()].sort(
+    [...this.birthdays()].sort(
       (a, b) => getDaysUntilBirthday(new Date(a.birthDate)) - getDaysUntilBirthday(new Date(b.birthDate))
     )
   );
@@ -70,10 +84,7 @@ export class MessageScheduleDialogComponent implements OnInit {
 
   constructor(
     private dialogRef: MatDialogRef<MessageScheduleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: MessageScheduleDialogData,
-    private birthdayFacade: BirthdayFacadeService,
-    private categoryFacade: CategoryFacadeService,
-    private dialog: MatDialog
+    @Inject(MAT_DIALOG_DATA) public data: MessageScheduleDialogData
   ) {}
 
   ngOnInit(): void {
@@ -122,7 +133,7 @@ export class MessageScheduleDialogComponent implements OnInit {
         phone: result.editedData.phone.trim() || undefined,
         telegramUsername: result.editedData.telegramUsername.trim() || undefined
       };
-      this.birthdayFacade.updateBirthday(updated);
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updated }));
     });
   }
 

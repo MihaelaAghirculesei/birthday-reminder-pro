@@ -1,20 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { signal } from '@angular/core';
-import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog.component';
-import { BirthdayFacadeService, CategoryFacadeService } from '../../../core';
+import { CategoryFacadeService } from '../../../core';
 import { Birthday } from '../../../shared/models';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { signal } from '@angular/core';
+import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
 describe('MessageScheduleDialogComponent', () => {
   let component: MessageScheduleDialogComponent;
   let fixture: ComponentFixture<MessageScheduleDialogComponent>;
   let mockDialogRef: jasmine.SpyObj<MatDialogRef<MessageScheduleDialogComponent>>;
-  let mockBirthdayFacade: jasmine.SpyObj<BirthdayFacadeService>;
   let mockCategoryFacade: jasmine.SpyObj<CategoryFacadeService>;
   let mockDialog: jasmine.SpyObj<MatDialog>;
+  let store: MockStore;
 
   const mockBirthdays: Birthday[] = [
     {
@@ -41,13 +42,16 @@ describe('MessageScheduleDialogComponent', () => {
     TestBed.configureTestingModule({
       imports: [MessageScheduleDialogComponent, BrowserAnimationsModule],
       providers: [
+        provideMockStore(),
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: data },
-        { provide: BirthdayFacadeService, useValue: mockBirthdayFacade },
         { provide: CategoryFacadeService, useValue: mockCategoryFacade },
         { provide: MatDialog, useValue: mockDialog }
       ]
     });
+
+    store = TestBed.inject(MockStore);
+    store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
 
     fixture = TestBed.createComponent(MessageScheduleDialogComponent);
     component = fixture.componentInstance;
@@ -55,16 +59,6 @@ describe('MessageScheduleDialogComponent', () => {
 
   beforeEach(() => {
     mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-      'getMessagesByBirthday',
-      'addMessageToBirthday',
-      'updateMessageForBirthday',
-      'deleteMessageFromBirthday',
-      'updateBirthday'
-    ], {
-      birthdays: signal(mockBirthdays)
-    });
-    mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
     mockCategoryFacade = jasmine.createSpyObj('CategoryFacadeService', [], {
       categories: signal([])
     });
@@ -221,18 +215,10 @@ describe('MessageScheduleDialogComponent', () => {
     });
 
     it('should return true when there are no birthdays', () => {
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'getMessagesByBirthday',
-        'addMessageToBirthday',
-        'updateMessageForBirthday',
-        'deleteMessageFromBirthday'
-      ], {
-        birthdays: signal([])
-      });
-      mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
-
       TestBed.resetTestingModule();
       createComponent({});
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, []);
+      store.refreshState();
       fixture.detectChanges();
 
       expect(component.noBirthdays()).toBe(true);
@@ -240,7 +226,7 @@ describe('MessageScheduleDialogComponent', () => {
   });
 
   describe('allBirthdays signal', () => {
-    it('should return birthdays from facade sorted by nearest birthday', () => {
+    it('should return birthdays from store sorted by nearest birthday', () => {
       createComponent();
       fixture.detectChanges();
 
@@ -261,35 +247,25 @@ describe('MessageScheduleDialogComponent', () => {
     });
 
     it('should pre-compute hasContact as true for birthday with email', () => {
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'getMessagesByBirthday', 'addMessageToBirthday', 'updateMessageForBirthday',
-        'deleteMessageFromBirthday', 'updateBirthday'
-      ], {
-        birthdays: signal([{ ...mockBirthdays[0], email: 'test@example.com' }])
-      });
-      mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
       TestBed.resetTestingModule();
       createComponent();
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [{ ...mockBirthdays[0], email: 'test@example.com' }]);
+      store.refreshState();
       fixture.detectChanges();
 
       expect(component.birthdayOptions()[0].hasContact).toBeTrue();
     });
 
     it('should pre-compute contactInfo with all contact details', () => {
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'getMessagesByBirthday', 'addMessageToBirthday', 'updateMessageForBirthday',
-        'deleteMessageFromBirthday', 'updateBirthday'
-      ], {
-        birthdays: signal([{
-          ...mockBirthdays[0],
-          email: 'test@example.com',
-          phone: '+1234567890',
-          telegramUsername: 'testuser'
-        }])
-      });
-      mockBirthdayFacade.getMessagesByBirthday.and.returnValue(of([]));
       TestBed.resetTestingModule();
       createComponent();
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [{
+        ...mockBirthdays[0],
+        email: 'test@example.com',
+        phone: '+1234567890',
+        telegramUsername: 'testuser'
+      }]);
+      store.refreshState();
       fixture.detectChanges();
 
       const info = component.birthdayOptions()[0].contactInfo;
