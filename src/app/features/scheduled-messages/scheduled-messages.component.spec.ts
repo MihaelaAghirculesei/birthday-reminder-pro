@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
-import { signal } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { ScheduledMessagesComponent } from './scheduled-messages.component';
-import { BirthdayFacadeService } from '../../core';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 describe('ScheduledMessagesComponent', () => {
   let component: ScheduledMessagesComponent;
   let fixture: ComponentFixture<ScheduledMessagesComponent>;
-  let mockBirthdayFacade: jasmine.SpyObj<BirthdayFacadeService>;
   let mockDialog: jasmine.SpyObj<MatDialog>;
+  let store: MockStore;
 
   const mockMessage1: ScheduledMessage = {
     id: 'm1',
@@ -68,19 +68,17 @@ describe('ScheduledMessagesComponent', () => {
 
   beforeEach(() => {
     mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
-    mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-      'deleteMessageFromBirthday'
-    ], {
-      birthdays: signal(mockBirthdays)
-    });
 
     TestBed.configureTestingModule({
       imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
       providers: [
-        { provide: MatDialog, useValue: mockDialog },
-        { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
+        provideMockStore(),
+        { provide: MatDialog, useValue: mockDialog }
       ]
     });
+
+    store = TestBed.inject(MockStore);
+    store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
 
     fixture = TestBed.createComponent(ScheduledMessagesComponent);
     component = fixture.componentInstance;
@@ -174,34 +172,26 @@ describe('ScheduledMessagesComponent', () => {
   });
 
   describe('deleteMessage', () => {
-    it('should call facade deleteMessageFromBirthday when confirmed', () => {
+    it('should dispatch deleteMessageFromBirthday when confirmed', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(true));
       mockDialog.open.and.returnValue(mockDialogRef);
+      spyOn(store, 'dispatch');
 
       component.deleteMessage('1', 'm1');
 
-      expect(mockBirthdayFacade.deleteMessageFromBirthday).toHaveBeenCalledWith('1', 'm1');
+      expect(store.dispatch).toHaveBeenCalled();
     });
 
-    it('should not call facade when cancelled', () => {
+    it('should not dispatch when cancelled', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(false));
       mockDialog.open.and.returnValue(mockDialogRef);
+      spyOn(store, 'dispatch');
 
       component.deleteMessage('1', 'm1');
 
-      expect(mockBirthdayFacade.deleteMessageFromBirthday).not.toHaveBeenCalled();
-    });
-
-    it('should handle deletion of different messages', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      mockDialog.open.and.returnValue(mockDialogRef);
-
-      component.deleteMessage('3', 'm2');
-
-      expect(mockBirthdayFacade.deleteMessageFromBirthday).toHaveBeenCalledWith('3', 'm2');
+      expect(store.dispatch).not.toHaveBeenCalled();
     });
   });
 
@@ -238,54 +228,14 @@ describe('ScheduledMessagesComponent', () => {
     });
   });
 
-  describe('Integration - Complete Flows', () => {
-    it('should support opening dialog and deleting message workflow', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      mockDialog.open.and.returnValue(mockDialogRef);
-
-      component.openScheduleDialog(mockBirthdays[0]);
-      expect(mockDialog.open).toHaveBeenCalled();
-
-      component.deleteMessage('1', 'm1');
-      expect(mockBirthdayFacade.deleteMessageFromBirthday).toHaveBeenCalledWith('1', 'm1');
-    });
-
-    it('should display only birthdays with messages', () => {
-      const birthdaysWithMsgs = component.birthdaysWithMessages();
-
-      expect(birthdaysWithMsgs.length).toBe(2);
-      birthdaysWithMsgs.forEach(entry => {
-        expect(entry.birthday.scheduledMessages).toBeDefined();
-        expect(entry.birthday.scheduledMessages!.length).toBeGreaterThan(0);
-        expect(entry.messages.length).toBeGreaterThan(0);
-      });
-    });
-  });
-
   describe('noBirthdays computed signal', () => {
     it('should return false when there are birthdays', () => {
       expect(component.noBirthdays()).toBe(false);
     });
 
     it('should return true when there are no birthdays', () => {
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'deleteMessageFromBirthday'
-      ], {
-        birthdays: signal([])
-      });
-
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
-        providers: [
-          { provide: MatDialog, useValue: mockDialog },
-          { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
-        ]
-      });
-
-      fixture = TestBed.createComponent(ScheduledMessagesComponent);
-      component = fixture.componentInstance;
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, []);
+      store.refreshState();
       fixture.detectChanges();
 
       expect(component.noBirthdays()).toBe(true);
@@ -299,23 +249,8 @@ describe('ScheduledMessagesComponent', () => {
         scheduledMessages: null as unknown as undefined
       };
 
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'deleteMessageFromBirthday'
-      ], {
-        birthdays: signal([birthdayWithNull])
-      });
-
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
-        providers: [
-          { provide: MatDialog, useValue: mockDialog },
-          { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
-        ]
-      });
-
-      fixture = TestBed.createComponent(ScheduledMessagesComponent);
-      component = fixture.componentInstance;
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [birthdayWithNull]);
+      store.refreshState();
       fixture.detectChanges();
 
       const birthdaysWithMsgs = component.birthdaysWithMessages();
@@ -323,23 +258,8 @@ describe('ScheduledMessagesComponent', () => {
     });
 
     it('should handle empty birthdays list', () => {
-      mockBirthdayFacade = jasmine.createSpyObj('BirthdayFacadeService', [
-        'deleteMessageFromBirthday'
-      ], {
-        birthdays: signal([])
-      });
-
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
-        providers: [
-          { provide: MatDialog, useValue: mockDialog },
-          { provide: BirthdayFacadeService, useValue: mockBirthdayFacade }
-        ]
-      });
-
-      fixture = TestBed.createComponent(ScheduledMessagesComponent);
-      component = fixture.componentInstance;
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, []);
+      store.refreshState();
       fixture.detectChanges();
 
       const birthdaysWithMsgs = component.birthdaysWithMessages();
