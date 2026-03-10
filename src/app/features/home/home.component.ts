@@ -21,7 +21,12 @@ import { PhotoUploadComponent } from '../../shared/components/photo-upload.compo
 import { DEFAULT_CATEGORY, BirthdayCategory } from '../../shared/constants';
 import { Birthday } from '../../shared/models';
 import { getZodiacSign } from '../../shared/utils';
-import { BirthdayFacadeService, CategoryFacadeService, LoggerService } from '../../core';
+import { CategoryFacadeService, LoggerService } from '../../core';
+import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { AppState } from '../../core/store/app.state';
+import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 @Component({
     selector: 'app-home',
@@ -58,12 +63,12 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;
 
   private readonly fb = inject(FormBuilder);
-  private readonly birthdayFacade = inject(BirthdayFacadeService);
+  private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly logger = inject(LoggerService);
 
   birthdayForm!: FormGroup;
-  birthdays: Signal<Birthday[]> = this.birthdayFacade.birthdays;
+  birthdays: Signal<Birthday[]> = toSignal(this.store.select(BirthdaySelectors.selectAllBirthdays), { initialValue: [] });
   categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;
   selectedPhoto: string | null = null;
   isAddingTestData = signal(false);
@@ -118,7 +123,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
         zodiacSign: zodiacSign.name,
       };
 
-      this.birthdayFacade.addBirthday(formData);
+      this.store.dispatch(BirthdayActions.addBirthday({ birthday: formData }));
       this.birthdayForm.reset({ reminderDays: 7, category: DEFAULT_CATEGORY });
       this.selectedPhoto = null;
       this.isAddBirthdayExpanded = false;
@@ -137,7 +142,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   addTestData(): void {
     this.isAddingTestData.set(true);
-    this.birthdayFacade.loadTestData();
+    this.store.dispatch(BirthdayActions.loadTestData());
     this.testDataTimer = setTimeout(() => {
       this.isAddingTestData.set(false);
       this.testDataTimer = null;
