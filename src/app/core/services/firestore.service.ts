@@ -346,7 +346,7 @@ export class FirestoreService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { syncStatus: _removed, ...rest } = birthday;
 
-    return {
+    const data: Record<string, unknown> = {
       ...rest,
       birthDate: Timestamp.fromDate(
         birthday.birthDate instanceof Date
@@ -356,6 +356,15 @@ export class FirestoreService {
       ownerId: userId,
       updatedAt: Date.now()
     };
+
+    // Firestore rejects undefined values
+    for (const key of Object.keys(data)) {
+      if (data[key] === undefined) {
+        delete data[key];
+      }
+    }
+
+    return data;
   }
 
   unsubscribeAll(): void {
