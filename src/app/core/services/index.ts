@@ -1,5 +1,5 @@
 export { AccessibilityService } from './accessibility.service';
-export { BirthdayFacadeService } from './birthday-facade.service';
+export { BirthdayService } from './birthday.service';
 export { CategoryFacadeService } from './category-facade.service';
 export { CategoryStorageService } from './category-storage.service';
 export { NotificationService, NotificationMessage } from './notification.service';
