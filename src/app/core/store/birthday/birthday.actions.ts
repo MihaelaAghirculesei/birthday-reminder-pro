@@ -71,19 +71,9 @@ export const setSearchTerm = createAction(
   props<{ searchTerm: string }>()
 );
 
-export const setSelectedMonth = createAction(
-  '[Birthday] Set Selected Month',
-  props<{ month: number | null }>()
-);
-
 export const setSelectedCategory = createAction(
   '[Birthday] Set Selected Category',
   props<{ category: string | null }>()
-);
-
-export const setSortOrder = createAction(
-  '[Birthday] Set Sort Order',
-  props<{ sortOrder: 'name' | 'age' | 'nextBirthday' }>()
 );
 
 export const clearFilters = createAction(

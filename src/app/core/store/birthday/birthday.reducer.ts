@@ -159,27 +159,11 @@ export const birthdayReducer = createReducer(
     }
   })),
 
-  on(BirthdayActions.setSelectedMonth, (state, { month }) => ({
-    ...state,
-    filters: {
-      ...state.filters,
-      selectedMonth: month
-    }
-  })),
-
   on(BirthdayActions.setSelectedCategory, (state, { category }) => ({
     ...state,
     filters: {
       ...state.filters,
       selectedCategory: category
-    }
-  })),
-
-  on(BirthdayActions.setSortOrder, (state, { sortOrder }) => ({
-    ...state,
-    filters: {
-      ...state.filters,
-      sortOrder
     }
   })),
 

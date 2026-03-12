@@ -152,18 +152,14 @@ describe('Birthday Reducer', () => {
   });
 
   describe('Filter Actions', () => {
-    it('should update filters', () => {
-      let state = birthdayReducer(initialBirthdayState, BirthdayActions.setSearchTerm({ searchTerm: 'John' }));
+    it('should update search term', () => {
+      const state = birthdayReducer(initialBirthdayState, BirthdayActions.setSearchTerm({ searchTerm: 'John' }));
       expect(state.filters.searchTerm).toBe('John');
+    });
 
-      state = birthdayReducer(state, BirthdayActions.setSelectedMonth({ month: 4 }));
-      expect(state.filters.selectedMonth).toBe(4);
-
-      state = birthdayReducer(state, BirthdayActions.setSelectedCategory({ category: 'family' }));
+    it('should update selected category', () => {
+      const state = birthdayReducer(initialBirthdayState, BirthdayActions.setSelectedCategory({ category: 'family' }));
       expect(state.filters.selectedCategory).toBe('family');
-
-      state = birthdayReducer(state, BirthdayActions.setSortOrder({ sortOrder: 'age' }));
-      expect(state.filters.sortOrder).toBe('age');
     });
 
     it('should clear filters', () => {
@@ -370,21 +366,20 @@ describe('Birthday Reducer', () => {
 
   describe('updateFilters action', () => {
     it('should update multiple filters at once', () => {
-      const filters = { searchTerm: 'John', selectedMonth: 5, selectedCategory: 'family' };
+      const filters = { searchTerm: 'John', selectedCategory: 'family' };
       const action = BirthdayActions.updateFilters({ filters });
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.filters.searchTerm).toBe('John');
-      expect(state.filters.selectedMonth).toBe(5);
       expect(state.filters.selectedCategory).toBe('family');
     });
 
     it('should preserve existing filters when updating partial filters', () => {
       let state = birthdayReducer(initialBirthdayState, BirthdayActions.setSearchTerm({ searchTerm: 'Test' }));
-      state = birthdayReducer(state, BirthdayActions.updateFilters({ filters: { selectedMonth: 3 } }));
+      state = birthdayReducer(state, BirthdayActions.updateFilters({ filters: { selectedCategory: 'friends' } }));
 
       expect(state.filters.searchTerm).toBe('Test');
-      expect(state.filters.selectedMonth).toBe(3);
+      expect(state.filters.selectedCategory).toBe('friends');
     });
   });
 
