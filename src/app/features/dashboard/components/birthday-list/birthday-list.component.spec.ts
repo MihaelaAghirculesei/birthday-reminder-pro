@@ -57,7 +57,7 @@ describe('BirthdayListComponent', () => {
               loading: false,
               error: null,
               selectedId: null,
-              filters: { searchTerm: '', selectedMonth: null, selectedCategory: null, sortOrder: 'nextBirthday' }
+              filters: { searchTerm: '', selectedCategory: null }
             }
           }
         }),
