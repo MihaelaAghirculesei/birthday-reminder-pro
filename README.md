@@ -141,7 +141,8 @@ Component → Action → Effect → Service (IndexedDB/API) → Effect → Reduc
 
 ### Services
 
-- Facade Services: `BirthdayFacadeService`, `CategoryFacadeService`
+- Facade Services: `DashboardFacadeService`, `CategoryFacadeService`
+- `BirthdayService` for birthday business logic (ID, zodiac, metadata, normalization)
 - `GoogleCalendarService` for Calendar API
 - `PushNotificationService` for notifications
 - `IndexedDBStorageService` for data persistence
