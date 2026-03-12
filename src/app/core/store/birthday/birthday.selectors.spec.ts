@@ -16,10 +16,7 @@ describe('Birthday Selectors', () => {
       fromSelectors.selectSelectedBirthday,
       fromSelectors.selectBirthdayFilters,
       fromSelectors.selectSearchTerm,
-      fromSelectors.selectSelectedMonth,
       fromSelectors.selectSelectedCategory,
-      fromSelectors.selectSortOrder,
-      fromSelectors.selectFilteredBirthdays,
       fromSelectors.selectBirthdaysThisMonth,
       fromSelectors.selectNext5Birthdays,
       fromSelectors.selectAverageAge,
@@ -83,53 +80,6 @@ describe('Birthday Selectors', () => {
     expect(fromSelectors.selectSelectedBirthday(state)).toEqual(mockBirthdays[0]);
   });
 
-  describe('Filtered Birthdays', () => {
-    it('should filter by search term', () => {
-      const stateWithSearch = {
-        birthdays: {
-          ...mockState,
-          filters: { ...initialBirthdayFilters, searchTerm: 'ali' }
-        }
-      };
-
-      const result = fromSelectors.selectFilteredBirthdays(stateWithSearch);
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('Alice');
-    });
-
-    it('should filter by month', () => {
-      const stateWithMonth = {
-        birthdays: {
-          ...mockState,
-          filters: { ...initialBirthdayFilters, selectedMonth: 4 }
-        }
-      };
-
-      const result = fromSelectors.selectFilteredBirthdays(stateWithMonth);
-      expect(result.length).toBe(2);
-    });
-
-    it('should filter by category', () => {
-      const stateWithCategory = {
-        birthdays: {
-          ...mockState,
-          filters: { ...initialBirthdayFilters, selectedCategory: 'family' }
-        }
-      };
-
-      const result = fromSelectors.selectFilteredBirthdays(stateWithCategory);
-      expect(result.length).toBe(1);
-      expect(result[0].category).toBe('family');
-    });
-
-    it('should sort by name', () => {
-      const result = fromSelectors.selectFilteredBirthdays(state);
-      expect(result[0].name).toBe('Alice');
-      expect(result[1].name).toBe('Bob');
-      expect(result[2].name).toBe('Charlie');
-    });
-  });
-
   it('should calculate statistics', () => {
     expect(fromSelectors.selectAverageAge(state)).toBeGreaterThan(0);
     const byMonth = fromSelectors.selectBirthdaysByMonth(state);
@@ -148,44 +98,9 @@ describe('Birthday Selectors', () => {
       expect(fromSelectors.selectSearchTerm.projector(filters)).toBe('test');
     });
 
-    it('should select selected month', () => {
-      const filters = { ...initialBirthdayFilters, selectedMonth: 5 };
-      expect(fromSelectors.selectSelectedMonth.projector(filters)).toBe(5);
-    });
-
     it('should select selected category', () => {
       const filters = { ...initialBirthdayFilters, selectedCategory: 'family' };
       expect(fromSelectors.selectSelectedCategory.projector(filters)).toBe('family');
-    });
-
-    it('should select sort order', () => {
-      const filters = { ...initialBirthdayFilters, sortOrder: 'age' as const };
-      expect(fromSelectors.selectSortOrder.projector(filters)).toBe('age');
-    });
-  });
-
-  describe('Sorting in Filtered Birthdays', () => {
-    it('should sort by age', () => {
-      const stateWithAgeSort = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, sortOrder: 'age' as const }
-        }
-      };
-      const result = fromSelectors.selectFilteredBirthdays(stateWithAgeSort);
-      expect(result[0].name).toBe('Bob');
-      expect(result[2].name).toBe('Charlie');
-    });
-
-    it('should sort by next birthday', () => {
-      const stateWithNextBirthdaySort = {
-        birthdays: {
-          ...mockState,
-          filters: { ...mockState.filters, sortOrder: 'nextBirthday' as const }
-        }
-      };
-      const result = fromSelectors.selectFilteredBirthdays(stateWithNextBirthdaySort);
-      expect(result.length).toBe(3);
     });
   });
 

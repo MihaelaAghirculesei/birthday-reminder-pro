@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { BirthdayState } from './birthday.state';
 import { birthdayAdapter } from './birthday.reducer';
-import { calculateAge, DEFAULT_CATEGORY } from '../../../shared';
+import { calculateAge } from '../../../shared';
 import { getNextBirthdayDate, getDaysUntilBirthday } from '../../../shared/utils/date.utils';
 
 export const selectBirthdayState = createFeatureSelector<BirthdayState>('birthdays');
@@ -49,63 +49,9 @@ export const selectSearchTerm = createSelector(
   (filters) => filters.searchTerm
 );
 
-export const selectSelectedMonth = createSelector(
-  selectBirthdayFilters,
-  (filters) => filters.selectedMonth
-);
-
 export const selectSelectedCategory = createSelector(
   selectBirthdayFilters,
   (filters) => filters.selectedCategory
-);
-
-export const selectSortOrder = createSelector(
-  selectBirthdayFilters,
-  (filters) => filters.sortOrder
-);
-
-export const selectFilteredBirthdays = createSelector(
-  selectAllBirthdays,
-  selectBirthdayFilters,
-  (birthdays, filters) => {
-    let filtered = [...birthdays];
-
-    if (filters.searchTerm.trim()) {
-      filtered = filtered.filter(birthday =>
-        birthday.name.toLowerCase().includes(filters.searchTerm.toLowerCase())
-      );
-    }
-
-    if (filters.selectedMonth !== null) {
-      filtered = filtered.filter(birthday =>
-        birthday.birthDate.getMonth() === filters.selectedMonth
-      );
-    }
-
-    if (filters.selectedCategory !== null) {
-      filtered = filtered.filter(birthday =>
-        (birthday.category || DEFAULT_CATEGORY) === filters.selectedCategory
-      );
-    }
-
-    filtered.sort((a, b) => {
-      switch (filters.sortOrder) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'age':
-          return calculateAge(b.birthDate) - calculateAge(a.birthDate);
-        case 'nextBirthday': {
-          const nextA = getNextBirthdayDate(a.birthDate);
-          const nextB = getNextBirthdayDate(b.birthDate);
-          return nextA.getTime() - nextB.getTime();
-        }
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }
 );
 
 export const selectUpcomingBirthdays = (days = 30) => createSelector(
