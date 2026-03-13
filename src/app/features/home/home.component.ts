@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -23,7 +23,8 @@ import { Birthday } from '../../shared/models';
 import { getZodiacSign } from '../../shared/utils';
 import { CategoryFacadeService, LoggerService } from '../../core';
 import { Store } from '@ngrx/store';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { timer } from 'rxjs';
 import { AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
@@ -59,13 +60,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
         ]),
     ]
 })
-export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
+export class HomeComponent implements OnInit, AfterViewInit {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;
 
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   birthdayForm!: FormGroup;
   birthdays: Signal<Birthday[]> = toSignal(this.store.select(BirthdaySelectors.selectAllBirthdays), { initialValue: [] });
@@ -73,12 +75,13 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   selectedPhoto: string | null = null;
   isAddingTestData = signal(false);
   isAddBirthdayExpanded = false;
-  private testDataTimer: ReturnType<typeof setTimeout> | null = null;
   private dashboardComponentRef: ComponentRef<unknown> | null = null;
   private isDashboardLoaded = false;
   private viewReady = false;
 
   constructor() {
+    this.destroyRef.onDestroy(() => this.unloadDashboard());
+
     this.birthdayForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
       birthDate: ['', [Validators.required, this.pastDateValidator]],
@@ -143,18 +146,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   addTestData(): void {
     this.isAddingTestData.set(true);
     this.store.dispatch(BirthdayActions.loadTestData());
-    this.testDataTimer = setTimeout(() => {
-      this.isAddingTestData.set(false);
-      this.testDataTimer = null;
-    }, 1000);
-  }
-
-  ngOnDestroy(): void {
-    if (this.testDataTimer) {
-      clearTimeout(this.testDataTimer);
-      this.testDataTimer = null;
-    }
-    this.unloadDashboard();
+    timer(1000).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.isAddingTestData.set(false));
   }
 
   private async loadDashboard(): Promise<void> {
