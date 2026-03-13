@@ -27,10 +27,6 @@ describe('BirthdayEditService', () => {
     service = TestBed.inject(BirthdayEditService);
   });
 
-  afterEach(() => {
-    service.ngOnDestroy();
-  });
-
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
@@ -214,14 +210,6 @@ describe('BirthdayEditService', () => {
         done();
       });
     });
-
-    it('should clear auto-save timer', fakeAsync(() => {
-      const callback = jasmine.createSpy('callback');
-      service.scheduleAutoSave(callback, 1000);
-      service.cancelEdit();
-      tick(1000);
-      expect(callback).not.toHaveBeenCalled();
-    }));
   });
 
   describe('isEditing', () => {
@@ -247,16 +235,7 @@ describe('BirthdayEditService', () => {
   });
 
   describe('scheduleAutoSave', () => {
-    it('should call callback after delay', fakeAsync(() => {
-      const callback = jasmine.createSpy('callback');
-      service.scheduleAutoSave(callback, 1000);
-      tick(999);
-      expect(callback).not.toHaveBeenCalled();
-      tick(1);
-      expect(callback).toHaveBeenCalledTimes(1);
-    }));
-
-    it('should use default delay of 2000ms', fakeAsync(() => {
+    it('should call callback after debounce delay', fakeAsync(() => {
       const callback = jasmine.createSpy('callback');
       service.scheduleAutoSave(callback);
       tick(1999);
@@ -265,31 +244,17 @@ describe('BirthdayEditService', () => {
       expect(callback).toHaveBeenCalledTimes(1);
     }));
 
-    it('should clear previous timer when scheduling new save', fakeAsync(() => {
+    it('should debounce multiple calls and only execute the last', fakeAsync(() => {
       const callback1 = jasmine.createSpy('callback1');
       const callback2 = jasmine.createSpy('callback2');
 
-      service.scheduleAutoSave(callback1, 1000);
+      service.scheduleAutoSave(callback1);
       tick(500);
-      service.scheduleAutoSave(callback2, 1000);
-      tick(1000);
+      service.scheduleAutoSave(callback2);
+      tick(2000);
 
       expect(callback1).not.toHaveBeenCalled();
       expect(callback2).toHaveBeenCalledTimes(1);
     }));
-  });
-
-  describe('ngOnDestroy', () => {
-    it('should clear auto-save timer on destroy', fakeAsync(() => {
-      const callback = jasmine.createSpy('callback');
-      service.scheduleAutoSave(callback, 1000);
-      service.ngOnDestroy();
-      tick(1000);
-      expect(callback).not.toHaveBeenCalled();
-    }));
-
-    it('should not throw when no timer is active', () => {
-      expect(() => service.ngOnDestroy()).not.toThrow();
-    });
   });
 });

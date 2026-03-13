@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, OnDestroy, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, signal, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { take, switchMap, EMPTY, map } from 'rxjs';
+import { take, switchMap, EMPTY, map, timer } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
@@ -39,7 +40,7 @@ interface EnrichedBirthday extends Birthday {
     styleUrls: ['./birthday-list.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BirthdayListComponent implements OnChanges, OnDestroy {
+export class BirthdayListComponent implements OnChanges {
   @Input() birthdays: Birthday[] = [];
   @Input() categories: BirthdayCategory[] = [];
   @Input() searchTerm = '';
@@ -57,11 +58,10 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
 
   isAddingTestData = signal(false);
   isClearingData = signal(false);
-  private testDataTimer?: ReturnType<typeof setTimeout>;
-  private clearDataTimer?: ReturnType<typeof setTimeout>;
 
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthdays']) {
@@ -87,7 +87,7 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
   onAddTestData(): void {
     this.isAddingTestData.set(true);
     this.addTestData.emit();
-    this.testDataTimer = setTimeout(() => this.isAddingTestData.set(false), 2000);
+    timer(2000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.isAddingTestData.set(false));
   }
 
   onClearAllData(): void {
@@ -106,18 +106,13 @@ export class BirthdayListComponent implements OnChanges, OnDestroy {
       if (confirmed) {
         this.isClearingData.set(true);
         this.clearAllData.emit();
-        this.clearDataTimer = setTimeout(() => this.isClearingData.set(false), 2000);
+        timer(2000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.isClearingData.set(false));
       }
     });
   }
 
   onBirthdaysImported(birthdays: Birthday[]): void {
     this.birthdaysImported.emit(birthdays);
-  }
-
-  ngOnDestroy(): void {
-    if (this.testDataTimer) clearTimeout(this.testDataTimer);
-    if (this.clearDataTimer) clearTimeout(this.clearDataTimer);
   }
 
   trackByBirthday(_index: number, birthday: Birthday): string {

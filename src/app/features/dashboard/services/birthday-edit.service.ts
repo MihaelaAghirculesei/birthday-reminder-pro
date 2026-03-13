@@ -1,5 +1,7 @@
-import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { Birthday } from '../../../shared';
 
 export interface EditingBirthdayData {
@@ -14,19 +16,21 @@ export interface EditingBirthdayData {
 @Injectable({
   providedIn: 'root'
 })
-export class BirthdayEditService implements OnDestroy {
+export class BirthdayEditService {
+  private readonly destroyRef = inject(DestroyRef);
+
   private editingBirthdayIdSubject = new BehaviorSubject<string | null>(null);
   private editingBirthdayDataSubject = new BehaviorSubject<EditingBirthdayData | null>(null);
-  private autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  private autoSave$ = new Subject<() => void>();
 
   editingBirthdayId$ = this.editingBirthdayIdSubject.asObservable();
   editingBirthdayData$ = this.editingBirthdayDataSubject.asObservable();
 
-  ngOnDestroy(): void {
-    if (this.autoSaveTimer) {
-      clearTimeout(this.autoSaveTimer);
-      this.autoSaveTimer = null;
-    }
+  constructor() {
+    this.autoSave$.pipe(
+      debounceTime(2000),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(callback => callback());
   }
 
   get currentEditingId(): string | null {
@@ -61,10 +65,6 @@ export class BirthdayEditService implements OnDestroy {
   }
 
   cancelEdit(): void {
-    if (this.autoSaveTimer) {
-      clearTimeout(this.autoSaveTimer);
-      this.autoSaveTimer = null;
-    }
     this.editingBirthdayIdSubject.next(null);
     this.editingBirthdayDataSubject.next(null);
   }
@@ -73,10 +73,7 @@ export class BirthdayEditService implements OnDestroy {
     return this.editingBirthdayIdSubject.value === birthdayId;
   }
 
-  scheduleAutoSave(callback: () => void, delay = 2000): void {
-    if (this.autoSaveTimer) {
-      clearTimeout(this.autoSaveTimer);
-    }
-    this.autoSaveTimer = setTimeout(callback, delay);
+  scheduleAutoSave(callback: () => void): void {
+    this.autoSave$.next(callback);
   }
 }

@@ -247,21 +247,4 @@ describe('BirthdayListComponent', () => {
       expect(store.dispatch).toHaveBeenCalled();
     });
   });
-
-  describe('Component cleanup', () => {
-    it('should clear timers on destroy', fakeAsync(() => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogSpy.open.and.returnValue(mockDialogRef);
-
-      component.onAddTestData();
-      component.onClearAllData();
-
-      component.ngOnDestroy();
-
-      // Timers should be cleared
-      expect(component['testDataTimer']).toBeDefined();
-      expect(component['clearDataTimer']).toBeDefined();
-    }));
-  });
 });
