@@ -1,9 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { NetworkService } from './network.service';
+import { Subscription } from 'rxjs';
 
 describe('NetworkService', () => {
   let service: NetworkService;
+  let subscription: Subscription;
+
+  afterEach(() => {
+    if (subscription) {
+      subscription.unsubscribe();
+    }
+  });
 
   describe('Browser environment', () => {
     beforeEach(() => {
@@ -25,7 +33,7 @@ describe('NetworkService', () => {
     });
 
     it('should have online$ observable', (done) => {
-      service.online$.subscribe(online => {
+      subscription = service.online$.subscribe(online => {
         expect(typeof online).toBe('boolean');
         done();
       });
@@ -37,7 +45,7 @@ describe('NetworkService', () => {
 
     it('should update online status when navigator.onLine changes', (done) => {
       let callCount = 0;
-      service.online$.subscribe(online => {
+      subscription = service.online$.subscribe(online => {
         callCount++;
         if (callCount === 1) {
           expect(online).toBe(navigator.onLine);
@@ -54,7 +62,7 @@ describe('NetworkService', () => {
 
     it('should respond to offline event', (done) => {
       let callCount = 0;
-      service.online$.subscribe(online => {
+      subscription = service.online$.subscribe(online => {
         callCount++;
         if (callCount === 2) {
           expect(online).toBe(false);
@@ -68,7 +76,7 @@ describe('NetworkService', () => {
 
     it('should respond to online event', (done) => {
       let callCount = 0;
-      service.online$.subscribe(online => {
+      subscription = service.online$.subscribe(online => {
         callCount++;
         if (callCount === 2) {
           expect(online).toBe(true);
@@ -105,39 +113,10 @@ describe('NetworkService', () => {
     });
 
     it('should have online$ observable on server', (done) => {
-      service.online$.subscribe(online => {
+      subscription = service.online$.subscribe(online => {
         expect(online).toBe(true);
         done();
       });
-    });
-  });
-
-  describe('ngOnDestroy', () => {
-    beforeEach(() => {
-      TestBed.configureTestingModule({
-        providers: [
-          NetworkService,
-          { provide: PLATFORM_ID, useValue: 'browser' }
-        ]
-      });
-      service = TestBed.inject(NetworkService);
-    });
-
-    it('should unsubscribe from network events', () => {
-      const subscription = service['networkSubscription'];
-      if (subscription) {
-        spyOn(subscription, 'unsubscribe');
-        service.ngOnDestroy();
-        expect(subscription.unsubscribe).toHaveBeenCalled();
-      } else {
-        service.ngOnDestroy();
-        expect(true).toBe(true);
-      }
-    });
-
-    it('should not throw if networkSubscription is undefined', () => {
-      service['networkSubscription'] = undefined;
-      expect(() => service.ngOnDestroy()).not.toThrow();
     });
   });
 });

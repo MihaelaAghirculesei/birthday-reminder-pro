@@ -1,26 +1,23 @@
-import { Injectable, Inject, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, fromEvent, merge, Subscription } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
-export class NetworkService implements OnDestroy {
+export class NetworkService {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+
   private onlineSubject = new BehaviorSubject<boolean>(true);
   public online$ = this.onlineSubject.asObservable();
-  private networkSubscription?: Subscription;
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+  constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.onlineSubject.next(navigator.onLine);
       this.initializeNetworkListener();
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.networkSubscription) {
-      this.networkSubscription.unsubscribe();
     }
   }
 
@@ -29,7 +26,9 @@ export class NetworkService implements OnDestroy {
       const online$ = fromEvent(window, 'online').pipe(map(() => true));
       const offline$ = fromEvent(window, 'offline').pipe(map(() => false));
 
-      this.networkSubscription = merge(online$, offline$).subscribe((isOnline: boolean) => {
+      merge(online$, offline$).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe((isOnline: boolean) => {
         this.onlineSubject.next(isOnline);
       });
     }
