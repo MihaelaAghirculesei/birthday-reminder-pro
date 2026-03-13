@@ -26,7 +26,13 @@
   <mat-card class="add-birthday-card">
     <mat-card-header class="collapsible-header"
       data-testid="add-birthday-button"
+      role="button"
+      tabindex="0"
+      [attr.aria-expanded]="isAddBirthdayExpanded"
+      aria-controls="add-birthday-form"
       (click)="toggleAddBirthdaySection()"
+      (keydown.enter)="toggleAddBirthdaySection()"
+      (keydown.space)="toggleAddBirthdaySection(); $event.preventDefault()"
       [title]="isAddBirthdayExpanded ? 'Click to close form' : 'Click to add new birthday'">
       <mat-card-title>✨ Add New Birthday</mat-card-title>
       <mat-icon class="expand-icon" [class.expanded]="isAddBirthdayExpanded">
@@ -34,7 +40,7 @@
       </mat-icon>
     </mat-card-header>
     @if (isAddBirthdayExpanded) {
-      <mat-card-content [@expandCollapse]>
+      <mat-card-content id="add-birthday-form" [@expandCollapse]>
         <form [formGroup]="birthdayForm" (ngSubmit)="onSubmit()" class="birthday-form">
           <app-photo-upload
             [currentPhoto]="selectedPhoto"

@@ -74,6 +74,17 @@
         }
       }
 
+      &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+
+        :host-context(body.dark-theme) & {
+          outline-color: rgba(255, 255, 255, 0.6);
+          background: $dark-theme-gradient;
+        }
+      }
+
       .expand-icon {
         transition: $transition-smooth;
         backdrop-filter: blur(10px);
