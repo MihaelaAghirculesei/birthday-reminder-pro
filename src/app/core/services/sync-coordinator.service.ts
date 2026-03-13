@@ -1,8 +1,8 @@
 import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { Subject, Subscription, firstValueFrom } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subscription, firstValueFrom } from 'rxjs';
 
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
@@ -28,12 +28,17 @@ export class SyncCoordinatorService {
   private readonly pendingChanges = inject(PendingChangesService);
   private readonly networkService = inject(NetworkService);
   private readonly logger = inject(LoggerService);
-
   private readonly destroyRef = inject(DestroyRef);
-  private readonly destroy$ = new Subject<void>();
+
   private subscriptions: Subscription[] = [];
   private isInitialized = false;
   private hasActiveListeners = false;
+
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.teardownCloudListeners();
+    });
+  }
 
   async initialize(): Promise<void> {
     if (!isPlatformBrowser(this.platformId) || this.isInitialized) return;
@@ -44,7 +49,7 @@ export class SyncCoordinatorService {
     this.updatePendingCount();
 
     this.networkService.online$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isOnline) => {
         this.store.dispatch(SyncActions.setOnlineStatus({ isOnline }));
         if (isOnline) {
@@ -53,7 +58,7 @@ export class SyncCoordinatorService {
       });
 
     this.store.select(AuthSelectors.selectAuthUser)
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => {
         if (user) {
           this.setupCloudListeners(user.uid);
@@ -64,7 +69,7 @@ export class SyncCoordinatorService {
       });
 
     this.pendingChanges.changes$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updatePendingCount();
       });
@@ -77,13 +82,13 @@ export class SyncCoordinatorService {
     this.firestoreService.subscribeToCategories(userId);
 
     const birthdaysSub = this.firestoreService.birthdays$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((birthdays) => {
         this.store.dispatch(SyncActions.cloudBirthdaysUpdated({ birthdays }));
       });
 
     const categoriesSub = this.firestoreService.categories$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((categories) => {
         this.store.dispatch(SyncActions.cloudCategoriesUpdated({ categories }));
       });
@@ -310,17 +315,5 @@ export class SyncCoordinatorService {
   private updatePendingCount(): void {
     const count = this.pendingChanges.pendingCount;
     this.store.dispatch(SyncActions.updatePendingCount({ count }));
-  }
-
-  constructor() {
-    try {
-      this.destroyRef.onDestroy(() => {
-        this.destroy$.next();
-        this.destroy$.complete();
-        this.teardownCloudListeners();
-      });
-    } catch (e) {
-      this.logger.warn('[SyncCoordinator] DestroyRef not available:', e);
-    }
   }
 }

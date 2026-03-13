@@ -2,8 +2,7 @@ import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
-import { interval, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subscription, interval } from 'rxjs';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { IndexedDBStorageService } from './offline-storage.service';
@@ -26,8 +25,9 @@ export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly destroy$ = new Subject<void>();
   private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  private intervalSubscription?: Subscription;
+  private destroyed = false;
 
   private readonly permissionService = inject(NotificationPermissionService);
 
@@ -40,19 +40,14 @@ export class PushNotificationService {
     private logger: LoggerService,
     private senderSettings: SenderSettingsService
   ) {
-    try {
-      this.destroyRef.onDestroy(() => {
-        this.destroy$.next();
-        this.destroy$.complete();
-        // Clear all browser timeouts
-        for (const timeout of this.browserTimeouts.values()) {
-          clearTimeout(timeout);
-        }
-        this.browserTimeouts.clear();
-      });
-    } catch (e) {
-      this.logger.warn('[PushNotification] DestroyRef not available:', e);
-    }
+    this.destroyRef.onDestroy(() => {
+      this.destroyed = true;
+      this.intervalSubscription?.unsubscribe();
+      for (const timeout of this.browserTimeouts.values()) {
+        clearTimeout(timeout);
+      }
+      this.browserTimeouts.clear();
+    });
     this.initializeNotifications();
   }
 
@@ -82,14 +77,19 @@ export class PushNotificationService {
       await Notification.requestPermission();
     }
 
+    // Guard: if destroyed during async init, bail out
+    if (this.destroyed) return;
+
     // Schedule precise timeouts for today's messages
     await this.scheduleAllBrowserTimeouts();
+
+    // Guard: if destroyed during async init, bail out
+    if (this.destroyed) return;
 
     // Fallback polling every 30s with wider window
     this.checkBrowserNotifications();
 
-    interval(30000)
-      .pipe(takeUntil(this.destroy$))
+    this.intervalSubscription = interval(30000)
       .subscribe(() => this.checkBrowserNotifications());
   }
 
