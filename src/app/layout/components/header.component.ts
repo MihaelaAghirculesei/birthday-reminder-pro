@@ -1,6 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone, signal, computed } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -8,21 +7,17 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatDialog } from '@angular/material/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NetworkStatusComponent } from '../../shared/components/network-status.component';
-import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
 
-import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
-import { ThemeService, NotificationService } from '../../core';
-import { NotificationPermissionService } from '../../core/services/notification-permission.service';
-import { BackupService } from '../../core/services/backup.service';
-import { Birthday } from '../../shared/models';
 import { AppState } from '../../core/store/app.state';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
-import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
-import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+
+import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
+import { HeaderImportExportComponent } from './header-import-export.component';
+import { HeaderUserMenuComponent } from './header-user-menu.component';
+import { HeaderNavStripComponent } from './header-nav-strip.component';
 
 @Component({
     selector: 'app-header',
@@ -30,12 +25,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
       CommonModule,
       RouterModule,
       NetworkStatusComponent,
-      AuthButtonComponent,
       MatIconModule,
       MatButtonModule,
       MatMenuModule,
       MatDividerModule,
-      NgOptimizedImage
+      HeaderSettingsMenuComponent,
+      HeaderImportExportComponent,
+      HeaderUserMenuComponent,
+      HeaderNavStripComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
@@ -54,83 +51,31 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
             <span>Messages</span>
           </a>
           <mat-divider></mat-divider>
-          <button mat-menu-item [matMenuTriggerFor]="settingsMenu">
+          <button mat-menu-item [matMenuTriggerFor]="mobileSettings.settingsMenu">
             <mat-icon>settings</mat-icon>
             <span>Settings</span>
           </button>
-          <button mat-menu-item [matMenuTriggerFor]="importMenu">
+          <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.importMenu">
             <mat-icon>upload_file</mat-icon>
             <span>Import</span>
           </button>
-          <button mat-menu-item [matMenuTriggerFor]="exportMenu">
+          <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.exportMenu">
             <mat-icon>download</mat-icon>
             <span>Export</span>
           </button>
           <mat-divider></mat-divider>
-          @if (isAuthenticated()) {
-            <div mat-menu-item disabled class="user-info-menu-item">
-              @if (userPhotoURL()) {
-                <mat-icon class="avatar-icon">
-                  <img [ngSrc]="userPhotoURL()!" [alt]="userDisplayName() || 'User'" class="menu-user-avatar" width="24" height="24" referrerpolicy="no-referrer" />
-                </mat-icon>
-              } @else {
-                <mat-icon>account_circle</mat-icon>
-              }
-              <span>{{ userDisplayName() || 'User' }} · <small class="menu-user-email">{{ userEmail() }}</small></span>
-            </div>
-            <button mat-menu-item (click)="signOut()">
-              <mat-icon>logout</mat-icon>
-              <span>Sign out</span>
-            </button>
-          } @else if (!authLoading()) {
-            <app-auth-button></app-auth-button>
-          }
+          <app-header-user-menu
+            mode="mobile"
+            [isAuthenticated]="isAuthenticated()"
+            [authLoading]="authLoading()"
+            [userDisplayName]="userDisplayName()"
+            [userEmail]="userEmail()"
+            [userPhotoURL]="userPhotoURL()"
+            (signOutClicked)="signOut()">
+          </app-header-user-menu>
         </mat-menu>
-        <mat-menu #importMenu="matMenu" class="nav-menu-panel nav-submenu" xPosition="before">
-          <button mat-menu-item (click)="importJSON.click()">
-            <mat-icon>data_object</mat-icon>
-            <span>Import JSON</span>
-          </button>
-          <button mat-menu-item (click)="importCSV.click()">
-            <mat-icon>table_chart</mat-icon>
-            <span>Import CSV</span>
-          </button>
-          <button mat-menu-item (click)="importVCard.click()">
-            <mat-icon>contact_page</mat-icon>
-            <span>Import vCard</span>
-          </button>
-        </mat-menu>
-        <mat-menu #exportMenu="matMenu" class="nav-menu-panel nav-submenu" xPosition="before">
-          <button mat-menu-item (click)="exportJSON()">
-            <mat-icon>data_object</mat-icon>
-            <span>Export JSON</span>
-          </button>
-          <button mat-menu-item (click)="exportCSV()">
-            <mat-icon>table_chart</mat-icon>
-            <span>Export CSV</span>
-          </button>
-        </mat-menu>
-        <mat-menu #settingsMenu="matMenu" class="nav-menu-panel nav-submenu" xPosition="before">
-          <a mat-menu-item routerLink="/calendar-sync" aria-label="Go to calendar sync page">
-            <mat-icon>sync</mat-icon>
-            <span>Calendar Sync</span>
-          </a>
-          <button mat-menu-item (click)="openSenderSettings()">
-            <mat-icon>badge</mat-icon>
-            <span>Message Signature</span>
-          </button>
-          <button mat-menu-item (click)="toggleNotifications()">
-            <mat-icon>{{ notificationIcon() }}</mat-icon>
-            <span>{{ notificationLabel() }}</span>
-          </button>
-          <button mat-menu-item (click)="themeService.toggleDarkMode()">
-            <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-            <span>{{ themeService.darkMode() ? 'Light Theme' : 'Dark Theme' }}</span>
-          </button>
-        </mat-menu>
-        <input #importJSON type="file" accept=".json" hidden (change)="onImportJSON($event)">
-        <input #importCSV type="file" accept=".csv" hidden (change)="onImportCSV($event)">
-        <input #importVCard type="file" accept=".vcf" hidden (change)="onImportVCard($event)">
+        <app-header-settings-menu #mobileSettings menuClass="nav-menu-panel nav-submenu" />
+        <app-header-import-export #mobileImportExport menuClass="nav-menu-panel nav-submenu" />
         <h1 class="hero-title" id="main-title">
           <picture>
             <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="46" height="46">
@@ -143,91 +88,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
         </div>
       </div>
       <p class="hero-subtitle">Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style.</p>
-      <nav class="nav-strip" role="navigation" aria-label="Main navigation">
-        <a mat-button routerLink="/" class="nav-strip-item">
-          <mat-icon>home</mat-icon>
-          <span>Dashboard</span>
-        </a>
-        <a mat-button routerLink="/scheduled-messages" class="nav-strip-item">
-          <mat-icon>schedule_send</mat-icon>
-          <span>Messages</span>
-        </a>
-        <button mat-button [matMenuTriggerFor]="stripSettingsMenu" class="nav-strip-item">
-          <mat-icon>settings</mat-icon>
-          <span>Settings</span>
-          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
-        </button>
-        <button mat-button [matMenuTriggerFor]="stripImportMenu" class="nav-strip-item">
-          <mat-icon>upload_file</mat-icon>
-          <span>Import</span>
-          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
-        </button>
-        <button mat-button [matMenuTriggerFor]="stripExportMenu" class="nav-strip-item">
-          <mat-icon>download</mat-icon>
-          <span>Export</span>
-          <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
-        </button>
-        @if (isAuthenticated()) {
-          <div class="nav-strip-spacer"></div>
-          <div class="nav-strip-user">
-            @if (userPhotoURL()) {
-              <img [ngSrc]="userPhotoURL()!" [alt]="userDisplayName() || 'User'" class="nav-strip-avatar" width="28" height="28" referrerpolicy="no-referrer" />
-            } @else {
-              <mat-icon class="nav-strip-user-icon">account_circle</mat-icon>
-            }
-            <span class="nav-strip-user-name">{{ userDisplayName() || 'User' }}</span>
-          </div>
-          <button mat-button (click)="signOut()" class="nav-strip-item nav-strip-signout">
-            <mat-icon>logout</mat-icon>
-            <span>Sign out</span>
-          </button>
-        } @else if (!authLoading()) {
-          <div class="nav-strip-spacer"></div>
-          <app-auth-button></app-auth-button>
-        }
-      </nav>
-      <mat-menu #stripSettingsMenu="matMenu" class="nav-strip-dropdown">
-        <a mat-menu-item routerLink="/calendar-sync">
-          <mat-icon>sync</mat-icon>
-          <span>Calendar Sync</span>
-        </a>
-        <button mat-menu-item (click)="openSenderSettings()">
-          <mat-icon>badge</mat-icon>
-          <span>Message Signature</span>
-        </button>
-        <button mat-menu-item (click)="toggleNotifications()">
-          <mat-icon>{{ notificationIcon() }}</mat-icon>
-          <span>{{ notificationLabel() }}</span>
-        </button>
-        <button mat-menu-item (click)="themeService.toggleDarkMode()">
-          <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-          <span>{{ themeService.darkMode() ? 'Light Theme' : 'Dark Theme' }}</span>
-        </button>
-      </mat-menu>
-      <mat-menu #stripImportMenu="matMenu" class="nav-strip-dropdown">
-        <button mat-menu-item (click)="importJSON.click()">
-          <mat-icon>data_object</mat-icon>
-          <span>Import JSON</span>
-        </button>
-        <button mat-menu-item (click)="importCSV.click()">
-          <mat-icon>table_chart</mat-icon>
-          <span>Import CSV</span>
-        </button>
-        <button mat-menu-item (click)="importVCard.click()">
-          <mat-icon>contact_page</mat-icon>
-          <span>Import vCard</span>
-        </button>
-      </mat-menu>
-      <mat-menu #stripExportMenu="matMenu" class="nav-strip-dropdown">
-        <button mat-menu-item (click)="exportJSON()">
-          <mat-icon>data_object</mat-icon>
-          <span>Export JSON</span>
-        </button>
-        <button mat-menu-item (click)="exportCSV()">
-          <mat-icon>table_chart</mat-icon>
-          <span>Export CSV</span>
-        </button>
-      </mat-menu>
+      <app-header-nav-strip
+        [isAuthenticated]="isAuthenticated()"
+        [authLoading]="authLoading()"
+        [userDisplayName]="userDisplayName()"
+        [userEmail]="userEmail()"
+        [userPhotoURL]="userPhotoURL()"
+        (signOutClicked)="signOut()">
+      </app-header-nav-strip>
     </header>
   `,
     styles: [`
@@ -396,55 +264,6 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
       }
     }
 
-    .menu-user-email {
-      font-size: 0.75em;
-      opacity: 0.6;
-    }
-
-    .avatar-icon {
-      overflow: visible !important;
-    }
-
-    .menu-user-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .menu-btn {
-      display: none;
-      position: absolute;
-      left: 0;
-      align-items: center;
-      justify-content: center;
-      color: #1a1a1a;
-      opacity: 0.9;
-      width: var(--header-icon-size);
-      height: var(--header-icon-size);
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius);
-      transition: background 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
-      &:hover {
-        opacity: 1;
-        background: rgba(0, 0, 0, 0.1);
-        border-color: rgba(0, 0, 0, 0.3);
-      }
-
-      :host-context(body.dark-theme) & {
-        color: white;
-        border-color: rgba(255, 255, 255, 0.2);
-        &:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: rgba(255, 255, 255, 0.35);
-        }
-      }
-    }
-
-    app-network-status {
-      position: static;
-    }
-
     ::ng-deep .nav-strip-dropdown.mat-mdc-menu-panel {
       background: rgba(102, 126, 234, 0.5);
       backdrop-filter: blur(20px);
@@ -515,135 +334,42 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
       }
     }
 
-    .nav-strip {
-      display: flex;
+    .menu-btn {
+      display: none;
+      position: absolute;
+      left: 0;
       align-items: center;
-      gap: 1.25rem;
-      margin: 0.5rem -1.5rem -1rem;
-      padding: 0.35rem max(0.75rem, calc((100vw - var(--content-max-width)) / 2 + 0.75rem));
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-      flex-wrap: wrap;
-
-      :host-context(body.dark-theme) & {
-        background: rgba(255, 255, 255, 0.06);
-        border-top-color: rgba(255, 255, 255, 0.08);
-      }
-    }
-
-    .nav-strip-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      color: #1a1a1a !important;
-      font-size: 0.85rem;
-      font-weight: 500;
-      border-radius: 8px;
-      padding: 0.3rem 0.75rem;
-      min-height: 36px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: background 0.2s ease, border-color 0.2s ease;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.08);
-        border-color: rgba(0, 0, 0, 0.15);
-      }
-
-      .mat-icon {
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
-        color: #1a1a1a;
-      }
-
-      :host-context(body.dark-theme) & {
-        color: white !important;
-        border-color: rgba(255, 255, 255, 0.12);
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.25);
-        }
-
-        .mat-icon {
-          color: rgba(255, 255, 255, 0.85);
-        }
-      }
-    }
-
-    .nav-strip-arrow {
-      font-size: 18px !important;
-      width: 18px !important;
-      height: 18px !important;
-      margin-left: -0.2rem;
-      opacity: 0.6;
-    }
-
-    .nav-strip-spacer {
-      flex: 1;
-    }
-
-    .nav-strip-user {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0 0.5rem;
-      font-size: 0.85rem;
+      justify-content: center;
       color: #1a1a1a;
-      opacity: 0.85;
+      opacity: 0.9;
+      width: var(--header-icon-size);
+      height: var(--header-icon-size);
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius);
+      transition: background 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+      &:hover {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.1);
+        border-color: rgba(0, 0, 0, 0.3);
+      }
 
       :host-context(body.dark-theme) & {
         color: white;
+        border-color: rgba(255, 255, 255, 0.2);
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.35);
+        }
       }
     }
 
-    .nav-strip-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .nav-strip-user-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
-
-    .nav-strip-user-name {
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .nav-strip-signout {
-      opacity: 0.7;
-      &:hover {
-        opacity: 1;
-      }
-    }
-
-    @media (max-width: 1180px) {
-      .nav-strip {
-        gap: 0.5rem;
-      }
-
-      .nav-strip-item {
-        padding: 0.3rem 0.5rem;
-        gap: 0.25rem;
-        font-size: 0.8rem;
-      }
+    app-network-status {
+      position: static;
     }
 
     @media (max-width: 1010px) {
       .menu-btn {
         display: inline-flex;
-      }
-
-      .nav-strip {
-        display: none;
       }
     }
 
@@ -695,78 +421,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store<AppState>);
-  private readonly dialog = inject(MatDialog);
-  private readonly backupService = inject(BackupService);
-  private readonly notificationService = inject(NotificationService);
-
-  private readonly birthdays = toSignal(
-    this.store.select(BirthdaySelectors.selectAllBirthdays),
-    { initialValue: [] }
-  );
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly el = inject(ElementRef);
-  public readonly themeService = inject(ThemeService);
-  private readonly permissionService = inject(NotificationPermissionService);
-  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
-  notificationsGranted = signal(false);
-  notificationsEnabled = signal(false);
-  notificationIcon = computed(() =>
-    this.notificationsGranted() && this.notificationsEnabled() ? 'notifications_active'
-    : this.notificationsGranted() ? 'notifications_off'
-    : 'notifications'
-  );
-  notificationLabel = computed(() =>
-    this.notificationsGranted() && this.notificationsEnabled() ? 'Disable Notifications' : 'Enable Notifications'
-  );
   private lastScrollY = 0;
   private readonly scrollThreshold = 10;
-
-  ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.notificationsGranted.set(this.permissionService.getCurrentPermission() === 'granted');
-      this.notificationsEnabled.set(this.permissionService.isNotificationsEnabled());
-      this.permissionService.permissionStatus.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(status => {
-        this.notificationsGranted.set(status === 'granted');
-      });
-      this.permissionService.notificationsEnabled.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(enabled => {
-        this.notificationsEnabled.set(enabled);
-      });
-      this.lastScrollY = this.getScrollY();
-      this.ngZone.runOutsideAngular(() => {
-        window.addEventListener('scroll', this.onScroll, { passive: true });
-        document.body.addEventListener('scroll', this.onScroll, { passive: true });
-      });
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      window.removeEventListener('scroll', this.onScroll);
-      document.body.removeEventListener('scroll', this.onScroll);
-    }
-  }
-
-  private getScrollY(): number {
-    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
-  }
-
-  private onScroll = (): void => {
-    const currentY = this.getScrollY();
-    if (currentY <= 0) {
-      this.el.nativeElement.classList.remove('header-hidden');
-      this.lastScrollY = currentY;
-    } else if (currentY > this.lastScrollY + this.scrollThreshold) {
-      this.el.nativeElement.classList.add('header-hidden');
-      this.lastScrollY = currentY;
-    } else if (currentY < this.lastScrollY - this.scrollThreshold) {
-      this.el.nativeElement.classList.remove('header-hidden');
-      this.lastScrollY = currentY;
-    }
-  };
 
   isAuthenticated = toSignal(
     this.store.select(AuthSelectors.selectIsAuthenticated),
@@ -793,61 +455,42 @@ export class HeaderComponent implements OnInit, OnDestroy {
     { initialValue: null }
   );
 
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.lastScrollY = this.getScrollY();
+      this.ngZone.runOutsideAngular(() => {
+        window.addEventListener('scroll', this.onScroll, { passive: true });
+        document.body.addEventListener('scroll', this.onScroll, { passive: true });
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('scroll', this.onScroll);
+      document.body.removeEventListener('scroll', this.onScroll);
+    }
+  }
+
   signOut(): void {
     this.store.dispatch(AuthActions.signOut());
   }
 
-  async toggleNotifications(): Promise<void> {
-    if (!this.notificationsGranted()) {
-      const granted = await this.permissionService.requestPermission();
-      if (granted) {
-        this.notificationService.show('Notifications enabled!', 'success');
-      }
-    } else if (this.notificationsEnabled()) {
-      this.permissionService.setNotificationsEnabled(false);
-      this.notificationService.show('Notifications disabled', 'info');
-    } else {
-      this.permissionService.setNotificationsEnabled(true);
-      this.notificationService.show('Notifications enabled!', 'success');
+  private getScrollY(): number {
+    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  private onScroll = (): void => {
+    const currentY = this.getScrollY();
+    if (currentY <= 0) {
+      this.el.nativeElement.classList.remove('header-hidden');
+      this.lastScrollY = currentY;
+    } else if (currentY > this.lastScrollY + this.scrollThreshold) {
+      this.el.nativeElement.classList.add('header-hidden');
+      this.lastScrollY = currentY;
+    } else if (currentY < this.lastScrollY - this.scrollThreshold) {
+      this.el.nativeElement.classList.remove('header-hidden');
+      this.lastScrollY = currentY;
     }
-  }
-
-  openSenderSettings(): void {
-    this.dialog.open(SenderSettingsDialogComponent, {
-      width: '400px',
-      maxWidth: '95vw'
-    });
-  }
-
-  exportJSON(): void { this.handleExport(b => this.backupService.exportToJSON(b), 'Exported to JSON'); }
-  exportCSV(): void { this.handleExport(b => this.backupService.exportToCSV(b), 'Exported to CSV'); }
-
-  onImportJSON(event: Event): void { this.handleImport(event, f => this.backupService.importFromFile(f), 'Invalid backup file'); }
-  onImportCSV(event: Event): void { this.handleImport(event, f => this.backupService.importFromCSV(f), 'Invalid CSV file'); }
-  onImportVCard(event: Event): void { this.handleImport(event, f => this.backupService.importFromVCard(f), 'Invalid vCard file'); }
-
-  private handleExport(exporter: (b: Birthday[]) => void, successMsg: string): void {
-    const birthdays = this.birthdays();
-    if (birthdays.length === 0) {
-      this.notificationService.show('No birthdays to export', 'warning');
-      return;
-    }
-    exporter(birthdays);
-    this.notificationService.show(successMsg, 'success');
-  }
-
-  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, errorMsg: string): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    try {
-      const birthdays = await importer(file);
-      for (const birthday of birthdays) {
-        this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
-      }
-      this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
-    } catch {
-      this.notificationService.show(errorMsg, 'error');
-    }
-    (event.target as HTMLInputElement).value = '';
-  }
+  };
 }
