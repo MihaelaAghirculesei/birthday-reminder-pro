@@ -1,3 +1,5 @@
+@use 'breakpoints' as *;
+
 // Shared color variables
 $white-50: rgba(255, 255, 255, 0.5) !default;
 $white-70: rgba(255, 255, 255, 0.7) !default;
@@ -32,30 +34,30 @@ $btn-delete-end: #c82333 !default;
 $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
 @mixin circular-button($size, $gradient-start, $gradient-end, $icon-size: 20px) {
-  width: $size !important;
-  height: $size !important;
-  background: linear-gradient(135deg, $gradient-start 0%, $gradient-end 100%) !important;
-  color: white !important;
-  border-radius: 50% !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
-  transition: $transition-smooth !important;
-  border: none !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  width: $size;
+  height: $size;
+  background: linear-gradient(135deg, $gradient-start 0%, $gradient-end 100%);
+  color: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: $transition-smooth;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    transform: translateY(-1px) scale(1.1) !important;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-1px) scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
   }
 
-  .mat-mdc-button-touch-target { display: none !important; }
+  .mat-mdc-button-touch-target { display: none; }
 
   mat-icon, .icon, [class$='-icon'] {
-    font-size: $icon-size !important;
-    width: $icon-size !important;
-    height: $icon-size !important;
-    color: white !important;
+    font-size: $icon-size;
+    width: $icon-size;
+    height: $icon-size;
+    color: white;
     transition: all 0.3s ease;
   }
 
@@ -118,7 +120,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     padding: 32px !important;
     overflow: visible !important;
 
-    @media (max-width: 390px) {
+    @include respond-to('mobile-sm') {
       padding: 16px !important;
     }
   }
@@ -254,7 +256,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
 
-    @media (max-width: 390px) {
+    @include respond-to('mobile-sm') {
       padding: 14px 12px;
 
       .mat-mdc-card-title {
@@ -273,7 +275,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   .mat-mdc-card-content {
     padding: 32px;
 
-    @media (max-width: 390px) {
+    @include respond-to('mobile-sm') {
       padding: 16px;
     }
   }
@@ -342,7 +344,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1.4;
   }
 
-  @media (max-width: 390px) {
+  @include respond-to('mobile-sm') {
     h3 { font-size: 0.95rem; }
     p { font-size: 0.85rem; }
   }
