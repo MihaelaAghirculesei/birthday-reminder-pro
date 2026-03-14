@@ -8,19 +8,11 @@ describe('Birthday Selectors', () => {
       fromSelectors.selectBirthdayState,
       fromSelectors.selectAllBirthdays,
       fromSelectors.selectBirthdayEntities,
-      fromSelectors.selectBirthdayIds,
       fromSelectors.selectBirthdayTotal,
-      fromSelectors.selectBirthdayLoading,
-      fromSelectors.selectBirthdayError,
-      fromSelectors.selectSelectedBirthdayId,
-      fromSelectors.selectSelectedBirthday,
-      fromSelectors.selectBirthdayFilters,
       fromSelectors.selectSearchTerm,
       fromSelectors.selectSelectedCategory,
-      fromSelectors.selectBirthdaysThisMonth,
       fromSelectors.selectNext5Birthdays,
       fromSelectors.selectAverageAge,
-      fromSelectors.selectBirthdaysByMonth
     ];
     selectors.forEach(s => {
       s.release();
@@ -56,7 +48,6 @@ describe('Birthday Selectors', () => {
       '2': mockBirthdays[1],
       '3': mockBirthdays[2]
     },
-    selectedId: '1',
     filters: { ...initialBirthdayFilters },
     loading: false,
     error: null,
@@ -70,21 +61,10 @@ describe('Birthday Selectors', () => {
   it('should select basic state', () => {
     expect(fromSelectors.selectAllBirthdays(state).length).toBe(3);
     expect(fromSelectors.selectBirthdayTotal(state)).toBe(3);
-    expect(fromSelectors.selectBirthdayLoading(state)).toBe(false);
-    expect(fromSelectors.selectBirthdayError(state)).toBeNull();
-    expect(fromSelectors.selectBirthdayFilters(state)).toEqual(initialBirthdayFilters);
-  });
-
-  it('should select specific birthday', () => {
-    expect(fromSelectors.selectSelectedBirthdayId(state)).toBe('1');
-    expect(fromSelectors.selectSelectedBirthday(state)).toEqual(mockBirthdays[0]);
   });
 
   it('should calculate statistics', () => {
     expect(fromSelectors.selectAverageAge(state)).toBeGreaterThan(0);
-    const byMonth = fromSelectors.selectBirthdaysByMonth(state);
-    expect(byMonth.length).toBe(12);
-    expect(byMonth[4].count).toBe(2);
   });
 
   it('should select birthday by id', () => {
@@ -102,25 +82,6 @@ describe('Birthday Selectors', () => {
       const filters = { ...initialBirthdayFilters, selectedCategory: 'family' };
       expect(fromSelectors.selectSelectedCategory.projector(filters)).toBe('family');
     });
-  });
-
-  describe('Upcoming Birthdays', () => {
-    it('should select upcoming birthdays within 30 days', () => {
-      const selector = fromSelectors.selectUpcomingBirthdays(30);
-      const result = selector(state);
-      expect(Array.isArray(result)).toBe(true);
-    });
-
-    it('should select upcoming birthdays with custom days', () => {
-      const selector = fromSelectors.selectUpcomingBirthdays(60);
-      const result = selector(state);
-      expect(Array.isArray(result)).toBe(true);
-    });
-  });
-
-  it('should select birthdays this month', () => {
-    const result = fromSelectors.selectBirthdaysThisMonth(state);
-    expect(Array.isArray(result)).toBe(true);
   });
 
   it('should select next 5 birthdays', () => {

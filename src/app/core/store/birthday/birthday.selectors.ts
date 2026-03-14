@@ -7,7 +7,6 @@ import { getNextBirthdayDate, getDaysUntilBirthday } from '../../../shared/utils
 export const selectBirthdayState = createFeatureSelector<BirthdayState>('birthdays');
 
 const {
-  selectIds,
   selectEntities,
   selectAll,
   selectTotal
@@ -15,31 +14,9 @@ const {
 
 export const selectAllBirthdays = selectAll;
 export const selectBirthdayEntities = selectEntities;
-export const selectBirthdayIds = selectIds;
 export const selectBirthdayTotal = selectTotal;
 
-export const selectBirthdayLoading = createSelector(
-  selectBirthdayState,
-  (state) => state.loading
-);
-
-export const selectBirthdayError = createSelector(
-  selectBirthdayState,
-  (state) => state.error
-);
-
-export const selectSelectedBirthdayId = createSelector(
-  selectBirthdayState,
-  (state) => state.selectedId
-);
-
-export const selectSelectedBirthday = createSelector(
-  selectBirthdayEntities,
-  selectSelectedBirthdayId,
-  (entities, selectedId) => selectedId ? entities[selectedId] : null
-);
-
-export const selectBirthdayFilters = createSelector(
+const selectBirthdayFilters = createSelector(
   selectBirthdayState,
   (state) => state.filters
 );
@@ -52,37 +29,6 @@ export const selectSearchTerm = createSelector(
 export const selectSelectedCategory = createSelector(
   selectBirthdayFilters,
   (filters) => filters.selectedCategory
-);
-
-export const selectUpcomingBirthdays = (days = 30) => createSelector(
-  selectAllBirthdays,
-  (birthdays) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const futureDate = new Date();
-    futureDate.setDate(today.getDate() + days);
-
-    return birthdays
-      .filter(birthday => {
-        const nextBirthday = getNextBirthdayDate(birthday.birthDate);
-        return nextBirthday >= today && nextBirthday <= futureDate;
-      })
-      .sort((a, b) => {
-        const nextA = getNextBirthdayDate(a.birthDate);
-        const nextB = getNextBirthdayDate(b.birthDate);
-        return nextA.getTime() - nextB.getTime();
-      });
-  }
-);
-
-export const selectBirthdaysThisMonth = createSelector(
-  selectAllBirthdays,
-  (birthdays) => {
-    const currentMonth = new Date().getMonth();
-    return birthdays.filter(birthday =>
-      birthday.birthDate.getMonth() === currentMonth
-    );
-  }
 );
 
 export const selectNext5Birthdays = createSelector(
@@ -107,25 +53,6 @@ export const selectAverageAge = createSelector(
       sum + calculateAge(birthday.birthDate), 0
     );
     return Math.round(totalAge / birthdays.length);
-  }
-);
-
-export const selectBirthdaysByMonth = createSelector(
-  selectAllBirthdays,
-  (birthdays) => {
-    const monthCounts = new Array(12).fill(0);
-
-    birthdays.forEach(birthday => {
-      monthCounts[birthday.birthDate.getMonth()]++;
-    });
-
-    const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    return MONTHS_SHORT.map((month, index) => ({
-      month,
-      count: monthCounts[index],
-      monthIndex: index
-    }));
   }
 );
 
