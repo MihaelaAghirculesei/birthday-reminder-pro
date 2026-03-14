@@ -10,7 +10,6 @@ export const birthdayAdapter: EntityAdapter<Birthday> = createEntityAdapter<Birt
 });
 
 export const initialBirthdayState: BirthdayState = birthdayAdapter.getInitialState({
-  selectedId: null,
   filters: initialBirthdayFilters,
   loading: false,
   error: null,
@@ -111,7 +110,6 @@ export const birthdayReducer = createReducer(
       ...state,
       loading: false,
       error: null,
-      selectedId: state.selectedId === id ? null : state.selectedId,
       optimisticBackup: entity
         ? { ...state.optimisticBackup, [id]: entity }
         : state.optimisticBackup
@@ -146,11 +144,6 @@ export const birthdayReducer = createReducer(
     return { ...state, loading: false, error };
   }),
 
-  on(BirthdayActions.selectBirthday, (state, { id }) => ({
-    ...state,
-    selectedId: id
-  })),
-
   on(BirthdayActions.setSearchTerm, (state, { searchTerm }) => ({
     ...state,
     filters: {
@@ -167,19 +160,6 @@ export const birthdayReducer = createReducer(
     }
   })),
 
-  on(BirthdayActions.clearFilters, (state) => ({
-    ...state,
-    filters: initialBirthdayFilters
-  })),
-
-  on(BirthdayActions.updateFilters, (state, { filters }) => ({
-    ...state,
-    filters: {
-      ...state.filters,
-      ...filters
-    }
-  })),
-
   on(BirthdayActions.clearAllBirthdays, (state) => ({
     ...state,
     loading: true,
@@ -190,8 +170,7 @@ export const birthdayReducer = createReducer(
     birthdayAdapter.removeAll({
       ...state,
       loading: false,
-      error: null,
-      selectedId: null
+      error: null
     })
   ),
 

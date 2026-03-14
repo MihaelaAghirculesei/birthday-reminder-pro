@@ -137,19 +137,7 @@ describe('Birthday Reducer', () => {
       expect(state.optimisticBackup['1']).toBeUndefined();
     });
 
-    it('should clear selectedId if deleted birthday was selected', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
-      state = birthdayReducer(state, BirthdayActions.selectBirthday({ id: '1' }));
-
-      const action = BirthdayActions.deleteBirthday({ id: '1' });
-      const newState = birthdayReducer(state, action);
-
-      expect(newState.selectedId).toBeNull();
-    });
-  });
+});
 
   describe('Filter Actions', () => {
     it('should update search term', () => {
@@ -162,23 +150,12 @@ describe('Birthday Reducer', () => {
       expect(state.filters.selectedCategory).toBe('family');
     });
 
-    it('should clear filters', () => {
-      let state = birthdayReducer(initialBirthdayState, BirthdayActions.setSearchTerm({ searchTerm: 'test' }));
-      state = birthdayReducer(state, BirthdayActions.clearFilters());
-      expect(state.filters.searchTerm).toBe('');
-    });
-  });
-
-  it('should select birthday', () => {
-    const state = birthdayReducer(initialBirthdayState, BirthdayActions.selectBirthday({ id: '1' }));
-    expect(state.selectedId).toBe('1');
-  });
+});
 
   it('should clear all birthdays', () => {
     let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
     state = birthdayReducer(state, BirthdayActions.clearAllBirthdaysSuccess());
     expect(state.ids.length).toBe(0);
-    expect(state.selectedId).toBeNull();
   });
 
   describe('Failure Actions', () => {
@@ -361,25 +338,6 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state).toBe(initialBirthdayState);
-    });
-  });
-
-  describe('updateFilters action', () => {
-    it('should update multiple filters at once', () => {
-      const filters = { searchTerm: 'John', selectedCategory: 'family' };
-      const action = BirthdayActions.updateFilters({ filters });
-      const state = birthdayReducer(initialBirthdayState, action);
-
-      expect(state.filters.searchTerm).toBe('John');
-      expect(state.filters.selectedCategory).toBe('family');
-    });
-
-    it('should preserve existing filters when updating partial filters', () => {
-      let state = birthdayReducer(initialBirthdayState, BirthdayActions.setSearchTerm({ searchTerm: 'Test' }));
-      state = birthdayReducer(state, BirthdayActions.updateFilters({ filters: { selectedCategory: 'friends' } }));
-
-      expect(state.filters.searchTerm).toBe('Test');
-      expect(state.filters.selectedCategory).toBe('friends');
     });
   });
 
