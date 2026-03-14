@@ -1,6 +1,5 @@
 import { createAction, props } from '@ngrx/store';
 import { Birthday, ScheduledMessage } from '../../../shared/models/birthday.model';
-import { BirthdayFilters } from './birthday.state';
 
 export const loadBirthdays = createAction(
   '[Birthday] Load Birthdays'
@@ -61,11 +60,6 @@ export const deleteBirthdayFailure = createAction(
   props<{ error: string; id?: string }>()
 );
 
-export const selectBirthday = createAction(
-  '[Birthday] Select Birthday',
-  props<{ id: string | null }>()
-);
-
 export const setSearchTerm = createAction(
   '[Birthday] Set Search Term',
   props<{ searchTerm: string }>()
@@ -74,15 +68,6 @@ export const setSearchTerm = createAction(
 export const setSelectedCategory = createAction(
   '[Birthday] Set Selected Category',
   props<{ category: string | null }>()
-);
-
-export const clearFilters = createAction(
-  '[Birthday] Clear Filters'
-);
-
-export const updateFilters = createAction(
-  '[Birthday] Update Filters',
-  props<{ filters: Partial<BirthdayFilters> }>()
 );
 
 export const clearAllBirthdays = createAction(

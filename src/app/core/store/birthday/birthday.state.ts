@@ -2,7 +2,6 @@ import { EntityState } from '@ngrx/entity';
 import { Birthday } from '../../../shared/models/birthday.model';
 
 export interface BirthdayState extends EntityState<Birthday> {
-  selectedId: string | null;
   filters: BirthdayFilters;
   loading: boolean;
   error: string | null;
