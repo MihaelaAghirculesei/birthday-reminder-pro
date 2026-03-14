@@ -1,4 +1,5 @@
 @use 'mixins' as *;
+@use 'breakpoints' as *;
 
 .birthday-form {
   display: flex;
@@ -91,13 +92,13 @@
   gap: 32px;
   align-items: start;
 
-  @media (min-width: 1200px) {
+  @include respond-above('desktop') {
     grid-template-columns: 1fr;
     gap: 40px;
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .content-sections {
     gap: 24px;
   }
@@ -112,7 +113,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@include respond-to('mobile') {
   .content-sections {
     gap: 16px;
   }

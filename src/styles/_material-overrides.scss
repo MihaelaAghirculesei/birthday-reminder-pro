@@ -1,3 +1,6 @@
+@use 'breakpoints' as *;
+@use 'mixins' as m;
+
 .header-search-section .dashboard-search-field {
   margin-bottom: 24px;
 
@@ -23,22 +26,22 @@
   }
 
   input {
-    color: #1a1a1a !important;
-    -webkit-text-fill-color: #1a1a1a !important;
+    color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
   }
 
   label {
-    color: rgba(0, 0, 0, 0.6) !important;
+    color: var(--text-secondary) !important;
   }
 
   body.dark-theme & {
     input {
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
+      color: var(--text-primary) !important;
+      -webkit-text-fill-color: var(--text-primary) !important;
     }
 
     label {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: var(--text-secondary) !important;
     }
 
     .mat-mdc-form-field-flex {
@@ -65,7 +68,7 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
   color: var(--text-secondary);
 }
 
-@media (max-width: 480px) {
+@include respond-to('mobile') {
   app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
     font-size: 0.85rem;
   }
@@ -99,7 +102,7 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
         align-items: center;
         gap: 4px;
         font-size: 0.8rem;
-        color: #d32f2f;
+        color: var(--error-color-hover);
         font-style: italic;
         margin-top: 2px;
 
@@ -107,7 +110,7 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
           font-size: 16px;
           width: 16px;
           height: 16px;
-          color: #d32f2f;
+          color: var(--error-color-hover);
         }
       }
     }
@@ -119,12 +122,12 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
         opacity: 1 !important;
       }
 
-      .birthday-name { color: #b71c1c !important; }
+      .birthday-name { color: var(--error-color-dark) !important; }
 
       .no-contact-hint {
-        color: #b71c1c !important;
+        color: var(--error-color-dark) !important;
 
-        .no-contact-icon { color: #b71c1c !important; }
+        .no-contact-icon { color: var(--error-color-dark) !important; }
       }
     }
   }
@@ -134,9 +137,9 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
       border-bottom-color: rgba(255, 255, 255, 0.12);
 
       .birthday-option {
-        .birthday-name { color: #fff !important; }
+        .birthday-name { color: var(--text-primary) !important; }
         .birthday-date,
-        .birthday-contact-info { color: rgba(255, 255, 255, 0.7) !important; }
+        .birthday-contact-info { color: var(--text-secondary) !important; }
       }
 
       &.mdc-list-item--disabled {
@@ -146,12 +149,12 @@ app-scheduled-messages .birthday-info .mat-mdc-card-subtitle {
           opacity: 1 !important;
         }
 
-        .birthday-name { color: #ff6b6b !important; }
+        .birthday-name { color: var(--error-color-dark) !important; }
 
         .no-contact-hint {
-          color: #ff6b6b !important;
+          color: var(--error-color-dark) !important;
 
-          .no-contact-icon { color: #ff6b6b !important; }
+          .no-contact-icon { color: var(--error-color-dark) !important; }
         }
       }
     }
@@ -207,7 +210,7 @@ app-google-calendar-sync .mat-slide-toggle-label {
 
 // Category reassign dialog select panel (CDK overlay)
 .category-reassign-select-panel.mat-mdc-select-panel {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background: m.$dialog-gradient !important;
   border-radius: 12px !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
@@ -262,12 +265,12 @@ app-google-calendar-sync .mat-slide-toggle-label {
   }
 
   body.dark-theme & {
-    background: #333 !important;
+    background: var(--surface-elevated) !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
   }
 
-  @media (max-width: 390px) {
+  @include respond-to('mobile-sm') {
     .mat-mdc-option {
       font-size: 0.8rem;
       min-height: 40px;
@@ -294,7 +297,7 @@ app-google-calendar-sync .mat-slide-toggle-label {
 // Birthday item context menu (CDK overlay)
 .birthday-item-menu.mat-mdc-menu-panel {
   min-width: 180px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: var(--overlay-gradient-dark);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
 
@@ -331,7 +334,7 @@ app-google-calendar-sync .mat-slide-toggle-label {
     border-top-color: rgba(255, 255, 255, 0.15) !important;
   }
 
-  @media (max-width: 400px) {
+  @include respond-to('mobile-sm') {
     .mat-mdc-menu-item {
       min-height: 36px;
       font-size: 14px;
