@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import * as CategoryActions from './category.actions';
 import { BIRTHDAY_CATEGORIES, BirthdayCategory } from '../../../shared';
 import { CategoryStorageService } from '../../services/category-storage.service';
@@ -61,36 +61,64 @@ export class CategoryEffects {
   addCategory$ = createEffect(() =>
     this.actions$.pipe(
       ofType(CategoryActions.addCategory),
-      tap(({ category }) => this.categoryStorage.addCustomCategory(category)),
-      map(({ category }) => CategoryActions.addCategorySuccess({ category }))
+      switchMap(({ category }) => {
+        try {
+          this.categoryStorage.addCustomCategory(category);
+          return of(CategoryActions.addCategorySuccess({ category }));
+        } catch (error) {
+          return of(CategoryActions.addCategoryFailure({
+            error: error instanceof Error ? error.message : 'Failed to add category'
+          }));
+        }
+      })
     )
   );
 
   updateCategory$ = createEffect(() =>
     this.actions$.pipe(
       ofType(CategoryActions.updateCategory),
-      tap(({ category }) => this.categoryStorage.updateCategory(category)),
-      map(({ category }) => CategoryActions.updateCategorySuccess({ category }))
+      switchMap(({ category }) => {
+        try {
+          this.categoryStorage.updateCategory(category);
+          return of(CategoryActions.updateCategorySuccess({ category }));
+        } catch (error) {
+          return of(CategoryActions.updateCategoryFailure({
+            error: error instanceof Error ? error.message : 'Failed to update category'
+          }));
+        }
+      })
     )
   );
 
   deleteCategory$ = createEffect(() =>
     this.actions$.pipe(
       ofType(CategoryActions.deleteCategory),
-      tap(({ categoryId }) => this.categoryStorage.deleteCategory(categoryId)),
-      map(({ categoryId }) =>
-        CategoryActions.deleteCategorySuccess({ categoryId })
-      )
+      switchMap(({ categoryId }) => {
+        try {
+          this.categoryStorage.deleteCategory(categoryId);
+          return of(CategoryActions.deleteCategorySuccess({ categoryId }));
+        } catch (error) {
+          return of(CategoryActions.deleteCategoryFailure({
+            error: error instanceof Error ? error.message : 'Failed to delete category'
+          }));
+        }
+      })
     )
   );
 
   restoreCategory$ = createEffect(() =>
     this.actions$.pipe(
       ofType(CategoryActions.restoreCategory),
-      tap(({ categoryId }) => this.categoryStorage.restoreCategory(categoryId)),
-      map(({ categoryId }) =>
-        CategoryActions.restoreCategorySuccess({ categoryId })
-      )
+      switchMap(({ categoryId }) => {
+        try {
+          this.categoryStorage.restoreCategory(categoryId);
+          return of(CategoryActions.restoreCategorySuccess({ categoryId }));
+        } catch (error) {
+          return of(CategoryActions.restoreCategoryFailure({
+            error: error instanceof Error ? error.message : 'Failed to restore category'
+          }));
+        }
+      })
     )
   );
 }
