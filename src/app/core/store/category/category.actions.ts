@@ -25,6 +25,11 @@ export const addCategorySuccess = createAction(
   props<{ category: BirthdayCategory }>()
 );
 
+export const addCategoryFailure = createAction(
+  '[Category] Add Category Failure',
+  props<{ error: string }>()
+);
+
 export const updateCategory = createAction(
   '[Category] Update Category',
   props<{ category: BirthdayCategory }>()
@@ -33,6 +38,11 @@ export const updateCategory = createAction(
 export const updateCategorySuccess = createAction(
   '[Category] Update Category Success',
   props<{ category: BirthdayCategory }>()
+);
+
+export const updateCategoryFailure = createAction(
+  '[Category] Update Category Failure',
+  props<{ error: string }>()
 );
 
 export const deleteCategory = createAction(
@@ -45,6 +55,11 @@ export const deleteCategorySuccess = createAction(
   props<{ categoryId: string }>()
 );
 
+export const deleteCategoryFailure = createAction(
+  '[Category] Delete Category Failure',
+  props<{ error: string }>()
+);
+
 export const restoreCategory = createAction(
   '[Category] Restore Category',
   props<{ categoryId: string }>()
@@ -53,4 +68,9 @@ export const restoreCategory = createAction(
 export const restoreCategorySuccess = createAction(
   '[Category] Restore Category Success',
   props<{ categoryId: string }>()
+);
+
+export const restoreCategoryFailure = createAction(
+  '[Category] Restore Category Failure',
+  props<{ error: string }>()
 );
