@@ -146,6 +146,16 @@ describe('CategoryEffects', () => {
         done();
       });
     });
+
+    it('should handle add category failure', (done) => {
+      categoryStorageMock.addCustomCategory.and.throwError('Storage error');
+      actions$ = of(CategoryActions.addCategory({ category: mockCategory }));
+
+      effects.addCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
+        done();
+      });
+    });
   });
 
   describe('updateCategory$', () => {
@@ -156,6 +166,16 @@ describe('CategoryEffects', () => {
       effects.updateCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.updateCategorySuccess({ category: updatedCategory }));
         expect(categoryStorageMock.updateCategory).toHaveBeenCalledWith(updatedCategory);
+        done();
+      });
+    });
+
+    it('should handle update category failure', (done) => {
+      categoryStorageMock.updateCategory.and.throwError('Storage error');
+      actions$ = of(CategoryActions.updateCategory({ category: mockCategory }));
+
+      effects.updateCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.updateCategoryFailure.type);
         done();
       });
     });
@@ -171,6 +191,16 @@ describe('CategoryEffects', () => {
         done();
       });
     });
+
+    it('should handle delete category failure', (done) => {
+      categoryStorageMock.deleteCategory.and.throwError('Storage error');
+      actions$ = of(CategoryActions.deleteCategory({ categoryId: 'custom1' }));
+
+      effects.deleteCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.deleteCategoryFailure.type);
+        done();
+      });
+    });
   });
 
   describe('restoreCategory$', () => {
@@ -180,6 +210,16 @@ describe('CategoryEffects', () => {
       effects.restoreCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.restoreCategorySuccess({ categoryId: 'family' }));
         expect(categoryStorageMock.restoreCategory).toHaveBeenCalledWith('family');
+        done();
+      });
+    });
+
+    it('should handle restore category failure', (done) => {
+      categoryStorageMock.restoreCategory.and.throwError('Storage error');
+      actions$ = of(CategoryActions.restoreCategory({ categoryId: 'family' }));
+
+      effects.restoreCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
         done();
       });
     });
