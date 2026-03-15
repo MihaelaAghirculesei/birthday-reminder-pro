@@ -76,12 +76,11 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   }
 
   private readonly store = inject(Store<AppState>);
+  private readonly fb = inject(FormBuilder);
+  private readonly scheduledMessageService = inject(ScheduledMessageService);
+  private readonly notificationService = inject(NotificationService);
 
-  constructor(
-    private fb: FormBuilder,
-    private scheduledMessageService: ScheduledMessageService,
-    private notificationService: NotificationService
-  ) {
+  constructor() {
     this.messageForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       message: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1000)]],
