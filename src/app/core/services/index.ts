@@ -1,4 +1,3 @@
-export { AccessibilityService } from './accessibility.service';
 export { BirthdayService } from './birthday.service';
 export { CategoryFacadeService } from './category-facade.service';
 export { CategoryStorageService } from './category-storage.service';
