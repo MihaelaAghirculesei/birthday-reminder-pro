@@ -99,25 +99,25 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .content-container {
     padding: 24px 16px;
     gap: 24px;
   }
 }
 
-@media (max-width: 480px) {
+@include respond-to('mobile') {
   .content-container {
     padding: 16px 8px;
     gap: 16px;
   }
 
   .add-birthday-card .mat-mdc-card-content {
-    padding: 24px !important;
+    padding: 24px;
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .content-container {
     padding: 8px 4px;
     gap: 12px;
@@ -129,7 +129,7 @@
   padding: 16px 0;
   border-top: 1px solid var(--border-light);
 
-  @media (max-width: 768px) {
+  @include respond-to('tablet') {
     margin: 16px 0;
     padding: 12px 0;
   }
@@ -168,14 +168,14 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .test-data-section {
     margin: 24px 0;
     padding: 0 8px;
   }
 
   .test-data-card .mat-mdc-card-content {
-    padding: 24px !important;
+    padding: 24px;
   }
 
   .test-data-content {

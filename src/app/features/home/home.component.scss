@@ -69,14 +69,14 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .test-data-section {
     margin: 24px 0;
     padding: 0 8px;
   }
 
   .test-data-card .mat-mdc-card-content {
-    padding: 24px !important;
+    padding: 24px;
   }
 
   .test-data-content {
@@ -104,13 +104,13 @@
   }
 }
 
-@media (max-width: 480px) {
+@include respond-to('mobile') {
   .add-birthday-card .mat-mdc-card-content {
-    padding: 24px !important;
+    padding: 24px;
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .test-data-content {
     gap: 12px;
 
