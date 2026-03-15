@@ -139,13 +139,13 @@
   }
 }
 
-@media (max-width: 900px) {
+@include respond-to('desktop-sm') {
   .schedule-message-fab {
     transform: scale(0.9);
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .dashboard-container {
     padding: 16px;
   }
@@ -179,7 +179,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .dashboard-container {
     padding: 6px;
   }

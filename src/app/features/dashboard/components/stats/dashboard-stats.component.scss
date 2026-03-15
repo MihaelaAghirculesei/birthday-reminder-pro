@@ -35,7 +35,7 @@
   }
 
   .mat-mdc-card-content {
-    padding: 32px !important;
+    padding: 32px;
   }
 
   .stat-content {
@@ -108,7 +108,7 @@
   }
 }
 
-@media (max-width: 1200px) {
+@include respond-to('desktop') {
   .stats-row {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
@@ -124,7 +124,7 @@
   }
 }
 
-@media (max-width: 530px) {
+@include respond-to('phablet') {
   .stats-row {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -132,7 +132,7 @@
 
   .stat-card {
     .mat-mdc-card-content {
-      padding: 16px !important;
+      padding: 16px;
     }
 
     .stat-icon {
@@ -144,7 +144,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .stats-row {
     gap: 8px;
     margin-bottom: 20px;
