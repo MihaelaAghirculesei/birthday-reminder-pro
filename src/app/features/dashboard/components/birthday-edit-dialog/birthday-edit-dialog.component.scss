@@ -46,7 +46,7 @@ h2[mat-dialog-title] {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 
-  @media (max-width: 500px) {
+  @include respond-to('phablet') {
     grid-template-columns: 1fr;
   }
 }
@@ -162,18 +162,13 @@ h2[mat-dialog-title] {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: #fff3e0;
-  color: #e65100;
+  background: var(--warning-bg);
+  color: var(--warning-text);
   font-size: 0.9rem;
   font-weight: 500;
 
-  :host-context(body.dark-theme) & {
-    background: #3e2723;
-    color: #ffab40;
-  }
-
   mat-icon {
-    color: #ff9800;
+    color: var(--warning-accent);
     flex-shrink: 0;
   }
 }
@@ -216,7 +211,7 @@ h2[mat-dialog-title] {
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .dialog-container {
     max-width: 100vw;
   }
@@ -231,7 +226,7 @@ h2[mat-dialog-title] {
   }
 }
 
-@media (max-width: 500px) {
+@include respond-to('phablet') {
   .photo-section,
   .scheduler-section {
     padding: 12px;

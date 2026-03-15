@@ -174,18 +174,18 @@
     button[mat-button],
     button[mat-stroked-button],
     button[mat-raised-button] {
-      color: #764ba2 !important;
+      color: var(--dialog-accent) !important;
       border: 2px solid $white-50 !important;
       background: white !important;
       border-radius: 4px !important;
       padding: 5px 15px !important;
 
       .mdc-button__label {
-        color: #764ba2 !important;
+        color: var(--dialog-accent) !important;
       }
 
       mat-icon {
-        color: #764ba2 !important;
+        color: var(--dialog-accent) !important;
         margin-right: 4px;
         @include icon-size(18px);
       }
@@ -304,7 +304,7 @@
 }
 
 
-@media (max-width: 680px) {
+@include respond-to('tablet-md') {
   ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
     max-width: 90vw !important;
     max-height: 95vh !important;
@@ -364,7 +364,7 @@
   }
 }
 
-@media (max-width: 440px) {
+@include respond-to('mobile') {
   .category-reassign-dialog {
     width: 100%;
 
@@ -379,7 +379,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .category-reassign-dialog {
     .dialog-header {
       padding: 10px 12px;

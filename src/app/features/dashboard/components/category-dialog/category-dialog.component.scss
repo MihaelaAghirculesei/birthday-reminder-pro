@@ -140,7 +140,7 @@ mat-dialog-actions {
   gap: 8px;
 }
 
-@media (max-width: 680px) {
+@include respond-to('tablet-md') {
   .category-form {
     min-width: auto;
     gap: 16px;
