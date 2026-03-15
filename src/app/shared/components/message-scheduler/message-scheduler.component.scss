@@ -1,3 +1,5 @@
+@use '../../../../styles/shared' as *;
+
 .message-scheduler {
   width: 100%;
 
@@ -296,7 +298,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .message-scheduler {
     .message-form {
       .form-row {

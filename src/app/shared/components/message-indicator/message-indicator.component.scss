@@ -1,3 +1,5 @@
+@use '../../../../styles/shared' as *;
+
 .message-indicator-button {
   display: flex;
   align-items: center;
@@ -43,7 +45,7 @@
   z-index: 10;
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .message-indicator-button {
     width: 48px;
     height: 48px;

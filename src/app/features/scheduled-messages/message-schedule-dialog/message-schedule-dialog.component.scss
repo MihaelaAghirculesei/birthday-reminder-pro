@@ -215,9 +215,9 @@
 
   ::ng-deep {
     button[mat-stroked-button] {
-      color: #764ba2 !important;
+      color: var(--dialog-accent) !important;
       border-color: $white-50 !important;
-      background: white !important;
+      background: var(--surface) !important;
       &:hover {
         background: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
@@ -226,7 +226,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .message-schedule-dialog {
     min-width: auto;
     width: 100%;

@@ -39,7 +39,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      border-radius: var(--radius) !important;
+      border-radius: var(--radius);
       font-weight: 600;
 
       mat-icon {
@@ -267,7 +267,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .scheduled-messages-container {
     padding: 16px;
 
