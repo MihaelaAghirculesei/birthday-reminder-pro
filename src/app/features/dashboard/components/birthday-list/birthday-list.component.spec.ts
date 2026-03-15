@@ -56,7 +56,6 @@ describe('BirthdayListComponent', () => {
               },
               loading: false,
               error: null,
-              selectedId: null,
               filters: { searchTerm: '', selectedCategory: null }
             }
           }

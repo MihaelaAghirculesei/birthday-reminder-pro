@@ -45,7 +45,7 @@ describe('HeaderNavStripComponent', () => {
         provideMockStore({
           initialState: {
             auth: { user: null, loading: false, error: null },
-            birthdays: { ids: [], entities: {}, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } }
+            birthdays: { ids: [], entities: {}, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } }
           }
         }),
         { provide: PLATFORM_ID, useValue: 'browser' },

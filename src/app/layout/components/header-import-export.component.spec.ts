@@ -28,7 +28,7 @@ describe('HeaderImportExportComponent', () => {
       providers: [
         provideMockStore({
           initialState: {
-            birthdays: { ids: [], entities: {}, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } }
+            birthdays: { ids: [], entities: {}, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } }
           }
         }),
         { provide: NotificationService, useValue: mockNotificationService },

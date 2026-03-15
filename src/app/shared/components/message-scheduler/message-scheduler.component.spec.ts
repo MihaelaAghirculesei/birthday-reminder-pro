@@ -111,7 +111,7 @@ describe('MessageSchedulerComponent', () => {
 
   it('should pre-compute processed messages in enrichedMessages', () => {
     component.birthday = mockBirthday;
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } } });
+    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
     component.loadMessages();
 
     expect(component.enrichedMessages().length).toBe(1);
@@ -131,7 +131,7 @@ describe('MessageSchedulerComponent', () => {
       ...mockMessage,
       message: 'You are a {zodiac}!'
     };
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [messageWithZodiac] } }, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } } });
+    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [messageWithZodiac] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
     component.loadMessages();
 
     expect(component.enrichedMessages()[0].processedMessage).toBe('You are a Capricorn!');
@@ -139,7 +139,7 @@ describe('MessageSchedulerComponent', () => {
 
   it('should pre-compute wishLinks in enrichedMessages', () => {
     component.birthday = { ...mockBirthday, email: 'test@example.com' };
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, email: 'test@example.com', scheduledMessages: [mockMessage] } }, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } } });
+    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, email: 'test@example.com', scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
     component.loadMessages();
 
     expect(component.enrichedMessages()[0].wishLinks).toBeDefined();
@@ -148,7 +148,7 @@ describe('MessageSchedulerComponent', () => {
 
   it('should pre-compute formatted dates in enrichedMessages', () => {
     component.birthday = mockBirthday;
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, selectedId: null, filters: { searchTerm: '', selectedCategory: null } } });
+    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
     component.loadMessages();
 
     expect(component.enrichedMessages()[0].formattedCreatedDate).toBeDefined();

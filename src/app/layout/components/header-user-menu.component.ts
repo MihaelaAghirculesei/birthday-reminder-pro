@@ -57,6 +57,10 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
     }
   `,
   styles: [`
+    :host {
+      display: contents;
+    }
+
     .menu-user-email {
       font-size: 0.75em;
       opacity: 0.6;
