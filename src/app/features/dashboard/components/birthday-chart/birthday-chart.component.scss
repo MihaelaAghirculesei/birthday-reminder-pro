@@ -11,7 +11,7 @@
   }
 
   .mat-mdc-card-content {
-    padding: 24px !important;
+    padding: 24px;
   }
 }
 
@@ -111,7 +111,7 @@
   }
 }
 
-@media (max-width: 1200px) {
+@include respond-to('desktop') {
   .chart-container {
     height: 150px;
   }
@@ -125,7 +125,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .chart-container {
     height: 120px;
     padding: 12px 0;
@@ -149,7 +149,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@include respond-to('tablet-sm') {
   .chart-container {
     flex-wrap: wrap;
     height: auto;
@@ -176,7 +176,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .chart-card .mat-mdc-card-content {
     padding: 12px !important;
   }

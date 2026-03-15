@@ -620,7 +620,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .categories-section {
     margin-top: 16px;
     margin-bottom: 16px;

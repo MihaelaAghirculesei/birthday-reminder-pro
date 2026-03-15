@@ -14,8 +14,8 @@
   display: flex;
   flex-direction: column;
   background: $card-gradient-light !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-elevated) !important;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
   border: none !important;
   max-width: 600px;
   width: 100%;
@@ -91,7 +91,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include respond-to('tablet') {
   .backup-card {
     .mat-mdc-card-content {
       padding: 16px !important;
@@ -141,7 +141,7 @@
   }
 }
 
-@media (max-width: 390px) {
+@include respond-to('mobile-sm') {
   .backup-card .mat-mdc-card-content {
     padding: 12px !important;
   }
