@@ -8,6 +8,7 @@ import { SyncCoordinatorService } from '../../services/sync-coordinator.service'
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
 import { LoggerService } from '../../services/logger.service';
+import { BirthdayMergeService } from '../../services/birthday-merge.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import * as SyncActions from './sync.actions';
 import * as AuthSelectors from '../auth/auth.selectors';
@@ -21,6 +22,7 @@ export class SyncEffects {
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly notificationService = inject(NotificationService);
   private readonly logger = inject(LoggerService);
+  private readonly mergeService = inject(BirthdayMergeService);
 
   migrateLocalToCloud$ = createEffect(() =>
     this.actions$.pipe(
@@ -114,39 +116,13 @@ export class SyncEffects {
   );
 
   private async mergeCloudBirthdays(cloudBirthdays: Birthday[]): Promise<void> {
-    // Get current local state
     const localBirthdays = await this.offlineStorage.getBirthdays();
-    const localMap = new Map(localBirthdays.map((b) => [b.id, b]));
 
-    // Merge strategy: cloud wins for synced items, local wins for pending items
-    const merged: Birthday[] = [];
+    const { merged } = this.mergeService.merge(localBirthdays, cloudBirthdays, {
+      strategy: 'cloud-wins'
+    });
 
-    for (const cloudBirthday of cloudBirthdays) {
-      const local = localMap.get(cloudBirthday.id);
-
-      if (!local || local.syncStatus === 'synced' || local.syncStatus === undefined) {
-        // No local version or local is already synced - use cloud
-        merged.push({ ...cloudBirthday, syncStatus: 'synced' });
-      } else if (local.syncStatus === 'pending') {
-        // Local has pending changes - keep local (will be pushed later)
-        merged.push(local);
-      } else {
-        // Default: use cloud
-        merged.push({ ...cloudBirthday, syncStatus: 'synced' });
-      }
-
-      localMap.delete(cloudBirthday.id);
-    }
-
-    // Add remaining local items (not in cloud)
-    for (const local of localMap.values()) {
-      merged.push(local);
-    }
-
-    // Save merged state
     await this.offlineStorage.saveBirthdays(merged);
-
-    // Dispatch to reload store
     this.store.dispatch(BirthdayActions.loadBirthdays());
   }
 }

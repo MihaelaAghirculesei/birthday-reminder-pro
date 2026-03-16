@@ -10,6 +10,7 @@ import { IndexedDBStorageService } from './offline-storage.service';
 import { PendingChangesService, PendingChange } from './pending-changes.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
+import { BirthdayMergeService } from './birthday-merge.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 
 import * as SyncActions from '../store/sync/sync.actions';
@@ -28,6 +29,7 @@ export class SyncCoordinatorService {
   private readonly pendingChanges = inject(PendingChangesService);
   private readonly networkService = inject(NetworkService);
   private readonly logger = inject(LoggerService);
+  private readonly mergeService = inject(BirthdayMergeService);
   private readonly destroyRef = inject(DestroyRef);
 
   private subscriptions: Subscription[] = [];
@@ -130,37 +132,11 @@ export class SyncCoordinatorService {
   private async mergeCloudWithLocal(cloudBirthdays: Birthday[], userId: string): Promise<void> {
     const localBirthdays = await this.offlineStorage.getBirthdays();
 
-    const cloudMap = new Map(cloudBirthdays.map((b) => [b.id, b]));
-    const localMap = new Map(localBirthdays.map((b) => [b.id, b]));
+    const { merged, toUpload } = this.mergeService.merge(localBirthdays, cloudBirthdays, {
+      strategy: 'latest-wins'
+    });
 
-    const merged: Birthday[] = [];
-    const toUpload: Birthday[] = [];
-
-    for (const cloudItem of cloudBirthdays) {
-      const localItem = localMap.get(cloudItem.id);
-
-      if (!localItem) {
-        merged.push(cloudItem);
-      } else {
-        const winner = this.resolveConflict(localItem, cloudItem);
-        merged.push(winner);
-
-        if (winner === localItem && (localItem.updatedAt || 0) > (cloudItem.updatedAt || 0)) {
-          toUpload.push(localItem);
-        }
-      }
-    }
-
-    for (const localItem of localBirthdays) {
-      if (!cloudMap.has(localItem.id)) {
-        merged.push(localItem);
-        toUpload.push(localItem);
-      }
-    }
-
-    const deduped = this.deduplicateByName(merged);
-
-    await this.offlineStorage.saveBirthdays(deduped);
+    await this.offlineStorage.saveBirthdays(merged);
 
     if (toUpload.length > 0 && this.networkService.isOnline) {
       await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, toUpload));
@@ -168,43 +144,6 @@ export class SyncCoordinatorService {
 
     this.store.dispatch(SyncActions.syncSuccess({ timestamp: Date.now() }));
     this.logger.info('[SyncCoordinator] Merge complete. Total:', merged.length);
-  }
-
-  private deduplicateByName(birthdays: Birthday[]): Birthday[] {
-    const seen = new Map<string, Birthday>();
-    for (const b of birthdays) {
-      const key = `${b.name.trim().toLowerCase()}|${new Date(b.birthDate).toISOString().slice(0, 10)}`;
-      const existing = seen.get(key);
-      if (!existing || (b.updatedAt || 0) > (existing.updatedAt || 0)) {
-        seen.set(key, b);
-      }
-    }
-    return Array.from(seen.values());
-  }
-
-  private resolveConflict(local: Birthday, cloud: Birthday): Birthday {
-    const localTime = local.updatedAt || 0;
-    const cloudTime = cloud.updatedAt || 0;
-
-    if (localTime === cloudTime) {
-      return cloud;
-    }
-
-    if (Math.abs(localTime - cloudTime) > 1000) {
-      return localTime > cloudTime ? local : cloud;
-    }
-
-    const winner = localTime > cloudTime ? local : cloud;
-    const loser = localTime > cloudTime ? cloud : local;
-
-    return {
-      ...loser,
-      ...winner,
-      notes: winner.notes || loser.notes,
-      category: winner.category || loser.category,
-      updatedAt: Math.max(localTime, cloudTime),
-      syncStatus: 'synced' as const
-    };
   }
 
   async migrateLocalToCloud(): Promise<number> {

@@ -7,6 +7,7 @@ import { IndexedDBStorageService } from './offline-storage.service';
 import { PendingChangesService, PendingChange } from './pending-changes.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
+import { BirthdayMergeService, MergeResult } from './birthday-merge.service';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { Birthday } from '../../shared/models/birthday.model';
 
@@ -19,6 +20,7 @@ describe('SyncCoordinatorService', () => {
   let pendingChangesMock: jasmine.SpyObj<PendingChangesService>;
   let networkServiceMock: Partial<NetworkService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
+  let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
   let networkOnline$: BehaviorSubject<boolean>;
 
   const mockUser: AuthUser = {
@@ -86,6 +88,8 @@ describe('SyncCoordinatorService', () => {
       isOnline: true
     } as Partial<NetworkService>;
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
+    mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
 
     pendingChangesMock.initialize.and.returnValue(Promise.resolve());
     pendingChangesMock.getChangesForEntity.and.returnValue([]);
@@ -100,7 +104,8 @@ describe('SyncCoordinatorService', () => {
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
         { provide: PendingChangesService, useValue: pendingChangesMock },
         { provide: NetworkService, useValue: networkServiceMock },
-        { provide: LoggerService, useValue: loggerMock }
+        { provide: LoggerService, useValue: loggerMock },
+        { provide: BirthdayMergeService, useValue: mergeServiceMock }
       ]
     });
 
@@ -178,94 +183,7 @@ describe('SyncCoordinatorService', () => {
     expect(service['destroyRef']).toBeTruthy();
   });
 
-  // =====================================================
-  // CONFLICT RESOLUTION TESTS
-  // =====================================================
-  describe('resolveConflict', () => {
-    it('should prefer cloud when timestamps are equal (server authority)', () => {
-      const local = makeBirthday({ id: 'b-1', name: 'Local Name', updatedAt: 1000 });
-      const cloud = makeBirthday({ id: 'b-1', name: 'Cloud Name', updatedAt: 1000 });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.name).toBe('Cloud Name');
-    });
-
-    it('should prefer local when local timestamp is newer (>1s diff)', () => {
-      const local = makeBirthday({ id: 'b-1', name: 'Local Name', updatedAt: 5000 });
-      const cloud = makeBirthday({ id: 'b-1', name: 'Cloud Name', updatedAt: 2000 });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.name).toBe('Local Name');
-    });
-
-    it('should prefer cloud when cloud timestamp is newer (>1s diff)', () => {
-      const local = makeBirthday({ id: 'b-1', name: 'Local Name', updatedAt: 2000 });
-      const cloud = makeBirthday({ id: 'b-1', name: 'Cloud Name', updatedAt: 5000 });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.name).toBe('Cloud Name');
-    });
-
-    it('should merge fields for near-simultaneous edits (<1s diff)', () => {
-      const local = makeBirthday({
-        id: 'b-1', name: 'Local Name', notes: '', category: 'friends',
-        updatedAt: 1000
-      });
-      const cloud = makeBirthday({
-        id: 'b-1', name: 'Cloud Name', notes: 'Important note', category: '',
-        updatedAt: 1500 // within 1 second
-      });
-
-      const result = service['resolveConflict'](local, cloud);
-      // Winner is cloud (newer), but preserves notes from loser
-      expect(result.name).toBe('Cloud Name');
-      expect(result.notes).toBe('Important note');
-      expect(result.category).toBe('friends');
-      expect(result.updatedAt).toBe(1500);
-      expect(result.syncStatus).toBe('synced');
-    });
-
-    it('should preserve notes from loser when winner has none', () => {
-      const local = makeBirthday({
-        id: 'b-1', notes: 'My note', updatedAt: 1200
-      });
-      const cloud = makeBirthday({
-        id: 'b-1', notes: '', updatedAt: 1100
-      });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.notes).toBe('My note');
-    });
-
-    it('should preserve category from loser when winner has none', () => {
-      const local = makeBirthday({
-        id: 'b-1', category: '', updatedAt: 1100
-      });
-      const cloud = makeBirthday({
-        id: 'b-1', category: 'family', updatedAt: 1200
-      });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.category).toBe('family');
-    });
-
-    it('should handle undefined updatedAt (treat as 0)', () => {
-      const local = makeBirthday({ id: 'b-1', name: 'Local', updatedAt: undefined });
-      const cloud = makeBirthday({ id: 'b-1', name: 'Cloud', updatedAt: undefined });
-
-      const result = service['resolveConflict'](local, cloud);
-      // Equal timestamps (both 0) → prefer cloud
-      expect(result.name).toBe('Cloud');
-    });
-
-    it('should use max timestamp for near-simultaneous edits', () => {
-      const local = makeBirthday({ id: 'b-1', updatedAt: 1300 });
-      const cloud = makeBirthday({ id: 'b-1', updatedAt: 1800 });
-
-      const result = service['resolveConflict'](local, cloud);
-      expect(result.updatedAt).toBe(1800);
-    });
-  });
+  // NOTE: Conflict resolution tests have been moved to birthday-merge.service.spec.ts
 
   // =====================================================
   // PROCESS PENDING CHANGES TESTS
@@ -490,43 +408,46 @@ describe('SyncCoordinatorService', () => {
       firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
     });
 
-    it('should keep cloud-only items', async () => {
+    it('should call mergeService.merge with latest-wins strategy', async () => {
       const cloudBirthdays = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
+      mergeServiceMock.merge.and.returnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [] });
 
       await service['mergeCloudWithLocal'](cloudBirthdays, 'user-123');
 
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays.length).toBe(1);
-      expect(savedBirthdays[0].name).toBe('Cloud Only');
+      expect(mergeServiceMock.merge).toHaveBeenCalledWith(
+        localBirthdays,
+        cloudBirthdays,
+        { strategy: 'latest-wins' }
+      );
     });
 
-    it('should keep local-only items and queue for upload', async () => {
-      const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
+    it('should save merged result to IndexedDB', async () => {
+      const mergedBirthdays = [makeBirthday({ id: 'b-1', name: 'Merged' })];
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      mergeServiceMock.merge.and.returnValue({ merged: mergedBirthdays, toUpload: [] });
 
       await service['mergeCloudWithLocal']([], 'user-123');
 
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays.length).toBe(1);
-      expect(savedBirthdays[0].name).toBe('Local Only');
+      expect(offlineStorageMock.saveBirthdays).toHaveBeenCalledWith(mergedBirthdays);
     });
 
-    it('should upload local-only items to cloud when online', async () => {
-      const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
+    it('should upload toUpload items to cloud when online', async () => {
+      const toUploadItems = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
 
       await service['mergeCloudWithLocal']([], 'user-123');
 
-      expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalledWith(
-        'user-123', jasmine.arrayContaining([jasmine.objectContaining({ id: 'local-1' })])
-      );
+      expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalledWith('user-123', toUploadItems);
     });
 
     it('should not upload when offline', async () => {
-      const localBirthdays = [makeBirthday({ id: 'local-1' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
+      const toUploadItems = [makeBirthday({ id: 'local-1' })];
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
 
       await service['mergeCloudWithLocal']([], 'user-123');
@@ -534,54 +455,26 @@ describe('SyncCoordinatorService', () => {
       expect(firestoreServiceMock.saveBirthdaysBatch).not.toHaveBeenCalled();
     });
 
-    it('should resolve conflicts for items existing in both', async () => {
-      const cloudBirthday = makeBirthday({ id: 'b-1', name: 'Cloud', updatedAt: 5000 });
-      const localBirthday = makeBirthday({ id: 'b-1', name: 'Local', updatedAt: 2000 });
-
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([localBirthday]));
-
-      await service['mergeCloudWithLocal']([cloudBirthday], 'user-123');
-
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays.length).toBe(1);
-      expect(savedBirthdays[0].name).toBe('Cloud'); // Cloud wins (newer)
-    });
-
-    it('should upload local winner items to cloud', async () => {
-      const cloudBirthday = makeBirthday({ id: 'b-1', name: 'Cloud', updatedAt: 2000 });
-      const localBirthday = makeBirthday({ id: 'b-1', name: 'Local', updatedAt: 5000 });
-
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([localBirthday]));
+    it('should not upload when toUpload is empty', async () => {
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
 
-      await service['mergeCloudWithLocal']([cloudBirthday], 'user-123');
+      await service['mergeCloudWithLocal']([], 'user-123');
 
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays[0].name).toBe('Local'); // Local wins
-      expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalled();
+      expect(firestoreServiceMock.saveBirthdaysBatch).not.toHaveBeenCalled();
     });
 
-    it('should handle mixed scenario (cloud-only + local-only + conflicts)', async () => {
-      const cloudBirthdays = [
-        makeBirthday({ id: 'cloud-only', name: 'Cloud Only' }),
-        makeBirthday({ id: 'shared-1', name: 'Cloud Version', updatedAt: 3000 })
-      ];
-      const localBirthdays = [
-        makeBirthday({ id: 'local-only', name: 'Local Only' }),
-        makeBirthday({ id: 'shared-1', name: 'Local Version', updatedAt: 5000 })
-      ];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+    it('should dispatch syncSuccess after merge', async () => {
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
+      spyOn(store, 'dispatch');
 
-      await service['mergeCloudWithLocal'](cloudBirthdays, 'user-123');
+      await service['mergeCloudWithLocal']([], 'user-123');
 
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays.length).toBe(3);
-
-      const names = savedBirthdays.map((b: Birthday) => b.name);
-      expect(names).toContain('Cloud Only');
-      expect(names).toContain('Local Only');
-      expect(names).toContain('Local Version'); // Local wins conflict
+      expect(store.dispatch).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: '[Sync] Success' })
+      );
     });
   });
 

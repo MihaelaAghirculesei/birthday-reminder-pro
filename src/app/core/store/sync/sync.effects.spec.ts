@@ -10,6 +10,8 @@ import { SyncCoordinatorService } from '../../services/sync-coordinator.service'
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
 import { LoggerService } from '../../services/logger.service';
+import { BirthdayMergeService, MergeResult } from '../../services/birthday-merge.service';
+import { Birthday } from '../../../shared/models/birthday.model';
 
 describe('SyncEffects', () => {
   let actions$: Observable<Action>;
@@ -19,6 +21,7 @@ describe('SyncEffects', () => {
   let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
+  let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
 
   const initialState = {
     auth: { user: { uid: 'user-123' }, loading: false, error: null, initialized: true },
@@ -36,6 +39,8 @@ describe('SyncEffects', () => {
     ]);
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
+    mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
 
     TestBed.configureTestingModule({
       providers: [
@@ -45,7 +50,8 @@ describe('SyncEffects', () => {
         { provide: SyncCoordinatorService, useValue: syncCoordinatorMock },
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
         { provide: NotificationService, useValue: notificationServiceMock },
-        { provide: LoggerService, useValue: loggerMock }
+        { provide: LoggerService, useValue: loggerMock },
+        { provide: BirthdayMergeService, useValue: mergeServiceMock }
       ]
     });
 
@@ -113,6 +119,50 @@ describe('SyncEffects', () => {
           'Sync failed: Network error',
           'error'
         );
+        done();
+      });
+    });
+  });
+
+  describe('cloudBirthdaysUpdated$', () => {
+    it('should call mergeService.merge with cloud-wins strategy and dispatch syncSuccess', (done) => {
+      const cloudBirthdays: Birthday[] = [
+        { id: 'b-1', name: 'Cloud', birthDate: new Date('1990-01-01'), zodiacSign: 'Capricorn' } as Birthday
+      ];
+      const localBirthdays: Birthday[] = [
+        { id: 'b-2', name: 'Local', birthDate: new Date('1991-02-02'), zodiacSign: 'Aquarius' } as Birthday
+      ];
+
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
+      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
+      mergeServiceMock.merge.and.returnValue({
+        merged: [...cloudBirthdays, ...localBirthdays],
+        toUpload: []
+      });
+
+      actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: cloudBirthdays }));
+
+      effects.cloudBirthdaysUpdated$.subscribe((action) => {
+        expect(mergeServiceMock.merge).toHaveBeenCalledWith(
+          localBirthdays,
+          cloudBirthdays,
+          { strategy: 'cloud-wins' }
+        );
+        expect(offlineStorageMock.saveBirthdays).toHaveBeenCalledWith(
+          [...cloudBirthdays, ...localBirthdays]
+        );
+        expect(action.type).toBe('[Sync] Success');
+        done();
+      });
+    });
+
+    it('should dispatch syncFailure on error', (done) => {
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.reject(new Error('DB error')));
+
+      actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [] }));
+
+      effects.cloudBirthdaysUpdated$.subscribe((action) => {
+        expect(action).toEqual(SyncActions.syncFailure({ error: 'DB error' }));
         done();
       });
     });
