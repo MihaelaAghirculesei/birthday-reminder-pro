@@ -2,6 +2,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
+import { IndexedDBConnectionService } from './indexeddb-connection.service';
 
 export type ChangeType = 'create' | 'update' | 'delete';
 export type EntityType = 'birthday' | 'category';
@@ -17,8 +18,6 @@ export interface PendingChange {
 }
 
 const PENDING_CHANGES_STORE = 'pendingChanges';
-const DB_NAME = 'BirthdayReminderDB';
-const DB_VERSION = 3;
 
 @Injectable({
   providedIn: 'root'
@@ -26,6 +25,7 @@ const DB_VERSION = 3;
 export class PendingChangesService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+  private readonly connection = inject(IndexedDBConnectionService);
 
   private changesSubject = new BehaviorSubject<PendingChange[]>([]);
   readonly changes$ = this.changesSubject.asObservable();
@@ -121,40 +121,9 @@ export class PendingChangesService {
     return this.changesSubject.getValue().filter((c) => c.entityType === entityType);
   }
 
-  private async openDB(): Promise<IDBDatabase> {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        if (!db.objectStoreNames.contains('birthdays')) {
-          const store = db.createObjectStore('birthdays', { keyPath: 'id' });
-          store.createIndex('name', 'name', { unique: false });
-          store.createIndex('birthDate', 'birthDate', { unique: false });
-        }
-
-        if (!db.objectStoreNames.contains('scheduledMessages')) {
-          const messageStore = db.createObjectStore('scheduledMessages', { keyPath: 'id' });
-          messageStore.createIndex('birthdayId', 'birthdayId', { unique: false });
-          messageStore.createIndex('active', 'active', { unique: false });
-        }
-
-        if (!db.objectStoreNames.contains(PENDING_CHANGES_STORE)) {
-          const pendingStore = db.createObjectStore(PENDING_CHANGES_STORE, { keyPath: 'id' });
-          pendingStore.createIndex('entityType', 'entityType', { unique: false });
-          pendingStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-      };
-    });
-  }
-
   private async loadChanges(): Promise<PendingChange[]> {
     try {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise((resolve, reject) => {
         const transaction = db.transaction([PENDING_CHANGES_STORE], 'readonly');
         const store = transaction.objectStore(PENDING_CHANGES_STORE);
@@ -174,7 +143,7 @@ export class PendingChangesService {
 
   private async saveChanges(changes: PendingChange[]): Promise<void> {
     try {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise((resolve, reject) => {
         const transaction = db.transaction([PENDING_CHANGES_STORE], 'readwrite');
         const store = transaction.objectStore(PENDING_CHANGES_STORE);

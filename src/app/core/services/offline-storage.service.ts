@@ -2,6 +2,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { LoggerService } from './logger.service';
+import { IndexedDBConnectionService } from './indexeddb-connection.service';
 
 interface StoredBirthday extends Omit<Birthday, 'birthDate'> {
   birthDate: string;
@@ -24,8 +25,7 @@ export interface OfflineStorageService {
 export class IndexedDBStorageService implements OfflineStorageService {
   private platformId = inject(PLATFORM_ID);
   private logger = inject(LoggerService);
-  private dbName = 'BirthdayReminderDB';
-  private dbVersion = 3;
+  private connection = inject(IndexedDBConnectionService);
   private storeName = 'birthdays';
   private messagesStoreName = 'scheduledMessages';
 
@@ -57,41 +57,6 @@ export class IndexedDBStorageService implements OfflineStorageService {
     throw lastError;
   }
 
-  private async openDB(): Promise<IDBDatabase> {
-    if (!isPlatformBrowser(this.platformId)) {
-      throw new Error('IndexedDB is not available on the server');
-    }
-
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, this.dbVersion);
-
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
-          store.createIndex('name', 'name', { unique: false });
-          store.createIndex('birthDate', 'birthDate', { unique: false });
-        }
-
-        if (!db.objectStoreNames.contains(this.messagesStoreName)) {
-          const messageStore = db.createObjectStore(this.messagesStoreName, { keyPath: 'id' });
-          messageStore.createIndex('birthdayId', 'birthdayId', { unique: false });
-          messageStore.createIndex('active', 'active', { unique: false });
-        }
-
-        if (!db.objectStoreNames.contains('pendingChanges')) {
-          const pendingStore = db.createObjectStore('pendingChanges', { keyPath: 'id' });
-          pendingStore.createIndex('entityType', 'entityType', { unique: false });
-          pendingStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-      };
-    });
-  }
-
   async getBirthdays(): Promise<Birthday[]> {
     if (!isPlatformBrowser(this.platformId)) {
       return [];
@@ -99,7 +64,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
 
     try {
       return await this.executeWithRetry(async () => {
-        const db = await this.openDB();
+        const db = await this.connection.getDB();
         return new Promise<Birthday[]>((resolve, reject) => {
           const transaction = db.transaction([this.storeName], 'readonly');
           const store = transaction.objectStore(this.storeName);
@@ -127,7 +92,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
@@ -153,7 +118,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
@@ -174,7 +139,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
@@ -195,7 +160,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
@@ -213,7 +178,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
@@ -231,7 +196,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
@@ -249,7 +214,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
@@ -267,7 +232,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     return this.executeWithRetry(async () => {
-      const db = await this.openDB();
+      const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.messagesStoreName], 'readwrite');
         const store = transaction.objectStore(this.messagesStoreName);
@@ -286,7 +251,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
 
     try {
       return await this.executeWithRetry(async () => {
-        const db = await this.openDB();
+        const db = await this.connection.getDB();
         return new Promise<ScheduledMessage[]>((resolve, reject) => {
           const transaction = db.transaction([this.messagesStoreName], 'readonly');
           const store = transaction.objectStore(this.messagesStoreName);
