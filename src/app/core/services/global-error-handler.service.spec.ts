@@ -2,17 +2,25 @@ import { TestBed } from '@angular/core/testing';
 import { Injector } from '@angular/core';
 import { GlobalErrorHandler } from './global-error-handler.service';
 import { NotificationService } from './notification.service';
+import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+  let errorReporterSpy: jasmine.SpyObj<ErrorReporter>;
   let injectorSpy: jasmine.SpyObj<Injector>;
 
   beforeEach(() => {
     notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['show']);
+    errorReporterSpy = jasmine.createSpyObj('ErrorReporter', ['captureError']);
     injectorSpy = jasmine.createSpyObj('Injector', ['get']);
-    injectorSpy.get.and.returnValue(notificationServiceSpy);
+    injectorSpy.get.and.callFake((token: unknown) => {
+      if (token === ERROR_REPORTER) {
+        return errorReporterSpy;
+      }
+      return notificationServiceSpy;
+    });
 
     TestBed.configureTestingModule({
       providers: [
@@ -223,6 +231,33 @@ describe('GlobalErrorHandler', () => {
       const error = new Error('Test error');
 
       expect(() => errorHandler.handleError(error)).not.toThrow();
+    });
+  });
+
+  describe('Error reporting via token', () => {
+    it('should report errors via ERROR_REPORTER token', () => {
+      const error = new Error('Test error');
+      errorHandler.handleError(error);
+
+      expect(errorReporterSpy.captureError).toHaveBeenCalledTimes(1);
+      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      expect(report.error).toBe(error);
+      expect(report.type).toBe('Unknown');
+      expect(report.technicalMessage).toBe('Test error');
+      expect(report.timestamp).toBeDefined();
+    });
+
+    it('should handle missing ERROR_REPORTER token gracefully', () => {
+      injectorSpy.get.and.callFake((token: unknown) => {
+        if (token === ERROR_REPORTER) {
+          throw new Error('No provider for ERROR_REPORTER');
+        }
+        return notificationServiceSpy;
+      });
+
+      const error = new Error('Test error');
+      expect(() => errorHandler.handleError(error)).not.toThrow();
+      expect(notificationServiceSpy.show).toHaveBeenCalled();
     });
   });
 

@@ -1,7 +1,7 @@
 import { ErrorHandler, Injectable, Injector } from '@angular/core';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
-import { ErrorReportingService } from './error-reporting.service';
+import { ERROR_REPORTER, ErrorReporter } from './error-reporting.service';
 
 interface ErrorContext {
   type: 'IndexedDB' | 'NgRx' | 'GoogleAPI' | 'Network' | 'Unknown';
@@ -157,7 +157,7 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   private reportError(error: unknown, context: ErrorContext): void {
     try {
-      const reporter = this.injector.get(ErrorReportingService);
+      const reporter = this.injector.get(ERROR_REPORTER) as ErrorReporter;
       reporter.captureError({
         error,
         type: context.type,
