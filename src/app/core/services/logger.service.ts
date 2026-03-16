@@ -19,42 +19,42 @@ export class LoggerService {
     this.isSilent = silentLogging ?? false;
   }
 
-  private shouldLog(): boolean {
+  private isDebugEnabled(): boolean {
     return isDevMode() && !this.isSilent;
   }
 
   log(...args: unknown[]): void {
-    if (this.shouldLog()) {
+    if (this.isDebugEnabled()) {
       console.log(...args);
     }
   }
 
   info(...args: unknown[]): void {
-    if (this.shouldLog()) {
+    if (this.isDebugEnabled()) {
       console.info(...args);
     }
   }
 
   warn(...args: unknown[]): void {
-    if (this.shouldLog()) {
+    if (!this.isSilent) {
       console.warn(...args);
     }
   }
 
   error(...args: unknown[]): void {
-    if (this.shouldLog()) {
+    if (!this.isSilent) {
       console.error(...args);
     }
   }
 
   group(label: string): void {
-    if (this.shouldLog()) {
+    if (this.isDebugEnabled()) {
       console.group(label);
     }
   }
 
   groupEnd(): void {
-    if (this.shouldLog()) {
+    if (this.isDebugEnabled()) {
       console.groupEnd();
     }
   }
