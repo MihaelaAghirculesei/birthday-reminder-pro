@@ -93,9 +93,10 @@ export const ZODIAC_SIGNS: ZodiacSign[] = [
   }
 ];
 
-export function getZodiacSign(birthDate: Date): ZodiacSign {
-  const month = birthDate.getMonth() + 1;
-  const day = birthDate.getDate();
+export function getZodiacSign(birthDate: string): ZodiacSign {
+  const [, m, d] = birthDate.split('-').map(Number);
+  const month = m;
+  const day = d;
 
   for (const sign of ZODIAC_SIGNS) {
     if (sign.name === 'Capricorn') {

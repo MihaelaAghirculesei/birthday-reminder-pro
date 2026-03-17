@@ -1,11 +1,13 @@
+import { parseLocalDate } from '../date.utils';
+
 /**
  * Calculate the age based on a birth date
- * @param birthDate
+ * @param birthDate YYYY-MM-DD string
  * @returns
  */
-export function calculateAge(birthDate: Date): number {
+export function calculateAge(birthDate: string): number {
   const today = new Date();
-  const birth = new Date(birthDate);
+  const birth = parseLocalDate(birthDate);
   let age = today.getFullYear() - birth.getFullYear();
   const monthDiff = today.getMonth() - birth.getMonth();
 
