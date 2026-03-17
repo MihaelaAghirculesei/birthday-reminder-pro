@@ -5,6 +5,7 @@ export { NotificationService, NotificationMessage } from './notification.service
 export { NotificationPermissionService, NotificationPermissionStatus } from './notification-permission.service';
 export { PushNotificationService, BirthdayNotificationData } from './push-notification.service';
 export { NetworkService } from './network.service';
+export { IndexedDBConnectionService } from './indexeddb-connection.service';
 export { IndexedDBStorageService } from './offline-storage.service';
 export { GoogleCalendarService, GoogleCalendarSettings, GoogleCalendarItem } from './google-calendar.service';
 export { GoogleApiErrorService, GoogleApiErrorDetails } from './google-api-error.service';
@@ -17,6 +18,7 @@ export { SelectivePreloadingStrategy } from './selective-preloading.strategy';
 export { FirebaseAuthService, AuthUser } from './firebase-auth.service';
 export { FirestoreService } from './firestore.service';
 export { SyncCoordinatorService } from './sync-coordinator.service';
+export { BirthdayMergeService, MergeResult, MergeStrategy, MergeOptions } from './birthday-merge.service';
 export { PendingChangesService, PendingChange, ChangeType, EntityType } from './pending-changes.service';
-export { ErrorReportingService, ErrorReport, ERROR_REPORTER } from './error-reporting.service';
+export { ErrorReportingService, ErrorReport, ErrorReporter, SerializedErrorReport, ERROR_REPORTER, ERROR_REPORTING_ENDPOINT } from './error-reporting.service';
 export { SenderSettingsService } from './sender-settings.service';
