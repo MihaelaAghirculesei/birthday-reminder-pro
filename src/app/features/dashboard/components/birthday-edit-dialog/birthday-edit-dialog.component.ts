@@ -71,7 +71,7 @@ export class BirthdayEditDialogComponent {
     this.editingData = {
       name: data.birthday.name,
       notes: data.birthday.notes || '',
-      birthDate: this.formatDateForInput(data.birthday.birthDate),
+      birthDate: data.birthday.birthDate,
       category: data.birthday.category || '',
       photo: data.birthday.photo || null,
       rememberPhoto: data.birthday.rememberPhoto || null,
@@ -79,19 +79,12 @@ export class BirthdayEditDialogComponent {
       phone: data.birthday.phone || '',
       telegramUsername: data.birthday.telegramUsername || '',
     };
+    this.contactWarning = !this.hasAnyContact();
   }
 
   @HostListener('window:keydown.escape')
   handleEscapeKey(): void {
     this.onCancel();
-  }
-
-  private formatDateForInput(date: Date): string {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   onPhotoSelected(photoDataUrl: string): void {
@@ -114,14 +107,32 @@ export class BirthdayEditDialogComponent {
     this.hasUnsavedMessages = hasUnsaved;
   }
 
+  private phonePattern = /^\+?[\d\s\-()]*$/;
+  private emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  private telegramPattern = /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
+
   hasAnyContact(): boolean {
     return !!(this.editingData.email.trim() || this.editingData.phone.trim() || this.editingData.telegramUsername.trim());
   }
 
+  isEmailValid(): boolean {
+    return !this.editingData.email.trim() || this.emailPattern.test(this.editingData.email);
+  }
+
+  isPhoneValid(): boolean {
+    return !this.editingData.phone.trim() || this.phonePattern.test(this.editingData.phone);
+  }
+
+  isTelegramValid(): boolean {
+    return !this.editingData.telegramUsername.trim() || this.telegramPattern.test(this.editingData.telegramUsername);
+  }
+
+  isContactValid(): boolean {
+    return this.isEmailValid() && this.isPhoneValid() && this.isTelegramValid();
+  }
+
   onContactChange(): void {
-    if (this.contactWarning && this.hasAnyContact()) {
-      this.contactWarning = false;
-    }
+    this.contactWarning = !this.hasAnyContact();
   }
 
   onCancel(): void {
@@ -129,12 +140,9 @@ export class BirthdayEditDialogComponent {
   }
 
   onSave(): void {
-    const hasContact = !!(this.editingData.email.trim() || this.editingData.phone.trim() || this.editingData.telegramUsername.trim());
-    if (!hasContact) {
-      this.contactWarning = true;
+    if (!this.isContactValid()) {
       return;
     }
-    this.contactWarning = false;
     const result: BirthdayEditDialogResult = {
       birthday: this.data.birthday,
       editedData: this.editingData

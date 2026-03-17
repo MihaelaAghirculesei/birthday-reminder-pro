@@ -58,39 +58,54 @@
           <span>Contact Info (for sending wishes)</span>
         </div>
         <div class="contact-fields">
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!editingData.email.trim()">
             <mat-label>Email</mat-label>
             <input
               matInput
               type="email"
               [(ngModel)]="editingData.email"
+              #emailField="ngModel"
               (ngModelChange)="onContactChange()"
               placeholder="email@example.com"
+              pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
               />
             <mat-icon matPrefix>email</mat-icon>
+            @if (emailField.errors?.['pattern']) {
+              <mat-error>Please enter a valid email address.</mat-error>
+            }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!editingData.phone.trim()">
             <mat-label>Phone</mat-label>
             <input
               matInput
               type="tel"
               [(ngModel)]="editingData.phone"
+              #phoneField="ngModel"
               (ngModelChange)="onContactChange()"
               placeholder="+1234567890"
+              pattern="^\+?[\d\s\-\(\)]*$"
               />
             <mat-icon matPrefix>phone</mat-icon>
+            @if (phoneField.errors?.['pattern']) {
+              <mat-error>Phone number can only contain digits, +, -, spaces and parentheses.</mat-error>
+            }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="contactWarning && !hasAnyContact()">
+          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!editingData.telegramUsername.trim()">
             <mat-label>Telegram Username</mat-label>
             <input
               matInput
               [(ngModel)]="editingData.telegramUsername"
+              #telegramField="ngModel"
               (ngModelChange)="onContactChange()"
               placeholder="username"
+              pattern="^[a-zA-Z][a-zA-Z0-9_]{4,31}$"
               />
             <mat-icon matPrefix>send</mat-icon>
+            @if (telegramField.errors?.['pattern']) {
+              <mat-error>Username must start with a letter, be 5-32 characters: letters, digits and underscores.</mat-error>
+            }
           </mat-form-field>
         </div>
       </div>
@@ -133,7 +148,7 @@
   @if (contactWarning) {
     <div class="contact-warning">
       <mat-icon>warning</mat-icon>
-      Please add at least one contact info (Email, Phone, or Telegram) to enable sending wishes.
+      No contact info provided. Add Email, Phone, or Telegram to enable sending wishes.
     </div>
   }
 
@@ -142,7 +157,7 @@
       <mat-icon>close</mat-icon>
       Cancel
     </button>
-    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages">
+    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages || !isContactValid()">
       <mat-icon>check</mat-icon>
       Save Changes
     </button>
