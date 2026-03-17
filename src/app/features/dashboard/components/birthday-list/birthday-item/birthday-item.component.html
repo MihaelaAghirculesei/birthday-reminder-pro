@@ -28,7 +28,7 @@
     <div class="dashboard-birthday-details compact-hide">
       <div class="dashboard-birth-date">
         <mat-icon class="small-icon">cake</mat-icon>
-        {{ birthday.birthDate | date : 'EEEE, MMMM dd, yyyy' }}
+        {{ birthDateDisplay | date : 'EEEE, MMMM dd, yyyy' }}
       </div>
       @if (birthday.notes) {
         <div class="dashboard-notes">
@@ -52,7 +52,6 @@
     </div>
   </div>
 
-  <!-- Burger menu for compact mode (<660px) -->
   <button
     mat-icon-button
     [matMenuTriggerFor]="itemMenu"
@@ -62,14 +61,14 @@
     >
     <mat-icon>more_vert</mat-icon>
   </button>
-  <mat-menu #itemMenu="matMenu" panelClass="birthday-item-menu">
+  <mat-menu #itemMenu="matMenu" class="birthday-item-menu">
     <div mat-menu-item disabled class="menu-info-item">
       <mat-icon>person</mat-icon>
       <span>{{ age }} years old</span>
     </div>
     <div mat-menu-item disabled class="menu-info-item">
       <mat-icon>cake</mat-icon>
-      <span>{{ birthday.birthDate | date : 'MMM dd, yyyy' }}</span>
+      <span>{{ birthDateDisplay | date : 'MMM dd, yyyy' }}</span>
     </div>
     @if (birthday.notes) {
       <div mat-menu-item disabled class="menu-info-item">

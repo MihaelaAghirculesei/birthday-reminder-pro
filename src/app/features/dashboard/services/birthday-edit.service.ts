@@ -41,7 +41,7 @@ export class BirthdayEditService {
     return this.editingBirthdayDataSubject.value;
   }
 
-  startEdit(birthday: Birthday, formatDateForInput: (date: Date) => string, defaultCategory: string): void {
+  startEdit(birthday: Birthday, defaultCategory: string): void {
     if (this.editingBirthdayIdSubject.value && this.editingBirthdayIdSubject.value !== birthday.id) {
       this.cancelEdit();
     }
@@ -50,7 +50,7 @@ export class BirthdayEditService {
     this.editingBirthdayDataSubject.next({
       name: birthday.name,
       notes: birthday.notes || '',
-      birthDate: formatDateForInput(birthday.birthDate),
+      birthDate: birthday.birthDate,
       category: birthday.category || defaultCategory,
       photo: birthday.photo || null,
       rememberPhoto: birthday.rememberPhoto || null,

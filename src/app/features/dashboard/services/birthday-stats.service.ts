@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Birthday } from '../../../shared';
-import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
 
 export interface DashboardStats {
   total: number;
@@ -38,10 +38,10 @@ export class BirthdayStatsService {
   calculateStats(birthdays: Birthday[]): DashboardStats {
     const total = birthdays.length;
     const currentMonth = new Date().getMonth();
-    const thisMonth = birthdays.filter(b => new Date(b.birthDate).getMonth() === currentMonth).length;
+    const thisMonth = birthdays.filter(b => parseLocalDate(b.birthDate).getMonth() === currentMonth).length;
 
     const totalAge = birthdays.reduce((sum, b) => {
-      const age = new Date().getFullYear() - new Date(b.birthDate).getFullYear();
+      const age = new Date().getFullYear() - parseLocalDate(b.birthDate).getFullYear();
       return sum + age;
     }, 0);
     const averageAge = birthdays.length > 0 ? Math.round(totalAge / birthdays.length) : 0;
@@ -75,7 +75,7 @@ export class BirthdayStatsService {
     const monthCounts = new Array(12).fill(0);
 
     birthdays.forEach(birthday => {
-      const month = new Date(birthday.birthDate).getMonth();
+      const month = parseLocalDate(birthday.birthDate).getMonth();
       monthCounts[month]++;
     });
 

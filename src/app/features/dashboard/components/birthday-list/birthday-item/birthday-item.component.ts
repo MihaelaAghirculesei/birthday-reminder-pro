@@ -6,6 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { ZodiacIconComponent, CategoryIconComponent, MessageIndicatorComponent, Birthday, calculateAge } from '../../../../../shared';
+import { parseLocalDate } from '../../../../../shared/utils/date.utils';
 import { RememberPhotoComponent } from '../../remember-photo/remember-photo.component';
 
 @Component({
@@ -34,6 +35,10 @@ export class BirthdayItemComponent implements OnChanges {
   daysText = '';
   daysChipClass = 'green-safe';
   age = 0;
+
+  get birthDateDisplay(): Date {
+    return parseLocalDate(this.birthday.birthDate);
+  }
 
   @Output() edit = new EventEmitter<Birthday>();
   @Output() deleted = new EventEmitter<Birthday>();
@@ -70,7 +75,6 @@ export class BirthdayItemComponent implements OnChanges {
   }
 
   onEdit(event: Event): void {
-    // Release focus from button to prevent aria-hidden warning
     (event.currentTarget as HTMLElement).blur();
     this.edit.emit(this.birthday);
   }

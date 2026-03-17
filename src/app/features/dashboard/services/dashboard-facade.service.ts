@@ -5,7 +5,7 @@ import { Birthday, BirthdayCategory } from '../../../shared';
 import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService, ChartDataItem } from './birthday-stats.service';
 import { CategoryStats } from '../components/category-filter/category-filter.component';
-import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
 import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
@@ -54,7 +54,7 @@ export class DashboardFacadeService {
     futureDate.setDate(today.getDate() + 30);
 
     return this.birthdays().filter(birthday => {
-      const nextBirthday = new Date(birthday.birthDate);
+      const nextBirthday = parseLocalDate(birthday.birthDate);
       nextBirthday.setFullYear(today.getFullYear());
       if (nextBirthday < today) {
         nextBirthday.setFullYear(today.getFullYear() + 1);
@@ -143,7 +143,9 @@ export class DashboardFacadeService {
 
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(b => b.name.toLowerCase().includes(searchLower));
+      filtered = filtered.filter(b =>
+        b.name.toLowerCase().split(/\s+/).some(word => word.startsWith(searchLower))
+      );
     }
 
     return filtered.sort((a, b) => getDaysUntilBirthday(a.birthDate) - getDaysUntilBirthday(b.birthDate));
