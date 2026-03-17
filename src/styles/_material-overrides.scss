@@ -294,44 +294,56 @@ app-google-calendar-sync .mat-slide-toggle-label {
   }
 }
 
+// Birthday edit dialog panel - override leaked gradient-dialog-surface global styles
+.birthday-edit-dialog-panel .mat-mdc-dialog-container {
+  background-color: var(--surface) !important;
+
+  .mdc-dialog__surface {
+    background: var(--surface) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-elevated) !important;
+  }
+}
+
 // Birthday item context menu (CDK overlay)
 .birthday-item-menu.mat-mdc-menu-panel {
   min-width: 180px;
-  background: var(--overlay-gradient-dark);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
+  box-shadow: var(--shadow-elevated);
 
   .mat-mdc-menu-content {
-    color: white;
+    color: var(--text-primary);
   }
 
   .mat-mdc-menu-item {
-    color: white !important;
+    color: var(--text-primary) !important;
 
     .mat-icon {
-      color: rgba(255, 255, 255, 0.7) !important;
+      color: var(--text-muted) !important;
     }
 
     .mdc-list-item__primary-text {
-      color: white !important;
+      color: var(--text-primary) !important;
     }
 
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(0, 0, 0, 0.45);
     }
 
     &[disabled] {
       opacity: 1 !important;
-      color: white !important;
+      color: var(--text-secondary) !important;
 
       .mdc-list-item__primary-text {
-        color: white !important;
+        color: var(--text-secondary) !important;
       }
     }
   }
 
   mat-divider, .mat-divider {
-    border-top-color: rgba(255, 255, 255, 0.15) !important;
+    border-top-color: var(--border-light) !important;
   }
 
   @include respond-to('mobile-sm') {
