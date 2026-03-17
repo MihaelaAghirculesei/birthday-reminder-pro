@@ -68,7 +68,7 @@ export class MessageScheduleDialogComponent implements OnInit {
   selectedBirthday: Birthday | null = null;
   allBirthdays: Signal<Birthday[]> = computed(() =>
     [...this.birthdays()].sort(
-      (a, b) => getDaysUntilBirthday(new Date(a.birthDate)) - getDaysUntilBirthday(new Date(b.birthDate))
+      (a, b) => getDaysUntilBirthday(a.birthDate) - getDaysUntilBirthday(b.birthDate)
     )
   );
   birthdayOptions: Signal<BirthdayOptionView[]> = computed(() =>
@@ -115,6 +115,7 @@ export class MessageScheduleDialogComponent implements OnInit {
       width: '700px',
       maxWidth: '95vw',
       maxHeight: '90vh',
+      panelClass: 'birthday-edit-dialog-panel',
       data: dialogData,
       autoFocus: 'first-tabbable'
     });
@@ -125,7 +126,7 @@ export class MessageScheduleDialogComponent implements OnInit {
         ...result.birthday,
         name: result.editedData.name.trim() || result.birthday.name,
         notes: result.editedData.notes.trim(),
-        birthDate: new Date(result.editedData.birthDate),
+        birthDate: result.editedData.birthDate,
         category: result.editedData.category,
         photo: result.editedData.photo || undefined,
         rememberPhoto: result.editedData.rememberPhoto || undefined,

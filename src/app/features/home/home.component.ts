@@ -21,6 +21,7 @@ import { PhotoUploadComponent } from '../../shared/components/photo-upload.compo
 import { DEFAULT_CATEGORY, BirthdayCategory } from '../../shared/constants';
 import { Birthday } from '../../shared/models';
 import { getZodiacSign } from '../../shared/utils';
+import { toDateString } from '../../shared/utils/date.utils';
 import { CategoryFacadeService, LoggerService } from '../../core';
 import { Store } from '@ngrx/store';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -117,11 +118,12 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   onSubmit() {
     if (this.birthdayForm.valid) {
-      const birthDate = new Date(this.birthdayForm.value.birthDate);
+      const birthDate = toDateString(this.birthdayForm.value.birthDate);
       const zodiacSign = getZodiacSign(birthDate);
 
       const formData = {
         ...this.birthdayForm.value,
+        birthDate,
         photo: this.selectedPhoto,
         zodiacSign: zodiacSign.name,
       };
