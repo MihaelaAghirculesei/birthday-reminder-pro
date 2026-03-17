@@ -29,7 +29,7 @@ export const ScheduledMessageSchema = z.object({
 export const BirthdaySchema = z.object({
   id: z.string(),
   name: z.string().min(1).max(200),
-  birthDate: z.union([z.string(), z.date()]),
+  birthDate: z.string(),
   notes: z.string().max(1000).optional(),
   reminderDays: z.number().min(1).max(365).optional(),
   photo: z.string().optional(),

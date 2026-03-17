@@ -10,7 +10,7 @@ export interface SyncMetadata {
 export interface Birthday extends SyncMetadata {
   id: string;
   name: string;
-  birthDate: Date;
+  birthDate: string;
   notes?: string;
   reminderDays?: number;
   photo?: string;
