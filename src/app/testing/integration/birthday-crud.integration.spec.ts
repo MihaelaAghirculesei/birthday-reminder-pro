@@ -12,7 +12,7 @@ import { GoogleCalendarService } from '../../core/services/google-calendar.servi
 import { SyncCoordinatorService } from '../../core/services/sync-coordinator.service';
 import { birthdayReducer } from '../../core/store/birthday/birthday.reducer';
 import { authReducer } from '../../core/store/auth/auth.reducer';
-import { BirthdayEffects } from '../../core/store/birthday/birthday.effects';
+import { BirthdayCrudEffects } from '../../core/store/birthday/birthday-crud.effects';
 import { Birthday } from '../../shared/models/birthday.model';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
@@ -86,7 +86,7 @@ describe('Birthday CRUD Integration', () => {
     TestBed.configureTestingModule({
       providers: [
         provideStore({ birthdays: birthdayReducer, auth: authReducer }),
-        provideEffects([BirthdayEffects]),
+        provideEffects([BirthdayCrudEffects]),
         IdGeneratorService,
         LoggerService,
         { provide: SILENT_LOGGING, useValue: true },

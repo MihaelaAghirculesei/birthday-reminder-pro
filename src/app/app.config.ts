@@ -6,10 +6,10 @@ import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
-import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy } from './core';
+import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
-import { BirthdayEffects } from './core/store/birthday/birthday.effects';
+import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
 import { categoryReducer } from './core/store/category/category.reducer';
 import { CategoryEffects } from './core/store/category/category.effects';
 import { uiReducer } from './core/store/ui/ui.reducer';
@@ -20,6 +20,7 @@ import { SyncEffects } from './core/store/sync/sync.effects';
 import { FirebaseAuthService } from './core/services/firebase-auth.service';
 import { SyncCoordinatorService } from './core/services/sync-coordinator.service';
 import { LoggerService } from './core/services/logger.service';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 function initializeApp(
   authService: FirebaseAuthService,
@@ -36,6 +37,10 @@ function initializeApp(
   };
 }
 
+const devProviders = isDevMode()
+  ? [provideStoreDevtools({ maxAge: 25, logOnly: false })]
+  : [];
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
@@ -48,10 +53,12 @@ export const appConfig: ApplicationConfig = {
       auth: authReducer,
       sync: syncReducer
     }),
-    provideEffects([BirthdayEffects, CategoryEffects, AuthEffects, SyncEffects]),
+    provideEffects([BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects, CategoryEffects, AuthEffects, SyncEffects]),
+    ...devProviders,
     NotificationService,
     ThemeService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    { provide: ERROR_REPORTER, useExisting: ErrorReportingService },
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
