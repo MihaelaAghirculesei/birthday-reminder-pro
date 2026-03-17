@@ -33,7 +33,7 @@ describe('Search Functionality', () => {
     });
 
     cy.get('.dashboard-container', { timeout: 15000 }).should('exist');
-    cy.get('.dashboard-search-field input', { timeout: 15000 }).should('be.visible');
+    cy.get('[data-testid="search-input"]', { timeout: 15000 }).should('be.visible');
   });
 
   it('should search birthdays by name', () => {
@@ -41,8 +41,8 @@ describe('Search Functionality', () => {
     cy.contains('Bob Smith').should('exist');
     cy.contains('Charlie Brown').should('exist');
 
-    cy.get('.dashboard-search-field input')
-      .should('exist')
+    cy.get('[data-testid="search-input"]')
+      .should('be.visible')
       .type('Alice', { force: true });
 
     cy.contains('Alice Johnson').should('exist');
@@ -51,12 +51,12 @@ describe('Search Functionality', () => {
   });
 
   it('should clear search and show all birthdays', () => {
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('Alice', { force: true });
     cy.contains('Bob Smith').should('not.exist');
 
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .clear({ force: true });
 
@@ -66,7 +66,7 @@ describe('Search Functionality', () => {
   });
 
   it('should show no results message for non-existent search', () => {
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('NonExistent', { force: true });
 
@@ -74,15 +74,15 @@ describe('Search Functionality', () => {
   });
 
   it('should be case insensitive', () => {
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('alice', { force: true });
     cy.contains('Alice Johnson').should('be.visible');
 
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .clear({ force: true });
-    cy.get('.dashboard-search-field input')
+    cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('ALICE', { force: true });
     cy.contains('Alice Johnson').should('be.visible');

@@ -31,6 +31,7 @@ export default defineConfig({
     runMode: 2,
     openMode: 0,
   },
+  allowCypressEnv: false,
   defaultCommandTimeout: 10000,
   requestTimeout: 10000,
   responseTimeout: 10000,
