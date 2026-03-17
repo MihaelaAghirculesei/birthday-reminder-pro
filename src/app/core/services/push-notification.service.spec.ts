@@ -13,7 +13,7 @@ describe('PushNotificationService', () => {
   const mockBirthday: Birthday = {
     id: 'b1',
     name: 'John Doe',
-    birthDate: new Date('1990-01-15'),
+    birthDate: '1990-01-15',
     zodiacSign: 'Capricorn',
     reminderDays: 7,
     category: 'family'
@@ -314,7 +314,7 @@ describe('PushNotificationService', () => {
     it('should replace age placeholder with empty string if age cannot be calculated', async () => {
       const futureBirthday = {
         ...mockBirthday,
-        birthDate: new Date(new Date().getFullYear() + 100, 0, 1),
+        birthDate: '2126-01-01',
         scheduledMessages: [mockMessage]
       };
       mockStorage.getBirthdays.and.returnValue(Promise.resolve([futureBirthday]));
@@ -431,7 +431,7 @@ describe('PushNotificationService', () => {
   describe('Notification date calculation', () => {
     it('should schedule for next year if birthday has passed this year', async () => {
       const now = new Date();
-      const pastBirthday = new Date(now.getFullYear(), 0, 1);
+      const pastBirthday = `${now.getFullYear()}-01-01`;
 
       const birthday = {
         ...mockBirthday,
@@ -449,7 +449,7 @@ describe('PushNotificationService', () => {
 
     it('should schedule for this year if birthday is upcoming', async () => {
       const now = new Date();
-      const futureBirthday = new Date(now.getFullYear(), 11, 31);
+      const futureBirthday = `${now.getFullYear()}-12-31`;
 
       const birthday = {
         ...mockBirthday,
@@ -467,7 +467,8 @@ describe('PushNotificationService', () => {
   describe('Age calculation', () => {
     it('should calculate correct age for past birthday this year', async () => {
       const now = new Date();
-      const pastDate = new Date(now.getFullYear() - 30, now.getMonth() - 1, 15);
+      const m = String(now.getMonth()).padStart(2, '0');
+      const pastDate = `${now.getFullYear() - 30}-${m}-15`;
       const birthday = {
         ...mockBirthday,
         birthDate: pastDate,
@@ -488,7 +489,8 @@ describe('PushNotificationService', () => {
 
     it('should calculate correct age for upcoming birthday this year', async () => {
       const now = new Date();
-      const futureDate = new Date(now.getFullYear() - 25, now.getMonth() + 1, 15);
+      const m = String(now.getMonth() + 2).padStart(2, '0');
+      const futureDate = `${now.getFullYear() - 25}-${m}-15`;
       const birthday = {
         ...mockBirthday,
         birthDate: futureDate,
@@ -508,7 +510,10 @@ describe('PushNotificationService', () => {
 
     it('should handle birthday on same month different day', async () => {
       const now = new Date();
-      const sameMonthDate = new Date(now.getFullYear() - 20, now.getMonth(), now.getDate() + 5);
+      const futureDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 5);
+      const m = String(futureDay.getMonth() + 1).padStart(2, '0');
+      const d = String(futureDay.getDate()).padStart(2, '0');
+      const sameMonthDate = `${now.getFullYear() - 20}-${m}-${d}`;
       const birthday = {
         ...mockBirthday,
         birthDate: sameMonthDate,
@@ -564,7 +569,6 @@ describe('PushNotificationService', () => {
         {
           ...mockBirthday,
           id: 'b2'
-          // no scheduledMessages
         },
         {
           ...mockBirthday,
@@ -750,8 +754,6 @@ describe('PushNotificationService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (service as any).checkBrowserNotifications();
 
-      // If guard works, storage.getBirthdays should NOT be called by checkBrowserNotifications
-      // (it may have been called during init, so we reset and check)
       mockStorage.getBirthdays.calls.reset();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (service as any).checkBrowserNotifications();
@@ -760,7 +762,6 @@ describe('PushNotificationService', () => {
 
     it('should allow checkBrowserNotifications when notifications enabled and permission granted', async () => {
       mockPermissionService.isNotificationsEnabled.and.returnValue(true);
-      // Simulate browser permission granted
       const origPermission = Notification.permission;
       Object.defineProperty(Notification, 'permission', { value: 'granted', writable: true, configurable: true });
       mockStorage.getBirthdays.calls.reset();
@@ -768,17 +769,15 @@ describe('PushNotificationService', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (service as any).checkBrowserNotifications();
 
-      // When enabled and granted, it should proceed and call getBirthdays
       expect(mockStorage.getBirthdays).toHaveBeenCalled();
 
-      // Restore
       Object.defineProperty(Notification, 'permission', { value: origPermission, writable: true, configurable: true });
     });
   });
 
   describe('Birthday date edge cases', () => {
     it('should handle leap year birthday', async () => {
-      const leapYearBirthday = new Date(2000, 1, 29); // Feb 29
+      const leapYearBirthday = '2000-02-29'; // Feb 29
       const birthday = {
         ...mockBirthday,
         birthDate: leapYearBirthday,
@@ -792,7 +791,7 @@ describe('PushNotificationService', () => {
     });
 
     it('should handle end of year birthday', async () => {
-      const endOfYearBirthday = new Date(1990, 11, 31); // Dec 31
+      const endOfYearBirthday = '1990-12-31'; // Dec 31
       const birthday = {
         ...mockBirthday,
         birthDate: endOfYearBirthday,
@@ -806,7 +805,7 @@ describe('PushNotificationService', () => {
     });
 
     it('should handle start of year birthday', async () => {
-      const startOfYearBirthday = new Date(1990, 0, 1); // Jan 1
+      const startOfYearBirthday = '1990-01-01'; // Jan 1
       const birthday = {
         ...mockBirthday,
         birthDate: startOfYearBirthday,

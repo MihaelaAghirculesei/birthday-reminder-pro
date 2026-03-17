@@ -9,7 +9,7 @@ describe('IndexedDBStorageService', () => {
   const mockBirthday: Birthday = {
     id: 'test-1',
     name: 'John Doe',
-    birthDate: new Date('1990-01-15'),
+    birthDate: '1990-01-15',
     zodiacSign: 'Capricorn',
     reminderDays: 7,
     category: 'family'
@@ -18,7 +18,7 @@ describe('IndexedDBStorageService', () => {
   const mockBirthday2: Birthday = {
     id: 'test-2',
     name: 'Jane Smith',
-    birthDate: new Date('1985-06-20'),
+    birthDate: '1985-06-20',
     zodiacSign: 'Gemini',
     reminderDays: 3,
     category: 'friends'
@@ -121,12 +121,12 @@ describe('IndexedDBStorageService', () => {
       expect(birthdays.length).toBe(0);
     });
 
-    it('should preserve birthDate as Date object after retrieval', async () => {
+    it('should preserve birthDate as YYYY-MM-DD string after retrieval', async () => {
       await service.addBirthday(mockBirthday);
       const birthdays = await service.getBirthdays();
 
-      expect(birthdays[0].birthDate instanceof Date).toBe(true);
-      expect(birthdays[0].birthDate.getTime()).toBe(mockBirthday.birthDate.getTime());
+      expect(typeof birthdays[0].birthDate).toBe('string');
+      expect(birthdays[0].birthDate).toBe(mockBirthday.birthDate);
     });
 
     it('should handle saving empty birthdays array', async () => {

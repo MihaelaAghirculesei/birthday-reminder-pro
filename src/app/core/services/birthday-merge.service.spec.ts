@@ -8,7 +8,7 @@ describe('BirthdayMergeService', () => {
     return {
       id: 'b-1',
       name: 'Mario Rossi',
-      birthDate: new Date('1990-05-15'),
+      birthDate: '1990-05-15',
       zodiacSign: 'Taurus',
       ...overrides
     } as Birthday;
@@ -18,9 +18,6 @@ describe('BirthdayMergeService', () => {
     service = new BirthdayMergeService();
   });
 
-  // =====================================================
-  // LATEST-WINS STRATEGY
-  // =====================================================
   describe('merge with latest-wins strategy', () => {
     it('should keep cloud-only items', () => {
       const cloud = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
@@ -84,8 +81,8 @@ describe('BirthdayMergeService', () => {
     });
 
     it('should deduplicate by name+date by default', () => {
-      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: new Date('1990-05-15'), updatedAt: 1000 })];
-      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: new Date('1990-05-15'), updatedAt: 2000 })];
+      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 2000 })];
 
       const result = service.merge(local, cloud, { strategy: 'latest-wins' });
 
@@ -94,8 +91,8 @@ describe('BirthdayMergeService', () => {
     });
 
     it('should not deduplicate when deduplicate is false', () => {
-      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: new Date('1990-05-15'), updatedAt: 1000 })];
-      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: new Date('1990-05-15'), updatedAt: 2000 })];
+      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 2000 })];
 
       const result = service.merge(local, cloud, { strategy: 'latest-wins', deduplicate: false });
 
@@ -103,9 +100,6 @@ describe('BirthdayMergeService', () => {
     });
   });
 
-  // =====================================================
-  // CLOUD-WINS STRATEGY
-  // =====================================================
   describe('merge with cloud-wins strategy', () => {
     it('should use cloud version for items without local counterpart', () => {
       const cloud = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
@@ -171,8 +165,8 @@ describe('BirthdayMergeService', () => {
     });
 
     it('should not deduplicate by default', () => {
-      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: new Date('1990-05-15') })];
-      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: new Date('1990-05-15') })];
+      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: '1990-05-15' })];
+      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: '1990-05-15' })];
 
       const result = service.merge(local, cloud, { strategy: 'cloud-wins' });
 
@@ -191,9 +185,6 @@ describe('BirthdayMergeService', () => {
     });
   });
 
-  // =====================================================
-  // CONFLICT RESOLUTION (resolveConflict)
-  // =====================================================
   describe('resolveConflict (via latest-wins merge)', () => {
     it('should prefer cloud when timestamps are equal', () => {
       const local = [makeBirthday({ id: 'b-1', name: 'Local', updatedAt: 1000 })];
@@ -270,16 +261,13 @@ describe('BirthdayMergeService', () => {
     });
   });
 
-  // =====================================================
-  // DEDUPLICATION
-  // =====================================================
   describe('deduplication', () => {
     it('should deduplicate by name+birthDate keeping the newer one', () => {
       const local = [
-        makeBirthday({ id: 'b-1', name: 'mario rossi', birthDate: new Date('1990-05-15'), updatedAt: 3000 })
+        makeBirthday({ id: 'b-1', name: 'mario rossi', birthDate: '1990-05-15', updatedAt: 3000 })
       ];
       const cloud = [
-        makeBirthday({ id: 'b-2', name: 'Mario Rossi', birthDate: new Date('1990-05-15'), updatedAt: 1000 })
+        makeBirthday({ id: 'b-2', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 })
       ];
 
       const result = service.merge(local, cloud, { strategy: 'latest-wins' });
@@ -290,10 +278,10 @@ describe('BirthdayMergeService', () => {
 
     it('should not deduplicate entries with different birth dates', () => {
       const local = [
-        makeBirthday({ id: 'b-1', name: 'Mario Rossi', birthDate: new Date('1990-05-15') })
+        makeBirthday({ id: 'b-1', name: 'Mario Rossi', birthDate: '1990-05-15' })
       ];
       const cloud = [
-        makeBirthday({ id: 'b-2', name: 'Mario Rossi', birthDate: new Date('1991-05-15') })
+        makeBirthday({ id: 'b-2', name: 'Mario Rossi', birthDate: '1991-05-15' })
       ];
 
       const result = service.merge(local, cloud, { strategy: 'latest-wins' });
@@ -303,10 +291,10 @@ describe('BirthdayMergeService', () => {
 
     it('should handle trimmed names and case-insensitive comparison', () => {
       const local = [
-        makeBirthday({ id: 'b-1', name: '  Mario Rossi  ', birthDate: new Date('1990-05-15'), updatedAt: 5000 })
+        makeBirthday({ id: 'b-1', name: '  Mario Rossi  ', birthDate: '1990-05-15', updatedAt: 5000 })
       ];
       const cloud = [
-        makeBirthday({ id: 'b-2', name: 'mario rossi', birthDate: new Date('1990-05-15'), updatedAt: 1000 })
+        makeBirthday({ id: 'b-2', name: 'mario rossi', birthDate: '1990-05-15', updatedAt: 1000 })
       ];
 
       const result = service.merge(local, cloud, { strategy: 'latest-wins' });

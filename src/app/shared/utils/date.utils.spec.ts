@@ -1,4 +1,4 @@
-import { getDaysUntilBirthday, getNextBirthdayDate, formatDaysUntil } from './date.utils';
+import { getDaysUntilBirthday, getNextBirthdayDate, formatDaysUntil, parseLocalDate, toDateString } from './date.utils';
 
 describe('Date Utils', () => {
 
@@ -15,7 +15,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 0, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getNextBirthdayDate(birthDate);
 
       expect(result.getFullYear()).toBe(2024);
@@ -31,7 +31,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 11, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 0, 15);
+      const birthDate = '1990-01-15';
       const result = getNextBirthdayDate(birthDate);
 
       expect(result.getFullYear()).toBe(2025);
@@ -43,7 +43,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 15, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getNextBirthdayDate(birthDate);
 
       expect(result.getFullYear()).toBe(2024);
@@ -55,7 +55,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 0, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(2000, 1, 29);
+      const birthDate = '2000-02-29';
       const result = getNextBirthdayDate(birthDate);
 
       expect(result.getFullYear()).toBe(2024);
@@ -67,7 +67,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 11, 31, 23, 59, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 0, 1);
+      const birthDate = '1990-01-01';
       const result = getNextBirthdayDate(birthDate);
 
       expect(result.getFullYear()).toBe(2025);
@@ -89,7 +89,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 15, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(0);
@@ -99,7 +99,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 14, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(1);
@@ -109,7 +109,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 0, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 0, 11);
+      const birthDate = '1990-01-11';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(10);
@@ -119,7 +119,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 11, 25, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 0, 1);
+      const birthDate = '1990-01-01';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(7);
@@ -129,7 +129,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 0, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(166);
@@ -139,7 +139,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 14, 23, 59, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const result = getDaysUntilBirthday(birthDate);
 
       expect(result).toBe(1);
@@ -185,7 +185,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 15, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const days = getDaysUntilBirthday(birthDate);
       const message = formatDaysUntil(days);
 
@@ -196,7 +196,7 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 14, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const days = getDaysUntilBirthday(birthDate);
       const message = formatDaysUntil(days);
 
@@ -207,11 +207,35 @@ describe('Date Utils', () => {
       const mockToday = new Date(2024, 5, 1, 12, 30, 0);
       jasmine.clock().mockDate(mockToday);
 
-      const birthDate = new Date(1990, 5, 15);
+      const birthDate = '1990-06-15';
       const days = getDaysUntilBirthday(birthDate);
       const message = formatDaysUntil(days);
 
       expect(message).toBe('In 14 days');
+    });
+  });
+
+  describe('parseLocalDate', () => {
+    it('should parse YYYY-MM-DD to local Date', () => {
+      const date = parseLocalDate('1990-06-15');
+      expect(date.getFullYear()).toBe(1990);
+      expect(date.getMonth()).toBe(5);
+      expect(date.getDate()).toBe(15);
+    });
+  });
+
+  describe('toDateString', () => {
+    it('should return YYYY-MM-DD string as-is', () => {
+      expect(toDateString('1990-06-15')).toBe('1990-06-15');
+    });
+
+    it('should convert Date to YYYY-MM-DD', () => {
+      expect(toDateString(new Date(1990, 5, 15))).toBe('1990-06-15');
+    });
+
+    it('should convert ISO string to YYYY-MM-DD', () => {
+      const result = toDateString('1990-06-15T00:00:00.000Z');
+      expect(result).toMatch(/^1990-06-1[45]$/);
     });
   });
 });

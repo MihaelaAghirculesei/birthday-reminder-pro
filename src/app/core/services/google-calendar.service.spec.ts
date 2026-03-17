@@ -347,7 +347,7 @@ describe('GoogleCalendarService', () => {
       const birthday = {
         id: '1',
         name: 'John Doe',
-        birthDate: new Date(1990, 5, 15),
+        birthDate: '1990-06-15',
         categoryId: 'cat1',
         reminderDays: 7
       };
@@ -363,7 +363,7 @@ describe('GoogleCalendarService', () => {
       const birthday = {
         id: '1',
         name: 'John Doe',
-        birthDate: new Date(1990, 5, 15),
+        birthDate: '1990-06-15',
         categoryId: 'cat1',
         reminderDays: 7
       };
@@ -380,7 +380,7 @@ describe('GoogleCalendarService', () => {
       const birthday = {
         id: '1',
         name: 'Jane Smith',
-        birthDate: new Date(1985, 11, 25),
+        birthDate: '1985-12-25',
         categoryId: 'cat1',
         reminderDays: 3
       };
@@ -411,8 +411,8 @@ describe('GoogleCalendarService', () => {
 
     it('should sync all birthdays and report results', async () => {
       const birthdays = [
-        { id: '1', name: 'John', birthDate: new Date(1990, 5, 15), categoryId: 'cat1', reminderDays: 7 },
-        { id: '2', name: 'Jane', birthDate: new Date(1985, 11, 25), categoryId: 'cat1', reminderDays: 3 }
+        { id: '1', name: 'John', birthDate: '1990-06-15', categoryId: 'cat1', reminderDays: 7 },
+        { id: '2', name: 'Jane', birthDate: '1985-12-25', categoryId: 'cat1', reminderDays: 3 }
       ];
 
       const results = await service.syncAllBirthdays(birthdays);
@@ -430,8 +430,8 @@ describe('GoogleCalendarService', () => {
       }
 
       const birthdays = [
-        { id: '1', name: 'John', birthDate: new Date(1990, 5, 15), categoryId: 'cat1', reminderDays: 7 },
-        { id: '2', name: 'Jane', birthDate: new Date(1985, 11, 25), categoryId: 'cat1', reminderDays: 3 }
+        { id: '1', name: 'John', birthDate: '1990-06-15', categoryId: 'cat1', reminderDays: 7 },
+        { id: '2', name: 'Jane', birthDate: '1985-12-25', categoryId: 'cat1', reminderDays: 3 }
       ];
 
       const results = await service.syncAllBirthdays(birthdays);

@@ -69,7 +69,7 @@ describe('FirestoreService', () => {
   });
 
   it('saveBirthday should return an observable', () => {
-    const birthday = { id: '1', name: 'Test', birthDate: new Date() } as Birthday;
+    const birthday = { id: '1', name: 'Test', birthDate: '2000-01-01' } as Birthday;
     const result = service.saveBirthday('user-123', birthday);
     expect(result).toBeTruthy();
     expect(result.subscribe).toBeDefined();

@@ -27,7 +27,7 @@ describe('BirthdayCrudEffects', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 0, 15),
+    birthDate: '1990-01-15',
     category: 'Family',
     zodiacSign: 'Capricorn'
   };
@@ -147,7 +147,7 @@ describe('BirthdayCrudEffects', () => {
 
   describe('addBirthday$', () => {
     it('should add birthday successfully', (done) => {
-      const newBirthday = { name: 'Jane Doe', birthDate: new Date(1995, 5, 20), category: 'Friends' };
+      const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
       offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
@@ -163,7 +163,7 @@ describe('BirthdayCrudEffects', () => {
     });
 
     it('should handle add birthday failure', (done) => {
-      const newBirthday = { name: 'Jane Doe', birthDate: new Date(1995, 5, 20), category: 'Friends' };
+      const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
       const error = new Error('Add failed');
       offlineStorageMock.addBirthday.and.returnValue(Promise.reject(error));
 
@@ -176,7 +176,7 @@ describe('BirthdayCrudEffects', () => {
     });
 
     it('should sync to Google Calendar when event ID is returned', (done) => {
-      const newBirthday = { name: 'Jane Doe', birthDate: new Date(1995, 5, 20), category: 'Friends' };
+      const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
       googleCalendarMock.isEnabled.and.returnValue(true);
       googleCalendarMock.syncBirthdayToCalendar.and.returnValue(Promise.resolve('event-123'));
       offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());

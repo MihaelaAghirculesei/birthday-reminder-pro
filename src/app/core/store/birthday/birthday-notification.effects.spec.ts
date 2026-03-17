@@ -15,7 +15,7 @@ describe('BirthdayNotificationEffects', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 0, 15),
+    birthDate: '1990-01-15',
     category: 'Family',
     zodiacSign: 'Capricorn'
   };

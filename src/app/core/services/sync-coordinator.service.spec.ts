@@ -39,7 +39,7 @@ describe('SyncCoordinatorService', () => {
     return {
       id: 'b-1',
       name: 'Mario Rossi',
-      birthDate: new Date('1990-05-15'),
+      birthDate: '1990-05-15',
       zodiacSign: 'Taurus',
       daysUntilBirthday: 90,
       ...overrides
@@ -167,7 +167,7 @@ describe('SyncCoordinatorService', () => {
   it('migrateLocalToCloud should upload local birthdays', async () => {
     Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
     const localBirthdays = [
-      { id: 'b-1', name: 'Test', birthDate: new Date() }
+      { id: 'b-1', name: 'Test', birthDate: '2000-01-01' }
     ];
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays as Birthday[]));
     firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
@@ -183,11 +183,6 @@ describe('SyncCoordinatorService', () => {
     expect(service['destroyRef']).toBeTruthy();
   });
 
-  // NOTE: Conflict resolution tests have been moved to birthday-merge.service.spec.ts
-
-  // =====================================================
-  // PROCESS PENDING CHANGES TESTS
-  // =====================================================
   describe('processPendingChanges', () => {
     beforeEach(() => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
@@ -301,7 +296,6 @@ describe('SyncCoordinatorService', () => {
       pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
       pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
 
-      // First and third succeed, second fails
       let callCount = 0;
       firestoreServiceMock.saveBirthday.and.callFake(() => {
         callCount++;
@@ -319,9 +313,6 @@ describe('SyncCoordinatorService', () => {
     });
   });
 
-  // =====================================================
-  // CATEGORY CHANGE PROCESSING TESTS
-  // =====================================================
   describe('processCategoryChange', () => {
     beforeEach(() => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
@@ -358,9 +349,6 @@ describe('SyncCoordinatorService', () => {
     });
   });
 
-  // =====================================================
-  // QUEUE CHANGE + IMMEDIATE PROCESSING TESTS
-  // =====================================================
   describe('queueChange with immediate processing', () => {
     it('should process immediately when online and authenticated', async () => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
@@ -394,14 +382,10 @@ describe('SyncCoordinatorService', () => {
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
-      // processPendingChanges is called but exits early because no currentUser
       expect(pendingChangesMock.getChangesForEntity).not.toHaveBeenCalled();
     });
   });
 
-  // =====================================================
-  // MERGE CLOUD WITH LOCAL TESTS
-  // =====================================================
   describe('mergeCloudWithLocal', () => {
     beforeEach(() => {
       offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
@@ -478,9 +462,6 @@ describe('SyncCoordinatorService', () => {
     });
   });
 
-  // =====================================================
-  // MIGRATION TESTS
-  // =====================================================
   describe('migrateLocalToCloud', () => {
     it('should add sync metadata to migrated birthdays', async () => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });

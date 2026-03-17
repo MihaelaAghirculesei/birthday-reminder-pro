@@ -31,7 +31,8 @@ describe('BackupService', () => {
 
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('John');
-      expect(result[0].birthDate).toEqual(jasmine.any(Date));
+      expect(typeof result[0].birthDate).toBe('string');
+      expect(result[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
     it('should throw error for invalid JSON', async () => {
@@ -105,8 +106,8 @@ describe('BackupService', () => {
       const result = await service.importFromCSV(file);
 
       expect(result.length).toBe(2);
-      expect(result[0].birthDate).toEqual(jasmine.any(Date));
-      expect(result[1].birthDate).toEqual(jasmine.any(Date));
+      expect(typeof result[0].birthDate).toBe('string');
+      expect(typeof result[1].birthDate).toBe('string');
     });
 
     it('should skip rows with invalid data', async () => {
@@ -134,7 +135,7 @@ describe('BackupService', () => {
 
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('John Smith');
-      expect(result[0].birthDate).toEqual(jasmine.any(Date));
+      expect(typeof result[0].birthDate).toBe('string');
       expect(result[0].category).toBe('friends');
     });
 
@@ -181,7 +182,7 @@ describe('BackupService', () => {
       const birthdays = [{
         id: '1',
         name: 'John',
-        birthDate: new Date('1990-05-15'),
+        birthDate: '1990-05-15',
         zodiacSign: 'Taurus',
         reminderDays: 7
       }];
@@ -199,7 +200,7 @@ describe('BackupService', () => {
       const birthdays = [{
         id: '1',
         name: 'John',
-        birthDate: new Date('1990-05-15'),
+        birthDate: '1990-05-15',
         category: 'friends',
         notes: 'Test',
         zodiacSign: 'Taurus',
@@ -217,7 +218,7 @@ describe('BackupService', () => {
       const birthdays = [{
         id: '1',
         name: 'Smith, John',
-        birthDate: new Date('1990-05-15'),
+        birthDate: '1990-05-15',
         notes: 'Has "quotes"',
         category: 'Line\nbreak',
         zodiacSign: 'Taurus',

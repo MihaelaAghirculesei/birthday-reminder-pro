@@ -127,10 +127,10 @@ describe('SyncEffects', () => {
   describe('cloudBirthdaysUpdated$', () => {
     it('should call mergeService.merge with cloud-wins strategy and dispatch syncSuccess', (done) => {
       const cloudBirthdays: Birthday[] = [
-        { id: 'b-1', name: 'Cloud', birthDate: new Date('1990-01-01'), zodiacSign: 'Capricorn' } as Birthday
+        { id: 'b-1', name: 'Cloud', birthDate: '1990-01-01', zodiacSign: 'Capricorn' } as Birthday
       ];
       const localBirthdays: Birthday[] = [
-        { id: 'b-2', name: 'Local', birthDate: new Date('1991-02-02'), zodiacSign: 'Aquarius' } as Birthday
+        { id: 'b-2', name: 'Local', birthDate: '1991-02-02', zodiacSign: 'Aquarius' } as Birthday
       ];
 
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));

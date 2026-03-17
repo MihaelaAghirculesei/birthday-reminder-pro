@@ -6,7 +6,7 @@ describe('Birthday Reducer', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 4, 15),
+    birthDate: '1990-05-15',
     category: 'friends'
   };
 

@@ -24,19 +24,19 @@ describe('Birthday Selectors', () => {
     {
       id: '1',
       name: 'Alice',
-      birthDate: new Date(1990, 4, 15),
+      birthDate: '1990-05-15',
       category: 'friends'
     },
     {
       id: '2',
       name: 'Bob',
-      birthDate: new Date(1985, 11, 20),
+      birthDate: '1985-12-20',
       category: 'family'
     },
     {
       id: '3',
       name: 'Charlie',
-      birthDate: new Date(1995, 4, 10),
+      birthDate: '1995-05-10',
       category: 'friends'
     }
   ];
