@@ -499,16 +499,16 @@ export class GoogleCalendarService {
   }
 
   private createBirthdayEvent(birthday: Birthday): CalendarEvent {
-    const birthDate = birthday.birthDate;
+    const [year, month, day] = birthday.birthDate.split('-').map(Number);
     const currentYear = new Date().getFullYear();
-    const thisYearBirthday = new Date(currentYear, birthDate.getMonth(), birthDate.getDate());
+    const thisYearBirthday = new Date(currentYear, month - 1, day);
 
     const eventDate = thisYearBirthday < new Date()
-      ? new Date(currentYear + 1, birthDate.getMonth(), birthDate.getDate())
+      ? new Date(currentYear + 1, month - 1, day)
       : thisYearBirthday;
 
-    const dateString = eventDate.toISOString().split('T')[0];
-    const age = currentYear - birthDate.getFullYear() + (thisYearBirthday < new Date() ? 1 : 0);
+    const dateString = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')}`;
+    const age = currentYear - year + (thisYearBirthday < new Date() ? 1 : 0);
 
     return {
       summary: `🎂 ${birthday.name}'s Birthday (${age} years)`,

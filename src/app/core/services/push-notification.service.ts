@@ -4,6 +4,7 @@ import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notificati
 import { Capacitor } from '@capacitor/core';
 import { Subscription, interval } from 'rxjs';
 import { Birthday, ScheduledMessage } from '../../shared/models';
+import { parseLocalDate } from '../../shared/utils/date.utils';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { LoggerService } from './logger.service';
@@ -77,16 +78,12 @@ export class PushNotificationService {
       await Notification.requestPermission();
     }
 
-    // Guard: if destroyed during async init, bail out
     if (this.destroyed) return;
 
-    // Schedule precise timeouts for today's messages
     await this.scheduleAllBrowserTimeouts();
 
-    // Guard: if destroyed during async init, bail out
     if (this.destroyed) return;
 
-    // Fallback polling every 30s with wider window
     this.checkBrowserNotifications();
 
     this.intervalSubscription = interval(30000)
@@ -138,7 +135,7 @@ export class PushNotificationService {
   }
 
   private shouldShowBrowserNotification(birthday: Birthday, message: ScheduledMessage, now: Date): boolean {
-    const birthDate = new Date(birthday.birthDate);
+    const birthDate = parseLocalDate(birthday.birthDate);
     const [hours, minutes] = message.scheduledTime.split(':').map(Number);
 
     const thisYearBirthday = new Date(
@@ -291,14 +288,13 @@ export class PushNotificationService {
 
     const key = `${birthday.id}-${message.id}`;
 
-    // Cancel existing timeout for this message
     const existing = this.browserTimeouts.get(key);
     if (existing) {
       clearTimeout(existing);
       this.browserTimeouts.delete(key);
     }
 
-    const birthDate = new Date(birthday.birthDate);
+    const birthDate = parseLocalDate(birthday.birthDate);
     const now = new Date();
     const [hours, minutes] = message.scheduledTime.split(':').map(Number);
 
@@ -314,7 +310,6 @@ export class PushNotificationService {
 
     const delay = scheduledTime.getTime() - now.getTime();
 
-    // Only schedule if it's in the future and within 24 hours
     if (delay > 0 && delay < 86400000) {
       const timeout = setTimeout(async () => {
         this.browserTimeouts.delete(key);
@@ -348,7 +343,6 @@ export class PushNotificationService {
 
   async cancelAllNotificationsForBirthday(birthdayId: string): Promise<void> {
     if (!this.isNative) {
-      // Clear all browser timeouts for this birthday
       for (const [key, timeout] of this.browserTimeouts.entries()) {
         if (key.startsWith(`${birthdayId}-`)) {
           clearTimeout(timeout);
@@ -401,7 +395,7 @@ export class PushNotificationService {
 
   private getNextNotificationDate(birthday: Birthday, message: ScheduledMessage): Date | null {
     const now = new Date();
-    const birthDate = new Date(birthday.birthDate);
+    const birthDate = parseLocalDate(birthday.birthDate);
 
     const [hours, minutes] = message.scheduledTime.split(':').map(Number);
 
@@ -452,9 +446,9 @@ export class PushNotificationService {
       .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
   }
 
-  private calculateAge(birthDate: Date): number | null {
+  private calculateAge(birthDate: string): number | null {
     const today = new Date();
-    const birth = new Date(birthDate);
+    const birth = parseLocalDate(birthDate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
 

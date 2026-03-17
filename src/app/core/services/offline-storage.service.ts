@@ -1,12 +1,9 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
+import { toDateString } from '../../shared/utils/date.utils';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
-
-interface StoredBirthday extends Omit<Birthday, 'birthDate'> {
-  birthDate: string;
-}
 
 const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
 
@@ -72,9 +69,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
 
           request.onerror = () => reject(request.error);
           request.onsuccess = () => {
-            const birthdays = request.result.map((b: StoredBirthday) => ({
+            const birthdays = request.result.map((b: Birthday) => ({
               ...b,
-              birthDate: new Date(b.birthDate)
+              birthDate: toDateString(b.birthDate)
             }));
             resolve(birthdays);
           };
@@ -100,10 +97,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         store.clear();
 
         birthdays.forEach(birthday => {
-          store.add({
-            ...birthday,
-            birthDate: birthday.birthDate.toISOString()
-          });
+          store.add(birthday);
         });
 
         transaction.oncomplete = () => resolve();
@@ -122,10 +116,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
-        const request = store.add({
-          ...birthday,
-          birthDate: birthday.birthDate.toISOString()
-        });
+        const request = store.add(birthday);
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
@@ -143,10 +134,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
-        const request = store.put({
-          ...birthday,
-          birthDate: birthday.birthDate.toISOString()
-        });
+        const request = store.put(birthday);
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();

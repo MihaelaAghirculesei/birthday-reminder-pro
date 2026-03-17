@@ -1,6 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Birthday } from '../../shared';
+import { toDateString } from '../../shared/utils/date.utils';
 import { z } from 'zod';
 import { LoggerService } from './logger.service';
 import { ScheduledMessageSchema } from '../../shared/schemas/birthday.schema';
@@ -16,7 +17,7 @@ const BackupSchema = z.object({
   exportDate: z.string(),
   birthdays: z.array(z.object({
     name: z.string().min(1).max(200),
-    birthDate: z.union([z.string(), z.date()]),
+    birthDate: z.string(),
     id: z.string().optional(),
     notes: z.string().max(1000).optional(),
     category: z.string().max(100).optional(),
@@ -35,7 +36,7 @@ const BackupSchema = z.object({
 export class BackupService {
   private readonly BACKUP_VERSION = 1;
 
-  private readonly document = inject(DOCUMENT);
+  private readonly document = inject(DOCUMENT) as Document;
   private readonly platformId = inject(PLATFORM_ID);
 
   constructor(private logger: LoggerService) {}
@@ -54,11 +55,9 @@ export class BackupService {
   exportToCSV(birthdays: Birthday[]): void {
     const headers = ['Name', 'Birth Date', 'Category', 'Notes', 'Zodiac Sign'];
     const rows = birthdays.map(b => {
-      const date = new Date(b.birthDate);
-      const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       return [
         this.escapeCSV(b.name),
-        isoDate,
+        b.birthDate,
         this.escapeCSV(b.category || ''),
         this.escapeCSV(b.notes || ''),
         this.escapeCSV(b.zodiacSign || '')
@@ -94,13 +93,13 @@ export class BackupService {
     }
 
     return validatedData.birthdays.map(b => {
-      const date = new Date(b.birthDate);
-      if (isNaN(date.getTime())) {
-        throw new Error(`Invalid date for ${b.name || 'birthday'}`);
+      const birthDate = toDateString(b.birthDate);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+        throw new Error(`Invalid date for ${b.name}`);
       }
       return {
         ...b,
-        birthDate: date,
+        birthDate,
         id: b.id || crypto.randomUUID()
       } as Birthday;
     });
@@ -173,23 +172,23 @@ export class BackupService {
     return values;
   }
 
-  private parseDate(dateStr: string): Date | null {
+  private parseDate(dateStr: string): string | null {
     if (!dateStr) return null;
 
     const cleaned = dateStr.trim();
 
     const dmyMatch = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
     if (dmyMatch) {
-      return new Date(+dmyMatch[3], +dmyMatch[2] - 1, +dmyMatch[1]);
+      return `${dmyMatch[3]}-${String(+dmyMatch[2]).padStart(2, '0')}-${String(+dmyMatch[1]).padStart(2, '0')}`;
     }
 
     const isoMatch = cleaned.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (isoMatch) {
-      return new Date(+isoMatch[1], +isoMatch[2] - 1, +isoMatch[3]);
+      return cleaned;
     }
 
     const parsed = new Date(cleaned);
-    return isNaN(parsed.getTime()) ? null : parsed;
+    return isNaN(parsed.getTime()) ? null : toDateString(parsed);
   }
 
   private downloadFile(blob: Blob, filename: string): void {

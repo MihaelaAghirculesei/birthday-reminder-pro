@@ -117,7 +117,7 @@ export class BirthdayMergeService {
   private deduplicateByName(birthdays: Birthday[]): Birthday[] {
     const seen = new Map<string, Birthday>();
     for (const b of birthdays) {
-      const key = `${b.name.trim().toLowerCase()}|${new Date(b.birthDate).toISOString().slice(0, 10)}`;
+      const key = `${b.name.trim().toLowerCase()}|${b.birthDate}`;
       const existing = seen.get(key);
       if (!existing || (b.updatedAt || 0) > (existing.updatedAt || 0)) {
         seen.set(key, b);

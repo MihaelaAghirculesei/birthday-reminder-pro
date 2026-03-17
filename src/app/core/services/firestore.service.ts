@@ -18,16 +18,13 @@ import { getFirebaseFirestore, isFirebaseConfigured } from '../../firebase.confi
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
+import { toDateString, parseLocalDate } from '../../shared/utils/date.utils';
 
 export interface FirestoreDocument {
   id: string;
   updatedAt: number;
   ownerId: string;
   [key: string]: unknown;
-}
-
-interface StoredBirthday extends Omit<Birthday, 'birthDate'> {
-  birthDate: Timestamp;
 }
 
 @Injectable({
@@ -50,8 +47,6 @@ export class FirestoreService {
   private getUserPath(userId: string): string {
     return `users/${userId}`;
   }
-
-  // ============ BIRTHDAYS ============
 
   getBirthdays(userId: string): Observable<Birthday[]> {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
@@ -187,8 +182,6 @@ export class FirestoreService {
     }
   }
 
-  // ============ CATEGORIES ============
-
   getCategories(userId: string): Observable<Category[]> {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of([]);
@@ -299,23 +292,21 @@ export class FirestoreService {
     }
   }
 
-  // ============ HELPERS ============
-
   private mapBirthdaysFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Birthday[] {
     const birthdays: Birthday[] = [];
     for (const doc of snapshot.docs) {
-      const data = doc.data() as StoredBirthday;
+      const data = doc.data();
       const mapped = {
         ...data,
         id: doc.id,
-        birthDate: data.birthDate instanceof Timestamp
-          ? data.birthDate.toDate()
-          : new Date(data.birthDate as unknown as string),
+        birthDate: data['birthDate'] instanceof Timestamp
+          ? toDateString(data['birthDate'].toDate())
+          : toDateString(data['birthDate']),
         syncStatus: 'synced' as const
       };
       const result = safeParseBirthday(mapped);
       if (result.success) {
-        birthdays.push(mapped);
+        birthdays.push(mapped as unknown as Birthday);
       } else {
         this.logger.warn('[Firestore] Skipping invalid birthday document:', doc.id, result.error.issues);
       }
@@ -348,16 +339,11 @@ export class FirestoreService {
 
     const data: Record<string, unknown> = {
       ...rest,
-      birthDate: Timestamp.fromDate(
-        birthday.birthDate instanceof Date
-          ? birthday.birthDate
-          : new Date(birthday.birthDate)
-      ),
+      birthDate: Timestamp.fromDate(parseLocalDate(birthday.birthDate)),
       ownerId: userId,
       updatedAt: Date.now()
     };
 
-    // Firestore rejects undefined values
     for (const key of Object.keys(data)) {
       if (data[key] === undefined) {
         delete data[key];
