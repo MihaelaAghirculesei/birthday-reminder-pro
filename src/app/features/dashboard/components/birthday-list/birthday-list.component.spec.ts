@@ -16,7 +16,7 @@ describe('BirthdayListComponent', () => {
     {
       id: '1',
       name: 'Alice Johnson',
-      birthDate: new Date(1992, 2, 10),
+      birthDate: '1992-03-10',
       category: 'friends',
       zodiacSign: 'Pisces',
       reminderDays: 7,
@@ -26,7 +26,7 @@ describe('BirthdayListComponent', () => {
     {
       id: '2',
       name: 'Bob Williams',
-      birthDate: new Date(1988, 7, 25),
+      birthDate: '1988-08-25',
       category: 'family',
       zodiacSign: 'Virgo',
       reminderDays: 7,

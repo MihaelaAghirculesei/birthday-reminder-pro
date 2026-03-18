@@ -20,7 +20,7 @@ describe('MessageSchedulerComponent', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 0, 15),
+    birthDate: '1990-01-15',
     category: 'Family',
     zodiacSign: 'Capricorn'
   };
@@ -61,7 +61,7 @@ describe('MessageSchedulerComponent', () => {
           initialState: {
             birthdays: {
               ids: ['1'],
-              entities: { '1': { id: '1', name: 'John Doe', birthDate: new Date(1990, 0, 15), category: 'Family', zodiacSign: 'Capricorn', scheduledMessages: [] } },
+              entities: { '1': { id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'Family', zodiacSign: 'Capricorn', scheduledMessages: [] } },
               loading: false, error: null, selectedId: null,
               filters: { searchTerm: '', selectedCategory: null }
             }
@@ -239,7 +239,6 @@ describe('MessageSchedulerComponent', () => {
       component.birthday = mockBirthday;
       component.loadMessages();
 
-      // Just verify it doesn't throw - messages come from store subscription
       expect(component.messages).toBeDefined();
     });
 

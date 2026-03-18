@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { BirthdayStatsService } from './birthday-stats.service';
 import { Birthday } from '../../../shared';
+import { parseLocalDate } from '../../../shared/utils/date.utils';
 
 describe('BirthdayStatsService', () => {
   let service: BirthdayStatsService;
@@ -9,7 +10,7 @@ describe('BirthdayStatsService', () => {
     {
       id: '1',
       name: 'Alice',
-      birthDate: new Date(1990, 0, 15),
+      birthDate: '1990-01-15',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
@@ -19,7 +20,7 @@ describe('BirthdayStatsService', () => {
     {
       id: '2',
       name: 'Bob',
-      birthDate: new Date(1985, 5, 20),
+      birthDate: '1985-06-20',
       category: 'family',
       zodiacSign: 'Gemini',
       reminderDays: 7,
@@ -29,7 +30,7 @@ describe('BirthdayStatsService', () => {
     {
       id: '3',
       name: 'Charlie',
-      birthDate: new Date(1992, 0, 10),
+      birthDate: '1992-01-10',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
@@ -56,7 +57,7 @@ describe('BirthdayStatsService', () => {
     it('should calculate birthdays this month', () => {
       const currentMonth = new Date().getMonth();
       const birthdaysThisMonth = mockBirthdays.filter(
-        b => new Date(b.birthDate).getMonth() === currentMonth
+        b => parseLocalDate(b.birthDate).getMonth() === currentMonth
       );
       const stats = service.calculateStats(mockBirthdays);
       expect(stats.thisMonth).toBe(birthdaysThisMonth.length);
@@ -112,14 +113,14 @@ describe('BirthdayStatsService', () => {
 
     it('should count birthdays per month correctly', () => {
       const chartData = service.getChartData(mockBirthdays);
-      const januaryCount = mockBirthdays.filter(b => new Date(b.birthDate).getMonth() === 0).length;
+      const januaryCount = mockBirthdays.filter(b => parseLocalDate(b.birthDate).getMonth() === 0).length;
       expect(chartData[0].count).toBe(januaryCount);
     });
 
     it('should return zero counts for months with no birthdays', () => {
-      const singleBirthday = [mockBirthdays[0]]; // Only January
+      const singleBirthday = [mockBirthdays[0]]; 
       const chartData = service.getChartData(singleBirthday);
-      expect(chartData[1].count).toBe(0); // February should be 0
+      expect(chartData[1].count).toBe(0); 
     });
 
     it('should handle empty birthdays array', () => {
@@ -184,7 +185,7 @@ describe('BirthdayStatsService', () => {
 
     it('should handle multiple categories', () => {
       const categoryStats = service.getCategoriesStats(mockBirthdays);
-      expect(categoryStats.length).toBe(2); // friends and family
+      expect(categoryStats.length).toBe(2); 
     });
   });
 

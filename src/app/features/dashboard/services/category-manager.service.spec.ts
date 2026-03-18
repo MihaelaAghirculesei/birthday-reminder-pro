@@ -31,7 +31,7 @@ describe('CategoryManagerService', () => {
     {
       id: '1',
       name: 'Alice',
-      birthDate: new Date(1990, 0, 15),
+      birthDate: '1990-01-15',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
@@ -41,7 +41,7 @@ describe('CategoryManagerService', () => {
     {
       id: '2',
       name: 'Bob',
-      birthDate: new Date(1985, 5, 20),
+      birthDate: '1985-06-20',
       category: 'work',
       zodiacSign: 'Gemini',
       reminderDays: 7,
@@ -218,7 +218,7 @@ describe('CategoryManagerService', () => {
       mockDialogRef.afterClosed.and.returnValue(of(true));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
-      service.deleteCategory('family'); // family has no birthdays in mockBirthdays
+      service.deleteCategory('family'); 
 
       expect(categoryFacadeSpy.deleteCategory).toHaveBeenCalledWith('family');
     });
@@ -238,7 +238,7 @@ describe('CategoryManagerService', () => {
       mockDialogRef.afterClosed.and.returnValue(of(null));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
-      service.deleteCategory('work'); // work has 1 birthday
+      service.deleteCategory('work'); 
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;

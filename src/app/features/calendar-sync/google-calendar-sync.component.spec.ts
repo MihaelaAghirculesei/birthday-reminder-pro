@@ -27,7 +27,7 @@ describe('GoogleCalendarSyncComponent', () => {
     {
       id: '1',
       name: 'Alice',
-      birthDate: new Date(1990, 0, 15),
+      birthDate: '1990-01-15',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,

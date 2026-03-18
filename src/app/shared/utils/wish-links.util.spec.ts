@@ -12,7 +12,7 @@ describe('wish-links.util', () => {
   const baseBirthday: Birthday = {
     id: 'wish-test-1',
     name: 'Alice',
-    birthDate: new Date('1990-06-15'),
+    birthDate: '1990-06-15',
     zodiacSign: 'Gemini',
   };
 

@@ -14,7 +14,7 @@ describe('BirthdayItemComponent', () => {
   const mockBirthday: Birthday = {
     id: 'b1',
     name: 'John Doe',
-    birthDate: new Date('1990-05-15'),
+    birthDate: '1990-05-15',
     zodiacSign: 'Taurus',
     reminderDays: 7,
     category: 'family'
@@ -151,7 +151,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('age', () => {
     it('should pre-compute age on birthday input change', () => {
-      component.birthday = { ...component.birthday, birthDate: new Date('1990-01-15') };
+      component.birthday = { ...component.birthday, birthDate: '1990-01-15' };
       component.ngOnChanges({ birthday: new SimpleChange(null, component.birthday, false) });
 
       expect(component.age).toBeGreaterThan(30);

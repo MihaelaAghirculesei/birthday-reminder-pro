@@ -18,7 +18,7 @@ describe('BirthdayImportExportComponent', () => {
     {
       id: '1',
       name: 'John Doe',
-      birthDate: new Date('1990-01-15'),
+      birthDate: '1990-01-15',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
       category: 'friends'
@@ -26,7 +26,7 @@ describe('BirthdayImportExportComponent', () => {
     {
       id: '2',
       name: 'Jane Smith',
-      birthDate: new Date('1992-05-20'),
+      birthDate: '1992-05-20',
       zodiacSign: 'Taurus',
       reminderDays: 7,
       category: 'family'

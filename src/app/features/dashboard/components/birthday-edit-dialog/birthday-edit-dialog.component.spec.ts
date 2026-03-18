@@ -9,7 +9,7 @@ describe('BirthdayEditDialogComponent', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 0, 15),
+    birthDate: '1990-01-15',
     category: 'friends',
     zodiacSign: 'Capricorn',
     reminderDays: 7,
@@ -54,11 +54,8 @@ describe('BirthdayEditDialogComponent', () => {
       expect(component.editingData.rememberPhoto).toBe('remember.jpg');
     });
 
-    it('should format birthDate for input', () => {
-      expect(component.editingData.birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(component.editingData.birthDate).toContain('1990');
-      expect(component.editingData.birthDate).toContain('01');
-      expect(component.editingData.birthDate).toContain('15');
+    it('should use birthDate string directly', () => {
+      expect(component.editingData.birthDate).toBe('1990-01-15');
     });
 
     it('should use empty string for missing notes', () => {
@@ -137,6 +134,19 @@ describe('BirthdayEditDialogComponent', () => {
       });
     });
 
+    it('should allow saving without any contact info', () => {
+      component.editingData.email = '';
+      component.editingData.phone = '';
+      component.editingData.telegramUsername = '';
+
+      component.onSave();
+
+      expect(dialogRefSpy.close).toHaveBeenCalledWith({
+        birthday: mockBirthday,
+        editedData: component.editingData
+      });
+    });
+
     it('should include all edited data when saving', () => {
       component.editingData.name = 'Updated Name';
       component.editingData.notes = 'Updated notes';
@@ -148,6 +158,161 @@ describe('BirthdayEditDialogComponent', () => {
       expect(callArgs.editedData.name).toBe('Updated Name');
       expect(callArgs.editedData.notes).toBe('Updated notes');
       expect(callArgs.editedData.category).toBe('family');
+    });
+  });
+
+  describe('Contact warning', () => {
+    it('should not show warning on init when contact info exists', () => {
+      expect(component.contactWarning).toBeFalse();
+    });
+
+    it('should show warning on init when no contact info exists', () => {
+      const noContactBirthday = { ...mockBirthday, email: '', phone: '', telegramUsername: '' };
+      const data = { birthday: noContactBirthday, categories: mockCategories };
+      const comp = new BirthdayEditDialogComponent(dialogRefSpy, data);
+
+      expect(comp.contactWarning).toBeTrue();
+    });
+
+    it('should show warning when all contact fields are cleared', () => {
+      component.editingData.email = '';
+      component.editingData.phone = '';
+      component.editingData.telegramUsername = '';
+      component.onContactChange();
+
+      expect(component.contactWarning).toBeTrue();
+    });
+
+    it('should hide warning when a contact field is filled', () => {
+      component.editingData.email = '';
+      component.editingData.phone = '';
+      component.editingData.telegramUsername = '';
+      component.onContactChange();
+      expect(component.contactWarning).toBeTrue();
+
+      component.editingData.phone = '+123';
+      component.onContactChange();
+      expect(component.contactWarning).toBeFalse();
+    });
+  });
+
+  describe('Email validation', () => {
+    it('should accept valid emails', () => {
+      component.editingData.email = 'user@example.com';
+      expect(component.isEmailValid()).toBeTrue();
+
+      component.editingData.email = 'first.last+tag@domain.co.uk';
+      expect(component.isEmailValid()).toBeTrue();
+    });
+
+    it('should accept empty email', () => {
+      component.editingData.email = '';
+      expect(component.isEmailValid()).toBeTrue();
+    });
+
+    it('should reject invalid emails', () => {
+      component.editingData.email = 'notanemail';
+      expect(component.isEmailValid()).toBeFalse();
+
+      component.editingData.email = 'missing@domain';
+      expect(component.isEmailValid()).toBeFalse();
+
+      component.editingData.email = '@nodomain.com';
+      expect(component.isEmailValid()).toBeFalse();
+    });
+
+    it('should block saving when email is invalid', () => {
+      component.editingData.email = 'invalid';
+
+      component.onSave();
+
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Telegram validation', () => {
+    it('should accept valid usernames', () => {
+      component.editingData.telegramUsername = 'johndoe';
+      expect(component.isTelegramValid()).toBeTrue();
+
+      component.editingData.telegramUsername = 'user_123';
+      expect(component.isTelegramValid()).toBeTrue();
+    });
+
+    it('should accept empty username', () => {
+      component.editingData.telegramUsername = '';
+      expect(component.isTelegramValid()).toBeTrue();
+    });
+
+    it('should reject username starting with a number', () => {
+      component.editingData.telegramUsername = '12345';
+      expect(component.isTelegramValid()).toBeFalse();
+
+      component.editingData.telegramUsername = '1user';
+      expect(component.isTelegramValid()).toBeFalse();
+    });
+
+    it('should reject username shorter than 5 characters', () => {
+      component.editingData.telegramUsername = 'abcd';
+      expect(component.isTelegramValid()).toBeFalse();
+    });
+
+    it('should reject invalid usernames', () => {
+      component.editingData.telegramUsername = 'user name';
+      expect(component.isTelegramValid()).toBeFalse();
+
+      component.editingData.telegramUsername = 'user@name';
+      expect(component.isTelegramValid()).toBeFalse();
+    });
+
+    it('should block saving when telegram is invalid', () => {
+      component.editingData.telegramUsername = '123';
+
+      component.onSave();
+
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Phone validation', () => {
+    it('should accept valid phone numbers', () => {
+      component.editingData.phone = '+39 333 1234567';
+      expect(component.isPhoneValid()).toBeTrue();
+
+      component.editingData.phone = '(02) 1234-5678';
+      expect(component.isPhoneValid()).toBeTrue();
+
+      component.editingData.phone = '+1234567890';
+      expect(component.isPhoneValid()).toBeTrue();
+    });
+
+    it('should accept empty phone', () => {
+      component.editingData.phone = '';
+      expect(component.isPhoneValid()).toBeTrue();
+    });
+
+    it('should reject phone with letters', () => {
+      component.editingData.phone = 'abc123';
+      expect(component.isPhoneValid()).toBeFalse();
+
+      component.editingData.phone = '+39 test';
+      expect(component.isPhoneValid()).toBeFalse();
+    });
+
+    it('should block saving when phone is invalid', () => {
+      component.editingData.phone = 'invalid';
+
+      component.onSave();
+
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+
+    it('should allow saving when phone is valid', () => {
+      component.editingData.phone = '+39 333 123';
+
+      component.onSave();
+
+      expect(dialogRefSpy.close).toHaveBeenCalled();
     });
   });
 

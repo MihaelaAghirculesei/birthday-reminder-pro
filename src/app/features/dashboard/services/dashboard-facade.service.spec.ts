@@ -16,7 +16,7 @@ describe('DashboardFacadeService', () => {
     {
       id: '1',
       name: 'John Doe',
-      birthDate: new Date(1990, 0, 15),
+      birthDate: '1990-01-15',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
@@ -26,7 +26,7 @@ describe('DashboardFacadeService', () => {
     {
       id: '2',
       name: 'Jane Smith',
-      birthDate: new Date(1985, 5, 20),
+      birthDate: '1985-06-20',
       category: 'family',
       zodiacSign: 'Gemini',
       reminderDays: 7,
@@ -230,7 +230,7 @@ describe('DashboardFacadeService', () => {
         {
           id: '3',
           name: 'Orphan',
-          birthDate: new Date(2000, 0, 1),
+          birthDate: '2000-01-01',
           category: 'nonexistent',
           zodiacSign: 'Capricorn',
           reminderDays: 7,
@@ -270,7 +270,7 @@ describe('DashboardFacadeService', () => {
 
     it('should dispatch addBirthday', () => {
       spyOn(store, 'dispatch');
-      const newBirthday = { name: 'Test', birthDate: new Date() } as Omit<Birthday, 'id'>;
+      const newBirthday = { name: 'Test', birthDate: '2000-01-01' } as Omit<Birthday, 'id'>;
       service.addBirthday(newBirthday);
       expect(store.dispatch).toHaveBeenCalled();
     });

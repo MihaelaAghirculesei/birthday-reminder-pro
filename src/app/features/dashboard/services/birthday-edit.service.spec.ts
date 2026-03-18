@@ -8,7 +8,7 @@ describe('BirthdayEditService', () => {
   const mockBirthday: Birthday = {
     id: '1',
     name: 'John Doe',
-    birthDate: new Date(1990, 0, 15),
+    birthDate: '1990-01-15',
     category: 'friends',
     zodiacSign: 'Capricorn',
     reminderDays: 7,
@@ -16,10 +16,6 @@ describe('BirthdayEditService', () => {
     photo: 'photo.jpg',
     rememberPhoto: 'remember.jpg',
     scheduledMessages: []
-  };
-
-  const formatDateForInput = (date: Date): string => {
-    return date.toISOString().split('T')[0];
   };
 
   beforeEach(() => {
@@ -53,7 +49,7 @@ describe('BirthdayEditService', () => {
     });
 
     it('should return current editing ID after startEdit', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       expect(service.currentEditingId).toBe('1');
     });
   });
@@ -64,7 +60,7 @@ describe('BirthdayEditService', () => {
     });
 
     it('should return current editing data after startEdit', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       const data = service.currentEditingData;
       expect(data).toBeTruthy();
       expect(data?.name).toBe('John Doe');
@@ -74,7 +70,7 @@ describe('BirthdayEditService', () => {
 
   describe('startEdit', () => {
     it('should set editing birthday ID', (done) => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
 
       service.editingBirthdayId$.subscribe(id => {
         expect(id).toBe('1');
@@ -83,7 +79,7 @@ describe('BirthdayEditService', () => {
     });
 
     it('should set editing birthday data with correct values', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
 
       const data = service.currentEditingData;
       expect(data?.name).toBe('John Doe');
@@ -93,17 +89,16 @@ describe('BirthdayEditService', () => {
       expect(data?.rememberPhoto).toBe('remember.jpg');
     });
 
-    it('should format birthDate correctly', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+    it('should use birthDate string directly', () => {
+      service.startEdit(mockBirthday, 'friends');
 
       const data = service.currentEditingData;
-      const expectedDate = formatDateForInput(mockBirthday.birthDate);
-      expect(data?.birthDate).toBe(expectedDate);
+      expect(data?.birthDate).toBe('1990-01-15');
     });
 
     it('should use empty string for missing notes', () => {
       const birthdayWithoutNotes = { ...mockBirthday, notes: undefined };
-      service.startEdit(birthdayWithoutNotes, formatDateForInput, 'friends');
+      service.startEdit(birthdayWithoutNotes, 'friends');
 
       const data = service.currentEditingData;
       expect(data?.notes).toBe('');
@@ -111,7 +106,7 @@ describe('BirthdayEditService', () => {
 
     it('should use default category when birthday has no category', () => {
       const birthdayWithoutCategory = { ...mockBirthday, category: undefined };
-      service.startEdit(birthdayWithoutCategory, formatDateForInput, 'family');
+      service.startEdit(birthdayWithoutCategory, 'family');
 
       const data = service.currentEditingData;
       expect(data?.category).toBe('family');
@@ -120,25 +115,25 @@ describe('BirthdayEditService', () => {
     it('should cancel previous edit when starting new edit', () => {
       const birthday2 = { ...mockBirthday, id: '2', name: 'Jane Doe' };
 
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       expect(service.currentEditingId).toBe('1');
 
-      service.startEdit(birthday2, formatDateForInput, 'friends');
+      service.startEdit(birthday2, 'friends');
       expect(service.currentEditingId).toBe('2');
       expect(service.currentEditingData?.name).toBe('Jane Doe');
     });
 
     it('should not cancel edit when starting same birthday', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
 
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       expect(service.currentEditingId).toBe('1');
     });
   });
 
   describe('updateEditingData', () => {
     beforeEach(() => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
     });
 
     it('should update name', () => {
@@ -178,14 +173,14 @@ describe('BirthdayEditService', () => {
     it('should preserve unmodified fields', () => {
       service.updateEditingData({ name: 'Updated Name' });
       const data = service.currentEditingData;
-      expect(data?.notes).toBe('Test notes'); // Should remain unchanged
-      expect(data?.category).toBe('friends'); // Should remain unchanged
+      expect(data?.notes).toBe('Test notes'); 
+      expect(data?.category).toBe('friends'); 
     });
   });
 
   describe('cancelEdit', () => {
     beforeEach(() => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
     });
 
     it('should clear editing birthday ID', () => {
@@ -218,17 +213,17 @@ describe('BirthdayEditService', () => {
     });
 
     it('should return true for currently editing birthday', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       expect(service.isEditing('1')).toBe(true);
     });
 
     it('should return false for different birthday ID', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       expect(service.isEditing('2')).toBe(false);
     });
 
     it('should return false after cancel', () => {
-      service.startEdit(mockBirthday, formatDateForInput, 'friends');
+      service.startEdit(mockBirthday, 'friends');
       service.cancelEdit();
       expect(service.isEditing('1')).toBe(false);
     });

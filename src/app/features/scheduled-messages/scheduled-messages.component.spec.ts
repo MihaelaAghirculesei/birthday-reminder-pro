@@ -40,28 +40,28 @@ describe('ScheduledMessagesComponent', () => {
     {
       id: '1',
       name: 'John Doe',
-      birthDate: new Date('1990-01-15'),
+      birthDate: '1990-01-15',
       category: 'friends',
       scheduledMessages: [mockMessage1, mockMessage2]
     },
     {
       id: '2',
       name: 'Jane Smith',
-      birthDate: new Date('1995-06-20'),
+      birthDate: '1995-06-20',
       category: 'family',
       scheduledMessages: []
     },
     {
       id: '3',
       name: 'Bob Wilson',
-      birthDate: new Date('1988-12-10'),
+      birthDate: '1988-12-10',
       category: 'work',
       scheduledMessages: [mockMessage1]
     },
     {
       id: '4',
       name: 'Alice Brown',
-      birthDate: new Date('1992-03-25'),
+      birthDate: '1992-03-25',
       category: 'friends'
     }
   ];

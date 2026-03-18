@@ -22,7 +22,7 @@ describe('DashboardComponent', () => {
     {
       id: '1',
       name: 'John Doe',
-      birthDate: new Date(1990, 0, 15),
+      birthDate: '1990-01-15',
       category: 'friends',
       zodiacSign: 'Capricorn',
       reminderDays: 7,
@@ -32,7 +32,7 @@ describe('DashboardComponent', () => {
     {
       id: '2',
       name: 'Jane Smith',
-      birthDate: new Date(1985, 5, 20),
+      birthDate: '1985-06-20',
       category: 'family',
       zodiacSign: 'Gemini',
       reminderDays: 7,
