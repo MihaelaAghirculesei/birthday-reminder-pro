@@ -15,6 +15,8 @@ import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
+import { sanitizeBirthdayData, safeParseBirthday } from '../../../../shared/schemas/birthday.schema';
+import { LoggerService } from '../../../../core/services/logger.service';
 import { AppState } from '../../../../core/store/app.state';
 import * as BirthdayActions from '../../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../../core/store/birthday/birthday.selectors';
@@ -62,6 +64,7 @@ export class BirthdayListComponent implements OnChanges {
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly logger = inject(LoggerService);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthdays']) {
@@ -147,7 +150,7 @@ export class BirthdayListComponent implements OnChanges {
         );
       })
     ).subscribe(({ result, current }) => {
-      const updatedBirthday: Birthday = {
+      const raw = {
         ...current,
         name: result.editedData.name.trim() || result.birthday.name,
         notes: result.editedData.notes.trim(),
@@ -159,7 +162,13 @@ export class BirthdayListComponent implements OnChanges {
         phone: result.editedData.phone.trim() || undefined,
         telegramUsername: result.editedData.telegramUsername.trim() || undefined
       };
-      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday }));
+      const sanitized = sanitizeBirthdayData(raw);
+      const validation = safeParseBirthday(sanitized);
+      if (!validation.success) {
+        this.logger.error('[BirthdayList] Edit validation failed:', validation.error.issues);
+        return;
+      }
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: sanitized as unknown as Birthday }));
     });
   }
 
