@@ -27,7 +27,9 @@
             "allowedCommonJsDependencies": [
               "@firebase/firestore",
               "@grpc/grpc-js",
-              "@grpc/proto-loader"
+              "@grpc/proto-loader",
+              "compression",
+              "ip-address"
             ],
             "inlineStyleLanguage": "scss",
             "assets": [
