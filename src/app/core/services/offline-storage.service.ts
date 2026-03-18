@@ -2,6 +2,7 @@ import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
+import { sanitizeBirthdayData, safeParseBirthday, safeParseScheduledMessage } from '../../shared/schemas/birthday.schema';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 
@@ -69,10 +70,19 @@ export class IndexedDBStorageService implements OfflineStorageService {
 
           request.onerror = () => reject(request.error);
           request.onsuccess = () => {
-            const birthdays = request.result.map((b: Birthday) => ({
-              ...b,
-              birthDate: toDateString(b.birthDate)
-            }));
+            const birthdays: Birthday[] = [];
+            for (const raw of request.result) {
+              const sanitized = sanitizeBirthdayData({
+                ...raw,
+                birthDate: toDateString(raw.birthDate)
+              });
+              const result = safeParseBirthday(sanitized);
+              if (result.success) {
+                birthdays.push(sanitized as unknown as Birthday);
+              } else {
+                this.logger.warn('[IndexedDB] Skipping invalid birthday record:', raw.id, result.error.issues);
+              }
+            }
             resolve(birthdays);
           };
         });
@@ -247,7 +257,18 @@ export class IndexedDBStorageService implements OfflineStorageService {
           const request = index.getAll(birthdayId);
 
           request.onerror = () => reject(request.error);
-          request.onsuccess = () => resolve(request.result || []);
+          request.onsuccess = () => {
+            const messages: ScheduledMessage[] = [];
+            for (const raw of (request.result || [])) {
+              const result = safeParseScheduledMessage(raw);
+              if (result.success) {
+                messages.push(raw as ScheduledMessage);
+              } else {
+                this.logger.warn('[IndexedDB] Skipping invalid scheduled message:', raw.id, result.error.issues);
+              }
+            }
+            resolve(messages);
+          };
         });
       }, 'getScheduledMessagesByBirthday');
     } catch (error) {
