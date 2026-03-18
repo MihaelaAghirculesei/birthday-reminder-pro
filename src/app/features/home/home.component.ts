@@ -1,27 +1,13 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators,
-  AbstractControl,
-  ValidationErrors,
-} from '@angular/forms';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PhotoUploadComponent } from '../../shared/components/photo-upload.component';
-import { DEFAULT_CATEGORY, BirthdayCategory } from '../../shared/constants';
+import { BirthdayFormComponent } from '../../shared/components/birthday-form/birthday-form.component';
+import { BirthdayCategory } from '../../shared/constants';
 import { Birthday } from '../../shared/models';
-import { getZodiacSign } from '../../shared/utils';
-import { toDateString } from '../../shared/utils/date.utils';
 import { CategoryFacadeService, LoggerService } from '../../core';
 import { Store } from '@ngrx/store';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -34,16 +20,11 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
     selector: 'app-home',
     imports: [
         CommonModule,
-        ReactiveFormsModule,
         MatCardModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatDatepickerModule,
         MatIconModule,
         MatButtonModule,
         MatProgressSpinnerModule,
-        PhotoUploadComponent,
+        BirthdayFormComponent,
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],
@@ -64,16 +45,13 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
 export class HomeComponent implements OnInit, AfterViewInit {
   @ViewChild('dashboardContainer', { read: ViewContainerRef }) dashboardContainer?: ViewContainerRef;
 
-  private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly logger = inject(LoggerService);
   private readonly destroyRef = inject(DestroyRef);
 
-  birthdayForm!: FormGroup;
   birthdays: Signal<Birthday[]> = toSignal(this.store.select(BirthdaySelectors.selectAllBirthdays), { initialValue: [] });
   categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;
-  selectedPhoto: string | null = null;
   isAddingTestData = signal(false);
   isAddBirthdayExpanded = false;
   private dashboardComponentRef: ComponentRef<unknown> | null = null;
@@ -82,15 +60,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
 
   constructor() {
     this.destroyRef.onDestroy(() => this.unloadDashboard());
-
-    this.birthdayForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      birthDate: ['', [Validators.required, this.pastDateValidator]],
-      category: [DEFAULT_CATEGORY, Validators.required],
-      notes: ['', Validators.maxLength(500)],
-      reminderDays: [7, [Validators.min(1), Validators.max(365)]],
-      photo: [null],
-    });
 
     effect(() => {
       const hasBirthdays = this.birthdays().length > 0;
@@ -116,33 +85,9 @@ export class HomeComponent implements OnInit, AfterViewInit {
     this.categoryFacade.loadCategories();
   }
 
-  onSubmit() {
-    if (this.birthdayForm.valid) {
-      const birthDate = toDateString(this.birthdayForm.value.birthDate);
-      const zodiacSign = getZodiacSign(birthDate);
-
-      const formData = {
-        ...this.birthdayForm.value,
-        birthDate,
-        photo: this.selectedPhoto,
-        zodiacSign: zodiacSign.name,
-      };
-
-      this.store.dispatch(BirthdayActions.addBirthday({ birthday: formData }));
-      this.birthdayForm.reset({ reminderDays: 7, category: DEFAULT_CATEGORY });
-      this.selectedPhoto = null;
-      this.isAddBirthdayExpanded = false;
-    }
-  }
-
-  onPhotoSelected(photo: string): void {
-    this.selectedPhoto = photo;
-    this.birthdayForm.patchValue({ photo: photo });
-  }
-
-  onPhotoRemoved(): void {
-    this.selectedPhoto = null;
-    this.birthdayForm.patchValue({ photo: null });
+  onBirthdaySubmitted(birthday: Omit<Birthday, 'id'>): void {
+    this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
+    this.isAddBirthdayExpanded = false;
   }
 
   addTestData(): void {
@@ -151,6 +96,10 @@ export class HomeComponent implements OnInit, AfterViewInit {
     timer(1000).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.isAddingTestData.set(false));
+  }
+
+  toggleAddBirthdaySection(): void {
+    this.isAddBirthdayExpanded = !this.isAddBirthdayExpanded;
   }
 
   private async loadDashboard(): Promise<void> {
@@ -176,27 +125,5 @@ export class HomeComponent implements OnInit, AfterViewInit {
       this.dashboardContainer.clear();
     }
     this.isDashboardLoaded = false;
-  }
-
-  toggleAddBirthdaySection(): void {
-    this.isAddBirthdayExpanded = !this.isAddBirthdayExpanded;
-  }
-
-  trackByCategory(_index: number, category: BirthdayCategory): string {
-    return category.id;
-  }
-
-  private pastDateValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) return null;
-
-    const selectedDate = new Date(control.value);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-
-    if (selectedDate > today) {
-      return { futureDate: true };
-    }
-
-    return null;
   }
 }
