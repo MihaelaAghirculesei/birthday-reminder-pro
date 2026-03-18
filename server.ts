@@ -1,6 +1,12 @@
 import { APP_BASE_HREF } from '@angular/common';
+import { CSP_NONCE } from '@angular/core';
 import { CommonEngine } from '@angular/ssr/node';
 import express from 'express';
+import compression from 'compression';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
@@ -13,6 +19,17 @@ export function app(): express.Express {
 
   const commonEngine = new CommonEngine();
 
+  const indexHtmlTemplate = readFileSync(indexHtml, 'utf-8');
+
+  server.set('trust proxy', 1);
+
+  server.use(compression());
+
+  server.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
+
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
@@ -20,18 +37,55 @@ export function app(): express.Express {
     maxAge: '1y'
   }));
 
-  server.get('*', (req, res, next) => {
+  const ssrLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,            
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: 'Too many requests, please try again later.',
+  });
+
+  server.get('*', ssrLimiter, (req, res, next) => {
     const { protocol, originalUrl, baseUrl, headers } = req;
+    const nonce = randomBytes(16).toString('base64');
+    const document = indexHtmlTemplate.replace(
+      '<app-root>',
+      `<app-root ngCspNonce="${nonce}">`
+    );
 
     commonEngine
       .render({
         bootstrap,
-        documentFilePath: indexHtml,
+        document,
         url: `${protocol}://${headers.host}${originalUrl}`,
         publicPath: browserDistFolder,
-        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
+        providers: [
+          { provide: APP_BASE_HREF, useValue: baseUrl },
+          { provide: CSP_NONCE, useValue: nonce },
+        ],
       })
-      .then((html) => res.send(html))
+      .then((html) => {
+        html = html.replace(
+          /<script(?![^>]*\bsrc\b)(?![^>]*\bnonce\b)([^>]*)>/gi,
+          `<script$1 nonce="${nonce}">`
+        );
+
+        res.setHeader('Content-Security-Policy', [
+          `default-src 'self'`,
+          `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://accounts.google.com https://*.gstatic.com`,
+          `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
+          `style-src-elem 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
+          `font-src 'self' https://fonts.gstatic.com data:`,
+          `img-src 'self' data: blob: https:`,
+          `connect-src 'self' ws://localhost:* https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://identitytoolkit.googleapis.com https://firebaseinstallations.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://lh3.googleusercontent.com`,
+          `frame-src 'self' https://accounts.google.com https://birthday-app-2026.firebaseapp.com`,
+          `object-src 'none'`,
+          `base-uri 'self'`,
+          `form-action 'self' https://accounts.google.com`,
+        ].join('; '));
+
+        res.send(html);
+      })
       .catch((err) => next(err));
   });
 
