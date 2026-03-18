@@ -10,7 +10,7 @@ describe('Backup Flow Integration', () => {
     {
       id: 'test-1',
       name: 'Alice Johnson',
-      birthDate: new Date(1990, 5, 15),
+      birthDate: '1990-06-15',
       category: 'family',
       notes: 'Loves chocolate',
       zodiacSign: 'Gemini',
@@ -19,7 +19,7 @@ describe('Backup Flow Integration', () => {
     {
       id: 'test-2',
       name: 'Bob Smith',
-      birthDate: new Date(1985, 11, 25),
+      birthDate: '1985-12-25',
       category: 'friends',
       notes: 'Birthday on Christmas!',
       zodiacSign: 'Capricorn',
@@ -69,7 +69,8 @@ describe('Backup Flow Integration', () => {
 
       expect(imported.length).toBe(2);
       expect(imported[0].name).toBe('Alice Johnson');
-      expect(imported[0].birthDate).toBeInstanceOf(Date);
+      expect(typeof imported[0].birthDate).toBe('string');
+      expect(imported[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(imported[1].name).toBe('Bob Smith');
     });
 

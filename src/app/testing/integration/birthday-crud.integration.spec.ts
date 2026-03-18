@@ -105,7 +105,7 @@ describe('Birthday CRUD Integration', () => {
   it('should complete full CRUD cycle', fakeAsync(() => {
     const newBirthday = {
       name: 'Integration Test User',
-      birthDate: new Date(1990, 5, 15),
+      birthDate: '1990-06-15',
       category: 'friends',
       notes: 'Test notes'
     };
@@ -143,9 +143,9 @@ describe('Birthday CRUD Integration', () => {
 
   it('should handle multiple birthdays correctly', fakeAsync(() => {
     const birthdays = [
-      { name: 'User A', birthDate: new Date(1990, 0, 1), category: 'family' },
-      { name: 'User B', birthDate: new Date(1991, 1, 2), category: 'friends' },
-      { name: 'User C', birthDate: new Date(1992, 2, 3), category: 'colleagues' }
+      { name: 'User A', birthDate: '1990-01-01', category: 'family' },
+      { name: 'User B', birthDate: '1991-02-02', category: 'friends' },
+      { name: 'User C', birthDate: '1992-03-03', category: 'colleagues' }
     ];
 
     birthdays.forEach(b => store.dispatch(BirthdayActions.addBirthday({ birthday: b })));
@@ -162,8 +162,8 @@ describe('Birthday CRUD Integration', () => {
   }));
 
   it('should clear all birthdays', fakeAsync(() => {
-    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: new Date(), category: 'family' } }));
-    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: new Date(), category: 'friends' } }));
+    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: '2000-01-01', category: 'family' } }));
+    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: '2000-01-01', category: 'friends' } }));
     tick(200);
 
     expect(storedBirthdays.length).toBe(2);
@@ -178,7 +178,7 @@ describe('Birthday CRUD Integration', () => {
     store.dispatch(BirthdayActions.addBirthday({
       birthday: {
         name: 'Leo Person',
-        birthDate: new Date(1990, 7, 10),
+        birthDate: '1990-08-10',
         category: 'friends'
       }
     }));
@@ -188,8 +188,8 @@ describe('Birthday CRUD Integration', () => {
   }));
 
   it('should generate unique IDs', fakeAsync(() => {
-    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: new Date(), category: 'family' } }));
-    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: new Date(), category: 'family' } }));
+    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: '2000-01-01', category: 'family' } }));
+    store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: '2000-02-02', category: 'family' } }));
     tick(200);
 
     expect(storedBirthdays[0].id).toBeDefined();

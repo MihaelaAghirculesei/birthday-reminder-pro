@@ -16,7 +16,7 @@ describe('Birthday Mock Data', () => {
     it('should have required fields for each entry', () => {
       MOCK_BIRTHDAY_RAW_DATA.forEach((entry, index) => {
         expect(entry.name).toBeTruthy(`Entry ${index} missing name`);
-        expect(entry.date).toBeInstanceOf(Date);
+        expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(entry.category).toBeTruthy(`Entry ${index} missing category`);
         expect(entry.notes).toBeTruthy(`Entry ${index} missing notes`);
       });
@@ -164,7 +164,7 @@ describe('Birthday Mock Data', () => {
     });
 
     it('should allow overriding all fields', () => {
-      const customDate = new Date(2000, 5, 15);
+      const customDate = '2000-06-15';
       const birthday = createMockBirthday(mockIdGenerator, {
         name: 'Full Override',
         birthDate: customDate,
