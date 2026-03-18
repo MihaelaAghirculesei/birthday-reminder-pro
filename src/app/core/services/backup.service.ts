@@ -4,7 +4,7 @@ import { Birthday } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
 import { z } from 'zod';
 import { LoggerService } from './logger.service';
-import { ScheduledMessageSchema } from '../../shared/schemas/birthday.schema';
+import { BirthdaySchema, sanitizeBirthdayData, safeParseBirthday } from '../../shared/schemas/birthday.schema';
 
 export interface BackupData {
   version: number;
@@ -12,22 +12,14 @@ export interface BackupData {
   birthdays: Birthday[];
 }
 
+const BackupBirthdaySchema = BirthdaySchema.extend({
+  id: z.string().optional()
+});
+
 const BackupSchema = z.object({
   version: z.number(),
   exportDate: z.string(),
-  birthdays: z.array(z.object({
-    name: z.string().min(1).max(200),
-    birthDate: z.string(),
-    id: z.string().optional(),
-    notes: z.string().max(1000).optional(),
-    category: z.string().max(100).optional(),
-    photo: z.string().max(500).optional(),
-    rememberPhoto: z.string().max(500).optional(),
-    zodiacSign: z.string().max(50).optional(),
-    googleCalendarEventId: z.string().optional(),
-    reminderDays: z.number().optional(),
-    scheduledMessages: z.array(ScheduledMessageSchema).optional()
-  }))
+  birthdays: z.array(BackupBirthdaySchema)
 });
 
 @Injectable({
@@ -124,7 +116,7 @@ export class BackupService {
 
       if (!name || !birthDate) continue;
 
-      birthdays.push({
+      const candidate = sanitizeBirthdayData({
         id: crypto.randomUUID(),
         name: name.trim(),
         birthDate,
@@ -132,6 +124,13 @@ export class BackupService {
         notes: notes?.trim() || undefined,
         zodiacSign: zodiacSign?.trim() || undefined
       });
+
+      const result = safeParseBirthday(candidate);
+      if (result.success) {
+        birthdays.push(candidate as unknown as Birthday);
+      } else {
+        this.logger.warn(`[Import] Skipping invalid CSV row ${i}:`, result.error.issues);
+      }
     }
 
     if (birthdays.length === 0) {
@@ -143,14 +142,34 @@ export class BackupService {
 
   async importFromVCard(file: File): Promise<Birthday[]> {
     const text = await file.text();
-    return text.split('BEGIN:VCARD')
-      .filter(v => v.includes('FN:') && v.includes('BDAY'))
-      .flatMap(v => {
-        const name = v.match(/FN:(.+)/)?.[1].trim();
-        const bday = v.match(/BDAY[;:](.+)/)?.[1].split(':').pop()?.trim();
-        const birthDate = bday ? this.parseDate(bday) : null;
-        return name && birthDate ? [{ id: crypto.randomUUID(), name, birthDate, category: 'friends' }] : [];
+    const birthdays: Birthday[] = [];
+
+    const entries = text.split('BEGIN:VCARD')
+      .filter(v => v.includes('FN:') && v.includes('BDAY'));
+
+    for (const v of entries) {
+      const name = v.match(/FN:(.+)/)?.[1].trim();
+      const bday = v.match(/BDAY[;:](.+)/)?.[1].split(':').pop()?.trim();
+      const birthDate = bday ? this.parseDate(bday) : null;
+
+      if (!name || !birthDate) continue;
+
+      const candidate = sanitizeBirthdayData({
+        id: crypto.randomUUID(),
+        name,
+        birthDate,
+        category: 'friends'
       });
+
+      const result = safeParseBirthday(candidate);
+      if (result.success) {
+        birthdays.push(candidate as unknown as Birthday);
+      } else {
+        this.logger.warn('[Import] Skipping invalid vCard entry:', name, result.error.issues);
+      }
+    }
+
+    return birthdays;
   }
 
   private parseCSVLine(line: string): string[] {
