@@ -8,6 +8,7 @@ import type { TokenClient, TokenResponse } from './google-identity.types';
 import { LoggerService } from './logger.service';
 import { GoogleApiErrorService } from './google-api-error.service';
 import { SecureStorageService } from './secure-storage.service';
+import { safeParseGoogleCalendarSettings, safeParseCalendarItems, safeParseEventResponse } from '../../shared/schemas/birthday.schema';
 
 declare const gapi: Gapi;
 
@@ -419,7 +420,13 @@ export class GoogleCalendarService {
     return this.executeWithRetry(
       async () => {
         const response = await gapi.client.calendar.calendarList.list();
-        return response.result.items || [];
+        const items = response.result.items || [];
+        const result = safeParseCalendarItems(items);
+        if (!result.success) {
+          this.logger.warn('[GoogleCalendar] Invalid calendar list response, returning raw items:', result.error.issues);
+          return items;
+        }
+        return result.data;
       },
       'getCalendars'
     );
@@ -438,11 +445,12 @@ export class GoogleCalendarService {
           resource: event
         });
 
-        if (!response.result.id) {
-          throw new Error('Failed to create calendar event: No event ID returned');
+        const result = safeParseEventResponse(response.result);
+        if (!result.success) {
+          throw new Error('Failed to create calendar event: invalid response from Google API');
         }
 
-        return response.result.id;
+        return result.data.id;
       },
       `syncBirthday:${birthday.name}`
     );
@@ -542,8 +550,14 @@ export class GoogleCalendarService {
       const stored = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (stored) {
         try {
-          const settings = JSON.parse(stored);
-          this.settingsSubject.next(settings);
+          const parsed = JSON.parse(stored);
+          const result = safeParseGoogleCalendarSettings(parsed);
+          if (result.success) {
+            this.settingsSubject.next(result.data);
+          } else {
+            this.logger.warn('[GoogleCalendar] Invalid stored settings, using defaults:', result.error.issues);
+            localStorage.removeItem(STORAGE_KEY_SETTINGS);
+          }
         } catch (error) {
           this.logger.error('[GoogleCalendar] Failed to load settings:', error);
         }
