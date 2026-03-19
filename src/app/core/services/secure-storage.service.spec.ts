@@ -3,12 +3,21 @@ import { PLATFORM_ID } from '@angular/core';
 import { SecureStorageService } from './secure-storage.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
+function deleteSecureStorageDB(): Promise<void> {
+  return new Promise((resolve) => {
+    const request = indexedDB.deleteDatabase('SecureStorageDB');
+    request.onsuccess = () => resolve();
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+  });
+}
+
 describe('SecureStorageService', () => {
   let service: SecureStorageService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
-    sessionStorage.clear();
+    await deleteSecureStorageDB();
 
     TestBed.configureTestingModule({
       providers: [
@@ -21,9 +30,9 @@ describe('SecureStorageService', () => {
     service = TestBed.inject(SecureStorageService);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     localStorage.clear();
-    sessionStorage.clear();
+    await deleteSecureStorageDB();
   });
 
   it('should be created', () => {
@@ -139,11 +148,54 @@ describe('SecureStorageService', () => {
   });
 
   describe('encryption key management', () => {
-    it('should persist encryption key in session storage', async () => {
+    it('should persist encryption key in IndexedDB', async () => {
       await service.setItem('test', 'data');
 
-      const keyExists = sessionStorage.getItem('app_encryption_key');
-      expect(keyExists).toBeTruthy();
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('SecureStorageDB', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      const key = await new Promise<CryptoKey | undefined>((resolve, reject) => {
+        const tx = db.transaction('keys', 'readonly');
+        const store = tx.objectStore('keys');
+        const request = store.get('encryption-key');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      db.close();
+
+      expect(key).toBeTruthy();
+      expect(key instanceof CryptoKey).toBeTrue();
+    });
+
+    it('should generate a non-extractable key', async () => {
+      await service.setItem('test', 'data');
+
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('SecureStorageDB', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      const key = await new Promise<CryptoKey>((resolve, reject) => {
+        const tx = db.transaction('keys', 'readonly');
+        const store = tx.objectStore('keys');
+        const request = store.get('encryption-key');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      db.close();
+
+      expect(key.extractable).toBeFalse();
+    });
+
+    it('should not store encryption key in sessionStorage', async () => {
+      await service.setItem('test', 'data');
+      expect(sessionStorage.length).toBe(0);
     });
 
     it('should use same key for encrypt/decrypt within session', async () => {
@@ -158,12 +210,27 @@ describe('SecureStorageService', () => {
       expect(result2).toEqual(testData);
     });
 
-    it('should clear encryption key', async () => {
+    it('should clear encryption key from IndexedDB', async () => {
       await service.setItem('test', 'data');
-      expect(sessionStorage.getItem('app_encryption_key')).toBeTruthy();
+      await service.clearEncryptionKey();
 
-      service.clearEncryptionKey();
-      expect(sessionStorage.getItem('app_encryption_key')).toBeNull();
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('SecureStorageDB', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      const key = await new Promise<CryptoKey | undefined>((resolve, reject) => {
+        const tx = db.transaction('keys', 'readonly');
+        const store = tx.objectStore('keys');
+        const request = store.get('encryption-key');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+      });
+
+      db.close();
+
+      expect(key).toBeUndefined();
     });
   });
 
