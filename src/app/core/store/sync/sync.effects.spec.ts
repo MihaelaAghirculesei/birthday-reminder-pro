@@ -181,11 +181,23 @@ describe('SyncEffects', () => {
   });
 
   describe('pushPendingChanges$', () => {
-    it('should call syncCoordinator.processPendingChanges', (done) => {
+    it('should dispatch pushChangesSuccess on success', (done) => {
+      syncCoordinatorMock.processPendingChanges.and.returnValue(Promise.resolve(3));
       actions$ = of(SyncActions.pushPendingChanges());
 
-      effects.pushPendingChanges$.subscribe(() => {
+      effects.pushPendingChanges$.subscribe((action) => {
         expect(syncCoordinatorMock.processPendingChanges).toHaveBeenCalled();
+        expect(action).toEqual(SyncActions.pushChangesSuccess({ syncedCount: 3 }));
+        done();
+      });
+    });
+
+    it('should dispatch pushChangesFailure on error', (done) => {
+      syncCoordinatorMock.processPendingChanges.and.returnValue(Promise.reject(new Error('network error')));
+      actions$ = of(SyncActions.pushPendingChanges());
+
+      effects.pushPendingChanges$.subscribe((action) => {
+        expect(action).toEqual(SyncActions.pushChangesFailure({ error: 'network error' }));
         done();
       });
     });

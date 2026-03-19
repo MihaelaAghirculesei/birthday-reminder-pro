@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { SyncCoordinatorService } from './sync-coordinator.service';
+import * as SyncActions from '../store/sync/sync.actions';
 import { FirebaseAuthService, AuthUser } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
 import { IndexedDBStorageService } from './offline-storage.service';
@@ -8,7 +9,7 @@ import { PendingChangesService, PendingChange } from './pending-changes.service'
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
 import { BirthdayMergeService, MergeResult } from './birthday-merge.service';
-import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import { Birthday } from '../../shared/models/birthday.model';
 
 describe('SyncCoordinatorService', () => {
@@ -313,6 +314,92 @@ describe('SyncCoordinatorService', () => {
     });
   });
 
+  describe('processPendingChanges concurrency guard', () => {
+    beforeEach(() => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+    });
+
+    it('should not run concurrently — second call defers until first completes', async () => {
+      let resolveFirst!: () => void;
+      const blockingPromise = new Promise<void>((resolve) => { resolveFirst = resolve; });
+
+      const birthday = makeBirthday({ id: 'b-1' });
+      const change = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday });
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+
+      firestoreServiceMock.saveBirthday.and.callFake(() => {
+        return new Observable((subscriber) => {
+          blockingPromise.then(() => {
+            subscriber.next(undefined);
+            subscriber.complete();
+          });
+        });
+      });
+      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      // First call starts processing and blocks on the Observable
+      const firstRun = service.processPendingChanges();
+      // Second call arrives while first is in progress — should defer, not start processing
+      const secondRun = service.processPendingChanges();
+
+      // Second call returns immediately (deferred)
+      await secondRun;
+
+      // saveBirthday was called once by the first run; second run deferred via syncAgain
+      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
+      expect(pendingChangesMock.getChangesForEntity).toHaveBeenCalledTimes(1);
+
+      // Unblock the first run
+      resolveFirst();
+      await firstRun;
+
+      // After first run completes with syncAgain=true, it dispatches pushPendingChanges
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
+    });
+
+    it('should not duplicate writes when called concurrently', async () => {
+      const birthday = makeBirthday({ id: 'b-dup' });
+      const change = makePendingChange({ id: 'c-dup', entityId: 'b-dup', changeType: 'create', data: birthday });
+
+      let callCount = 0;
+      pendingChangesMock.getChangesForEntity.and.callFake(() => {
+        callCount++;
+        if (callCount === 1) return [change];
+        return [];
+      });
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+
+      await Promise.all([
+        service.processPendingChanges(),
+        service.processPendingChanges(),
+        service.processPendingChanges()
+      ]);
+
+      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
+    });
+
+    it('should dispatch pushPendingChanges after first run if a call arrived during sync', async () => {
+      const birthday1 = makeBirthday({ id: 'b-1' });
+      const change1 = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday1 });
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([change1]);
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      const firstRun = service.processPendingChanges();
+      service.processPendingChanges(); // deferred via syncAgain
+
+      await firstRun;
+
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
+    });
+  });
+
   describe('processCategoryChange', () => {
     beforeEach(() => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
@@ -350,39 +437,41 @@ describe('SyncCoordinatorService', () => {
   });
 
   describe('queueChange with immediate processing', () => {
-    it('should process immediately when online and authenticated', async () => {
+    it('should dispatch pushPendingChanges when online and authenticated', async () => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
 
       pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-      pendingChangesMock.getChangesForEntity.and.returnValue([]);
+      const dispatchSpy = spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
-      expect(pendingChangesMock.getChangesForEntity).toHaveBeenCalled();
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
     });
 
-    it('should not process immediately when offline', async () => {
+    it('should not dispatch when offline', async () => {
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
 
       pendingChangesMock.addChange.and.returnValue(Promise.resolve());
+      const dispatchSpy = spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
-      expect(pendingChangesMock.getChangesForEntity).not.toHaveBeenCalled();
+      expect(dispatchSpy).not.toHaveBeenCalledWith(SyncActions.pushPendingChanges());
     });
 
-    it('should not process immediately when not authenticated', async () => {
+    it('should not dispatch when not authenticated', async () => {
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => false });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
 
       pendingChangesMock.addChange.and.returnValue(Promise.resolve());
+      const dispatchSpy = spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
-      expect(pendingChangesMock.getChangesForEntity).not.toHaveBeenCalled();
+      expect(dispatchSpy).not.toHaveBeenCalledWith(SyncActions.pushPendingChanges());
     });
   });
 
