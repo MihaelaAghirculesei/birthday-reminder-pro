@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { of, from } from 'rxjs';
-import { map, exhaustMap, catchError, tap, withLatestFrom, filter } from 'rxjs/operators';
+import { map, exhaustMap, switchMap, catchError, tap, withLatestFrom, filter } from 'rxjs/operators';
 
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
@@ -71,7 +71,7 @@ export class SyncEffects {
   cloudBirthdaysUpdated$ = createEffect(() =>
     this.actions$.pipe(
       ofType(SyncActions.cloudBirthdaysUpdated),
-      exhaustMap(({ birthdays }) =>
+      switchMap(({ birthdays }) =>
         from(this.mergeCloudBirthdays(birthdays)).pipe(
           map(() => SyncActions.syncSuccess({ timestamp: Date.now() })),
           catchError((error) =>

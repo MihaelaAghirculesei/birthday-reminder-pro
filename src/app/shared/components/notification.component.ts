@@ -14,8 +14,7 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
     <div class="notification-container">
       @for (notification of notifications$ | async; track notification.id) {
         <div
-          class="notification"
-          [class]="'notification-' + notification.type"
+          [class]="'notification notification-' + notification.type"
           [@slideIn]
           (click)="close(notification.id)"
           (keydown.enter)="close(notification.id)"
