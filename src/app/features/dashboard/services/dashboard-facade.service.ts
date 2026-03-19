@@ -10,9 +10,7 @@ import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class DashboardFacadeService {
   private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
@@ -197,11 +195,8 @@ export class DashboardFacadeService {
     this._lastAction.set(null);
   }
 
-  async importBirthdays(birthdays: Birthday[]): Promise<void> {
-    for (const birthday of birthdays) {
-      this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
+  importBirthdays(birthdays: Birthday[]): void {
+    this.store.dispatch(BirthdayActions.importBirthdays({ birthdays }));
   }
 
   isCategorySelected(categoryId: string): boolean {

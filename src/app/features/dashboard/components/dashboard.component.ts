@@ -33,7 +33,8 @@ import { BirthdayEditService, CategoryManagerService, DashboardFacadeService } f
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [DashboardFacadeService]
 })
 export class DashboardComponent implements OnInit {
   readonly facade = inject(DashboardFacadeService);

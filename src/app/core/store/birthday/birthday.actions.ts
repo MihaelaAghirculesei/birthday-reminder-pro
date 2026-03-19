@@ -128,6 +128,21 @@ export const deleteMessageFromBirthdayFailure = createAction(
   props<{ error: string }>()
 );
 
+export const importBirthdays = createAction(
+  '[Birthday] Import Birthdays',
+  props<{ birthdays: Omit<Birthday, 'id'>[] }>()
+);
+
+export const importBirthdaysSuccess = createAction(
+  '[Birthday] Import Birthdays Success',
+  props<{ birthdays: Birthday[] }>()
+);
+
+export const importBirthdaysFailure = createAction(
+  '[Birthday] Import Birthdays Failure',
+  props<{ error: string }>()
+);
+
 export const loadTestData = createAction(
   '[Birthday] Load Test Data'
 );

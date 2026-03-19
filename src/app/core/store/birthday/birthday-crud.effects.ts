@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, OnInitEffects } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
-import { of, from } from 'rxjs';
+import { of, from, forkJoin } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
@@ -117,6 +117,29 @@ export class BirthdayCrudEffects implements OnInitEffects {
           catchError(error => of(BirthdayActions.clearAllBirthdaysFailure({ error: error.message })))
         )
       )
+    )
+  );
+
+  importBirthdays$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BirthdayActions.importBirthdays),
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      mergeMap(([{ birthdays }, userId]) => {
+        const prepared: Birthday[] = birthdays.map(b =>
+          this.birthdayService.prepareBirthdayForCreate(b, userId)
+        );
+
+        return from(this.offlineStorage.addBirthdays(prepared)).pipe(
+          switchMap(() => userId
+            ? forkJoin(prepared.map(b =>
+                from(this.syncCoordinator.queueChange('birthday', b.id, 'create', b))
+              ))
+            : of(null)
+          ),
+          map(() => BirthdayActions.importBirthdaysSuccess({ birthdays: prepared })),
+          catchError(error => of(BirthdayActions.importBirthdaysFailure({ error: error.message })))
+        );
+      })
     )
   );
 

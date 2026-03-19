@@ -12,6 +12,7 @@ export interface OfflineStorageService {
   getBirthdays(): Promise<Birthday[]>;
   saveBirthdays(birthdays: Birthday[]): Promise<void>;
   addBirthday(birthday: Birthday): Promise<void>;
+  addBirthdays(birthdays: Birthday[]): Promise<void>;
   updateBirthday(birthday: Birthday): Promise<void>;
   deleteBirthday(id: string): Promise<void>;
   clear(): Promise<void>;
@@ -132,6 +133,27 @@ export class IndexedDBStorageService implements OfflineStorageService {
         request.onsuccess = () => resolve();
       });
     }, 'addBirthday');
+  }
+
+  async addBirthdays(birthdays: Birthday[]): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    return this.executeWithRetry(async () => {
+      const db = await this.connection.getDB();
+      return new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction([this.storeName], 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+
+        birthdays.forEach(birthday => {
+          store.add(birthday);
+        });
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }, 'addBirthdays');
   }
 
   async updateBirthday(birthday: Birthday): Promise<void> {

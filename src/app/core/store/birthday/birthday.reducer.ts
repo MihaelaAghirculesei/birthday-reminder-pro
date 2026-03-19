@@ -231,6 +231,26 @@ export const birthdayReducer = createReducer(
     );
   }),
 
+  on(BirthdayActions.importBirthdays, (state) => ({
+    ...state,
+    loading: true,
+    error: null
+  })),
+
+  on(BirthdayActions.importBirthdaysSuccess, (state, { birthdays }) =>
+    birthdayAdapter.addMany(birthdays, {
+      ...state,
+      loading: false,
+      error: null
+    })
+  ),
+
+  on(BirthdayActions.importBirthdaysFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error
+  })),
+
   on(BirthdayActions.loadTestData, (state) => ({
     ...state,
     loading: true,
