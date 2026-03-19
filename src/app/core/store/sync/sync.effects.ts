@@ -93,15 +93,18 @@ export class SyncEffects {
     )
   );
 
-  pushPendingChanges$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(SyncActions.pushPendingChanges),
-        tap(() => {
-          this.syncCoordinator.processPendingChanges();
-        })
-      ),
-    { dispatch: false }
+  pushPendingChanges$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(SyncActions.pushPendingChanges),
+      exhaustMap(() =>
+        from(this.syncCoordinator.processPendingChanges()).pipe(
+          map((syncedCount) => SyncActions.pushChangesSuccess({ syncedCount })),
+          catchError((error) =>
+            of(SyncActions.pushChangesFailure({ error: error.message }))
+          )
+        )
+      )
+    )
   );
 
   syncFailure$ = createEffect(

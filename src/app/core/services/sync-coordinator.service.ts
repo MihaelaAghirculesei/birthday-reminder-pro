@@ -35,6 +35,8 @@ export class SyncCoordinatorService {
   private subscriptions: Subscription[] = [];
   private isInitialized = false;
   private hasActiveListeners = false;
+  private isSyncing = false;
+  private syncAgain = false;
 
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -54,9 +56,6 @@ export class SyncCoordinatorService {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((isOnline) => {
         this.store.dispatch(SyncActions.setOnlineStatus({ isOnline }));
-        if (isOnline) {
-          this.processPendingChanges();
-        }
       });
 
     this.store.select(AuthSelectors.selectAuthUser)
@@ -181,38 +180,49 @@ export class SyncCoordinatorService {
     await this.pendingChanges.addChange(entityType, entityId, changeType, data);
 
     if (this.networkService.isOnline && this.authService.isAuthenticated) {
-      this.processPendingChanges();
+      this.store.dispatch(SyncActions.pushPendingChanges());
     }
   }
 
-  async processPendingChanges(): Promise<void> {
-    const userId = this.authService.currentUser?.uid;
-    if (!userId || !this.networkService.isOnline) return;
-
-    const changes = this.pendingChanges.getChangesForEntity('birthday');
-    if (changes.length === 0) return;
-
-    this.store.dispatch(SyncActions.pushPendingChanges());
-    let syncedCount = 0;
-
-    for (const change of changes) {
-      if (change.retryCount >= MAX_RETRY_COUNT) {
-        this.logger.warn('[SyncCoordinator] Max retries reached for change:', change.id);
-        continue;
-      }
-
-      try {
-        await this.processChange(userId, change);
-        await this.pendingChanges.removeChange(change.id);
-        syncedCount++;
-      } catch (error) {
-        this.logger.error('[SyncCoordinator] Failed to process change:', error);
-        await this.pendingChanges.markRetry(change.id);
-      }
+  async processPendingChanges(): Promise<number> {
+    if (this.isSyncing) {
+      this.syncAgain = true;
+      return 0;
     }
 
-    if (syncedCount > 0) {
-      this.store.dispatch(SyncActions.pushChangesSuccess({ syncedCount }));
+    const userId = this.authService.currentUser?.uid;
+    if (!userId || !this.networkService.isOnline) return 0;
+
+    const changes = this.pendingChanges.getChangesForEntity('birthday');
+    if (changes.length === 0) return 0;
+
+    this.isSyncing = true;
+    try {
+      let syncedCount = 0;
+
+      for (const change of changes) {
+        if (change.retryCount >= MAX_RETRY_COUNT) {
+          this.logger.warn('[SyncCoordinator] Max retries reached for change:', change.id);
+          continue;
+        }
+
+        try {
+          await this.processChange(userId, change);
+          await this.pendingChanges.removeChange(change.id);
+          syncedCount++;
+        } catch (error) {
+          this.logger.error('[SyncCoordinator] Failed to process change:', error);
+          await this.pendingChanges.markRetry(change.id);
+        }
+      }
+
+      return syncedCount;
+    } finally {
+      this.isSyncing = false;
+      if (this.syncAgain) {
+        this.syncAgain = false;
+        this.store.dispatch(SyncActions.pushPendingChanges());
+      }
     }
   }
 
