@@ -8,7 +8,6 @@ interface EncryptedData {
   tag: string;
 }
 
-const ENCRYPTION_KEY_STORAGE = 'app_encryption_key';
 const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
@@ -19,6 +18,9 @@ const IV_LENGTH = 12;
 export class SecureStorageService {
   private cryptoKey: CryptoKey | null = null;
   private initPromise: Promise<void> | null = null;
+  private dbName = 'SecureStorageDB';
+  private storeName = 'keys';
+  private keyId = 'encryption-key';
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
@@ -37,30 +39,92 @@ export class SecureStorageService {
     }
   }
 
-  private async getOrCreateKey(): Promise<CryptoKey> {
-    const storedKey = sessionStorage.getItem(ENCRYPTION_KEY_STORAGE);
+  private async openDB(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, 1);
 
-    if (storedKey) {
-      const keyData = this.base64ToArrayBuffer(storedKey);
-      return await crypto.subtle.importKey(
-        'raw',
-        keyData,
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.createObjectStore(this.storeName);
+        }
+      };
+    });
+  }
+
+  private async getOrCreateKey(): Promise<CryptoKey> {
+    try {
+      const storedKey = await this.getKeyFromIndexedDB();
+      if (storedKey) {
+        return storedKey;
+      }
+
+      const key = await crypto.subtle.generateKey(
         { name: ALGORITHM, length: KEY_LENGTH },
-        true,
+        false,
         ['encrypt', 'decrypt']
       );
+
+      await this.storeKeyInIndexedDB(key);
+
+      return key;
+    } catch (error) {
+      this.logger.error('[SecureStorage] Key operation failed:', error);
+      throw error;
     }
+  }
 
-    const key = await crypto.subtle.generateKey(
-      { name: ALGORITHM, length: KEY_LENGTH },
-      true,
-      ['encrypt', 'decrypt']
-    );
+  private async getKeyFromIndexedDB(): Promise<CryptoKey | null> {
+    try {
+      const db = await this.openDB();
 
-    const exportedKey = await crypto.subtle.exportKey('raw', key);
-    sessionStorage.setItem(ENCRYPTION_KEY_STORAGE, this.arrayBufferToBase64(exportedKey));
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.get(this.keyId);
 
-    return key;
+        request.onerror = () => {
+          reject(request.error);
+          db.close();
+        };
+
+        request.onsuccess = () => {
+          resolve(request.result ?? null);
+          db.close();
+        };
+      });
+    } catch (error) {
+      this.logger.error('[SecureStorage] Failed to read key from IndexedDB:', error);
+      return null;
+    }
+  }
+
+  private async storeKeyInIndexedDB(key: CryptoKey): Promise<void> {
+    try {
+      const db = await this.openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(this.storeName, 'readwrite');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.put(key, this.keyId);
+
+        request.onerror = () => {
+          reject(request.error);
+          db.close();
+        };
+
+        request.onsuccess = () => {
+          resolve();
+          db.close();
+        };
+      });
+    } catch (error) {
+      this.logger.error('[SecureStorage] Failed to store key in IndexedDB:', error);
+      throw error;
+    }
   }
 
   async setItem<T>(key: string, value: T): Promise<void> {
@@ -197,10 +261,31 @@ export class SecureStorageService {
     return bytes.buffer;
   }
 
-  clearEncryptionKey(): void {
+  async clearEncryptionKey(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
-      sessionStorage.removeItem(ENCRYPTION_KEY_STORAGE);
-      this.cryptoKey = null;
+      try {
+        const db = await this.openDB();
+
+        await new Promise<void>((resolve, reject) => {
+          const transaction = db.transaction(this.storeName, 'readwrite');
+          const store = transaction.objectStore(this.storeName);
+          const request = store.delete(this.keyId);
+
+          request.onerror = () => {
+            reject(request.error);
+            db.close();
+          };
+
+          request.onsuccess = () => {
+            resolve();
+            db.close();
+          };
+        });
+
+        this.cryptoKey = null;
+      } catch (error) {
+        this.logger.error('[SecureStorage] Failed to clear key:', error);
+      }
     }
   }
 }
