@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -147,17 +148,20 @@ export class NotificationPermissionBannerComponent implements OnInit {
   private dismissed = false;
 
   constructor(
-    private permissionService: NotificationPermissionService
+    private permissionService: NotificationPermissionService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
-    const dismissedTimestamp = localStorage.getItem('notificationBannerDismissed');
-    if (dismissedTimestamp) {
-      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-      if (parseInt(dismissedTimestamp) < sevenDaysAgo) {
-        localStorage.removeItem('notificationBannerDismissed');
-      } else {
-        this.dismissed = true;
+    if (isPlatformBrowser(this.platformId)) {
+      const dismissedTimestamp = localStorage.getItem('notificationBannerDismissed');
+      if (dismissedTimestamp) {
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        if (parseInt(dismissedTimestamp) < sevenDaysAgo) {
+          localStorage.removeItem('notificationBannerDismissed');
+        } else {
+          this.dismissed = true;
+        }
       }
     }
 
@@ -189,6 +193,8 @@ export class NotificationPermissionBannerComponent implements OnInit {
   dismiss(): void {
     this.dismissed = true;
     this.shouldShow.set(false);
-    localStorage.setItem('notificationBannerDismissed', Date.now().toString());
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('notificationBannerDismissed', Date.now().toString());
+    }
   }
 }
