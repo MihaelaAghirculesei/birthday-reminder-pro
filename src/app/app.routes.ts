@@ -1,4 +1,6 @@
+
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -9,11 +11,13 @@ export const routes: Routes = [
   {
     path: 'scheduled-messages',
     loadComponent: () => import('./features/scheduled-messages/scheduled-messages.component').then(m => m.ScheduledMessagesComponent),
+    canActivate: [authGuard],
     data: { preload: true }
   },
   {
     path: 'calendar-sync',
     loadComponent: () => import('./features/calendar-sync/google-calendar-sync.component').then(m => m.GoogleCalendarSyncComponent),
+    canActivate: [authGuard],
     data: { preload: false }
   },
   {
