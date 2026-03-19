@@ -1,8 +1,11 @@
 import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { Store } from '@ngrx/store';
 import { Subscription, interval } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { parseLocalDate } from '../../shared/utils/date.utils';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
@@ -10,6 +13,8 @@ import { IndexedDBStorageService } from './offline-storage.service';
 import { LoggerService } from './logger.service';
 import { SenderSettingsService } from './sender-settings.service';
 import { NotificationPermissionService } from './notification-permission.service';
+import { selectAllBirthdays } from '../store/birthday/birthday.selectors';
+import * as BirthdayActions from '../store/birthday/birthday.actions';
 
 export interface BirthdayNotificationData {
   birthdayId: string;
@@ -26,9 +31,13 @@ export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly store = inject(Store);
   private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private intervalSubscription?: Subscription;
   private destroyed = false;
+
+  /** In-memory cache kept in sync with the NgRx store — avoids IndexedDB reads during polling. */
+  private birthdaysCache: Birthday[] = [];
 
   private readonly permissionService = inject(NotificationPermissionService);
 
@@ -80,7 +89,19 @@ export class PushNotificationService {
 
     if (this.destroyed) return;
 
-    await this.scheduleAllBrowserTimeouts();
+    // Keep cache in sync with the store — zero IndexedDB reads during polling.
+    this.store.select(selectAllBirthdays)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(birthdays => { this.birthdaysCache = birthdays; });
+
+    // Schedule per-birthday timeouts once the store has its first batch of data.
+    this.store.select(selectAllBirthdays)
+      .pipe(
+        filter(birthdays => birthdays.length > 0),
+        take(1),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(birthdays => this.scheduleBirthdayTimeouts(birthdays));
 
     if (this.destroyed) return;
 
@@ -90,47 +111,36 @@ export class PushNotificationService {
       .subscribe(() => this.checkBrowserNotifications());
   }
 
-  private async scheduleAllBrowserTimeouts(): Promise<void> {
-    try {
-      const birthdays = await this.storage.getBirthdays();
-      for (const birthday of birthdays) {
-        if (!birthday.scheduledMessages) continue;
-        for (const message of birthday.scheduledMessages) {
-          if (message.active) {
-            this.scheduleBrowserTimeout(birthday, message);
-          }
+  private scheduleBirthdayTimeouts(birthdays: Birthday[]): void {
+    for (const birthday of birthdays) {
+      if (!birthday.scheduledMessages) continue;
+      for (const message of birthday.scheduledMessages) {
+        if (message.active) {
+          this.scheduleBrowserTimeout(birthday, message);
         }
       }
-    } catch (error) {
-      this.logger.error('Failed to schedule browser timeouts:', error);
     }
   }
 
-  private async checkBrowserNotifications(): Promise<void> {
+  private checkBrowserNotifications(): void {
     if (!this.isBrowser) return;
     if (!('Notification' in window) || Notification.permission !== 'granted' || !this.permissionService.isNotificationsEnabled()) {
       return;
     }
 
-    try {
-      const birthdays = await this.storage.getBirthdays();
-      const now = new Date();
+    const now = new Date();
 
-      for (const birthday of birthdays) {
-        if (!birthday.scheduledMessages) continue;
+    for (const birthday of this.birthdaysCache) {
+      if (!birthday.scheduledMessages) continue;
 
-        for (const message of birthday.scheduledMessages) {
-          if (!message.active) continue;
+      for (const message of birthday.scheduledMessages) {
+        if (!message.active) continue;
 
-          const shouldShow = this.shouldShowBrowserNotification(birthday, message, now);
-          if (shouldShow) {
-            this.showBrowserNotification(birthday, message);
-            await this.markBrowserNotificationSent(birthday.id, message.id);
-          }
+        if (this.shouldShowBrowserNotification(birthday, message, now)) {
+          this.showBrowserNotification(birthday, message);
+          this.markBrowserNotificationSent(birthday.id, message.id);
         }
       }
-    } catch (error) {
-      this.logger.error('Failed to check browser notifications:', error);
     }
   }
 
@@ -181,27 +191,18 @@ export class PushNotificationService {
     };
   }
 
-  private async markBrowserNotificationSent(birthdayId: string, messageId: string): Promise<void> {
-    try {
-      const birthdays = await this.storage.getBirthdays();
-      const birthday = birthdays.find(b => b.id === birthdayId);
-
-      if (!birthday?.scheduledMessages) return;
-
-      const updatedMessages = birthday.scheduledMessages.map(msg => {
-        if (msg.id === messageId) {
-          return { ...msg, lastSentDate: new Date() };
-        }
-        return msg;
-      });
-
-      await this.storage.updateBirthday({
-        ...birthday,
-        scheduledMessages: updatedMessages
-      });
-    } catch (error) {
-      this.logger.error('Failed to mark browser notification as sent:', error);
-    }
+  /**
+   * Marks a notification as sent by dispatching through the store instead of
+   * performing a raw IndexedDB read + write. The effect pipeline persists the
+   * change to IndexedDB and the store subscription keeps the local cache
+   * consistent automatically.
+   */
+  private markBrowserNotificationSent(birthdayId: string, messageId: string): void {
+    this.store.dispatch(BirthdayActions.updateMessageInBirthday({
+      birthdayId,
+      messageId,
+      updates: { lastSentDate: new Date() }
+    }));
   }
 
   private async setupNotificationListeners(): Promise<void> {
@@ -315,7 +316,7 @@ export class PushNotificationService {
         this.browserTimeouts.delete(key);
         if ('Notification' in window && Notification.permission === 'granted' && this.permissionService.isNotificationsEnabled()) {
           this.showBrowserNotification(birthday, message);
-          await this.markBrowserNotificationSent(birthday.id, message.id);
+          this.markBrowserNotificationSent(birthday.id, message.id);
         }
       }, delay);
       this.browserTimeouts.set(key, timeout);
@@ -459,21 +460,23 @@ export class PushNotificationService {
     return age >= 0 ? age : null;
   }
 
-  async getScheduledNotificationsCount(): Promise<number> {
+  getScheduledNotificationsCount(): number {
     if (!this.isNative) {
-      try {
-        const birthdays = await this.storage.getBirthdays();
-        let count = 0;
-        for (const birthday of birthdays) {
-          if (birthday.scheduledMessages) {
-            count += birthday.scheduledMessages.filter(m => m.active).length;
-          }
+      let count = 0;
+      for (const birthday of this.birthdaysCache) {
+        if (birthday.scheduledMessages) {
+          count += birthday.scheduledMessages.filter(m => m.active).length;
         }
-        return count;
-      } catch (error) {
-        this.logger.error('Failed to get scheduled notifications count (browser):', error);
-        return 0;
       }
+      return count;
+    }
+    // For native, the caller must use the async variant below.
+    return 0;
+  }
+
+  async getScheduledNotificationsCountAsync(): Promise<number> {
+    if (!this.isNative) {
+      return this.getScheduledNotificationsCount();
     }
 
     try {
@@ -493,37 +496,31 @@ export class PushNotificationService {
     birthdayId?: string;
   }[]> {
     if (!this.isNative) {
-      try {
-        const birthdays = await this.storage.getBirthdays();
-        const notifications: {
-          id: number;
-          title: string;
-          body: string;
-          scheduledAt: Date;
-          birthdayId?: string;
-        }[] = [];
+      const notifications: {
+        id: number;
+        title: string;
+        body: string;
+        scheduledAt: Date;
+        birthdayId?: string;
+      }[] = [];
 
-        for (const birthday of birthdays) {
-          if (!birthday.scheduledMessages) continue;
-          for (const message of birthday.scheduledMessages) {
-            if (!message.active) continue;
-            const scheduledDate = this.getNextNotificationDate(birthday, message);
-            if (scheduledDate) {
-              notifications.push({
-                id: this.generateNotificationId(birthday.id, message.id),
-                title: message.title || '🎂 Birthday Reminder',
-                body: this.formatMessage(message.message, birthday),
-                scheduledAt: scheduledDate,
-                birthdayId: birthday.id
-              });
-            }
+      for (const birthday of this.birthdaysCache) {
+        if (!birthday.scheduledMessages) continue;
+        for (const message of birthday.scheduledMessages) {
+          if (!message.active) continue;
+          const scheduledDate = this.getNextNotificationDate(birthday, message);
+          if (scheduledDate) {
+            notifications.push({
+              id: this.generateNotificationId(birthday.id, message.id),
+              title: message.title || '🎂 Birthday Reminder',
+              body: this.formatMessage(message.message, birthday),
+              scheduledAt: scheduledDate,
+              birthdayId: birthday.id
+            });
           }
         }
-        return notifications.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
-      } catch (error) {
-        this.logger.error('Failed to get pending notifications (browser):', error);
-        return [];
       }
+      return notifications.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
     }
 
     try {
