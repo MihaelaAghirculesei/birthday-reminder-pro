@@ -4,6 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenu } from '@angular/material/menu';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LocaleService } from '../../core/services/locale.service';
 import { MatDialog } from '@angular/material/dialog';
 
 import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
@@ -16,25 +18,30 @@ import { NotificationPermissionService } from '../../core/services/notification-
     RouterModule,
     MatIconModule,
     MatMenuModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-menu #settingsMenu="matMenu" [class]="menuClass">
-      <a mat-menu-item routerLink="/calendar-sync" aria-label="Go to calendar sync page">
+      <a mat-menu-item routerLink="/calendar-sync" [attr.aria-label]="'NAV.CALENDAR_SYNC' | translate">
         <mat-icon>sync</mat-icon>
-        <span>Calendar Sync</span>
+        <span>{{ 'NAV.CALENDAR_SYNC' | translate }}</span>
       </a>
       <button mat-menu-item (click)="openSenderSettings()">
         <mat-icon>badge</mat-icon>
-        <span>Message Signature</span>
+        <span>{{ 'NAV.MESSAGE_SIGNATURE' | translate }}</span>
       </button>
       <button mat-menu-item (click)="toggleNotifications()">
         <mat-icon>{{ notificationIcon() }}</mat-icon>
-        <span>{{ notificationLabel() }}</span>
+        <span>{{ notificationLabel() | translate }}</span>
       </button>
       <button mat-menu-item (click)="themeService.toggleDarkMode()">
         <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-        <span>{{ themeService.darkMode() ? 'Light Theme' : 'Dark Theme' }}</span>
+        <span>{{ (themeService.darkMode() ? 'NAV.LIGHT_THEME' : 'NAV.DARK_THEME') | translate }}</span>
+      </button>
+      <button mat-menu-item (click)="localeService.toggleLanguage()">
+        <mat-icon>translate</mat-icon>
+        <span>{{ 'LANG.SWITCH' | translate }}</span>
       </button>
     </mat-menu>
   `
@@ -47,7 +54,9 @@ export class HeaderSettingsMenuComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
   private readonly platformId = inject(PLATFORM_ID);
   public readonly themeService = inject(ThemeService);
+  public readonly localeService = inject(LocaleService);
   private readonly permissionService = inject(NotificationPermissionService);
+  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   notificationsGranted = signal(false);
@@ -58,7 +67,9 @@ export class HeaderSettingsMenuComponent implements OnInit {
     : 'notifications'
   );
   notificationLabel = computed(() =>
-    this.notificationsGranted() && this.notificationsEnabled() ? 'Disable Notifications' : 'Enable Notifications'
+    this.notificationsGranted() && this.notificationsEnabled()
+      ? 'NAV.DISABLE_NOTIFICATIONS'
+      : 'NAV.ENABLE_NOTIFICATIONS'
   );
 
   ngOnInit(): void {
@@ -78,14 +89,17 @@ export class HeaderSettingsMenuComponent implements OnInit {
     if (!this.notificationsGranted()) {
       const granted = await this.permissionService.requestPermission();
       if (granted) {
-        this.notificationService.show('Notifications enabled!', 'success');
+        this.notificationService.show(
+          this.translate.instant('NOTIFICATIONS.NOTIFICATIONS_ENABLED'),
+          'success'
+        );
       }
     } else if (this.notificationsEnabled()) {
       this.permissionService.setNotificationsEnabled(false);
-      this.notificationService.show('Notifications disabled', 'info');
+      this.notificationService.show(this.translate.instant('NOTIFICATIONS.NOTIFICATIONS_DISABLED'), 'info');
     } else {
       this.permissionService.setNotificationsEnabled(true);
-      this.notificationService.show('Notifications enabled!', 'success');
+      this.notificationService.show(this.translate.instant('NOTIFICATIONS.NOTIFICATIONS_ENABLED'), 'success');
     }
   }
 

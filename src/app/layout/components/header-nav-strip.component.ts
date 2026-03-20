@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 import { HeaderImportExportComponent } from './header-import-export.component';
@@ -12,6 +13,7 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
   selector: 'app-header-nav-strip',
   imports: [
     RouterModule,
+    TranslatePipe,
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
@@ -24,25 +26,25 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
     <nav class="nav-strip" role="navigation" aria-label="Main navigation">
       <a mat-button routerLink="/" class="nav-strip-item">
         <mat-icon>home</mat-icon>
-        <span>Dashboard</span>
+        <span>{{ 'NAV.DASHBOARD' | translate }}</span>
       </a>
       <a mat-button routerLink="/scheduled-messages" class="nav-strip-item">
         <mat-icon>schedule_send</mat-icon>
-        <span>Messages</span>
+        <span>{{ 'NAV.MESSAGES' | translate }}</span>
       </a>
       <button mat-button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item">
         <mat-icon>settings</mat-icon>
-        <span>Settings</span>
+        <span>{{ 'NAV.SETTINGS' | translate }}</span>
         <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
       <button mat-button [matMenuTriggerFor]="stripImportExport.importMenu" class="nav-strip-item">
         <mat-icon>upload_file</mat-icon>
-        <span>Import</span>
+        <span>{{ 'NAV.IMPORT' | translate }}</span>
         <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
       <button mat-button [matMenuTriggerFor]="stripImportExport.exportMenu" class="nav-strip-item">
         <mat-icon>download</mat-icon>
-        <span>Export</span>
+        <span>{{ 'NAV.EXPORT' | translate }}</span>
         <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
       <app-header-user-menu

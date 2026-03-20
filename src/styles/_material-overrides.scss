@@ -165,6 +165,24 @@ app-category-dialog .mdc-floating-label {
   color: var(--text-primary) !important;
 }
 
+// Dark mode: form field focused labels and outlines use shade 300 (#c4b5fd)
+// instead of the default shade 500 (#7c3aed) which is too dark to see
+body.dark-theme {
+  .mat-mdc-form-field.mat-focused {
+    .mdc-floating-label {
+      color: #c4b5fd !important;
+    }
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #c4b5fd !important;
+    }
+  }
+  .mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+    color: #c4b5fd !important;
+  }
+}
+
 app-category-dialog [mat-dialog-title] {
   font-family: 'Roboto', sans-serif !important;
 }

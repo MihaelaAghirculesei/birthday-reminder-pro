@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule, MatMenu } from '@angular/material/menu';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../core';
 import { BackupService } from '../../core/services/backup.service';
@@ -16,31 +17,32 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
   imports: [
     MatIconModule,
     MatMenuModule,
+    TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-menu #importMenu="matMenu" [class]="menuClass">
       <button mat-menu-item (click)="importJSON.click()">
         <mat-icon>data_object</mat-icon>
-        <span>Import JSON</span>
+        <span>{{ 'IMPORT_EXPORT.IMPORT_JSON' | translate }}</span>
       </button>
       <button mat-menu-item (click)="importCSV.click()">
         <mat-icon>table_chart</mat-icon>
-        <span>Import CSV</span>
+        <span>{{ 'IMPORT_EXPORT.IMPORT_CSV' | translate }}</span>
       </button>
       <button mat-menu-item (click)="importVCard.click()">
         <mat-icon>contact_page</mat-icon>
-        <span>Import vCard</span>
+        <span>{{ 'IMPORT_EXPORT.IMPORT_VCARD' | translate }}</span>
       </button>
     </mat-menu>
     <mat-menu #exportMenu="matMenu" [class]="menuClass">
       <button mat-menu-item (click)="exportJSON()">
         <mat-icon>data_object</mat-icon>
-        <span>Export JSON</span>
+        <span>{{ 'IMPORT_EXPORT.EXPORT_JSON' | translate }}</span>
       </button>
       <button mat-menu-item (click)="exportCSV()">
         <mat-icon>table_chart</mat-icon>
-        <span>Export CSV</span>
+        <span>{{ 'IMPORT_EXPORT.EXPORT_CSV' | translate }}</span>
       </button>
     </mat-menu>
     <input #importJSON type="file" accept=".json" hidden (change)="onImportJSON($event)">
@@ -56,30 +58,31 @@ export class HeaderImportExportComponent {
   private readonly store = inject(Store<AppState>);
   private readonly backupService = inject(BackupService);
   private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   private readonly birthdays = toSignal(
     this.store.select(BirthdaySelectors.selectAllBirthdays),
     { initialValue: [] }
   );
 
-  exportJSON(): void { this.handleExport(b => this.backupService.exportToJSON(b), 'Exported to JSON'); }
-  exportCSV(): void { this.handleExport(b => this.backupService.exportToCSV(b), 'Exported to CSV'); }
+  exportJSON(): void { this.handleExport(b => this.backupService.exportToJSON(b), 'IMPORT_EXPORT.EXPORTED_JSON'); }
+  exportCSV(): void { this.handleExport(b => this.backupService.exportToCSV(b), 'IMPORT_EXPORT.EXPORTED_CSV'); }
 
-  onImportJSON(event: Event): void { this.handleImport(event, f => this.backupService.importFromFile(f), 'Invalid backup file'); }
-  onImportCSV(event: Event): void { this.handleImport(event, f => this.backupService.importFromCSV(f), 'Invalid CSV file'); }
-  onImportVCard(event: Event): void { this.handleImport(event, f => this.backupService.importFromVCard(f), 'Invalid vCard file'); }
+  onImportJSON(event: Event): void { this.handleImport(event, f => this.backupService.importFromFile(f), 'IMPORT_EXPORT.INVALID_JSON'); }
+  onImportCSV(event: Event): void { this.handleImport(event, f => this.backupService.importFromCSV(f), 'IMPORT_EXPORT.INVALID_CSV'); }
+  onImportVCard(event: Event): void { this.handleImport(event, f => this.backupService.importFromVCard(f), 'IMPORT_EXPORT.INVALID_VCARD'); }
 
-  private handleExport(exporter: (b: Birthday[]) => void, successMsg: string): void {
+  private handleExport(exporter: (b: Birthday[]) => void, successKey: string): void {
     const birthdays = this.birthdays();
     if (birthdays.length === 0) {
-      this.notificationService.show('No birthdays to export', 'warning');
+      this.notificationService.show(this.translate.instant('IMPORT_EXPORT.NO_BIRTHDAYS'), 'warning');
       return;
     }
     exporter(birthdays);
-    this.notificationService.show(successMsg, 'success');
+    this.notificationService.show(this.translate.instant(successKey), 'success');
   }
 
-  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, errorMsg: string): Promise<void> {
+  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, errorKey: string): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     try {
@@ -87,9 +90,12 @@ export class HeaderImportExportComponent {
       for (const birthday of birthdays) {
         this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
       }
-      this.notificationService.show(`Imported ${birthdays.length} birthdays`, 'success');
+      this.notificationService.show(
+        this.translate.instant('IMPORT_EXPORT.IMPORTED', { count: birthdays.length }),
+        'success'
+      );
     } catch {
-      this.notificationService.show(errorMsg, 'error');
+      this.notificationService.show(this.translate.instant(errorKey), 'error');
     }
     (event.target as HTMLInputElement).value = '';
   }

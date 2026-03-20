@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -7,7 +7,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
     selector: 'app-photo-upload',
-    imports: [MatIconModule, MatButtonModule, MatTooltipModule],
+    imports: [MatIconModule, MatButtonModule, MatTooltipModule, TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="photo-upload-container">
@@ -24,7 +24,7 @@ import { NotificationService } from '../../core/services/notification.service';
             <img [src]="currentPhoto" alt="Contact photo" class="contact-photo" width="120" height="120" loading="lazy" decoding="async">
             <div class="photo-overlay">
               <mat-icon>edit</mat-icon>
-              <span>Change Photo</span>
+              <span>{{ 'PHOTO_UPLOAD.CHANGE_PHOTO' | translate }}</span>
             </div>
           </div>
         }
@@ -32,8 +32,8 @@ import { NotificationService } from '../../core/services/notification.service';
         @if (!currentPhoto) {
           <div class="photo-placeholder">
             <mat-icon class="upload-icon">add_a_photo</mat-icon>
-            <span class="upload-text">Add Remember Photo</span>
-            <small class="upload-hint">Click to upload image</small>
+            <span class="upload-text">{{ 'PHOTO_UPLOAD.ADD_PHOTO' | translate }}</span>
+            <small class="upload-hint">{{ 'PHOTO_UPLOAD.CLICK_TO_UPLOAD' | translate }}</small>
           </div>
         }
     
@@ -51,7 +51,7 @@ import { NotificationService } from '../../core/services/notification.service';
             color="warn"
             class="delete-button-circle"
             (click)="removePhoto($event)"
-            matTooltip="Remove photo">
+            [matTooltip]="'PHOTO_UPLOAD.REMOVE_PHOTO' | translate">
             <img src="assets/icons/delete-button.png" alt="Delete" class="delete-icon" width="24" height="24" loading="lazy" decoding="async">
           </button>
         }
@@ -243,11 +243,12 @@ export class PhotoUploadComponent {
   @Output() photoSelected = new EventEmitter<string>();
   @Output() photoRemoved = new EventEmitter<void>();
 
-  constructor(private notificationService: NotificationService) {}
+  @ViewChild('fileInput') private fileInputRef!: ElementRef<HTMLInputElement>;
+
+  constructor(private notificationService: NotificationService, private translate: TranslateService) {}
 
   triggerFileInput() {
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    fileInput?.click();
+    this.fileInputRef?.nativeElement.click();
   }
 
   onFileSelected(event: Event) {
@@ -256,22 +257,26 @@ export class PhotoUploadComponent {
       const file = input.files[0];
 
       if (file.size > 5 * 1024 * 1024) {
-        this.notificationService.show('File size must be less than 5MB', 'error');
+        this.notificationService.show(this.translate.instant('PHOTO_UPLOAD.ERROR_SIZE'), 'error');
         return;
       }
 
       if (!file.type.startsWith('image/')) {
-        this.notificationService.show('Please select a valid image file', 'error');
+        this.notificationService.show(this.translate.instant('PHOTO_UPLOAD.ERROR_TYPE'), 'error');
         return;
       }
 
      const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
+        if (base64String.length > 7_000_000) {
+          this.notificationService.show(this.translate.instant('PHOTO_UPLOAD.ERROR_SIZE'), 'error');
+          return;
+        }
         this.photoSelected.emit(base64String);
       };
       reader.onerror = () => {
-        this.notificationService.show('Failed to read the selected file. Please try again.', 'error');
+        this.notificationService.show(this.translate.instant('PHOTO_UPLOAD.ERROR_READ'), 'error');
       };
       reader.readAsDataURL(file);
     }

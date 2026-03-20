@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -18,6 +19,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
     selector: 'app-google-calendar-sync',
     imports: [
         ReactiveFormsModule,
+        TranslatePipe,
         MatCardModule,
         MatFormFieldModule,
         MatSelectModule,
@@ -29,24 +31,23 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
     template: `
     <mat-card class="sync-card">
       <mat-card-header>
-        <mat-card-title>📅 Google Calendar Sync</mat-card-title>
+        <mat-card-title>{{ 'GOOGLE_CALENDAR_SYNC.TITLE' | translate }}</mat-card-title>
       </mat-card-header>
-    
+
       <mat-card-content>
         <div class="sync-status" [class.connected]="isSignedIn()">
           <mat-icon [color]="isSignedIn() ? 'primary' : 'warn'">
             {{ isSignedIn() ? 'cloud_done' : 'cloud_off' }}
           </mat-icon>
           <span class="status-text">
-            {{ isSignedIn() ? 'Connected to Google Calendar' : 'Not connected' }}
+            {{ (isSignedIn() ? 'GOOGLE_CALENDAR_SYNC.CONNECTED' : 'GOOGLE_CALENDAR_SYNC.NOT_CONNECTED') | translate }}
           </span>
         </div>
 
         @if (!isSignedIn()) {
           <div class="auth-section">
             <p class="auth-description">
-              Connect your Google account to automatically sync birthdays to your calendar.
-              Each birthday will be added as an annual recurring event.
+              {{ 'GOOGLE_CALENDAR_SYNC.AUTH_DESCRIPTION' | translate }}
             </p>
             <button mat-raised-button
               color="primary"
@@ -54,7 +55,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
               [disabled]="isConnecting()"
               class="submit-button">
               <mat-icon>login</mat-icon>
-              {{ isConnecting() ? 'Connecting...' : 'Connect Google Calendar' }}
+              {{ (isConnecting() ? 'GOOGLE_CALENDAR_SYNC.CONNECTING' : 'GOOGLE_CALENDAR_SYNC.CONNECT_BTN') | translate }}
             </button>
           </div>
         }
@@ -66,14 +67,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                 formControlName="enabled"
                 color="primary"
                 class="sync-toggle">
-                Enable automatic sync
+                {{ 'GOOGLE_CALENDAR_SYNC.ENABLE_AUTO_SYNC' | translate }}
               </mat-slide-toggle>
               @if (settingsForm.get('enabled')?.value) {
                 <div class="settings-content">
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Target Calendar</mat-label>
+                    <mat-label>{{ 'GOOGLE_CALENDAR_SYNC.TARGET_CALENDAR_LABEL' | translate }}</mat-label>
                     <mat-select formControlName="calendarId">
-                      <mat-option value="primary">Primary Calendar</mat-option>
+                      <mat-option value="primary">{{ 'GOOGLE_CALENDAR_SYNC.PRIMARY_CALENDAR' | translate }}</mat-option>
                       @for (calendar of calendars(); track calendar.id) {
                         <mat-option [value]="calendar.id">
                           {{ calendar.summary }}
@@ -83,25 +84,22 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                     <mat-icon matSuffix>calendar_today</mat-icon>
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Sync Mode</mat-label>
+                    <mat-label>{{ 'GOOGLE_CALENDAR_SYNC.SYNC_MODE_LABEL' | translate }}</mat-label>
                     <mat-select formControlName="syncMode">
-                      <mat-option value="one-way">One-way (App → Calendar)</mat-option>
-                      <mat-option value="two-way">Two-way (Bidirectional)</mat-option>
+                      <mat-option value="one-way">{{ 'GOOGLE_CALENDAR_SYNC.SYNC_ONE_WAY' | translate }}</mat-option>
+                      <mat-option value="two-way">{{ 'GOOGLE_CALENDAR_SYNC.SYNC_TWO_WAY' | translate }}</mat-option>
                     </mat-select>
-                    <mat-hint>
-                      One-way: Only sync from app to calendar.
-                      Two-way: Sync changes in both directions.
-                    </mat-hint>
+                    <mat-hint>{{ 'GOOGLE_CALENDAR_SYNC.SYNC_MODE_HINT' | translate }}</mat-hint>
                     <mat-icon matSuffix>sync</mat-icon>
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Reminder Time</mat-label>
+                    <mat-label>{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_TIME_LABEL' | translate }}</mat-label>
                     <mat-select formControlName="reminderMinutes">
-                      <mat-option [value]="60">1 hour before</mat-option>
-                      <mat-option [value]="360">6 hours before</mat-option>
-                      <mat-option [value]="1440">1 day before</mat-option>
-                      <mat-option [value]="2880">2 days before</mat-option>
-                      <mat-option [value]="10080">1 week before</mat-option>
+                      <mat-option [value]="60">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_1H' | translate }}</mat-option>
+                      <mat-option [value]="360">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_6H' | translate }}</mat-option>
+                      <mat-option [value]="1440">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_1D' | translate }}</mat-option>
+                      <mat-option [value]="2880">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_2D' | translate }}</mat-option>
+                      <mat-option [value]="10080">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_1W' | translate }}</mat-option>
                     </mat-select>
                     <mat-icon matSuffix>notifications</mat-icon>
                   </mat-form-field>
@@ -112,14 +110,14 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                       [disabled]="isSyncing()"
                       class="sync-button">
                       <mat-icon>sync</mat-icon>
-                      {{ isSyncing() ? 'Syncing...' : 'Sync All Birthdays' }}
+                      {{ (isSyncing() ? 'GOOGLE_CALENDAR_SYNC.SYNCING' : 'GOOGLE_CALENDAR_SYNC.SYNC_ALL_BTN') | translate }}
                     </button>
                     <button mat-stroked-button
                       (click)="saveSettings()"
                       [disabled]="settingsForm.pristine"
                       class="save-button">
                       <mat-icon>save</mat-icon>
-                      Save Settings
+                      {{ 'GOOGLE_CALENDAR_SYNC.SAVE_SETTINGS_BTN' | translate }}
                     </button>
                   </div>
                   @if (lastSyncResult(); as result) {
@@ -128,8 +126,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                         {{ result.failed > 0 ? 'warning' : 'check_circle' }}
                       </mat-icon>
                       <span>
-                        Last sync: {{ result.success }} successful,
-                        {{ result.failed }} failed
+                        {{ 'GOOGLE_CALENDAR_SYNC.LAST_SYNC' | translate: { success: result.success, failed: result.failed } }}
                       </span>
                     </div>
                   }
@@ -142,7 +139,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                 (click)="signOut()"
                 class="disconnect-button">
                 <mat-icon>logout</mat-icon>
-                Disconnect Google Calendar
+                {{ 'GOOGLE_CALENDAR_SYNC.DISCONNECT_BTN' | translate }}
               </button>
             </div>
           </div>

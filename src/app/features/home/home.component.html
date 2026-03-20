@@ -5,16 +5,16 @@
         <div class="test-data-content">
           <mat-icon class="test-icon">groups</mat-icon>
           <div class="test-info">
-            <h3>Want to explore the app?</h3>
-            <p>Add some sample birthdays to discover all the dashboard features</p>
+            <h3>{{ 'HOME.EXPLORE_TITLE' | translate }}</h3>
+            <p>{{ 'HOME.EXPLORE_SUBTITLE' | translate }}</p>
           </div>
-          <button mat-raised-button color="primary" (click)="addTestData()" [disabled]="isAddingTestData()" class="add-test-btn">
+          <button mat-raised-button color="primary" (click)="addTestData()" [disabled]="isAddingTestData()" class="add-test-btn" data-testid="show-demo-button">
             @if (isAddingTestData()) {
               <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
             } @else {
               <mat-icon>visibility</mat-icon>
             }
-            {{ isAddingTestData() ? 'Loading...' : 'Show Demo' }}
+            {{ isAddingTestData() ? ('HOME.LOADING' | translate) : ('HOME.SHOW_DEMO' | translate) }}
           </button>
         </div>
       </mat-card-content>
@@ -33,8 +33,8 @@
       (click)="toggleAddBirthdaySection()"
       (keydown.enter)="toggleAddBirthdaySection()"
       (keydown.space)="toggleAddBirthdaySection(); $event.preventDefault()"
-      [title]="isAddBirthdayExpanded ? 'Click to close form' : 'Click to add new birthday'">
-      <mat-card-title>✨ Add New Birthday</mat-card-title>
+      [title]="(isAddBirthdayExpanded ? 'HOME.CLICK_TO_CLOSE' : 'HOME.CLICK_TO_ADD') | translate">
+      <mat-card-title>{{ 'HOME.ADD_BIRTHDAY_TITLE' | translate }}</mat-card-title>
       <mat-icon class="expand-icon" [class.expanded]="isAddBirthdayExpanded">
         {{ isAddBirthdayExpanded ? 'remove_circle' : 'add_circle' }}
       </mat-icon>

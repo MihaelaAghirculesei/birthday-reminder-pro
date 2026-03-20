@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatCardModule } from '@angular/material/card';
@@ -25,6 +26,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
         MatButtonModule,
         MatProgressSpinnerModule,
         BirthdayFormComponent,
+        TranslatePipe,
     ],
     templateUrl: './home.component.html',
     styleUrls: ['./home.component.scss'],

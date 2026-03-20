@@ -1,10 +1,11 @@
 import { Component, ChangeDetectionStrategy, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, DOCUMENT } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
 
 
 @Component({
     selector: 'app-footer',
-    imports: [],
+    imports: [TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <footer class="app-footer">
@@ -13,7 +14,7 @@ import { isPlatformBrowser, DOCUMENT } from '@angular/common';
       </button>
 
       <div class="footer-center">
-        <p class="footer-tagline">Made with ❤️ to never forget special moments</p>
+        <p class="footer-tagline">{{ 'FOOTER.TAGLINE' | translate }}</p>
         <p class="footer-copyright">&copy; {{ currentYear }} Mihaela Melania Aghirculesei</p>
       </div>
 

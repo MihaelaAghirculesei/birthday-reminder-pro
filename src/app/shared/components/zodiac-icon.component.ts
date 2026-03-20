@@ -1,16 +1,23 @@
 import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
-
+import { TranslatePipe } from '@ngx-translate/core';
 import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
+
+const ZODIAC_KEY_MAP: Record<string, string> = {
+  'Aquarius': 'ZODIAC.AQUARIUS', 'Pisces': 'ZODIAC.PISCES', 'Aries': 'ZODIAC.ARIES',
+  'Taurus': 'ZODIAC.TAURUS', 'Gemini': 'ZODIAC.GEMINI', 'Cancer': 'ZODIAC.CANCER',
+  'Leo': 'ZODIAC.LEO', 'Virgo': 'ZODIAC.VIRGO', 'Libra': 'ZODIAC.LIBRA',
+  'Scorpio': 'ZODIAC.SCORPIO', 'Sagittarius': 'ZODIAC.SAGITTARIUS', 'Capricorn': 'ZODIAC.CAPRICORN'
+};
 
 @Component({
     selector: 'app-zodiac-icon',
-    imports: [],
+    imports: [TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <button class="zodiac-button"
             [class]="'zodiac-' + zodiacSign?.toLowerCase()"
-            [title]="tooltipText"
-            [attr.aria-label]="tooltipText"
+            [title]="zodiacNameKey | translate"
+            [attr.aria-label]="zodiacNameKey | translate"
             type="button">
       {{ symbol }}
     </button>
@@ -131,7 +138,7 @@ export class ZodiacIconComponent implements OnChanges {
   @Input() zodiacSign?: string;
 
   symbol = '?';
-  tooltipText = 'Unknown zodiac sign';
+  zodiacNameKey = 'ZODIAC.UNKNOWN';
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['zodiacSign']) {
@@ -146,10 +153,10 @@ export class ZodiacIconComponent implements OnChanges {
 
     if (zodiacData) {
       this.symbol = zodiacData.symbol;
-      this.tooltipText = `${zodiacData.name} (${zodiacData.element} sign)`;
+      this.zodiacNameKey = ZODIAC_KEY_MAP[zodiacData.name] ?? 'ZODIAC.UNKNOWN';
     } else {
       this.symbol = '?';
-      this.tooltipText = 'Unknown zodiac sign';
+      this.zodiacNameKey = 'ZODIAC.UNKNOWN';
     }
   }
 }

@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -33,35 +34,36 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
       HeaderImportExportComponent,
       HeaderUserMenuComponent,
       HeaderNavStripComponent,
+      TranslatePipe,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <header class="app-header" role="banner">
       <div class="header-top">
-        <button mat-icon-button [matMenuTriggerFor]="navMenu" #navMenuTrigger="matMenuTrigger" aria-label="Open navigation menu" class="menu-btn">
+        <button mat-icon-button [matMenuTriggerFor]="navMenu" #navMenuTrigger="matMenuTrigger" [attr.aria-label]="'NAV.OPEN_MENU' | translate" class="menu-btn">
           <mat-icon>menu</mat-icon>
         </button>
         <mat-menu #navMenu="matMenu" class="nav-menu-panel nav-menu-main" xPosition="after" yPosition="below" [overlapTrigger]="true">
-          <a mat-menu-item routerLink="/" aria-label="Go to dashboard page">
+          <a mat-menu-item routerLink="/" [attr.aria-label]="'NAV.GO_DASHBOARD' | translate">
             <mat-icon>home</mat-icon>
-            <span>Dashboard</span>
+            <span>{{ 'NAV.DASHBOARD' | translate }}</span>
           </a>
-          <a mat-menu-item routerLink="/scheduled-messages" aria-label="Go to scheduled messages page">
+          <a mat-menu-item routerLink="/scheduled-messages" [attr.aria-label]="'NAV.GO_MESSAGES' | translate">
             <mat-icon>schedule_send</mat-icon>
-            <span>Messages</span>
+            <span>{{ 'NAV.MESSAGES' | translate }}</span>
           </a>
           <mat-divider></mat-divider>
           <button mat-menu-item [matMenuTriggerFor]="mobileSettings.settingsMenu">
             <mat-icon>settings</mat-icon>
-            <span>Settings</span>
+            <span>{{ 'NAV.SETTINGS' | translate }}</span>
           </button>
           <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.importMenu">
             <mat-icon>upload_file</mat-icon>
-            <span>Import</span>
+            <span>{{ 'NAV.IMPORT' | translate }}</span>
           </button>
           <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.exportMenu">
             <mat-icon>download</mat-icon>
-            <span>Export</span>
+            <span>{{ 'NAV.EXPORT' | translate }}</span>
           </button>
           <mat-divider></mat-divider>
           <app-header-user-menu
@@ -81,13 +83,13 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
             <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="46" height="46">
             <img src="assets/icons/logo-reminder.png" alt="Birthday Memories application logo" class="app-logo" width="46" height="46" loading="eager" decoding="sync">
           </picture>
-          Birthday Memories
+          {{ 'APP.TITLE' | translate }}
         </h1>
-        <div class="header-controls" role="group" aria-label="Application settings">
+        <div class="header-controls" role="group" [attr.aria-label]="'NAV.APP_SETTINGS' | translate">
           <app-network-status></app-network-status>
         </div>
       </div>
-      <p class="hero-subtitle">Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style.</p>
+      <p class="hero-subtitle">{{ 'APP.SUBTITLE' | translate }}</p>
       <app-header-nav-strip
         [isAuthenticated]="isAuthenticated()"
         [authLoading]="authLoading()"
