@@ -1,5 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { CategoryState, categoryAdapter } from './category.state';
+import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
 
 export const selectCategoryState = createFeatureSelector<CategoryState>('categories');
 
@@ -25,11 +26,15 @@ export const selectCustomCategoryIds = createSelector(
   (state) => state.customCategoryIds
 );
 
+const _builtInNameKeys = new Map(BIRTHDAY_CATEGORIES.map(c => [c.id, c.nameKey]));
+
 export const selectAllCategories = createSelector(
   selectAllCategoriesRaw,
   selectDeletedCategoryIds,
   (categories, deletedIds) =>
-    categories.filter(cat => !deletedIds.includes(cat.id))
+    categories
+      .filter(cat => !deletedIds.includes(cat.id))
+      .map(cat => cat.nameKey ? cat : { ...cat, nameKey: _builtInNameKeys.get(cat.id) })
 );
 
 export const selectCategoryById = (categoryId: string) =>

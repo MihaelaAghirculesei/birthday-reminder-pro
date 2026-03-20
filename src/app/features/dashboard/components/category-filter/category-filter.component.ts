@@ -1,13 +1,15 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CategoryIconComponent } from '../../../../shared';
 
 export interface CategoryStats {
   id: string;
   name: string;
+  nameKey?: string;
   icon: string;
   color: string;
   count: number;
@@ -15,12 +17,14 @@ export interface CategoryStats {
 
 @Component({
     selector: 'app-category-filter',
-    imports: [MatIconModule, MatButtonModule, MatTooltipModule, CategoryIconComponent],
+    imports: [MatIconModule, MatButtonModule, MatTooltipModule, TranslatePipe, CategoryIconComponent],
     templateUrl: './category-filter.component.html',
     styleUrls: ['./category-filter.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryFilterComponent {
+  private translateService = inject(TranslateService);
+
   @Input() categoriesStats: CategoryStats[] = [];
   @Input() selectedCategory: string | null = null;
 
@@ -50,6 +54,15 @@ export class CategoryFilterComponent {
   deleteCategory(event: Event, categoryId: string): void {
     event.stopPropagation();
     this.deleteCategoryClicked.emit(categoryId);
+  }
+
+  getCategoryAriaLabel(categoryStats: CategoryStats): string {
+    const personKey = categoryStats.count === 1 ? 'CATEGORY_FILTER.PERSON' : 'CATEGORY_FILTER.PEOPLE';
+    return this.translateService.instant('CATEGORY_FILTER.FILTER_BY_ARIA', {
+      name: categoryStats.name,
+      count: categoryStats.count,
+      people: this.translateService.instant(personKey),
+    });
   }
 
   trackByCategoryStats(_index: number, categoryStats: CategoryStats): string {

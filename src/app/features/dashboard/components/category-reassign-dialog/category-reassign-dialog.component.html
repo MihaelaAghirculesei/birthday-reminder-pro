@@ -1,61 +1,70 @@
 <div class="category-reassign-dialog">
   <div class="dialog-header">
     <mat-icon class="warning-icon">{{ isReassignOnly ? 'move_to_inbox' : 'warning' }}</mat-icon>
-    <h2 mat-dialog-title>{{ isReassignOnly ? 'Reassign Work Birthdays' : 'Delete Category "' + data.categoryToDelete.name + '"?' }}</h2>
+    <h2 mat-dialog-title>
+      {{ isReassignOnly
+        ? ('CATEGORY_REASSIGN_DIALOG.TITLE_REASSIGN' | translate: {name: data.categoryToDelete.name})
+        : ('CATEGORY_REASSIGN_DIALOG.TITLE_DELETE' | translate: {name: data.categoryToDelete.name}) }}
+    </h2>
   </div>
 
   <mat-dialog-content>
     <div class="warning-message">
       <p class="count-warning">
         <strong>{{ data.affectedBirthdaysCount }}</strong>
-        {{ data.affectedBirthdaysCount === 1 ? 'birthday is' : 'birthdays are' }}
-        {{ isReassignOnly ? 'currently in the Work category' : 'currently assigned to this category' }}.
+        {{ data.affectedBirthdaysCount === 1
+          ? ('CATEGORY_REASSIGN_DIALOG.BIRTHDAY_IS' | translate)
+          : ('CATEGORY_REASSIGN_DIALOG.BIRTHDAYS_ARE' | translate) }}
+        {{ 'CATEGORY_REASSIGN_DIALOG.CURRENTLY_IN_CATEGORY' | translate: {name: data.categoryToDelete.name} }}.
       </p>
       <p class="info-text">
-        {{ isReassignOnly ? 'Choose a category to move them to:' : 'What would you like to do with ' + (data.affectedBirthdaysCount === 1 ? 'it' : 'them') + '?' }}
+        {{ isReassignOnly
+          ? ('CATEGORY_REASSIGN_DIALOG.CHOOSE_MOVE_TO' | translate)
+          : (data.affectedBirthdaysCount === 1
+              ? ('CATEGORY_REASSIGN_DIALOG.WHAT_TO_DO_ONE' | translate)
+              : ('CATEGORY_REASSIGN_DIALOG.WHAT_TO_DO_MANY' | translate)) }}
       </p>
     </div>
 
     <div class="reassign-section">
-      <h3>Choose a new category</h3>
+      <h3>{{ 'CATEGORY_REASSIGN_DIALOG.CHOOSE_NEW_CATEGORY' | translate }}</h3>
       <mat-form-field appearance="outline" class="category-select">
         <mat-select [(ngModel)]="selectedCategoryId" panelClass="category-reassign-select-panel">
           @for (category of availableCategories; track category.id) {
             <mat-option [value]="category.id">
               <div class="category-option">
                 <mat-icon [style.background-color]="category.color">{{ category.icon }}</mat-icon>
-                <span>{{ category.name }}</span>
+                <span>{{ category.nameKey ? (category.nameKey | translate) : category.name }}</span>
               </div>
             </mat-option>
           }
         </mat-select>
-        <mat-hint>All affected birthdays will be moved to this category</mat-hint>
+        <mat-hint>{{ 'CATEGORY_REASSIGN_DIALOG.ALL_MOVED_HINT' | translate }}</mat-hint>
       </mat-form-field>
     </div>
 
     @if (!isReassignOnly) {
       <div class="alternative-section">
         <p class="alternative-text">
-          Or you can delete the category and leave birthdays without a category
-          (they will use the default "Friends" category).
+          {{ 'CATEGORY_REASSIGN_DIALOG.OR_DELETE_TEXT' | translate }}
         </p>
       </div>
     }
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-button (click)="onCancel()" aria-label="Cancel category reassignment">
-      Cancel
+    <button mat-button (click)="onCancel()" [attr.aria-label]="'CATEGORY_REASSIGN_DIALOG.CANCEL_ARIA' | translate">
+      {{ 'CATEGORY_REASSIGN_DIALOG.CANCEL' | translate }}
     </button>
     @if (!isReassignOnly) {
       <button
         mat-stroked-button
         color="warn"
         (click)="onDeleteWithoutReassign()"
-        [attr.aria-label]="'Delete ' + data.categoryToDelete.name + ' category without reassigning birthdays'"
+        [attr.aria-label]="'CATEGORY_REASSIGN_DIALOG.DELETE_WITHOUT_REASSIGN_ARIA' | translate: {name: data.categoryToDelete.name}"
         >
         <mat-icon>delete</mat-icon>
-        Delete Without Reassigning
+        {{ 'CATEGORY_REASSIGN_DIALOG.DELETE_WITHOUT_REASSIGN' | translate }}
       </button>
     }
     <button
@@ -63,10 +72,12 @@
       color="primary"
       (click)="onConfirm()"
       [disabled]="!selectedCategoryId"
-      [attr.aria-label]="isReassignOnly ? 'Reassign birthdays to selected category' : 'Reassign birthdays and delete category'"
+      [attr.aria-label]="(isReassignOnly ? 'CATEGORY_REASSIGN_DIALOG.REASSIGN_ARIA' : 'CATEGORY_REASSIGN_DIALOG.REASSIGN_DELETE_ARIA') | translate"
       >
       <mat-icon>move_to_inbox</mat-icon>
-      {{ isReassignOnly ? 'Reassign Birthdays' : 'Reassign & Delete' }}
+      {{ isReassignOnly
+        ? ('CATEGORY_REASSIGN_DIALOG.REASSIGN_BIRTHDAYS' | translate)
+        : ('CATEGORY_REASSIGN_DIALOG.REASSIGN_AND_DELETE' | translate) }}
     </button>
   </mat-dialog-actions>
 </div>

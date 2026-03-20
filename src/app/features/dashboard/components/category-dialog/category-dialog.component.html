@@ -1,25 +1,32 @@
-<h2 mat-dialog-title>{{ data.mode === 'add' ? 'Add New Category' : 'Edit Category' }}</h2>
+<h2 mat-dialog-title>{{ (data.mode === 'add' ? 'CATEGORY_DIALOG.TITLE_ADD' : 'CATEGORY_DIALOG.TITLE_EDIT') | translate }}</h2>
 
 <mat-dialog-content>
   <form [formGroup]="categoryForm" class="category-form">
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Category Name</mat-label>
-      <input matInput formControlName="name" placeholder="e.g. Sports, Music, Gaming">
+      <mat-label>{{ 'CATEGORY_DIALOG.NAME_LABEL' | translate }} ({{ currentLangLabel }})</mat-label>
+      <input matInput formControlName="name" [placeholder]="'CATEGORY_DIALOG.NAME_PLACEHOLDER' | translate">
       <mat-icon matSuffix>label</mat-icon>
       @if (categoryForm.get('name')?.hasError('required')) {
         <mat-error>
-          Name is required
+          {{ 'CATEGORY_DIALOG.NAME_ERROR_REQUIRED' | translate }}
         </mat-error>
       }
       @if (categoryForm.get('name')?.hasError('minlength')) {
         <mat-error>
-          Name must be at least 2 characters
+          {{ 'CATEGORY_DIALOG.NAME_ERROR_MIN' | translate }}
         </mat-error>
       }
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'CATEGORY_DIALOG.NAME_LABEL' | translate }} ({{ otherLangLabel }})</mat-label>
+      <input matInput formControlName="nameOtherLang" [placeholder]="'CATEGORY_DIALOG.NAME_OTHER_LANG_PLACEHOLDER' | translate">
+      <mat-icon matSuffix>translate</mat-icon>
+      <mat-hint>{{ 'CATEGORY_DIALOG.NAME_OTHER_LANG_HINT' | translate }}</mat-hint>
+    </mat-form-field>
+
     <div class="icon-section">
-      <div class="section-label">Choose Icon</div>
+      <div class="section-label">{{ 'CATEGORY_DIALOG.CHOOSE_ICON' | translate }}</div>
       <div class="icon-grid">
         @for (icon of availableIcons; track icon) {
           <button
@@ -29,7 +36,7 @@
             [class.selected]="categoryForm.get('icon')?.value === icon"
             (click)="categoryForm.patchValue({ icon: icon })"
             [style.color]="categoryForm.get('icon')?.value === icon ? categoryForm.get('color')?.value : ''"
-            [attr.aria-label]="'Select ' + icon + ' icon'"
+            [attr.aria-label]="'CATEGORY_DIALOG.SELECT_ICON_ARIA' | translate: {icon: icon}"
             [attr.aria-pressed]="categoryForm.get('icon')?.value === icon"
             >
             <mat-icon>{{ icon }}</mat-icon>
@@ -39,7 +46,7 @@
     </div>
 
     <div class="color-section">
-      <div class="section-label">Choose Color</div>
+      <div class="section-label">{{ 'CATEGORY_DIALOG.CHOOSE_COLOR' | translate }}</div>
       <div class="color-grid">
         @for (colorOption of availableColors; track colorOption.value) {
           <button
@@ -49,7 +56,7 @@
             [style.background-color]="colorOption.value"
             (click)="categoryForm.patchValue({ color: colorOption.value })"
             [matTooltip]="colorOption.name"
-            [attr.aria-label]="'Select ' + colorOption.name + ' color'"
+            [attr.aria-label]="'CATEGORY_DIALOG.SELECT_COLOR_ARIA' | translate: {name: colorOption.name}"
             [attr.aria-pressed]="categoryForm.get('color')?.value === colorOption.value"
             >
             @if (categoryForm.get('color')?.value === colorOption.value) {
@@ -63,26 +70,28 @@
     </div>
 
     <div class="preview-section">
-      <div class="section-label">Preview</div>
+      <div class="section-label">{{ 'CATEGORY_DIALOG.PREVIEW' | translate }}</div>
       <div class="category-preview">
         <mat-icon [style.color]="categoryForm.get('color')?.value">
           {{ categoryForm.get('icon')?.value }}
         </mat-icon>
-        <span class="preview-name">{{ categoryForm.get('name')?.value || 'Category Name' }}</span>
+        <span class="preview-name">{{ categoryForm.get('name')?.value || ('CATEGORY_DIALOG.PREVIEW_NAME_PLACEHOLDER' | translate) }}</span>
       </div>
     </div>
   </form>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()" aria-label="Cancel category editing">Cancel</button>
+  <button mat-button (click)="onCancel()" [attr.aria-label]="'CATEGORY_DIALOG.CANCEL_ARIA' | translate">
+    {{ 'CATEGORY_DIALOG.CANCEL' | translate }}
+  </button>
   <button
     mat-raised-button
     color="primary"
     (click)="onSubmit()"
     [disabled]="categoryForm.invalid"
-    [attr.aria-label]="data.mode === 'add' ? 'Add new category' : 'Save category changes'"
+    [attr.aria-label]="(data.mode === 'add' ? 'CATEGORY_DIALOG.ADD_BTN_ARIA' : 'CATEGORY_DIALOG.SAVE_BTN_ARIA') | translate"
     >
-    {{ data.mode === 'add' ? 'Add Category' : 'Save Changes' }}
+    {{ (data.mode === 'add' ? 'CATEGORY_DIALOG.ADD_BTN' : 'CATEGORY_DIALOG.SAVE_BTN') | translate }}
   </button>
 </mat-dialog-actions>

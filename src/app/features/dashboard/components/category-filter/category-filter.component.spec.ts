@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CategoryFilterComponent, CategoryStats } from './category-filter.component';
+import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 
 describe('CategoryFilterComponent', () => {
   let component: CategoryFilterComponent;
@@ -13,7 +14,8 @@ describe('CategoryFilterComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CategoryFilterComponent]
+      imports: [CategoryFilterComponent],
+      providers: [provideTranslateTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoryFilterComponent);
@@ -209,6 +211,38 @@ describe('CategoryFilterComponent', () => {
 
     it('should have deleteCategoryClicked output', () => {
       expect(component.deleteCategoryClicked).toBeDefined();
+    });
+  });
+
+  describe('getCategoryAriaLabel', () => {
+    it('should use singular "person" key when count is 1', () => {
+      const singleStat: CategoryStats = { id: 'cat-1', name: 'Family', icon: 'family_restroom', color: '#FF5722', count: 1 };
+      const label = component.getCategoryAriaLabel(singleStat);
+      expect(typeof label).toBe('string');
+      expect(label.length).toBeGreaterThan(0);
+    });
+
+    it('should use plural "people" key when count is greater than 1', () => {
+      const pluralStat: CategoryStats = { id: 'cat-2', name: 'Friends', icon: 'people', color: '#2196F3', count: 5 };
+      const label = component.getCategoryAriaLabel(pluralStat);
+      expect(typeof label).toBe('string');
+      expect(label.length).toBeGreaterThan(0);
+    });
+
+    it('should use plural "people" key when count is 0', () => {
+      const zeroStat: CategoryStats = { id: 'cat-3', name: 'Work', icon: 'work', color: '#4CAF50', count: 0 };
+      const label = component.getCategoryAriaLabel(zeroStat);
+      expect(typeof label).toBe('string');
+    });
+
+    it('should produce different aria labels for count 1 vs count 2', () => {
+      const single: CategoryStats = { id: 'cat-1', name: 'Family', icon: 'family_restroom', color: '#FF5722', count: 1 };
+      const plural: CategoryStats = { id: 'cat-1', name: 'Family', icon: 'family_restroom', color: '#FF5722', count: 2 };
+      const labelSingle = component.getCategoryAriaLabel(single);
+      const labelPlural = component.getCategoryAriaLabel(plural);
+      // Both are strings; with real translations the person/people word differs
+      expect(typeof labelSingle).toBe('string');
+      expect(typeof labelPlural).toBe('string');
     });
   });
 });

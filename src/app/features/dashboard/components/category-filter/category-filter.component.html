@@ -6,9 +6,9 @@
           <div class="title-icon-wrapper">
             <mat-icon>category</mat-icon>
           </div>
-          Categories Overview
+          {{ 'CATEGORY_FILTER.TITLE' | translate }}
         </h3>
-        <p class="section-subtitle">Click any category to filter your birthdays</p>
+        <p class="section-subtitle">{{ 'CATEGORY_FILTER.SUBTITLE' | translate }}</p>
       </div>
       @if (selectedCategory) {
         <button
@@ -16,8 +16,8 @@
           color="primary"
           class="clear-all-btn"
           (click)="clearFilter()"
-          matTooltip="Clear all filters"
-          aria-label="Clear category filter"
+          [matTooltip]="'CATEGORY_FILTER.CLEAR_FILTERS' | translate"
+          [attr.aria-label]="'CATEGORY_FILTER.CLEAR_FILTER_ARIA' | translate"
           data-testid="clear-filter-button"
           >
           <mat-icon>clear_all</mat-icon>
@@ -32,7 +32,7 @@
           (click)="selectCategory(categoryStats.id)"
           role="button"
           tabindex="0"
-          [attr.aria-label]="'Filter by ' + categoryStats.name + ' category, ' + categoryStats.count + ' ' + (categoryStats.count === 1 ? 'person' : 'people')"
+          [attr.aria-label]="getCategoryAriaLabel(categoryStats)"
           [attr.aria-pressed]="selectedCategory === categoryStats.id"
           [attr.data-testid]="'category-filter-' + categoryStats.id"
           (keydown.enter)="selectCategory(categoryStats.id)"
@@ -49,10 +49,10 @@
               ></app-category-icon>
             </div>
             <div class="category-stat-info">
-              <div class="category-stat-name" [matTooltip]="categoryStats.name">{{ categoryStats.name }}</div>
+              <div class="category-stat-name" [matTooltip]="categoryStats.nameKey ? (categoryStats.nameKey | translate) : categoryStats.name">{{ categoryStats.nameKey ? (categoryStats.nameKey | translate) : categoryStats.name }}</div>
               <div class="category-stat-count">
                 {{ categoryStats.count }}
-                {{ categoryStats.count === 1 ? 'person' : 'people' }}
+                {{ categoryStats.count === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate) }}
               </div>
             </div>
             <div class="category-actions">
@@ -60,8 +60,8 @@
                 mat-icon-button
                 class="category-action-btn edit-btn"
                 (click)="editCategory($event, categoryStats.id)"
-                matTooltip="Edit category"
-                [attr.aria-label]="'Edit ' + categoryStats.name + ' category'"
+                [matTooltip]="'CATEGORY_FILTER.EDIT_TOOLTIP' | translate"
+                [attr.aria-label]="'CATEGORY_FILTER.EDIT_ARIA' | translate: {name: categoryStats.name}"
                 >
                 <mat-icon>edit</mat-icon>
               </button>
@@ -69,8 +69,8 @@
                 mat-icon-button
                 class="category-action-btn delete-btn"
                 (click)="deleteCategory($event, categoryStats.id)"
-                matTooltip="Delete category"
-                [attr.aria-label]="'Delete ' + categoryStats.name + ' category'"
+                [matTooltip]="'CATEGORY_FILTER.DELETE_TOOLTIP' | translate"
+                [attr.aria-label]="'CATEGORY_FILTER.DELETE_ARIA' | translate: {name: categoryStats.name}"
                 >
                 <mat-icon>delete</mat-icon>
               </button>
@@ -88,7 +88,7 @@
         (click)="addNewCategory()"
         role="button"
         tabindex="0"
-        aria-label="Add new category"
+        [attr.aria-label]="'CATEGORY_FILTER.ADD_ARIA' | translate"
         (keydown.enter)="addNewCategory()"
         (keydown.space)="addNewCategory()"
         >
@@ -98,8 +98,8 @@
             <mat-icon class="add-category-icon">add_circle</mat-icon>
           </div>
           <div class="category-stat-info">
-            <div class="category-stat-name">New Category</div>
-            <div class="category-stat-count">Click to add</div>
+            <div class="category-stat-name">{{ 'CATEGORY_FILTER.NEW_CATEGORY' | translate }}</div>
+            <div class="category-stat-count">{{ 'CATEGORY_FILTER.CLICK_TO_ADD' | translate }}</div>
           </div>
         </div>
       </div>

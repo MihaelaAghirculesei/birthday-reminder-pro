@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CategoryReassignDialogComponent, CategoryReassignDialogData } from './category-reassign-dialog.component';
+import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { BirthdayCategory } from '../../../../shared';
 
 describe('CategoryReassignDialogComponent', () => {
@@ -21,7 +22,8 @@ describe('CategoryReassignDialogComponent', () => {
       imports: [CategoryReassignDialogComponent, BrowserAnimationsModule],
       providers: [
         { provide: MatDialogRef, useValue: mockDialogRef },
-        { provide: MAT_DIALOG_DATA, useValue: data }
+        { provide: MAT_DIALOG_DATA, useValue: data },
+        provideTranslateTesting()
       ]
     });
 

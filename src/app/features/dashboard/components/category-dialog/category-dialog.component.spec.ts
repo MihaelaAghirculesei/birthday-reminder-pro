@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CategoryDialogComponent } from './category-dialog.component';
+import { provideTranslateTesting } from '../../../../../testing/translate-testing';
+import { LocaleService } from '../../../../core/services/locale.service';
 
 describe('CategoryDialogComponent', () => {
   let component: CategoryDialogComponent;
@@ -15,7 +17,8 @@ describe('CategoryDialogComponent', () => {
       providers: [
         FormBuilder,
         { provide: MatDialogRef, useValue: mockDialogRef },
-        { provide: MAT_DIALOG_DATA, useValue: data }
+        { provide: MAT_DIALOG_DATA, useValue: data },
+        provideTranslateTesting()
       ]
     });
 
@@ -55,6 +58,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(component.categoryForm.value).toEqual({
         name: '',
+        nameOtherLang: '',
         icon: 'star',
         color: '#2196F3'
       });
@@ -118,6 +122,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(component.categoryForm.value).toEqual({
         name: 'Family',
+        nameOtherLang: '',
         icon: 'favorite',
         color: '#F44336'
       });
@@ -138,6 +143,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(component.categoryForm.value).toEqual({
         name: 'Friends',
+        nameOtherLang: '',
         icon: 'star',
         color: '#2196F3'
       });
@@ -152,6 +158,7 @@ describe('CategoryDialogComponent', () => {
     it('should close dialog with form data when form is valid', () => {
       component.categoryForm.setValue({
         name: 'Work',
+        nameOtherLang: '',
         icon: 'work',
         color: '#4CAF50'
       });
@@ -160,6 +167,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(mockDialogRef.close).toHaveBeenCalledWith({
         name: 'Work',
+        nameOtherLang: '',
         icon: 'work',
         color: '#4CAF50'
       });
@@ -168,6 +176,7 @@ describe('CategoryDialogComponent', () => {
     it('should not close dialog when form is invalid', () => {
       component.categoryForm.setValue({
         name: '',
+        nameOtherLang: '',
         icon: 'work',
         color: '#4CAF50'
       });
@@ -180,6 +189,7 @@ describe('CategoryDialogComponent', () => {
     it('should not close dialog when name is too short', () => {
       component.categoryForm.setValue({
         name: 'A',
+        nameOtherLang: '',
         icon: 'work',
         color: '#4CAF50'
       });
@@ -286,6 +296,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(mockDialogRef.close).toHaveBeenCalledWith({
         name: 'Hobbies',
+        nameOtherLang: '',
         icon: 'brush',
         color: '#E91E63'
       });
@@ -314,6 +325,7 @@ describe('CategoryDialogComponent', () => {
 
       expect(mockDialogRef.close).toHaveBeenCalledWith({
         name: 'Travel & Adventure',
+        nameOtherLang: '',
         icon: 'flight',
         color: '#03A9F4'
       });
@@ -333,12 +345,73 @@ describe('CategoryDialogComponent', () => {
     });
   });
 
+  describe('Constructor - Italian locale', () => {
+    it('should set currentLang to "it", otherLang to "en" when locale is Italian', () => {
+      createComponent({ mode: 'add' });
+      const localeService = TestBed.inject(LocaleService);
+      localeService.setLanguage('it');
+
+      // Re-create component after setting Italian locale
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [CategoryDialogComponent, ReactiveFormsModule, BrowserAnimationsModule],
+        providers: [
+          FormBuilder,
+          { provide: MatDialogRef, useValue: mockDialogRef },
+          { provide: MAT_DIALOG_DATA, useValue: { mode: 'add' } },
+          provideTranslateTesting(),
+          { provide: LocaleService, useValue: { currentLang: 'it' } }
+        ]
+      });
+      const fixture2 = TestBed.createComponent(CategoryDialogComponent);
+      const component2 = fixture2.componentInstance;
+      fixture2.detectChanges();
+
+      expect(component2.currentLang).toBe('it');
+      expect(component2.otherLang).toBe('en');
+      expect(component2.currentLangLabel).toBe('Italiano');
+      expect(component2.otherLangLabel).toBe('English');
+    });
+
+    it('should load existing nameTranslations for otherLang in edit mode', () => {
+      const categoryData = {
+        mode: 'edit' as const,
+        category: {
+          id: '1',
+          name: 'Famiglia',
+          icon: 'family_restroom',
+          color: '#4CAF50',
+          nameTranslations: { en: 'Family', it: 'Famiglia' }
+        }
+      };
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        imports: [CategoryDialogComponent, ReactiveFormsModule, BrowserAnimationsModule],
+        providers: [
+          FormBuilder,
+          { provide: MatDialogRef, useValue: mockDialogRef },
+          { provide: MAT_DIALOG_DATA, useValue: categoryData },
+          provideTranslateTesting(),
+          { provide: LocaleService, useValue: { currentLang: 'it' } }
+        ]
+      });
+      const fixture2 = TestBed.createComponent(CategoryDialogComponent);
+      const component2 = fixture2.componentInstance;
+      fixture2.detectChanges();
+
+      // otherLang is 'en', nameTranslations['en'] = 'Family'
+      expect(component2.categoryForm.value.nameOtherLang).toBe('Family');
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle empty data object', () => {
       createComponent({ mode: 'add' });
 
       expect(component.categoryForm.value).toEqual({
         name: '',
+        nameOtherLang: '',
         icon: 'star',
         color: '#2196F3'
       });

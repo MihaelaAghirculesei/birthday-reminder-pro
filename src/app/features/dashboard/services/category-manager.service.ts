@@ -3,8 +3,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { take } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
 import { CategoryFacadeService, NotificationService } from '../../../core';
+import { LocaleService } from '../../../core/services/locale.service';
 import { CategoryDialogComponent } from '../components/category-dialog/category-dialog.component';
 import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
 import { AppState } from '../../../core/store/app.state';
@@ -19,6 +21,8 @@ export class CategoryManagerService {
   private readonly dialog = inject(MatDialog);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly notificationService = inject(NotificationService);
+  private readonly localeService = inject(LocaleService);
+  private readonly translate = inject(TranslateService);
 
   private readonly birthdays = toSignal(
     this.store.select(BirthdaySelectors.selectAllBirthdays),
@@ -36,9 +40,17 @@ export class CategoryManagerService {
       .pipe(take(1))
       .subscribe(result => {
         if (result) {
+          const currentLang = this.localeService.currentLang;
+          const otherLang = currentLang === 'it' ? 'en' : 'it';
+          const nameTranslations: Record<string, string> = { [currentLang]: result.name };
+          if (result.nameOtherLang?.trim()) {
+            nameTranslations[otherLang] = result.nameOtherLang.trim();
+          }
+
           const newCategory: BirthdayCategory = {
             id: this.generateCategoryId(result.name),
             name: result.name,
+            nameTranslations,
             icon: result.icon,
             color: result.color
           };
@@ -72,9 +84,20 @@ export class CategoryManagerService {
       .pipe(take(1))
       .subscribe(result => {
         if (result) {
+          const currentLang = this.localeService.currentLang;
+          const otherLang = currentLang === 'it' ? 'en' : 'it';
+          const nameTranslations: Record<string, string> = {
+            ...(category.nameTranslations || {}),
+            [currentLang]: result.name
+          };
+          if (result.nameOtherLang?.trim()) {
+            nameTranslations[otherLang] = result.nameOtherLang.trim();
+          }
+
           const updatedCategory: BirthdayCategory = {
             ...category,
             name: result.name,
+            nameTranslations,
             icon: result.icon,
             color: result.color
           };
@@ -98,9 +121,9 @@ export class CategoryManagerService {
       const dialogRef = this.dialog.open(ConfirmDialogComponent, {
         width: 'min(450px, 90vw)',
         data: {
-          title: 'Delete Category?',
-          message: `Are you sure you want to delete the category "${category.name}"?`,
-          confirmText: 'Delete',
+          title: this.translate.instant('CONFIRM.DELETE_CATEGORY_TITLE'),
+          message: this.translate.instant('CONFIRM.DELETE_CATEGORY_MESSAGE', { name: category.name }),
+          confirmText: this.translate.instant('CONFIRM.DELETE_BTN'),
           icon: 'delete',
           color: 'warn'
         }
@@ -121,7 +144,7 @@ export class CategoryManagerService {
     const uncategorizedBirthdays = birthdays.filter(b => b.category && !validCategoryIds.has(b.category));
 
     if (uncategorizedBirthdays.length === 0) {
-      this.notificationService.show('There are no uncategorized birthdays to reassign.', 'info');
+      this.notificationService.show(this.translate.instant('NOTIFICATIONS.NO_UNCATEGORIZED'), 'info');
       return;
     }
 

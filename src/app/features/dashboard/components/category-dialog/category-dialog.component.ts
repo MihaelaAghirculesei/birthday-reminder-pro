@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -7,6 +7,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LocaleService } from '../../../../core/services/locale.service';
 
 interface CategoryDialogData {
   mode: 'add' | 'edit';
@@ -15,18 +17,26 @@ interface CategoryDialogData {
     name: string;
     icon: string;
     color: string;
+    nameTranslations?: Record<string, string>;
   };
 }
 
 @Component({
     selector: 'app-category-dialog',
-    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatTooltipModule],
+    imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatIconModule, MatButtonModule, MatTooltipModule, TranslatePipe],
     templateUrl: './category-dialog.component.html',
     styleUrls: ['./category-dialog.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryDialogComponent {
+  private readonly localeService = inject(LocaleService);
+
   categoryForm: FormGroup;
+
+  readonly currentLang: string;
+  readonly currentLangLabel: string;
+  readonly otherLang: string;
+  readonly otherLangLabel: string;
 
   availableIcons = [
     'favorite', 'star', 'pets', 'sports_soccer', 'school', 'work',
@@ -59,8 +69,16 @@ export class CategoryDialogComponent {
     private dialogRef: MatDialogRef<CategoryDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: CategoryDialogData
   ) {
+    this.currentLang = this.localeService.currentLang;
+    this.otherLang = this.currentLang === 'it' ? 'en' : 'it';
+    this.currentLangLabel = this.currentLang === 'it' ? 'Italiano' : 'English';
+    this.otherLangLabel = this.otherLang === 'en' ? 'English' : 'Italiano';
+
+    const existingOtherName = data?.category?.nameTranslations?.[this.otherLang] || '';
+
     this.categoryForm = this.fb.group({
       name: [data?.category?.name || '', [Validators.required, Validators.minLength(2), Validators.maxLength(30)]],
+      nameOtherLang: [existingOtherName, [Validators.maxLength(30)]],
       icon: [data?.category?.icon || 'star', Validators.required],
       color: [data?.category?.color || '#2196F3', Validators.required]
     });

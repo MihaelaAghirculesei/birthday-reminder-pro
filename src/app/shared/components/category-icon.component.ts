@@ -1,17 +1,27 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { getCategoryIcon, getCategoryColor, getCategoryById } from '../constants/categories';
 
+const CATEGORY_KEY_MAP: Record<string, string> = {
+  family: 'CATEGORIES.FAMILY',
+  friends: 'CATEGORIES.FRIENDS',
+  colleagues: 'CATEGORIES.COLLEAGUES',
+  romantic: 'CATEGORIES.ROMANTIC',
+  acquaintances: 'CATEGORIES.ACQUAINTANCES',
+  other: 'CATEGORIES.OTHER',
+  gaming: 'CATEGORIES.GAMING'
+};
+
 @Component({
     selector: 'app-category-icon',
-    imports: [MatIconModule, MatTooltipModule],
+    imports: [MatIconModule, MatTooltipModule, TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="category-icon-wrapper"
          [style.background-color]="iconColor"
-         [matTooltip]="categoryName"
+         [matTooltip]="categoryTooltipKey | translate"
          [class]="cssClass">
       <mat-icon class="category-icon">
         {{ iconName }}
@@ -67,7 +77,7 @@ import { getCategoryIcon, getCategoryColor, getCategoryById } from '../constants
     }
   `]
 })
-export class CategoryIconComponent implements OnInit, OnChanges {
+export class CategoryIconComponent implements OnChanges {
   @Input() categoryId = 'friends';
   @Input() icon?: string;
   @Input() color?: string;
@@ -75,11 +85,7 @@ export class CategoryIconComponent implements OnInit, OnChanges {
 
   iconName = '';
   iconColor = '';
-  categoryName = '';
-
-  ngOnInit(): void {
-    this.updateCategoryData();
-  }
+  categoryTooltipKey = 'CATEGORIES.FRIENDS';
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['categoryId'] || changes['icon'] || changes['color']) {
@@ -90,6 +96,7 @@ export class CategoryIconComponent implements OnInit, OnChanges {
   private updateCategoryData(): void {
     this.iconName = this.icon || getCategoryIcon(this.categoryId);
     this.iconColor = this.color || getCategoryColor(this.categoryId);
-    this.categoryName = getCategoryById(this.categoryId)?.name || 'Unknown';
+    this.categoryTooltipKey = CATEGORY_KEY_MAP[this.categoryId]
+      ?? (getCategoryById(this.categoryId)?.name || 'Unknown');
   }
 }
