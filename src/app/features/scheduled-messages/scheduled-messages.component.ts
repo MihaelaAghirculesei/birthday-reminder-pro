@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, computed, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { take } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +11,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { Birthday, ScheduledMessage, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../../shared';
 import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
+import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
 import { SenderSettingsService } from '../../core';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 import { AppState } from '../../core/store/app.state';
@@ -26,10 +29,10 @@ interface BirthdayMessageView {
   messages: EnrichedMessage[];
 }
 
-const PRIORITY_LABELS: Record<string, string> = {
-  low: 'Low',
-  normal: 'Normal',
-  high: 'High'
+const PRIORITY_KEYS: Record<string, string> = {
+  low: 'MESSAGE_SCHEDULER.PRIORITY_LOW',
+  normal: 'MESSAGE_SCHEDULER.PRIORITY_NORMAL',
+  high: 'MESSAGE_SCHEDULER.PRIORITY_HIGH'
 };
 
 @Component({
@@ -40,6 +43,9 @@ const PRIORITY_LABELS: Record<string, string> = {
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,
+        LocalDatePipe,
+        TranslatePipe,
+        LocaleDatePipe,
     ],
     templateUrl: './scheduled-messages.component.html',
     styleUrls: ['./scheduled-messages.component.scss'],
@@ -49,6 +55,7 @@ export class ScheduledMessagesComponent {
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
   private readonly senderSettings = inject(SenderSettingsService);
+  private readonly translate = inject(TranslateService);
 
   private readonly birthdays = toSignal(
     this.store.select(BirthdaySelectors.selectAllBirthdays),
@@ -66,7 +73,7 @@ export class ScheduledMessagesComponent {
         messages: (b.scheduledMessages || []).map(msg => ({
           ...msg,
           wishLinks: getAvailableWishLinks(b, msg.message, senderName, senderFullName),
-          priorityLabel: PRIORITY_LABELS[msg.priority] || msg.priority
+          priorityLabel: this.translate.instant(PRIORITY_KEYS[msg.priority] || msg.priority)
         }))
       }));
   });
@@ -88,9 +95,9 @@ export class ScheduledMessagesComponent {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: 'min(450px, 90vw)',
       data: {
-        title: 'Delete Message?',
-        message: 'Are you sure you want to delete this scheduled message?',
-        confirmText: 'Delete',
+        title: this.translate.instant('SCHEDULED_MESSAGES.DELETE_TITLE'),
+        message: this.translate.instant('SCHEDULED_MESSAGES.DELETE_CONFIRM'),
+        confirmText: this.translate.instant('CONFIRM.DELETE_BTN'),
         icon: 'delete',
         color: 'warn'
       }

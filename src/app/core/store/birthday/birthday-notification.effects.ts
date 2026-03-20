@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import * as BirthdayActions from './birthday.actions';
 import { NotificationService } from '../../services/notification.service';
 
@@ -9,13 +10,17 @@ export class BirthdayNotificationEffects {
 
   private readonly actions$ = inject(Actions);
   private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   addBirthdaySuccess$ = createEffect(
     () =>
       this.actions$.pipe(
         ofType(BirthdayActions.addBirthdaySuccess),
         tap(({ birthday }) => {
-          this.notificationService.show(`${birthday.name} added successfully!`, 'success');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.BIRTHDAY_ADDED', { name: birthday.name }),
+            'success'
+          );
         })
       ),
     { dispatch: false }
@@ -26,7 +31,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.updateBirthdaySuccess),
         tap(({ birthday }) => {
-          this.notificationService.show(`${birthday.name} updated successfully!`, 'success');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.BIRTHDAY_UPDATED', { name: birthday.name }),
+            'success'
+          );
         })
       ),
     { dispatch: false }
@@ -37,7 +45,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.deleteBirthdaySuccess),
         tap(() => {
-          this.notificationService.show('Birthday deleted successfully!', 'success');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.BIRTHDAY_DELETED'),
+            'success'
+          );
         })
       ),
     { dispatch: false }
@@ -48,7 +59,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.addMessageToBirthdayFailure),
         tap(({ error }) => {
-          this.notificationService.show(`Failed to add message: ${error}`, 'error');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_ADD_MESSAGE', { error }),
+            'error'
+          );
         })
       ),
     { dispatch: false }
@@ -59,7 +73,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.updateMessageInBirthdayFailure),
         tap(({ error }) => {
-          this.notificationService.show(`Failed to update message: ${error}`, 'error');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_UPDATE_MESSAGE', { error }),
+            'error'
+          );
         })
       ),
     { dispatch: false }
@@ -70,7 +87,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.deleteMessageFromBirthdayFailure),
         tap(({ error }) => {
-          this.notificationService.show(`Failed to delete message: ${error}`, 'error');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_DELETE_MESSAGE', { error }),
+            'error'
+          );
         })
       ),
     { dispatch: false }
@@ -81,7 +101,10 @@ export class BirthdayNotificationEffects {
       this.actions$.pipe(
         ofType(BirthdayActions.loadTestDataSuccess),
         tap(({ birthdays }) => {
-          this.notificationService.show(`${birthdays.length} test birthdays loaded successfully!`, 'success');
+          this.notificationService.show(
+            this.translate.instant('IMPORT_EXPORT.IMPORTED', { count: birthdays.length }),
+            'success'
+          );
         })
       ),
     { dispatch: false }

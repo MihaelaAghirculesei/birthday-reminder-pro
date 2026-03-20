@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LocaleService } from '../../../core/services/locale.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { take } from 'rxjs';
+import { BehaviorSubject, of, switchMap, take } from 'rxjs';
 
 import {
   ReactiveFormsModule,
@@ -21,7 +23,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Store } from '@ngrx/store';
 import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../..';
-import { ScheduledMessageService, MessageTemplate } from '../../../features/scheduled-messages/scheduled-message.service';
+import { ScheduledMessageService, MessageTemplate } from '../../services/scheduled-message.service';
 import { NotificationService, SenderSettingsService } from '../../../core';
 import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
@@ -47,7 +49,8 @@ interface EnrichedMessage extends ScheduledMessage {
         MatSlideToggleModule,
         MatIconModule,
         MatButtonModule,
-        MatTooltipModule
+        MatTooltipModule,
+        TranslatePipe,
     ],
     templateUrl: './message-scheduler.component.html',
     styleUrls: ['./message-scheduler.component.scss'],
@@ -79,6 +82,10 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly scheduledMessageService = inject(ScheduledMessageService);
   private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
+  private readonly localeService = inject(LocaleService);
+
+  private readonly birthdayId$ = new BehaviorSubject<string | null>(null);
 
   constructor() {
     this.messageForm = this.fb.group({
@@ -93,17 +100,25 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.loadMessages();
+    this.birthdayId$.pipe(
+      switchMap(id => id
+        ? this.store.select(BirthdaySelectors.selectMessagesByBirthday(id))
+        : of([] as ScheduledMessage[])
+      ),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(messages => {
+      this.messages = messages ?? [];
+      this.enrichMessages();
+    });
 
     this.messageForm.get('message')?.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.updateMessagePreview();
-      });
+      .subscribe(() => this.updateMessagePreview());
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthday']) {
+      this.birthdayId$.next(this.birthday?.id ?? null);
       this.updateMessagePreview();
       this.enrichMessages();
     }
@@ -114,17 +129,6 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     this.messagePreview = this.birthday
       ? this.processMessage(message, this.birthday)
       : message;
-  }
-
-  loadMessages(): void {
-    if (this.birthday) {
-      this.store.select(BirthdaySelectors.selectMessagesByBirthday(this.birthday.id))
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(messages => {
-          this.messages = messages || [];
-          this.enrichMessages();
-        });
-    }
   }
 
   startCreatingMessage(): void {
@@ -153,7 +157,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
           messageId: this.editingMessage.id,
           updates: this.messageForm.value
         }));
-        this.notificationService.show('Message updated!', 'success');
+        this.notificationService.show(this.translate.instant('MESSAGE_SCHEDULER.MESSAGE_UPDATED'), 'success');
       } else {
         const newMessage = this.scheduledMessageService.createMessage({
           ...this.messageForm.value,
@@ -164,10 +168,9 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
           birthdayId: this.birthday.id,
           message: newMessage
         }));
-        this.notificationService.show('Scheduled message created!', 'success');
+        this.notificationService.show(this.translate.instant('MESSAGE_SCHEDULER.MESSAGE_CREATED'), 'success');
       }
 
-      this.loadMessages();
       this.cancelEdit();
       this.unsavedChanges.emit(false);
     }
@@ -194,7 +197,6 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
         messageId: message.id,
         updates: { active: !message.active }
       }));
-      this.loadMessages();
     }
   }
 
@@ -215,9 +217,9 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: 'min(450px, 90vw)',
       data: {
-        title: 'Delete Message?',
-        message: `Are you sure you want to delete "${message.title}"?`,
-        confirmText: 'Delete',
+        title: this.translate.instant('MESSAGE_SCHEDULER.DELETE_TITLE'),
+        message: this.translate.instant('MESSAGE_SCHEDULER.DELETE_CONFIRM', { title: message.title }),
+        confirmText: this.translate.instant('CONFIRM.DELETE_BTN'),
         icon: 'delete',
         color: 'warn'
       }
@@ -229,8 +231,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
           birthdayId,
           messageId: message.id
         }));
-        this.loadMessages();
-        this.notificationService.show('Message deleted', 'success');
+        this.notificationService.show(this.translate.instant('MESSAGE_SCHEDULER.MESSAGE_DELETED'), 'success');
       }
     });
   }
@@ -261,7 +262,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
   }
 
   private formatDate(date: Date): string {
-    return new Intl.DateTimeFormat('it-IT', {
+    return new Intl.DateTimeFormat(this.localeService.currentLocale(), {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

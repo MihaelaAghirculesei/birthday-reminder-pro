@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MessageIndicatorComponent } from './message-indicator.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { Birthday, ScheduledMessage } from '../../models';
 
 describe('MessageIndicatorComponent', () => {
@@ -33,7 +34,8 @@ describe('MessageIndicatorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MessageIndicatorComponent, NoopAnimationsModule]
+      imports: [MessageIndicatorComponent, NoopAnimationsModule],
+      providers: [provideTranslateTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MessageIndicatorComponent);
@@ -101,66 +103,70 @@ describe('MessageIndicatorComponent', () => {
     });
   });
 
-  describe('tooltipText', () => {
-    it('should show "No information available" when birthday is null', () => {
+  describe('tooltipKey and tooltipParams', () => {
+    it('should return NO_INFO key when birthday is null', () => {
       setBirthday(null);
-      expect(component.tooltipText()).toBe('No information available');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.NO_INFO');
     });
 
-    it('should show "No messages configured" when no messages exist', () => {
+    it('should return NO_MESSAGES key when no messages exist', () => {
       setBirthday(createMockBirthday([]));
-      expect(component.tooltipText()).toContain('No messages configured');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.NO_MESSAGES');
     });
 
-    it('should show "configured but disabled" when all messages are inactive', () => {
+    it('should return DISABLED_MANY key with count when all messages are inactive', () => {
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Msg1', '09:00', false),
         createMockMessage('2', 'Msg2', '12:00', false)
       ]));
-      expect(component.tooltipText()).toContain('2 messages configured but disabled');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.DISABLED_MANY');
+      expect(component.tooltipParams()).toEqual({ count: 2 });
     });
 
-    it('should show singular "message" when one inactive message exists', () => {
+    it('should return DISABLED_ONE key when one inactive message exists', () => {
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Msg1', '09:00', false)
       ]));
-      expect(component.tooltipText()).toContain('1 message configured but disabled');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.DISABLED_ONE');
+      expect(component.tooltipParams()).toEqual({ count: 1 });
     });
 
-    it('should show detailed info for single active message', () => {
+    it('should return ONE_ACTIVE key with title and time for single active message', () => {
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Birthday Reminder', '09:00', true)
       ]));
-      expect(component.tooltipText()).toContain('Message configured: "Birthday Reminder"');
-      expect(component.tooltipText()).toContain('sending at 09:00');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.ONE_ACTIVE');
+      expect(component.tooltipParams()).toEqual({ title: 'Birthday Reminder', time: '09:00' });
     });
 
-    it('should show count when all messages are active', () => {
+    it('should return ALL_ACTIVE key with count when all messages are active', () => {
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Msg1', '09:00', true),
         createMockMessage('2', 'Msg2', '12:00', true),
         createMockMessage('3', 'Msg3', '18:00', true)
       ]));
-      expect(component.tooltipText()).toBe('✅ 3 messages configured and active for birthday');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.ALL_ACTIVE');
+      expect(component.tooltipParams()).toEqual({ count: 3 });
     });
 
-    it('should show partial count when some messages are active', () => {
+    it('should return SOME_ACTIVE key with active and total counts', () => {
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Msg1', '09:00', true),
         createMockMessage('2', 'Msg2', '12:00', false),
         createMockMessage('3', 'Msg3', '18:00', true)
       ]));
-      expect(component.tooltipText()).toBe('✅ 2 of 3 configured messages are active');
+      expect(component.tooltipKey()).toBe('MESSAGE_INDICATOR.SOME_ACTIVE');
+      expect(component.tooltipParams()).toEqual({ active: 2, total: 3 });
     });
 
     it('should update when birthday changes', () => {
       setBirthday(createMockBirthday([]));
-      const initialTooltip = component.tooltipText();
+      const initialKey = component.tooltipKey();
 
       setBirthday(createMockBirthday([
         createMockMessage('1', 'Test', '09:00', true)
       ]));
-      expect(component.tooltipText()).not.toBe(initialTooltip);
+      expect(component.tooltipKey()).not.toBe(initialKey);
     });
   });
 });

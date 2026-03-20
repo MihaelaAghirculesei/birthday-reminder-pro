@@ -8,7 +8,7 @@ describe('Notifications', () => {
   });
 
   it('should display notification permission banner if supported', () => {
-    cy.contains('Show Demo').click();
+    cy.get('[data-testid="show-demo-button"]').click();
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
 
     cy.get('body').then(($body) => {
@@ -21,7 +21,7 @@ describe('Notifications', () => {
   });
 
   it('should dismiss notification banner if displayed', () => {
-    cy.contains('Show Demo').click();
+    cy.get('[data-testid="show-demo-button"]').click();
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
 
     cy.get('body').then(($body) => {
@@ -36,14 +36,15 @@ describe('Notifications', () => {
   });
 
   it('should show success notification after loading demo data', () => {
-    cy.contains('Show Demo').click();
+    cy.get('[data-testid="show-demo-button"]').click();
     cy.get('.notification-success', { timeout: 15000 })
       .should('exist')
-      .and('contain.text', 'test birthdays loaded successfully!');
+      .and('contain.text', 'Imported');
   });
 
   it('should close notification manually', () => {
-    cy.contains('Show Demo').click();
+    cy.get('[data-testid="show-demo-button"]').click();
+    // Capture the close button before the 3s auto-dismiss fires
     cy.get('[data-testid="close-notification"]', { timeout: 10000 }).first().click({ force: true });
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(500); // Wait for exit animation to complete

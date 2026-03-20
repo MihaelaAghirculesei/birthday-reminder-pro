@@ -1,11 +1,12 @@
 import { Component, Input, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday } from '../../models';
 
 @Component({
     selector: 'app-message-indicator',
-    imports: [CommonModule, MatTooltipModule],
+    imports: [CommonModule, MatTooltipModule, TranslatePipe],
     templateUrl: './message-indicator.component.html',
     styleUrls: ['./message-indicator.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -25,22 +26,26 @@ export class MessageIndicatorComponent {
     return this._birthday()?.scheduledMessages?.filter(msg => msg.active).length ?? 0;
   });
 
-  tooltipText = computed(() => {
+  private readonly _tooltipData = computed(() => {
     const birthday = this._birthday();
     const messages = birthday?.scheduledMessages;
     if (!messages?.length) {
-      return birthday ? '❌ No messages configured for this birthday' : 'No information available';
+      return { key: birthday ? 'MESSAGE_INDICATOR.NO_MESSAGES' : 'MESSAGE_INDICATOR.NO_INFO', params: {} };
     }
     const active = messages.filter(msg => msg.active);
     if (active.length === 0) {
-      return `⏸️ ${messages.length} message${messages.length > 1 ? 's' : ''} configured but disabled`;
+      const key = messages.length === 1 ? 'MESSAGE_INDICATOR.DISABLED_ONE' : 'MESSAGE_INDICATOR.DISABLED_MANY';
+      return { key, params: { count: messages.length } };
     }
     if (active.length === 1 && messages.length === 1) {
-      return `✅ Message configured: "${active[0].title}" - sending at ${active[0].scheduledTime}`;
+      return { key: 'MESSAGE_INDICATOR.ONE_ACTIVE', params: { title: active[0].title, time: active[0].scheduledTime } };
     }
     if (active.length === messages.length) {
-      return `✅ ${active.length} messages configured and active for birthday`;
+      return { key: 'MESSAGE_INDICATOR.ALL_ACTIVE', params: { count: active.length } };
     }
-    return `✅ ${active.length} of ${messages.length} configured messages are active`;
+    return { key: 'MESSAGE_INDICATOR.SOME_ACTIVE', params: { active: active.length, total: messages.length } };
   });
+
+  tooltipKey = computed(() => this._tooltipData().key);
+  tooltipParams = computed(() => this._tooltipData().params);
 }

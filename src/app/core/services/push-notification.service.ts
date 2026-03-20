@@ -81,6 +81,14 @@ export class PushNotificationService {
   private async initializeBrowserNotifications(): Promise<void> {
     if (!this.isBrowser) return;
 
+    // Subscribe synchronously BEFORE any await so the cache is always populated
+    // before test helpers or application code can call getPendingNotifications().
+    // Moving this after an await creates a race condition where setCache() calls
+    // in tests (or real data arriving early) get overwritten by the subscription.
+    this.store.select(selectAllBirthdays)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(birthdays => { this.birthdaysCache = birthdays; });
+
     if ('Notification' in window &&
         typeof Notification.requestPermission === 'function' &&
         Notification.permission === 'default') {
@@ -88,11 +96,6 @@ export class PushNotificationService {
     }
 
     if (this.destroyed) return;
-
-    // Keep cache in sync with the store — zero IndexedDB reads during polling.
-    this.store.select(selectAllBirthdays)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(birthdays => { this.birthdaysCache = birthdays; });
 
     // Schedule per-birthday timeouts once the store has its first batch of data.
     this.store.select(selectAllBirthdays)
@@ -427,13 +430,15 @@ export class PushNotificationService {
 
   private generateNotificationId(birthdayId: string, messageId: string): number {
     const combined = `${birthdayId}-${messageId}`;
-    let hash = 0;
+    // FNV-1a 32-bit: uses Math.imul for guaranteed 32-bit integer multiplication
+    // and >>> 0 to keep the result as an unsigned 32-bit integer.
+    // This avoids float64 intermediate values that can cause inconsistencies.
+    let hash = 2166136261; // FNV offset basis
     for (let i = 0; i < combined.length; i++) {
-      const char = combined.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+      hash ^= combined.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0; // FNV prime
     }
-    return Math.abs(hash);
+    return hash;
   }
 
   private formatMessage(template: string, birthday: Birthday): string {

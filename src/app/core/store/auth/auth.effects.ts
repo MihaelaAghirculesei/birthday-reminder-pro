@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { map, exhaustMap, catchError, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
 import * as AuthActions from './auth.actions';
@@ -11,6 +12,7 @@ export class AuthEffects {
   private readonly actions$ = inject(Actions);
   private readonly authService = inject(FirebaseAuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   signInWithGoogle$ = createEffect(
     () =>
@@ -30,7 +32,7 @@ export class AuthEffects {
         ofType(AuthActions.signInSuccess),
         tap(({ user }) => {
           this.notificationService.show(
-            `Welcome, ${user.displayName || user.email}!`,
+            this.translate.instant('NOTIFICATIONS.WELCOME', { name: user.displayName || user.email }),
             'success'
           );
         })
@@ -70,7 +72,7 @@ export class AuthEffects {
       this.actions$.pipe(
         ofType(AuthActions.signOutSuccess),
         tap(() => {
-          this.notificationService.show('Signed out successfully', 'success');
+          this.notificationService.show(this.translate.instant('NOTIFICATIONS.SIGNED_OUT'), 'success');
         })
       ),
     { dispatch: false }
@@ -81,7 +83,10 @@ export class AuthEffects {
       this.actions$.pipe(
         ofType(AuthActions.signOutFailure),
         tap(({ error }) => {
-          this.notificationService.show(`Sign out failed: ${error}`, 'error');
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.SIGN_OUT_FAILED', { error }),
+            'error'
+          );
         })
       ),
     { dispatch: false }

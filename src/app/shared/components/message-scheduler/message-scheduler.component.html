@@ -4,8 +4,8 @@
       @if (!hasAnyContact) {
         <div class="empty-state no-contact-alert">
           <mat-icon>contact_mail</mat-icon>
-          <h3>No Contact Information</h3>
-          <p>You need to add at least one contact method (email, phone, or Telegram) to {{ birthday?.name }} before you can schedule messages. Edit the birthday to add contact info.</p>
+          <h3>{{ 'MESSAGE_SCHEDULER.NO_CONTACT_TITLE' | translate }}</h3>
+          <p>{{ 'MESSAGE_SCHEDULER.NO_CONTACT_MESSAGE' | translate: {name: birthday?.name} }}</p>
         </div>
       } @else {
       <mat-expansion-panel
@@ -15,7 +15,7 @@
         <mat-expansion-panel-header>
           <mat-panel-title>
             <mat-icon>add</mat-icon>
-            Create New Message
+            {{ 'MESSAGE_SCHEDULER.CREATE_NEW_MESSAGE' | translate }}
           </mat-panel-title>
         </mat-expansion-panel-header>
 
@@ -25,7 +25,7 @@
           class="message-form"
           >
           <div class="templates-section">
-            <h4>Predefined Templates</h4>
+            <h4>{{ 'MESSAGE_SCHEDULER.PREDEFINED_TEMPLATES' | translate }}</h4>
             <div class="template-chips">
               @for (template of templates; track template.title) {
                 <mat-chip-option
@@ -40,21 +40,21 @@
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="title-field">
-              <mat-label>Message Title</mat-label>
+              <mat-label>{{ 'MESSAGE_SCHEDULER.TITLE_LABEL' | translate }}</mat-label>
               <input
                 matInput
                 formControlName="title"
-                placeholder="e.g. Happy Birthday!"
+                [placeholder]="'MESSAGE_SCHEDULER.TITLE_PLACEHOLDER' | translate"
                 maxlength="100"
                 />
               <mat-icon matSuffix>title</mat-icon>
               @if (messageForm.get('title')?.hasError('minlength')) {
-                <mat-error>Title must be at least 2 characters</mat-error>
+                <mat-error>{{ 'MESSAGE_SCHEDULER.TITLE_ERROR_MIN' | translate }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="time-field">
-              <mat-label>Sending Time</mat-label>
+              <mat-label>{{ 'MESSAGE_SCHEDULER.SENDING_TIME_LABEL' | translate }}</mat-label>
               <input
                 matInput
                 type="time"
@@ -67,200 +67,181 @@
 
           <div class="form-row">
             <mat-form-field appearance="outline" class="priority-field">
-              <mat-label>Priority</mat-label>
+              <mat-label>{{ 'MESSAGE_SCHEDULER.PRIORITY_LABEL' | translate }}</mat-label>
               <mat-select formControlName="priority">
                 <mat-option value="low">
-                  <mat-icon>keyboard_arrow_down</mat-icon> Low
+                  <mat-icon>keyboard_arrow_down</mat-icon> {{ 'MESSAGE_SCHEDULER.PRIORITY_LOW' | translate }}
                 </mat-option>
                 <mat-option value="normal">
-                  <mat-icon>remove</mat-icon> Normal
+                  <mat-icon>remove</mat-icon> {{ 'MESSAGE_SCHEDULER.PRIORITY_NORMAL' | translate }}
                 </mat-option>
                 <mat-option value="high">
-                  <mat-icon>keyboard_arrow_up</mat-icon> High
+                  <mat-icon>keyboard_arrow_up</mat-icon> {{ 'MESSAGE_SCHEDULER.PRIORITY_HIGH' | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
 
             <div class="toggle-field">
               <mat-slide-toggle formControlName="active">
-                Active Message
+                {{ 'MESSAGE_SCHEDULER.ACTIVE_MESSAGE' | translate }}
               </mat-slide-toggle>
             </div>
           </div>
 
           <mat-form-field appearance="outline" class="message-field">
-            <mat-label>Message</mat-label>
+            <mat-label>{{ 'MESSAGE_SCHEDULER.MESSAGE_LABEL' | translate }}</mat-label>
             <textarea
               matInput
               formControlName="message"
               rows="4"
               maxlength="1000"
-              placeholder="Write your personalized message..."
+              [placeholder]="'MESSAGE_SCHEDULER.MESSAGE_PLACEHOLDER' | translate"
             ></textarea>
-            <mat-hint>
-              Variables: {{ "{" }}name{{ "}" }}, {{ "{" }}age{{ "}" }}, {{ "{" }}zodiac{{ "}" }}, {{ "{" }}sender{{ "}" }}, {{ "{" }}senderFull{{ "}" }}
-            </mat-hint>
+            <mat-hint>{{ 'MESSAGE_SCHEDULER.MESSAGE_HINT' | translate }}</mat-hint>
             @if (messageForm.get('message')?.hasError('minlength')) {
-              <mat-error>Message must be at least 5 characters</mat-error>
+              <mat-error>{{ 'MESSAGE_SCHEDULER.MESSAGE_ERROR_MIN' | translate }}</mat-error>
             }
           </mat-form-field>
 
           @if (messageForm.get('message')?.value) {
-            <div
-              class="message-preview"
-              >
-              <h4>Preview:</h4>
+            <div class="message-preview">
+              <h4>{{ 'MESSAGE_SCHEDULER.PREVIEW_TITLE' | translate }}</h4>
               <div class="preview-content">
                 <strong>{{ messageForm.get("title")?.value }}</strong>
                 <p>{{ messagePreview }}</p>
-                <small
-                  >Will be sent at
-                  {{ messageForm.get("scheduledTime")?.value }}</small
-                  >
-                </div>
+                <small>{{ 'MESSAGE_SCHEDULER.WILL_BE_SENT_AT' | translate }} {{ messageForm.get("scheduledTime")?.value }}</small>
               </div>
-            }
-
-            <div class="form-actions">
-              <button type="button" mat-stroked-button (click)="cancelEdit()" aria-label="Cancel message editing">
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                mat-raised-button
-                color="primary"
-                [disabled]="messageForm.invalid"
-                [attr.aria-label]="(editingMessage ? 'Update' : 'Save') + ' scheduled message'"
-                >
-                <mat-icon>save</mat-icon>
-                {{ editingMessage ? "Update" : "Save" }} Message
-              </button>
             </div>
-          </form>
-        </mat-expansion-panel>
+          }
 
-        @if (enrichedMessages().length > 0) {
-          <div class="messages-list">
-            <h3>Scheduled Messages ({{ enrichedMessages().length }})</h3>
-            @for (message of enrichedMessages(); track message.id) {
-              <div
-                class="message-item"
-                [class.inactive]="!message.active"
-                >
-                <div class="message-header">
-                  <div class="message-title-row">
-                    <h4>{{ message.title }}</h4>
-                    <div class="message-badges">
-                      <span
-                        class="priority-badge"
-                        [class]="'priority-' + message.priority"
-                        >
-                        {{ message.priority }}
-                      </span>
-                      <span class="time-badge">{{ message.scheduledTime }}</span>
-                      <mat-icon
-                        class="status-icon"
-                        [class.active]="message.active"
-                  [matTooltip]="
-                    message.active
-                      ? 'Active message'
-                      : 'Disabled message'
-                  "
-                        >
-                        {{
-                        message.active
-                        ? "notifications_active"
-                        : "notifications_off"
-                        }}
-                      </mat-icon>
-                    </div>
-                  </div>
-                  <div class="message-meta">
-                    <small>Created: {{ message.formattedCreatedDate }}</small>
-                    @if (message.formattedLastSentDate) {
-                      <small>
-                        Last sent: {{ message.formattedLastSentDate }}
-                      </small>
-                    }
-                  </div>
-                </div>
-                <div class="message-content">
-                  <p>{{ message.processedMessage }}</p>
-                </div>
-                <div class="message-actions">
-                  <button
-                    mat-icon-button
-                    (click)="editMessage(message)"
-                    title="Edit"
-                    [attr.aria-label]="'Edit message: ' + message.title"
-                    >
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    (click)="toggleMessageStatus(message)"
-                    [title]="message.active ? 'Disable' : 'Enable'"
-                    [attr.aria-label]="(message.active ? 'Disable' : 'Enable') + ' message: ' + message.title"
-                    >
-                    <mat-icon>{{
-                      message.active ? "pause" : "play_arrow"
-                    }}</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
-                    (click)="testMessage(message)"
-                    title="Send test"
-                    color="accent"
-                    [attr.aria-label]="'Send test message: ' + message.title"
-                    >
-                    <mat-icon>send</mat-icon>
-                  </button>
-                  @for (link of message.wishLinks; track link.channel) {
-                    <a
-                      mat-icon-button
-                      [href]="link.url"
-                      target="_blank"
-                      rel="noopener"
-                      [title]="'Send via ' + link.label"
-                      [attr.aria-label]="'Send wish via ' + link.label"
-                      [style.color]="link.color"
-                      >
-                      <mat-icon>{{ link.icon }}</mat-icon>
-                    </a>
-                  }
-                  <button
-                    mat-icon-button
-                    (click)="deleteMessage(message)"
-                    title="Delete"
-                    color="warn"
-                    [attr.aria-label]="'Delete message: ' + message.title"
-                    >
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        }
+          <div class="form-actions">
+            <button type="button" mat-stroked-button (click)="cancelEdit()" [attr.aria-label]="'MESSAGE_SCHEDULER.CANCEL' | translate">
+              {{ 'MESSAGE_SCHEDULER.CANCEL' | translate }}
+            </button>
 
-        @if (enrichedMessages().length === 0) {
-          <div class="empty-state">
-            <mat-icon>schedule_send</mat-icon>
-            <h3>No scheduled messages</h3>
-            <p>Create your first automatic message for {{ birthday?.name }}</p>
             <button
+              type="submit"
               mat-raised-button
               color="primary"
-              (click)="startCreatingMessage()"
-              [attr.aria-label]="'Create first scheduled message for ' + birthday?.name"
+              [disabled]="messageForm.invalid"
+              [attr.aria-label]="(editingMessage ? 'MESSAGE_SCHEDULER.UPDATE_MESSAGE' : 'MESSAGE_SCHEDULER.SAVE_MESSAGE') | translate"
               >
-              <mat-icon>add</mat-icon>
-              Create First Message
+              <mat-icon>save</mat-icon>
+              {{ (editingMessage ? 'MESSAGE_SCHEDULER.UPDATE_MESSAGE' : 'MESSAGE_SCHEDULER.SAVE_MESSAGE') | translate }}
             </button>
           </div>
-        }
+        </form>
+      </mat-expansion-panel>
+
+      @if (enrichedMessages().length > 0) {
+        <div class="messages-list">
+          <h3>{{ 'MESSAGE_SCHEDULER.SCHEDULED_COUNT' | translate: {count: enrichedMessages().length} }}</h3>
+          @for (message of enrichedMessages(); track message.id) {
+            <div
+              class="message-item"
+              [class.inactive]="!message.active"
+              >
+              <div class="message-header">
+                <div class="message-title-row">
+                  <h4>{{ message.title }}</h4>
+                  <div class="message-badges">
+                    <span
+                      class="priority-badge"
+                      [class]="'priority-' + message.priority"
+                      >
+                      {{ message.priority }}
+                    </span>
+                    <span class="time-badge">{{ message.scheduledTime }}</span>
+                    <mat-icon
+                      class="status-icon"
+                      [class.active]="message.active"
+                      [matTooltip]="(message.active ? 'MESSAGE_SCHEDULER.ACTIVE_TOOLTIP' : 'MESSAGE_SCHEDULER.DISABLED_TOOLTIP') | translate"
+                      >
+                      {{ message.active ? "notifications_active" : "notifications_off" }}
+                    </mat-icon>
+                  </div>
+                </div>
+                <div class="message-meta">
+                  <small>{{ 'MESSAGE_SCHEDULER.CREATED' | translate }} {{ message.formattedCreatedDate }}</small>
+                  @if (message.formattedLastSentDate) {
+                    <small>{{ 'MESSAGE_SCHEDULER.LAST_SENT' | translate }} {{ message.formattedLastSentDate }}</small>
+                  }
+                </div>
+              </div>
+              <div class="message-content">
+                <p>{{ message.processedMessage }}</p>
+              </div>
+              <div class="message-actions">
+                <button
+                  mat-icon-button
+                  (click)="editMessage(message)"
+                  [title]="'MESSAGE_SCHEDULER.EDIT_BTN' | translate"
+                  [attr.aria-label]="('MESSAGE_SCHEDULER.EDIT_BTN' | translate) + ': ' + message.title"
+                  >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="toggleMessageStatus(message)"
+                  [title]="(message.active ? 'MESSAGE_SCHEDULER.DISABLE_BTN' : 'MESSAGE_SCHEDULER.ENABLE_BTN') | translate"
+                  [attr.aria-label]="((message.active ? 'MESSAGE_SCHEDULER.DISABLE_BTN' : 'MESSAGE_SCHEDULER.ENABLE_BTN') | translate) + ': ' + message.title"
+                  >
+                  <mat-icon>{{ message.active ? "pause" : "play_arrow" }}</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="testMessage(message)"
+                  [title]="'MESSAGE_SCHEDULER.SEND_TEST' | translate"
+                  color="accent"
+                  [attr.aria-label]="('MESSAGE_SCHEDULER.SEND_TEST' | translate) + ': ' + message.title"
+                  >
+                  <mat-icon>send</mat-icon>
+                </button>
+                @for (link of message.wishLinks; track link.channel) {
+                  <a
+                    mat-icon-button
+                    [href]="link.url"
+                    target="_blank"
+                    rel="noopener"
+                    [title]="('MESSAGE_SCHEDULER.SEND_VIA' | translate: {label: link.label})"
+                    [attr.aria-label]="('MESSAGE_SCHEDULER.SEND_VIA' | translate: {label: link.label})"
+                    [style.color]="link.color"
+                    >
+                    <mat-icon>{{ link.icon }}</mat-icon>
+                  </a>
+                }
+                <button
+                  mat-icon-button
+                  (click)="deleteMessage(message)"
+                  [title]="'MESSAGE_SCHEDULER.DELETE_BTN' | translate"
+                  color="warn"
+                  [attr.aria-label]="('MESSAGE_SCHEDULER.DELETE_BTN' | translate) + ': ' + message.title"
+                  >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
       }
-      </mat-card-content>
-    </mat-card>
-  </div>
+
+      @if (enrichedMessages().length === 0) {
+        <div class="empty-state">
+          <mat-icon>schedule_send</mat-icon>
+          <h3>{{ 'MESSAGE_SCHEDULER.NO_MESSAGES_TITLE' | translate }}</h3>
+          <p>{{ 'MESSAGE_SCHEDULER.NO_MESSAGES_SUBTITLE' | translate: {name: birthday?.name} }}</p>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="startCreatingMessage()"
+            [attr.aria-label]="('MESSAGE_SCHEDULER.CREATE_FIRST_MESSAGE' | translate) + ' ' + birthday?.name"
+            >
+            <mat-icon>add</mat-icon>
+            {{ 'MESSAGE_SCHEDULER.CREATE_FIRST_MESSAGE' | translate }}
+          </button>
+        </div>
+      }
+    }
+    </mat-card-content>
+  </mat-card>
+</div>

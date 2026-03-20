@@ -1,18 +1,18 @@
 <div class="scheduled-messages-container">
   <div class="header">
-    <h2>Scheduled Messages</h2>
-    <p class="subtitle">All scheduled messages for birthdays</p>
-    <button mat-fab extended color="primary" (click)="openScheduleDialog()" class="add-message-fab" aria-label="Create new scheduled message" [disabled]="noBirthdays()">
+    <h2>{{ 'SCHEDULED_MESSAGES.TITLE' | translate }}</h2>
+    <p class="subtitle">{{ 'SCHEDULED_MESSAGES.SUBTITLE' | translate }}</p>
+    <button mat-fab extended color="primary" (click)="openScheduleDialog()" class="add-message-fab" [attr.aria-label]="'SCHEDULED_MESSAGES.NEW_MESSAGE' | translate" [disabled]="noBirthdays()">
       <mat-icon>add</mat-icon>
-      New Message
+      {{ 'SCHEDULED_MESSAGES.NEW_MESSAGE' | translate }}
     </button>
   </div>
 
   @if (noBirthdays()) {
     <div class="no-messages">
       <mat-icon class="large-icon">cake</mat-icon>
-      <h3>No Birthdays Added</h3>
-      <p>You need to add at least one birthday before you can schedule messages. Go to the dashboard to add your first birthday!</p>
+      <h3>{{ 'SCHEDULED_MESSAGES.NO_BIRTHDAYS_TITLE' | translate }}</h3>
+      <p>{{ 'SCHEDULED_MESSAGES.NO_BIRTHDAYS_MESSAGE' | translate }}</p>
     </div>
   } @else if (birthdaysWithMessages().length > 0) {
     <div
@@ -32,7 +32,7 @@
               <div class="birthday-info">
                 <mat-card-title>{{ entry.birthday.name }}</mat-card-title>
                 <mat-card-subtitle>
-                  {{ entry.birthday.birthDate | date : "dd MMMM yyyy" }}
+                  {{ entry.birthday.birthDate | localDate | localeDate : "dd MMMM yyyy" }}
                 </mat-card-subtitle>
               </div>
             </div>
@@ -57,7 +57,7 @@
                       {{ message.priorityLabel }}
                     </span>
                     <span class="status" [class.active]="message.active">
-                      {{ message.active ? "Active" : "Inactive" }}
+                      {{ (message.active ? 'SCHEDULED_MESSAGES.STATUS_ACTIVE' : 'SCHEDULED_MESSAGES.STATUS_INACTIVE') | translate }}
                     </span>
                     @if (message.wishLinks.length > 0) {
                       <div class="wish-actions">
@@ -67,8 +67,8 @@
                             [href]="link.url"
                             target="_blank"
                             rel="noopener"
-                            [matTooltip]="'Send via ' + link.label"
-                            [attr.aria-label]="'Send wish via ' + link.label + ' to ' + entry.birthday.name"
+                            [matTooltip]="'SCHEDULED_MESSAGES.SEND_VIA' | translate: {label: link.label}"
+                            [attr.aria-label]="('SCHEDULED_MESSAGES.SEND_VIA' | translate: {label: link.label}) + ' ' + entry.birthday.name"
                             [style.color]="link.color"
                             >
                             <mat-icon>{{ link.icon }}</mat-icon>
@@ -81,8 +81,8 @@
                         mat-icon-button
                         color="primary"
                         (click)="openScheduleDialog(entry.birthday)"
-                        matTooltip="Edit messages"
-                        [attr.aria-label]="'Edit messages for ' + entry.birthday.name"
+                        [matTooltip]="'SCHEDULED_MESSAGES.EDIT_MESSAGES' | translate"
+                        [attr.aria-label]="('SCHEDULED_MESSAGES.EDIT_MESSAGES' | translate) + ' ' + entry.birthday.name"
                         >
                         <mat-icon>edit</mat-icon>
                       </button>
@@ -90,8 +90,8 @@
                         mat-icon-button
                         color="warn"
                         (click)="deleteMessage(entry.birthday.id, message.id)"
-                        matTooltip="Delete message"
-                        [attr.aria-label]="'Delete message: ' + message.title"
+                        [matTooltip]="'SCHEDULED_MESSAGES.DELETE_MESSAGE' | translate"
+                        [attr.aria-label]="('SCHEDULED_MESSAGES.DELETE_MESSAGE' | translate) + ': ' + message.title"
                         >
                         <mat-icon>delete</mat-icon>
                       </button>
@@ -107,8 +107,8 @@
   } @else {
     <div class="no-messages">
       <mat-icon class="large-icon">schedule</mat-icon>
-      <h3>No Scheduled Messages</h3>
-      <p>Go to the dashboard and edit a birthday to add scheduled messages</p>
+      <h3>{{ 'SCHEDULED_MESSAGES.NO_MESSAGES_TITLE' | translate }}</h3>
+      <p>{{ 'SCHEDULED_MESSAGES.NO_MESSAGES_MESSAGE' | translate }}</p>
     </div>
   }
 

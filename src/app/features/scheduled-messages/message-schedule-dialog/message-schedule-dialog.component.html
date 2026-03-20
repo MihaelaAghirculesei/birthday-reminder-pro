@@ -2,9 +2,9 @@
   <div class="dialog-header">
     <h2 class="dialog-title">
       <mat-icon>schedule_send</mat-icon>
-      <span>Schedule Birthday Messages</span>
+      <span>{{ 'MESSAGE_SCHEDULE_DIALOG.TITLE' | translate }}</span>
     </h2>
-    <button mat-icon-button (click)="close()" class="close-button" aria-label="Close dialog">
+    <button mat-icon-button (click)="close()" class="close-button" [attr.aria-label]="'MESSAGE_SCHEDULE_DIALOG.CLOSE' | translate">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -13,13 +13,13 @@
     @if (noBirthdays()) {
       <div class="no-birthdays-alert">
         <mat-icon>cake</mat-icon>
-        <h3>No Birthdays Added</h3>
-        <p>You need to add at least one birthday before you can schedule messages. Go to the dashboard to add your first birthday!</p>
+        <h3>{{ 'MESSAGE_SCHEDULE_DIALOG.NO_BIRTHDAYS_TITLE' | translate }}</h3>
+        <p>{{ 'MESSAGE_SCHEDULE_DIALOG.NO_BIRTHDAYS_MESSAGE' | translate }}</p>
       </div>
     } @else if (showBirthdaySelector) {
       <div class="birthday-selector">
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Select a Birthday</mat-label>
+          <mat-label>{{ 'MESSAGE_SCHEDULE_DIALOG.SELECT_BIRTHDAY_LABEL' | translate }}</mat-label>
           <mat-select [(ngModel)]="selectedBirthdayId" (selectionChange)="onBirthdaySelected()" panelClass="birthday-select-panel">
             @for (option of birthdayOptions(); track option.birthday.id) {
               <mat-option [value]="option.birthday.id" (click)="onOptionClick($event, option)">
@@ -30,7 +30,7 @@
                   } @else {
                     <span class="no-contact-hint">
                       <mat-icon class="no-contact-icon">warning</mat-icon>
-                      No contact info — click to add
+                      {{ 'MESSAGE_SCHEDULE_DIALOG.NO_CONTACT_HINT' | translate }}
                     </span>
                   }
                 </div>
@@ -38,12 +38,12 @@
             }
           </mat-select>
           <mat-icon matPrefix>cake</mat-icon>
-          <mat-hint>Choose whose birthday to schedule messages for</mat-hint>
+          <mat-hint>{{ 'MESSAGE_SCHEDULE_DIALOG.SELECT_BIRTHDAY_HINT' | translate }}</mat-hint>
         </mat-form-field>
         @if (!selectedBirthdayId) {
           <div class="selector-help">
             <mat-icon>info</mat-icon>
-            <p>Select a person from the dropdown to create scheduled messages for their birthday</p>
+            <p>{{ 'MESSAGE_SCHEDULE_DIALOG.SELECT_BIRTHDAY_HELP' | translate }}</p>
           </div>
         }
       </div>
@@ -63,12 +63,12 @@
             <h3>{{ selectedBirthday.name }}</h3>
             <p class="birth-date">
               <mat-icon class="small-icon">cake</mat-icon>
-              {{ selectedBirthday.birthDate | date: 'EEEE, MMMM dd, yyyy' }}
+              {{ selectedBirthday.birthDate | localDate | localeDate: 'EEEE, MMMM dd, yyyy' }}
             </p>
           </div>
-          <button mat-button color="primary" (click)="changeBirthday()" class="change-button" aria-label="Change selected birthday">
+          <button mat-button color="primary" (click)="changeBirthday()" class="change-button" [attr.aria-label]="'MESSAGE_SCHEDULE_DIALOG.CHANGE' | translate">
             <mat-icon>swap_horiz</mat-icon>
-            Change
+            {{ 'MESSAGE_SCHEDULE_DIALOG.CHANGE' | translate }}
           </button>
         </div>
         <div class="scheduler-container">
@@ -79,8 +79,8 @@
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-stroked-button (click)="close()" aria-label="Close message schedule dialog">
-      Close
+    <button mat-stroked-button (click)="close()" [attr.aria-label]="'MESSAGE_SCHEDULE_DIALOG.CLOSE' | translate">
+      {{ 'MESSAGE_SCHEDULE_DIALOG.CLOSE' | translate }}
     </button>
   </mat-dialog-actions>
 </div>

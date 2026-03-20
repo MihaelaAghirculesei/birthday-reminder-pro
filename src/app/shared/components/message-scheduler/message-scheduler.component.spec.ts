@@ -4,7 +4,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { MessageSchedulerComponent } from './message-scheduler.component';
-import { ScheduledMessageService } from '../../../features/scheduled-messages/scheduled-message.service';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
+import { ScheduledMessageService } from '../../services/scheduled-message.service';
 import { NotificationService } from '../../../core';
 import { Birthday, ScheduledMessage } from '../..';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
@@ -69,7 +70,8 @@ describe('MessageSchedulerComponent', () => {
         }),
         { provide: ScheduledMessageService, useValue: scheduledMessageServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
-        { provide: MatDialog, useValue: dialogMock }
+        { provide: MatDialog, useValue: dialogMock },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 
@@ -111,8 +113,8 @@ describe('MessageSchedulerComponent', () => {
 
   it('should pre-compute processed messages in enrichedMessages', () => {
     component.birthday = mockBirthday;
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
-    component.loadMessages();
+    component.messages = [mockMessage];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
 
     expect(component.enrichedMessages().length).toBe(1);
     expect(component.enrichedMessages()[0].processedMessage).toContain('John Doe');
@@ -131,16 +133,16 @@ describe('MessageSchedulerComponent', () => {
       ...mockMessage,
       message: 'You are a {zodiac}!'
     };
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [messageWithZodiac] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
-    component.loadMessages();
+    component.messages = [messageWithZodiac];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
 
     expect(component.enrichedMessages()[0].processedMessage).toBe('You are a Capricorn!');
   });
 
   it('should pre-compute wishLinks in enrichedMessages', () => {
     component.birthday = { ...mockBirthday, email: 'test@example.com' };
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, email: 'test@example.com', scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
-    component.loadMessages();
+    component.messages = [mockMessage];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
 
     expect(component.enrichedMessages()[0].wishLinks).toBeDefined();
     expect(Array.isArray(component.enrichedMessages()[0].wishLinks)).toBeTrue();
@@ -148,11 +150,42 @@ describe('MessageSchedulerComponent', () => {
 
   it('should pre-compute formatted dates in enrichedMessages', () => {
     component.birthday = mockBirthday;
-    store.setState({ birthdays: { ids: ['1'], entities: { '1': { ...mockBirthday, scheduledMessages: [mockMessage] } }, loading: false, error: null, filters: { searchTerm: '', selectedCategory: null } } });
-    component.loadMessages();
+    component.messages = [mockMessage];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
 
     expect(component.enrichedMessages()[0].formattedCreatedDate).toBeDefined();
     expect(component.enrichedMessages()[0].formattedCreatedDate).toContain(new Date().getFullYear().toString());
+  });
+
+  it('should pre-compute formattedLastSentDate when lastSentDate is set', () => {
+    const lastSentDate = new Date(2026, 0, 1, 10, 30, 0);
+    const messageWithLastSent: ScheduledMessage = { ...mockMessage, lastSentDate };
+    component.birthday = mockBirthday;
+    component.messages = [messageWithLastSent];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+
+    const enriched = component.enrichedMessages()[0];
+    expect(enriched.formattedLastSentDate).toBeDefined();
+    expect(enriched.formattedLastSentDate).not.toBeNull();
+    expect(enriched.formattedLastSentDate).toContain('2026');
+  });
+
+  it('should set formattedLastSentDate to null when lastSentDate is absent', () => {
+    component.birthday = mockBirthday;
+    component.messages = [mockMessage]; // mockMessage has no lastSentDate
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+
+    expect(component.enrichedMessages()[0].formattedLastSentDate).toBeNull();
+  });
+
+  it('should replace zodiac sign with empty string when zodiacSign is undefined', () => {
+    const birthdayNoZodiac: Birthday = { ...mockBirthday, zodiacSign: undefined };
+    component.birthday = birthdayNoZodiac;
+    const messageWithZodiac: ScheduledMessage = { ...mockMessage, message: 'You are a {zodiac}!' };
+    component.messages = [messageWithZodiac];
+    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+
+    expect(component.enrichedMessages()[0].processedMessage).toBe('You are a !');
   });
 
   it('should track messages by id', () => {
@@ -234,17 +267,17 @@ describe('MessageSchedulerComponent', () => {
     expect(component.messagePreview).toBe('Test');
   });
 
-  describe('loadMessages', () => {
-    it('should load messages for birthday', () => {
+  describe('messages state', () => {
+    it('should have messages defined when birthday is set', () => {
       component.birthday = mockBirthday;
-      component.loadMessages();
+      component.messages = [mockMessage];
 
       expect(component.messages).toBeDefined();
     });
 
-    it('should not load messages when birthday is null', () => {
+    it('should have empty messages when birthday is null', () => {
       component.birthday = null;
-      component.loadMessages();
+      component.messages = [];
 
       expect(component.messages).toEqual([]);
     });

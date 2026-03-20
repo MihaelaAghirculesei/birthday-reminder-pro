@@ -1,5 +1,7 @@
 import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LocaleDatePipe } from '../../../shared/pipes/locale-date.pipe';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,6 +16,7 @@ import { MessageSchedulerComponent } from '../../../shared/components/message-sc
 import { Birthday } from '../../../shared/models';
 import { CategoryFacadeService } from '../../../core';
 import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
 import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
@@ -49,7 +52,10 @@ function buildContactInfo(b: Birthday): string {
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,
-        MessageSchedulerComponent
+        MessageSchedulerComponent,
+        LocalDatePipe,
+        TranslatePipe,
+        LocaleDatePipe,
     ],
     templateUrl: './message-schedule-dialog.component.html',
     styleUrls: ['./message-schedule-dialog.component.scss'],
