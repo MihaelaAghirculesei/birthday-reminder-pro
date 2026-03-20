@@ -1,59 +1,59 @@
-<div class="stats-row" role="region" aria-label="Birthday statistics">
-  <mat-card class="stat-card" role="group" [attr.aria-label]="'Total birthdays: ' + totalBirthdays">
+<div class="stats-row" role="region" [attr.aria-label]="'DASHBOARD.STATS_ARIA' | translate">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'DASHBOARD.ARIA_TOTAL' | translate: { count: totalBirthdays }">
     <mat-card-content>
       <div class="stat-content">
         <mat-icon class="stat-icon total" aria-hidden="true">cake</mat-icon>
         <div class="stat-info">
           <div class="stat-number" aria-hidden="true">{{ totalBirthdays }}</div>
-          <div class="stat-label">Total Birthdays</div>
+          <div class="stat-label">{{ 'DASHBOARD.STAT_TOTAL' | translate }}</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card" role="group" [attr.aria-label]="'Birthdays in next 30 days: ' + birthdaysThisMonth">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'DASHBOARD.ARIA_NEXT_30' | translate: { count: birthdaysThisMonth }">
     <mat-card-content>
       <div class="stat-content">
         <mat-icon class="stat-icon month" aria-hidden="true">date_range</mat-icon>
         <div class="stat-info">
           <div class="stat-number" aria-hidden="true">{{ birthdaysThisMonth }}</div>
-          <div class="stat-label">Next 30 Days</div>
+          <div class="stat-label">{{ 'DASHBOARD.STAT_NEXT_30' | translate }}</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card" role="group" [attr.aria-label]="'Average age: ' + averageAge + ' years'">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'DASHBOARD.ARIA_AVG_AGE' | translate: { count: averageAge }">
     <mat-card-content>
       <div class="stat-content">
         <mat-icon class="stat-icon age" aria-hidden="true">person</mat-icon>
         <div class="stat-info">
           <div class="stat-number" aria-hidden="true">{{ averageAge }}</div>
-          <div class="stat-label">Average Age</div>
+          <div class="stat-label">{{ 'DASHBOARD.STAT_AVG_AGE' | translate }}</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card" role="group" [attr.aria-label]="'Days until next birthday: ' + nextBirthdayDays">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'DASHBOARD.ARIA_DAYS_TO_NEXT' | translate: { count: nextBirthdayDays }">
     <mat-card-content>
       <div class="stat-content">
         <mat-icon class="stat-icon next" aria-hidden="true">hourglass_top</mat-icon>
         <div class="stat-info">
           <div class="stat-number" aria-hidden="true">{{ nextBirthdayDays }}</div>
-          <div class="stat-label">Days to Next</div>
+          <div class="stat-label">{{ 'DASHBOARD.STAT_DAYS_TO_NEXT' | translate }}</div>
         </div>
       </div>
     </mat-card-content>
   </mat-card>
 
-  <mat-card class="stat-card" role="group" [attr.aria-label]="'Next birthday: ' + nextBirthdayText">
+  <mat-card class="stat-card" role="group" [attr.aria-label]="'DASHBOARD.ARIA_NEXT_BIRTHDAY' | translate: { text: nextBirthdayText }">
     <mat-card-content>
       <div class="stat-content">
         <mat-icon class="stat-icon upcoming" aria-hidden="true">event</mat-icon>
         <div class="stat-info">
           <div class="stat-number" aria-hidden="true">{{ nextBirthdayText }}</div>
-          <div class="stat-label">Next Birthday</div>
+          <div class="stat-label">{{ 'DASHBOARD.STAT_NEXT_BIRTHDAY' | translate }}</div>
         </div>
       </div>
     </mat-card-content>

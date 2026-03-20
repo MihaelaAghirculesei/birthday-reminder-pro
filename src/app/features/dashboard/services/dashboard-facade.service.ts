@@ -90,7 +90,7 @@ export class DashboardFacadeService {
 
   readonly categoriesStats: Signal<CategoryStats[]> = computed(() => {
     const birthdays = this.birthdays();
-    const allCategories = this.categoryFacade.categories();
+    const allCategories = this.categoryFacade.resolvedCategories();
     const stats = this.statsService.getCategoriesStats(birthdays);
     const validCategoryIds = new Set(allCategories.map(c => c.id));
     const statsMap = new Map(stats.map(s => [s.categoryId, s.count]));
@@ -102,6 +102,7 @@ export class DashboardFacadeService {
     const categoryStats = allCategories.map(category => ({
       id: category.id,
       name: category.name,
+      nameKey: category.nameKey,
       icon: category.icon,
       color: category.color,
       count: statsMap.get(category.id) || 0
@@ -111,6 +112,7 @@ export class DashboardFacadeService {
       categoryStats.unshift({
         id: '__orphaned__',
         name: 'Work',
+        nameKey: 'CATEGORIES.WORK',
         icon: 'business_center',
         color: '#FF9800',
         count: orphanedCount
@@ -149,7 +151,7 @@ export class DashboardFacadeService {
     return filtered.sort((a, b) => getDaysUntilBirthday(a.birthDate) - getDaysUntilBirthday(b.birthDate));
   });
 
-  readonly categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;
+  readonly categories: Signal<BirthdayCategory[]> = this.categoryFacade.resolvedCategories;
 
   selectCategory(categoryId: string | null): void {
     const current = this.storeSelectedCategory();

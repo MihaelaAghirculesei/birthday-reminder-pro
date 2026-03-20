@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { BirthdayImportExportComponent } from './birthday-import-export.component';
+import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { BackupService, NotificationService } from '../../../../../core';
 import { Birthday } from '../../../../../shared';
 
@@ -47,7 +48,8 @@ describe('BirthdayImportExportComponent', () => {
       imports: [BirthdayImportExportComponent],
       providers: [
         { provide: BackupService, useValue: backupSpy },
-        { provide: NotificationService, useValue: notificationSpy }
+        { provide: NotificationService, useValue: notificationSpy },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

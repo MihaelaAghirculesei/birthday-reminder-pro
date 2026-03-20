@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, signal, inject } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -37,6 +38,7 @@ interface EnrichedBirthday extends Birthday {
         MatTooltipModule,
         BirthdayItemComponent,
         BirthdayImportExportComponent,
+        TranslatePipe,
     ],
     templateUrl: './birthday-list.component.html',
     styleUrls: ['./birthday-list.component.scss'],
@@ -65,6 +67,7 @@ export class BirthdayListComponent implements OnChanges {
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly logger = inject(LoggerService);
+  private readonly translate = inject(TranslateService);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthdays']) {
@@ -97,9 +100,9 @@ export class BirthdayListComponent implements OnChanges {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: 'min(450px, 90vw)',
       data: {
-        title: 'Clear All Data?',
-        message: 'This will permanently delete all birthdays and categories. This action cannot be undone.',
-        confirmText: 'Clear All',
+        title: this.translate.instant('CONFIRM.CLEAR_ALL_TITLE'),
+        message: this.translate.instant('CONFIRM.CLEAR_ALL_MESSAGE'),
+        confirmText: this.translate.instant('CONFIRM.CLEAR_ALL_BTN'),
         icon: 'delete_forever',
         color: 'warn'
       }
@@ -176,9 +179,9 @@ export class BirthdayListComponent implements OnChanges {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: 'min(450px, 90vw)',
       data: {
-        title: 'Delete Birthday?',
-        message: `Are you sure you want to delete "${birthday.name}"?`,
-        confirmText: 'Delete',
+        title: this.translate.instant('CONFIRM.DELETE_BIRTHDAY_TITLE'),
+        message: this.translate.instant('CONFIRM.DELETE_BIRTHDAY_MESSAGE', { name: birthday.name }),
+        confirmText: this.translate.instant('CONFIRM.DELETE_BTN'),
         icon: 'delete',
         color: 'warn'
       }

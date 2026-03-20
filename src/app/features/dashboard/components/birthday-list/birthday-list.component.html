@@ -1,27 +1,27 @@
 <mat-card class="birthday-list-card">
   <mat-card-header class="birthday-list-header">
     <div class="header-title-section">
-      <mat-card-title>📅 All Upcoming Birthdays</mat-card-title>
+      <mat-card-title>{{ 'BIRTHDAY_LIST.TITLE' | translate }}</mat-card-title>
       @if (lastAction) {
         <button
           mat-raised-button
           color="accent"
           (click)="onUndo()"
           class="undo-button-enhanced"
-          matTooltip="Undo last action"
-          aria-label="Undo last action"
+          [matTooltip]="'BIRTHDAY_LIST.UNDO' | translate"
+          [attr.aria-label]="'BIRTHDAY_LIST.UNDO' | translate"
           >
           <mat-icon>undo</mat-icon>
-          UNDO
+          {{ 'BIRTHDAY_LIST.UNDO' | translate }}
         </button>
       }
     </div>
     <div class="header-search-section">
       <mat-form-field appearance="fill" class="dashboard-search-field">
-        <mat-label>Search by name</mat-label>
+        <mat-label>{{ 'BIRTHDAY_LIST.SEARCH_LABEL' | translate }}</mat-label>
         <input
           matInput
-          placeholder="Type to search..."
+          [placeholder]="'BIRTHDAY_LIST.SEARCH_PLACEHOLDER' | translate"
           (input)="onSearchChange($event)"
           [value]="searchTerm"
           data-testid="search-input"
@@ -47,10 +47,10 @@
     @if (birthdays.length === 0 && searchTerm) {
       <div class="no-birthdays" role="status" aria-live="polite">
         <mat-icon class="no-data-icon" aria-hidden="true">search_off</mat-icon>
-        <p class="no-data-text">No birthdays found matching "{{ searchTerm }}"</p>
-        <button mat-raised-button color="primary" (click)="onClearSearch()" aria-label="Clear search and show all birthdays">
+        <p class="no-data-text">{{ 'BIRTHDAY_LIST.NO_RESULTS' | translate: {term: searchTerm} }}</p>
+        <button mat-raised-button color="primary" (click)="onClearSearch()" [attr.aria-label]="'BIRTHDAY_LIST.CLEAR_SEARCH' | translate">
           <mat-icon aria-hidden="true">clear</mat-icon>
-          Clear Search
+          {{ 'BIRTHDAY_LIST.CLEAR_SEARCH' | translate }}
         </button>
       </div>
     }
@@ -58,7 +58,7 @@
     @if (birthdays.length === 0 && !searchTerm && totalBirthdays === 0) {
       <div class="no-birthdays" role="status" aria-live="polite">
         <mat-icon class="no-data-icon" aria-hidden="true">cake</mat-icon>
-        <p class="no-data-text">No birthdays yet. Add your first one!</p>
+        <p class="no-data-text">{{ 'BIRTHDAY_LIST.NO_BIRTHDAYS' | translate }}</p>
       </div>
     }
   </mat-card-content>
@@ -71,8 +71,8 @@
         <div class="test-data-content">
           <mat-icon class="test-icon">science</mat-icon>
           <div class="test-info">
-            <h3>Want to try the app?</h3>
-            <p>Add 10 sample birthdays with photos to test all features</p>
+            <h3>{{ 'BIRTHDAY_LIST.TEST_DATA_TITLE' | translate }}</h3>
+            <p>{{ 'BIRTHDAY_LIST.TEST_DATA_SUBTITLE' | translate }}</p>
           </div>
           <button
             mat-raised-button
@@ -82,7 +82,7 @@
             class="add-test-btn"
             >
             <mat-icon>add_circle</mat-icon>
-            {{ isAddingTestData() ? 'Adding...' : 'Add Test Data' }}
+            {{ isAddingTestData() ? ('BIRTHDAY_LIST.TEST_DATA_ADDING' | translate) : ('BIRTHDAY_LIST.TEST_DATA_ADD' | translate) }}
           </button>
         </div>
       </mat-card-content>
@@ -110,8 +110,8 @@
           <div class="clear-data-content">
             <mat-icon class="clear-icon">delete_sweep</mat-icon>
             <div class="clear-info">
-              <h3>Clear All Data</h3>
-              <p>Remove all birthdays from the app</p>
+              <h3>{{ 'BIRTHDAY_LIST.CLEAR_ALL_TITLE' | translate }}</h3>
+              <p>{{ 'BIRTHDAY_LIST.CLEAR_ALL_SUBTITLE' | translate }}</p>
             </div>
             <button
               mat-raised-button
@@ -121,7 +121,7 @@
               class="clear-all-btn"
               >
               <mat-icon>delete_forever</mat-icon>
-              {{ isClearingData() ? 'Clearing...' : 'Clear All' }}
+              {{ isClearingData() ? ('BIRTHDAY_LIST.CLEARING' | translate) : ('BIRTHDAY_LIST.CLEAR_ALL_BTN' | translate) }}
             </button>
           </div>
         </mat-card-content>

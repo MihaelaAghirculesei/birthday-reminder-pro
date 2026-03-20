@@ -1,7 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges, inject } from '@angular/core';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ChartDataItem } from '../../services';
 
 interface EnrichedChartDataItem extends ChartDataItem {
@@ -11,12 +12,13 @@ interface EnrichedChartDataItem extends ChartDataItem {
 
 @Component({
     selector: 'app-birthday-chart',
-    imports: [MatCardModule, MatIconModule],
+    imports: [MatCardModule, MatIconModule, TranslatePipe],
     templateUrl: './birthday-chart.component.html',
     styleUrls: ['./birthday-chart.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayChartComponent implements OnChanges {
+  private readonly translate = inject(TranslateService);
   private readonly MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   @Input() chartData: ChartDataItem[] = [];
@@ -38,5 +40,14 @@ export class BirthdayChartComponent implements OnChanges {
 
   trackByMonth(_index: number, monthData: EnrichedChartDataItem): string {
     return monthData.month;
+  }
+
+  getChartAriaLabel(): string {
+    return this.translate.instant('CHART.ARIA_TOTAL', { total: this.totalBirthdays });
+  }
+
+  getBarAriaLabel(month: string, count: number): string {
+    const key = count === 1 ? 'CHART.BAR_ARIA_ONE' : 'CHART.BAR_ARIA_MANY';
+    return this.translate.instant(key, { month, count });
   }
 }

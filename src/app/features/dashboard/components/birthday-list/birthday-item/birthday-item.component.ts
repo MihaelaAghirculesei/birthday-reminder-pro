@@ -1,5 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -22,6 +24,8 @@ import { RememberPhotoComponent } from '../../remember-photo/remember-photo.comp
         CategoryIconComponent,
         RememberPhotoComponent,
         MessageIndicatorComponent,
+        TranslatePipe,
+        LocaleDatePipe,
     ],
     templateUrl: './birthday-item.component.html',
     styleUrls: ['./birthday-item.component.scss'],
@@ -59,17 +63,18 @@ export class BirthdayItemComponent implements OnChanges {
 
     if (days === 0) {
       this.daysText = 'Today!';
+      this.daysChipClass = 'red-alert';
     } else if (days === 1) {
       this.daysText = 'Tomorrow';
-    } else {
+      this.daysChipClass = 'red-alert';
+    } else if (days <= 7) {
       this.daysText = `${days} days`;
-    }
-
-    if (days <= 7) {
       this.daysChipClass = 'red-alert';
     } else if (days <= 21) {
+      this.daysText = `${days} days`;
       this.daysChipClass = 'orange-warning';
     } else {
+      this.daysText = `${days} days`;
       this.daysChipClass = 'green-safe';
     }
   }

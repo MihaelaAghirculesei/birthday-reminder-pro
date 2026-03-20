@@ -45,7 +45,7 @@
         <mat-select [(ngModel)]="editingData.category">
           @for (category of data.categories; track category.id) {
             <mat-option [value]="category.id">
-              {{ category.name }}
+              {{ category.nameKey ? (category.nameKey | translate) : category.name }}
             </mat-option>
           }
         </mat-select>

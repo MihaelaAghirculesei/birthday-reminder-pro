@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { BirthdayItemComponent } from './birthday-item.component';
+import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { Birthday } from '../../../../../shared';
 
 interface MockMouseEvent {
@@ -22,7 +23,8 @@ describe('BirthdayItemComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BirthdayItemComponent]
+      imports: [BirthdayItemComponent],
+      providers: [provideTranslateTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(BirthdayItemComponent);

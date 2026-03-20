@@ -10,10 +10,10 @@
               cssClass="dashboard-hero-icon"
             ></app-calendar-icon>
           </div>
-          Dashboard & Statistics
+          {{ 'DASHBOARD.TITLE' | translate }}
         </h3>
         <p class="dashboard-section-subtitle">
-          Overview of your birthday collection
+          {{ 'DASHBOARD.SUBTITLE' | translate }}
         </p>
       </div>
     </div>
@@ -58,9 +58,9 @@
     color="primary"
     class="schedule-message-fab"
     (click)="onOpenMessageDialog($event)"
-    matTooltip="Schedule Birthday Messages"
+    [matTooltip]="'DASHBOARD.SCHEDULE_MESSAGES_TOOLTIP' | translate"
     matTooltipPosition="left"
-    aria-label="Schedule birthday messages"
+    [attr.aria-label]="'DASHBOARD.SCHEDULE_MESSAGES_ARIA' | translate"
   >
     <mat-icon>schedule_send</mat-icon>
   </button>
@@ -86,12 +86,12 @@
     } @placeholder {
       <div class="calendar-sync-placeholder">
         <mat-icon>cloud_sync</mat-icon>
-        <span>Google Calendar Sync</span>
+        <span>Sincronizzazione Calendario</span>
       </div>
     } @loading (minimum 200ms) {
       <div class="calendar-sync-loading">
         <mat-icon>hourglass_empty</mat-icon>
-        <span>Loading...</span>
+        <span>Caricamento...</span>
       </div>
     }
   </div>

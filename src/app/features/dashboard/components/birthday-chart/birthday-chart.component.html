@@ -2,20 +2,20 @@
   <mat-card-header>
     <mat-card-title>
       <mat-icon aria-hidden="true">bar_chart</mat-icon>
-      Monthly Distribution
+      {{ 'CHART.TITLE' | translate }}
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div
       class="chart-container"
       role="img"
-      [attr.aria-label]="'Bar chart showing birthday distribution across 12 months. Total: ' + totalBirthdays + ' birthdays'"
+      [attr.aria-label]="getChartAriaLabel()"
     >
       @for (monthData of enrichedChartData; track monthData.month) {
         <div
           class="chart-bar"
           role="listitem"
-          [attr.aria-label]="monthData.month + ': ' + monthData.count + ' ' + (monthData.count === 1 ? 'birthday' : 'birthdays')"
+          [attr.aria-label]="getBarAriaLabel(monthData.month, monthData.count)"
         >
           @if (monthData.count > 0) {
             <div class="bar-value" aria-hidden="true">
@@ -36,7 +36,7 @@
     </div>
     @if (totalBirthdays === 0) {
       <div class="chart-legend" role="status" aria-live="polite">
-        <p class="no-data-text">Add some birthdays to see the chart!</p>
+        <p class="no-data-text">{{ 'CHART.NO_DATA' | translate }}</p>
       </div>
     }
   </mat-card-content>

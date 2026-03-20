@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BirthdayListComponent } from './birthday-list.component';
+import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { Birthday, BirthdayCategory } from '../../../../shared';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 
@@ -60,7 +61,8 @@ describe('BirthdayListComponent', () => {
             }
           }
         }),
-        { provide: MatDialog, useValue: dialogSpyObj }
+        { provide: MatDialog, useValue: dialogSpyObj },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 
@@ -199,13 +201,61 @@ describe('BirthdayListComponent', () => {
       });
     });
 
-    it('should update birthday when dialog returns result', () => {
+    it('should update birthday when dialog returns result (empty fields fall back to undefined)', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
         editedData: {
           name: 'Updated Name',
           notes: 'New notes',
+          birthDate: '1992-03-10',
+          category: 'friends',
+          photo: null,
+          rememberPhoto: null,
+          email: '',
+          phone: '',
+          telegramUsername: ''
+        }
+      }));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      spyOn(store, 'dispatch');
+      component.editBirthday(mockBirthdays[0]);
+
+      expect(store.dispatch).toHaveBeenCalled();
+    });
+
+    it('should update birthday preserving contact info when provided', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of({
+        birthday: mockBirthdays[0],
+        editedData: {
+          name: 'Alice Johnson',
+          notes: '',
+          birthDate: '1992-03-10',
+          category: 'friends',
+          photo: 'data:image/png;base64,abc',
+          rememberPhoto: 'data:image/png;base64,def',
+          email: 'alice@example.com',
+          phone: '+39 123 456 789',
+          telegramUsername: 'alice_tg'
+        }
+      }));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      spyOn(store, 'dispatch');
+      component.editBirthday(mockBirthdays[0]);
+
+      expect(store.dispatch).toHaveBeenCalled();
+    });
+
+    it('should fall back to birthday.name when edited name is empty after trim', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of({
+        birthday: mockBirthdays[0],
+        editedData: {
+          name: '   ',  // only whitespace → trimmed name is ''
+          notes: '',
           birthDate: '1992-03-10',
           category: 'friends',
           photo: null,
@@ -244,6 +294,29 @@ describe('BirthdayListComponent', () => {
       spyOn(store, 'dispatch');
       component.deleteBirthday(mockBirthdays[0]);
       expect(store.dispatch).toHaveBeenCalled();
+    });
+
+    it('should not delete birthday when dialog is cancelled', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(false));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      spyOn(store, 'dispatch');
+      component.deleteBirthday(mockBirthdays[0]);
+      expect(store.dispatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Clear all data', () => {
+    it('should not emit clearAllData when confirm dialog is rejected', () => {
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(false));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      spyOn(component.clearAllData, 'emit');
+      component.onClearAllData();
+
+      expect(component.clearAllData.emit).not.toHaveBeenCalled();
     });
   });
 });

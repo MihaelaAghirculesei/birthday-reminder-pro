@@ -5,38 +5,34 @@
     (photoRemoved)="onPhotoRemoved()">
   </app-photo-upload>
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Name</mat-label>
-    <input matInput formControlName="name" placeholder="e.g. John Doe" data-testid="birthday-name-input" maxlength="50">
+    <mat-label>{{ 'BIRTHDAY_FORM.NAME_LABEL' | translate }}</mat-label>
+    <input matInput formControlName="name" [placeholder]="'BIRTHDAY_FORM.NAME_PLACEHOLDER' | translate" data-testid="birthday-name-input" maxlength="50">
     <mat-icon matSuffix>person</mat-icon>
     @if (birthdayForm.get('name')?.hasError('minlength')) {
-      <mat-error>Name must be at least 2 characters</mat-error>
+      <mat-error>{{ 'BIRTHDAY_FORM.NAME_ERROR_MIN' | translate }}</mat-error>
     }
   </mat-form-field>
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Birth Date</mat-label>
+    <mat-label>{{ 'BIRTHDAY_FORM.BIRTH_DATE_LABEL' | translate }}</mat-label>
     <input matInput [matDatepicker]="picker" formControlName="birthDate" data-testid="birthday-date-input">
-    <mat-hint>Click the icon to open calendar</mat-hint>
+    <mat-hint>{{ 'BIRTHDAY_FORM.BIRTH_DATE_HINT' | translate }}</mat-hint>
     @if (birthdayForm.get('birthDate')?.hasError('required')) {
-      <mat-error>
-        Birth date is required
-      </mat-error>
+      <mat-error>{{ 'BIRTHDAY_FORM.BIRTH_DATE_ERROR_REQUIRED' | translate }}</mat-error>
     }
     @if (birthdayForm.get('birthDate')?.hasError('futureDate')) {
-      <mat-error>
-        Birth date cannot be in the future
-      </mat-error>
+      <mat-error>{{ 'BIRTHDAY_FORM.BIRTH_DATE_ERROR_FUTURE' | translate }}</mat-error>
     }
     <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
     <mat-datepicker #picker></mat-datepicker>
   </mat-form-field>
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Category</mat-label>
+    <mat-label>{{ 'BIRTHDAY_FORM.CATEGORY_LABEL' | translate }}</mat-label>
     <mat-select formControlName="category" data-testid="category-select">
       @for (category of categories; track category.id) {
         <mat-option [value]="category.id">
           <div class="category-option">
             <mat-icon [style.color]="category.color">{{ category.icon }}</mat-icon>
-            <span>{{ category.name }}</span>
+            <span>{{ category.nameKey ? (category.nameKey | translate) : category.name }}</span>
           </div>
         </mat-option>
       }
@@ -44,14 +40,14 @@
     <mat-icon matSuffix>label</mat-icon>
   </mat-form-field>
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Notes (optional)</mat-label>
-    <textarea matInput formControlName="notes" placeholder="e.g. Gift: cooking book" rows="2"></textarea>
+    <mat-label>{{ 'BIRTHDAY_FORM.NOTES_LABEL' | translate }}</mat-label>
+    <textarea matInput formControlName="notes" [placeholder]="'BIRTHDAY_FORM.NOTES_PLACEHOLDER' | translate" rows="2"></textarea>
     <mat-icon matSuffix>notes</mat-icon>
   </mat-form-field>
   <mat-form-field appearance="outline" class="full-width">
-    <mat-label>Reminder Days</mat-label>
+    <mat-label>{{ 'BIRTHDAY_FORM.REMINDER_DAYS_LABEL' | translate }}</mat-label>
     <input matInput type="number" formControlName="reminderDays" min="1" max="365" data-testid="reminder-days-input">
-    <mat-hint>How many days before do you want to be reminded?</mat-hint>
+    <mat-hint>{{ 'BIRTHDAY_FORM.REMINDER_DAYS_HINT' | translate }}</mat-hint>
     <mat-icon matSuffix>notifications</mat-icon>
   </mat-form-field>
   <div class="form-actions">
@@ -63,7 +59,7 @@
       class="submit-button"
       data-testid="save-birthday-button">
       <mat-icon>add</mat-icon>
-      Add Birthday
+      {{ 'BIRTHDAY_FORM.ADD_BUTTON' | translate }}
     </button>
   </div>
 </form>

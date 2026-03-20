@@ -3,6 +3,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday } from '../../../../../shared';
 import { BackupService, NotificationService, LoggerService } from '../../../../../core';
 
@@ -12,7 +13,8 @@ import { BackupService, NotificationService, LoggerService } from '../../../../.
         MatCardModule,
         MatIconModule,
         MatButtonModule,
-        MatTooltipModule
+        MatTooltipModule,
+        TranslatePipe
     ],
     templateUrl: './birthday-import-export.component.html',
     styleUrls: ['./birthday-import-export.component.scss'],

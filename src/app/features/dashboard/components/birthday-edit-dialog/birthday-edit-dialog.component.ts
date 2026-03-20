@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday, BirthdayCategory, PhotoUploadComponent, MessageSchedulerComponent } from '../../../../shared';
 
 export interface BirthdayEditDialogData {
@@ -42,6 +43,7 @@ export interface BirthdayEditDialogResult {
         MatSelectModule,
         PhotoUploadComponent,
         MessageSchedulerComponent,
+        TranslatePipe,
     ],
     templateUrl: './birthday-edit-dialog.component.html',
     styleUrls: ['./birthday-edit-dialog.component.scss'],

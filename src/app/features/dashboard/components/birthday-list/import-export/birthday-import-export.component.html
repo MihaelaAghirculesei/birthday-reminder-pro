@@ -5,8 +5,8 @@
         <div class="backup-content">
           <mat-icon class="backup-icon">backup</mat-icon>
           <div class="backup-info">
-            <h3>Backup & Restore</h3>
-            <p>Export or import your birthday data</p>
+            <h3>{{ 'IMPORT_EXPORT.TITLE' | translate }}</h3>
+            <p>{{ 'IMPORT_EXPORT.SUBTITLE' | translate }}</p>
           </div>
           <div class="backup-actions">
             <button
@@ -14,8 +14,8 @@
               color="primary"
               (click)="onExportJSON()"
               [disabled]="isImporting()"
-              matTooltip="Export all birthdays to JSON file"
-              aria-label="Export birthdays to JSON">
+              [matTooltip]="'IMPORT_EXPORT.TOOLTIP_EXPORT_JSON' | translate"
+              [attr.aria-label]="'IMPORT_EXPORT.EXPORT_JSON' | translate">
               <mat-icon>download</mat-icon>
               JSON
             </button>
@@ -24,8 +24,8 @@
               color="primary"
               (click)="onExportCSV()"
               [disabled]="isImporting()"
-              matTooltip="Export all birthdays to CSV file"
-              aria-label="Export birthdays to CSV">
+              [matTooltip]="'IMPORT_EXPORT.TOOLTIP_EXPORT_CSV' | translate"
+              [attr.aria-label]="'IMPORT_EXPORT.EXPORT_CSV' | translate">
               <mat-icon>download</mat-icon>
               CSV
             </button>
@@ -34,30 +34,30 @@
               color="accent"
               (click)="jsonInput.click()"
               [disabled]="isImporting()"
-              matTooltip="Import birthdays from JSON file"
-              aria-label="Import birthdays from JSON">
+              [matTooltip]="'IMPORT_EXPORT.TOOLTIP_IMPORT_JSON' | translate"
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_JSON' | translate">
               <mat-icon>upload</mat-icon>
-              {{ isImporting() ? 'Importing...' : 'Import JSON' }}
+              {{ isImporting() ? ('IMPORT_EXPORT.IMPORTING' | translate) : ('IMPORT_EXPORT.IMPORT_JSON' | translate) }}
             </button>
             <button
               mat-stroked-button
               color="accent"
               (click)="csvInput.click()"
               [disabled]="isImporting()"
-              matTooltip="Import birthdays from CSV file"
-              aria-label="Import birthdays from CSV">
+              [matTooltip]="'IMPORT_EXPORT.TOOLTIP_IMPORT_CSV' | translate"
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_CSV' | translate">
               <mat-icon>upload</mat-icon>
-              {{ isImporting() ? 'Importing...' : 'Import CSV' }}
+              {{ isImporting() ? ('IMPORT_EXPORT.IMPORTING' | translate) : ('IMPORT_EXPORT.IMPORT_CSV' | translate) }}
             </button>
             <button
               mat-stroked-button
               color="accent"
               (click)="vcardInput.click()"
               [disabled]="isImporting()"
-              matTooltip="Import birthdays from vCard file"
-              aria-label="Import birthdays from vCard">
+              [matTooltip]="'IMPORT_EXPORT.TOOLTIP_IMPORT_VCARD' | translate"
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_VCARD' | translate">
               <mat-icon>upload</mat-icon>
-              {{ isImporting() ? 'Importing...' : 'Import vCard' }}
+              {{ isImporting() ? ('IMPORT_EXPORT.IMPORTING' | translate) : ('IMPORT_EXPORT.IMPORT_VCARD' | translate) }}
             </button>
             <input
               #jsonInput
@@ -65,21 +65,21 @@
               accept=".json"
               (change)="onImportBackup($event)"
               hidden
-              aria-label="JSON file input" />
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_JSON' | translate" />
             <input
               #csvInput
               type="file"
               accept=".csv"
               (change)="onImportCSV($event)"
               hidden
-              aria-label="CSV file input" />
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_CSV' | translate" />
             <input
               #vcardInput
               type="file"
               accept=".vcf"
               (change)="onImportVCard($event)"
               hidden
-              aria-label="vCard file input" />
+              [attr.aria-label]="'IMPORT_EXPORT.IMPORT_VCARD' | translate" />
           </div>
         </div>
       </mat-card-content>

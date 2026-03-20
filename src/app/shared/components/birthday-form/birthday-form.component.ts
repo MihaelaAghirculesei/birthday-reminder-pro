@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -33,6 +34,7 @@ import { LoggerService } from '../../../core';
     MatIconModule,
     MatButtonModule,
     PhotoUploadComponent,
+    TranslatePipe,
   ],
   templateUrl: './birthday-form.component.html',
   styleUrls: ['./birthday-form.component.scss'],
