@@ -2,6 +2,7 @@ import { Injectable, Signal, WritableSignal, computed, signal, inject } from '@a
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { Birthday, BirthdayCategory } from '../../../shared';
+import { safeParseBirthday } from '../../../shared/schemas/birthday.schema';
 import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService, ChartDataItem } from './birthday-stats.service';
 import { CategoryStats } from '../components/category-filter/category-filter.component';
@@ -183,7 +184,9 @@ export class DashboardFacadeService {
   undoLastAction(): void {
     const action = this._lastAction();
     if (action?.type === 'delete') {
-      this.store.dispatch(BirthdayActions.addBirthday({ birthday: action.data as Birthday }));
+      const result = safeParseBirthday(action.data);
+      if (!result.success) return;
+      this.store.dispatch(BirthdayActions.addBirthday({ birthday: result.data }));
       this._lastAction.set(null);
     }
   }

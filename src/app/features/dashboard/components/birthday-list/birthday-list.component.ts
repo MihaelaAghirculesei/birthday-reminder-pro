@@ -171,7 +171,7 @@ export class BirthdayListComponent implements OnChanges {
         this.logger.error('[BirthdayList] Edit validation failed:', validation.error.issues);
         return;
       }
-      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: sanitized as unknown as Birthday }));
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: validation.data }));
     });
   }
 
