@@ -1,5 +1,6 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { SecureStorageService } from './secure-storage.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,25 +9,44 @@ export class SenderSettingsService {
   private readonly SENDER_KEY = 'birthday-app-sender-name';
   private readonly SENDER_FULL_KEY = 'birthday-app-sender-full-name';
 
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly secureStorage = inject(SecureStorageService);
+
+  private readonly _senderName = signal<string>('');
+  private readonly _senderFullName = signal<string>('');
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadFromStorage();
+    }
+  }
+
+  private async loadFromStorage(): Promise<void> {
+    const [name, fullName] = await Promise.all([
+      this.secureStorage.getItem<string>(this.SENDER_KEY),
+      this.secureStorage.getItem<string>(this.SENDER_FULL_KEY)
+    ]);
+    this._senderName.set(name ?? '');
+    this._senderFullName.set(fullName ?? '');
+  }
 
   getSenderName(): string {
-    if (!isPlatformBrowser(this.platformId)) return '';
-    return localStorage.getItem(this.SENDER_KEY) || '';
+    return this._senderName();
   }
 
   setSenderName(name: string): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    localStorage.setItem(this.SENDER_KEY, name.trim());
+    const trimmed = name.trim();
+    this._senderName.set(trimmed);
+    this.secureStorage.setItem(this.SENDER_KEY, trimmed);
   }
 
   getSenderFullName(): string {
-    if (!isPlatformBrowser(this.platformId)) return '';
-    return localStorage.getItem(this.SENDER_FULL_KEY) || '';
+    return this._senderFullName();
   }
 
   setSenderFullName(name: string): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    localStorage.setItem(this.SENDER_FULL_KEY, name.trim());
+    const trimmed = name.trim();
+    this._senderFullName.set(trimmed);
+    this.secureStorage.setItem(this.SENDER_FULL_KEY, trimmed);
   }
 }

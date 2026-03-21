@@ -1,20 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { SenderSettingsService } from './sender-settings.service';
+import { SecureStorageService } from './secure-storage.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('SenderSettingsService', () => {
   let service: SenderSettingsService;
+  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideTranslateTesting()] });
-    service = TestBed.inject(SenderSettingsService);
-    localStorage.removeItem('birthday-app-sender-name');
-    localStorage.removeItem('birthday-app-sender-full-name');
-  });
+    mockSecureStorage = jasmine.createSpyObj('SecureStorageService', ['setItem', 'getItem', 'removeItem']);
+    mockSecureStorage.setItem.and.returnValue(Promise.resolve());
+    mockSecureStorage.getItem.and.returnValue(Promise.resolve(null));
+    mockSecureStorage.removeItem.and.returnValue(Promise.resolve());
 
-  afterEach(() => {
-    localStorage.removeItem('birthday-app-sender-name');
-    localStorage.removeItem('birthday-app-sender-full-name');
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: SecureStorageService, useValue: mockSecureStorage },
+        provideTranslateTesting()
+      ]
+    });
+    service = TestBed.inject(SenderSettingsService);
   });
 
   it('should be created', () => {
@@ -35,6 +40,11 @@ describe('SenderSettingsService', () => {
       service.setSenderName('  Alice  ');
       expect(service.getSenderName()).toBe('Alice');
     });
+
+    it('should persist name via SecureStorageService', () => {
+      service.setSenderName('Alice');
+      expect(mockSecureStorage.setItem).toHaveBeenCalledWith('birthday-app-sender-name', 'Alice');
+    });
   });
 
   describe('sender full name', () => {
@@ -50,6 +60,11 @@ describe('SenderSettingsService', () => {
     it('should trim whitespace from sender full name', () => {
       service.setSenderFullName('  Alice Johnson  ');
       expect(service.getSenderFullName()).toBe('Alice Johnson');
+    });
+
+    it('should persist full name via SecureStorageService', () => {
+      service.setSenderFullName('Alice Johnson');
+      expect(mockSecureStorage.setItem).toHaveBeenCalledWith('birthday-app-sender-full-name', 'Alice Johnson');
     });
   });
 });
