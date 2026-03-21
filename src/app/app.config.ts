@@ -1,5 +1,8 @@
-import { ApplicationConfig, isDevMode, ErrorHandler, APP_INITIALIZER } from '@angular/core';
+import { ApplicationConfig, isDevMode, ErrorHandler, APP_INITIALIZER, importProvidersFrom } from '@angular/core';
 import { provideRouter, withPreloading } from '@angular/router';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
+import { LocaleService } from './core/services/locale.service';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
@@ -25,10 +28,12 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 function initializeApp(
   authService: FirebaseAuthService,
   syncCoordinator: SyncCoordinatorService,
-  logger: LoggerService
+  logger: LoggerService,
+  localeService: LocaleService
 ) {
   return async () => {
     try {
+      localeService.initialize();
       authService.initAuthListener();
       await syncCoordinator.initialize();
     } catch (error) {
@@ -62,9 +67,15 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
-      deps: [FirebaseAuthService, SyncCoordinatorService, LoggerService],
+      deps: [FirebaseAuthService, SyncCoordinatorService, LoggerService, LocaleService],
       multi: true
     },
+    importProvidersFrom(
+      TranslateModule.forRoot({
+        loader: { provide: TranslateLoader, useClass: InlineTranslateLoader },
+        defaultLanguage: 'en'
+      })
+    ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
