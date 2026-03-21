@@ -306,7 +306,7 @@ export class FirestoreService {
       };
       const result = safeParseBirthday(mapped);
       if (result.success) {
-        birthdays.push(mapped as unknown as Birthday);
+        birthdays.push(result.data);
       } else {
         this.logger.warn('[Firestore] Skipping invalid birthday document:', doc.id, result.error.issues);
       }
@@ -322,10 +322,10 @@ export class FirestoreService {
         ...data,
         id: doc.id,
         syncStatus: 'synced'
-      } as Category;
+      };
       const result = safeParseCategory(mapped);
       if (result.success) {
-        categories.push(mapped);
+        categories.push(result.data);
       } else {
         this.logger.warn('[Firestore] Skipping invalid category document:', doc.id, result.error.issues);
       }

@@ -89,11 +89,12 @@ export class BackupService {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
         throw new Error(`Invalid date for ${b.name}`);
       }
-      return {
-        ...b,
-        birthDate,
-        id: b.id || crypto.randomUUID()
-      } as Birthday;
+      const assembled = { ...b, birthDate, id: b.id || crypto.randomUUID() };
+      const result = safeParseBirthday(assembled);
+      if (!result.success) {
+        throw new Error(`Invalid birthday data for ${b.name}: ${result.error.issues[0]?.message}`);
+      }
+      return result.data;
     });
   }
 
@@ -127,7 +128,7 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        birthdays.push(candidate as unknown as Birthday);
+        birthdays.push(result.data);
       } else {
         this.logger.warn(`[Import] Skipping invalid CSV row ${i}:`, result.error.issues);
       }
@@ -163,7 +164,7 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        birthdays.push(candidate as unknown as Birthday);
+        birthdays.push(result.data);
       } else {
         this.logger.warn('[Import] Skipping invalid vCard entry:', name, result.error.issues);
       }

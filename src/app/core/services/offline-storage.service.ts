@@ -79,7 +79,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
               });
               const result = safeParseBirthday(sanitized);
               if (result.success) {
-                birthdays.push(sanitized as unknown as Birthday);
+                birthdays.push(result.data);
               } else {
                 this.logger.warn('[IndexedDB] Skipping invalid birthday record:', raw.id, result.error.issues);
               }
@@ -284,7 +284,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
             for (const raw of (request.result || [])) {
               const result = safeParseScheduledMessage(raw);
               if (result.success) {
-                messages.push(raw as ScheduledMessage);
+                messages.push(result.data);
               } else {
                 this.logger.warn('[IndexedDB] Skipping invalid scheduled message:', raw.id, result.error.issues);
               }
