@@ -22,6 +22,7 @@ export interface Birthday extends SyncMetadata {
   phone?: string;
   telegramUsername?: string;
   scheduledMessages?: ScheduledMessage[];
+  daysUntilBirthday?: number;
 }
 
 export interface ScheduledMessage {

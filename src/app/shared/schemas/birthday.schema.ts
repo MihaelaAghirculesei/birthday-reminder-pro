@@ -15,12 +15,12 @@ export const ScheduledMessageSchema = z.object({
   message: z.string(),
   scheduledTime: z.string(),
   active: z.boolean(),
-  createdDate: z.union([z.string(), z.date()]),
-  lastSentDate: z.union([z.string(), z.date()]).optional(),
+  createdDate: z.coerce.date(),
+  lastSentDate: z.coerce.date().optional(),
   messageType: z.enum(['text', 'html']),
   priority: z.enum(['low', 'normal', 'high']),
   sentCount: z.number().optional(),
-  nextScheduledDate: z.union([z.string(), z.date()]).optional(),
+  nextScheduledDate: z.coerce.date().optional(),
   notificationSent: z.boolean().optional(),
   lastNotificationId: z.string().optional(),
   birthdayId: z.string().optional()
@@ -40,7 +40,8 @@ export const BirthdaySchema = z.object({
   email: z.string().email().max(254).optional(),
   phone: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/).optional(),
   telegramUsername: z.string().regex(/^[a-zA-Z0-9_]{5,32}$/).optional(),
-  scheduledMessages: z.array(ScheduledMessageSchema).optional()
+  scheduledMessages: z.array(ScheduledMessageSchema).optional(),
+  daysUntilBirthday: z.number().optional()
 }).merge(SyncMetadataSchema);
 
 export const CategorySchema = z.object({
