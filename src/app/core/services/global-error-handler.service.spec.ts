@@ -4,6 +4,7 @@ import { GlobalErrorHandler } from './global-error-handler.service';
 import { NotificationService } from './notification.service';
 import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
@@ -26,7 +27,8 @@ describe('GlobalErrorHandler', () => {
       providers: [
         { provide: Injector, useValue: injectorSpy },
         GlobalErrorHandler,
-        SILENT_LOGGER_PROVIDER
+        SILENT_LOGGER_PROVIDER,
+        provideTranslateTesting()
       ]
     });
 

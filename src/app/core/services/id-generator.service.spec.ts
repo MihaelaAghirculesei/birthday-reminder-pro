@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { IdGeneratorService } from './id-generator.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 const cryptoRef = crypto as unknown as { randomUUID?: () => string };
 
@@ -12,7 +13,8 @@ describe('IdGeneratorService', () => {
       TestBed.configureTestingModule({
         providers: [
           IdGeneratorService,
-          { provide: PLATFORM_ID, useValue: 'browser' }
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          provideTranslateTesting()
         ]
       });
       service = TestBed.inject(IdGeneratorService);
@@ -46,7 +48,8 @@ describe('IdGeneratorService', () => {
       TestBed.configureTestingModule({
         providers: [
           IdGeneratorService,
-          { provide: PLATFORM_ID, useValue: 'browser' }
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          provideTranslateTesting()
         ]
       });
 
@@ -95,7 +98,8 @@ describe('IdGeneratorService', () => {
       TestBed.configureTestingModule({
         providers: [
           IdGeneratorService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideTranslateTesting()
         ]
       });
       service = TestBed.inject(IdGeneratorService);
@@ -138,7 +142,8 @@ describe('IdGeneratorService', () => {
       TestBed.configureTestingModule({
         providers: [
           IdGeneratorService,
-          { provide: PLATFORM_ID, useValue: 'browser' }
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          provideTranslateTesting()
         ]
       });
       service = TestBed.inject(IdGeneratorService);

@@ -55,4 +55,27 @@ describe('Category Selectors', () => {
     const stateWithDeleted = { categories: { ...mockState, deletedCategoryIds: ['family'] } };
     expect(fromSelectors.selectCategoryById('family')(stateWithDeleted)).toBeUndefined();
   });
+
+  it('should keep existing nameKey when category already has one', () => {
+    const categoriesWithNameKey: BirthdayCategory[] = [
+      { id: 'custom-already-keyed', name: 'My Cat', nameKey: 'MY.KEY', icon: 'star', color: '#000' }
+    ];
+    const stateWithKey = {
+      categories: {
+        ...mockState,
+        ids: ['custom-already-keyed'],
+        entities: { 'custom-already-keyed': categoriesWithNameKey[0] },
+        customCategoryIds: ['custom-already-keyed']
+      }
+    };
+    const result = fromSelectors.selectAllCategories(stateWithKey);
+    expect(result[0].nameKey).toBe('MY.KEY');
+  });
+
+  it('should assign built-in nameKey for known categories without one', () => {
+    // 'family' exists in BIRTHDAY_CATEGORIES with nameKey 'CATEGORIES.FAMILY'
+    const result = fromSelectors.selectAllCategories(state);
+    const familyCat = result.find(c => c.id === 'family');
+    expect(familyCat?.nameKey).toBe('CATEGORIES.FAMILY');
+  });
 });

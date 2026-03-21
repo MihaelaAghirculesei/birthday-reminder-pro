@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { SyncCoordinatorService } from './sync-coordinator.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
 import { FirebaseAuthService, AuthUser } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
@@ -106,7 +107,8 @@ describe('SyncCoordinatorService', () => {
         { provide: PendingChangesService, useValue: pendingChangesMock },
         { provide: NetworkService, useValue: networkServiceMock },
         { provide: LoggerService, useValue: loggerMock },
-        { provide: BirthdayMergeService, useValue: mergeServiceMock }
+        { provide: BirthdayMergeService, useValue: mergeServiceMock },
+        provideTranslateTesting()
       ]
     });
 

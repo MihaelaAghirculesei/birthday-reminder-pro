@@ -3,6 +3,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { CategoryStorageService } from './category-storage.service';
 import { BirthdayCategory } from '../../shared';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('CategoryStorageService', () => {
   let service: CategoryStorageService;
@@ -45,7 +46,8 @@ describe('CategoryStorageService', () => {
       providers: [
         CategoryStorageService,
         { provide: PLATFORM_ID, useValue: 'browser' },
-        SILENT_LOGGER_PROVIDER
+        SILENT_LOGGER_PROVIDER,
+        provideTranslateTesting()
       ]
     });
 

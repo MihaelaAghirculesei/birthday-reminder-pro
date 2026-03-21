@@ -3,6 +3,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { ErrorReportingService, ErrorReport, ERROR_REPORTING_ENDPOINT } from './error-reporting.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('ErrorReportingService', () => {
   let service: ErrorReportingService;
@@ -37,7 +38,7 @@ describe('ErrorReportingService', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [SILENT_LOGGER_PROVIDER]
+      providers: [SILENT_LOGGER_PROVIDER, provideTranslateTesting()]
     });
     dbConnection = TestBed.inject(IndexedDBConnectionService);
     service = TestBed.inject(ErrorReportingService);

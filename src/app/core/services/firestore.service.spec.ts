@@ -3,6 +3,7 @@ import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { environment } from '../../../environments/environment';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('FirestoreService', () => {
   let service: FirestoreService;
@@ -18,7 +19,8 @@ describe('FirestoreService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: LoggerService, useValue: loggerMock }
+        { provide: LoggerService, useValue: loggerMock },
+        provideTranslateTesting()
       ]
     });
 

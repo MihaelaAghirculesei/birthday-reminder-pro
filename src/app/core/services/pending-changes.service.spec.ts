@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PendingChangesService } from './pending-changes.service';
 import { LoggerService } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('PendingChangesService', () => {
   let service: PendingChangesService;
@@ -11,7 +12,8 @@ describe('PendingChangesService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: LoggerService, useValue: loggerMock }
+        { provide: LoggerService, useValue: loggerMock },
+        provideTranslateTesting()
       ]
     });
 

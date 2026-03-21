@@ -5,6 +5,7 @@ import { SecureStorageService } from './secure-storage.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
 import type { Gapi, GapiTokenObject } from './google-api.types';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;
@@ -102,7 +103,8 @@ describe('GoogleCalendarService', () => {
         GoogleCalendarService,
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: SecureStorageService, useValue: mockSecureStorage },
-        SILENT_LOGGER_PROVIDER
+        SILENT_LOGGER_PROVIDER,
+        provideTranslateTesting()
       ]
     });
 

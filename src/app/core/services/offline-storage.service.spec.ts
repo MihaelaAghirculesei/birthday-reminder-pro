@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('IndexedDBStorageService', () => {
   let service: IndexedDBStorageService;
@@ -38,7 +39,7 @@ describe('IndexedDBStorageService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SILENT_LOGGER_PROVIDER]
+      providers: [SILENT_LOGGER_PROVIDER, provideTranslateTesting()]
     });
     service = TestBed.inject(IndexedDBStorageService);
   });

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { NetworkService } from './network.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { Subscription } from 'rxjs';
 
 describe('NetworkService', () => {
@@ -18,7 +19,8 @@ describe('NetworkService', () => {
       TestBed.configureTestingModule({
         providers: [
           NetworkService,
-          { provide: PLATFORM_ID, useValue: 'browser' }
+          { provide: PLATFORM_ID, useValue: 'browser' },
+          provideTranslateTesting()
         ]
       });
       service = TestBed.inject(NetworkService);
@@ -94,7 +96,8 @@ describe('NetworkService', () => {
       TestBed.configureTestingModule({
         providers: [
           NetworkService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideTranslateTesting()
         ]
       });
       service = TestBed.inject(NetworkService);

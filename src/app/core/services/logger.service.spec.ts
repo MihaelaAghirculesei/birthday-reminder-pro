@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { LoggerService, SILENT_LOGGING, SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('LoggerService', () => {
   // isDevMode() returns true in test environment
@@ -9,7 +10,7 @@ describe('LoggerService', () => {
 
     beforeEach(() => {
       TestBed.configureTestingModule({
-        providers: [LoggerService]
+        providers: [LoggerService, provideTranslateTesting()]
       });
       logger = TestBed.inject(LoggerService);
     });
@@ -66,7 +67,7 @@ describe('LoggerService', () => {
 
     beforeEach(() => {
       TestBed.configureTestingModule({
-        providers: [LoggerService, SILENT_LOGGER_PROVIDER]
+        providers: [LoggerService, SILENT_LOGGER_PROVIDER, provideTranslateTesting()]
       });
       logger = TestBed.inject(LoggerService);
     });
@@ -111,7 +112,7 @@ describe('LoggerService', () => {
   describe('SILENT_LOGGING not provided', () => {
     it('should default to non-silent when token is not provided', () => {
       TestBed.configureTestingModule({
-        providers: [LoggerService]
+        providers: [LoggerService, provideTranslateTesting()]
       });
       const logger = TestBed.inject(LoggerService);
       spyOn(console, 'error');
@@ -125,7 +126,8 @@ describe('LoggerService', () => {
       TestBed.configureTestingModule({
         providers: [
           LoggerService,
-          { provide: SILENT_LOGGING, useValue: false }
+          { provide: SILENT_LOGGING, useValue: false },
+          provideTranslateTesting()
         ]
       });
       const logger = TestBed.inject(LoggerService);

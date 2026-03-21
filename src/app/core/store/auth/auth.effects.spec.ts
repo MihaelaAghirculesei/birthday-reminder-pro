@@ -5,6 +5,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { AuthEffects } from './auth.effects';
 import * as AuthActions from './auth.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { FirebaseAuthService, AuthUser } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
 
@@ -39,7 +40,8 @@ describe('AuthEffects', () => {
           }
         }),
         { provide: FirebaseAuthService, useValue: authServiceMock },
-        { provide: NotificationService, useValue: notificationServiceMock }
+        { provide: NotificationService, useValue: notificationServiceMock },
+        provideTranslateTesting()
       ]
     });
 

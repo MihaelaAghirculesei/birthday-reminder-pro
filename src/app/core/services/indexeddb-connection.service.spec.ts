@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('IndexedDBConnectionService', () => {
   let service: IndexedDBConnectionService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SILENT_LOGGER_PROVIDER]
+      providers: [SILENT_LOGGER_PROVIDER, provideTranslateTesting()]
     });
     service = TestBed.inject(IndexedDBConnectionService);
   });

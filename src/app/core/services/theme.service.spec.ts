@@ -3,6 +3,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
 import { ThemeService } from './theme.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as UIActions from '../store/ui/ui.actions';
 
 describe('ThemeService', () => {
@@ -30,7 +31,8 @@ describe('ThemeService', () => {
       providers: [
         ThemeService,
         { provide: Store, useValue: storeSpyObj },
-        { provide: PLATFORM_ID, useValue: 'browser' }
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        provideTranslateTesting()
       ]
     });
 
@@ -113,7 +115,8 @@ describe('ThemeService', () => {
         providers: [
           ThemeService,
           { provide: Store, useValue: storeSpy },
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideTranslateTesting()
         ]
       });
     });

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { NotificationPermissionService } from './notification-permission.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { take } from 'rxjs';
 
 interface MockNotification {
@@ -45,7 +46,8 @@ describe('NotificationPermissionService', () => {
       providers: [
         NotificationPermissionService,
         { provide: PLATFORM_ID, useValue: 'browser' },
-        SILENT_LOGGER_PROVIDER
+        SILENT_LOGGER_PROVIDER,
+        provideTranslateTesting()
       ]
     });
 
@@ -183,7 +185,8 @@ describe('NotificationPermissionService', () => {
       TestBed.configureTestingModule({
         providers: [
           NotificationPermissionService,
-          { provide: PLATFORM_ID, useValue: 'server' }
+          { provide: PLATFORM_ID, useValue: 'server' },
+          provideTranslateTesting()
         ]
       });
       const serverService = TestBed.inject(NotificationPermissionService);
@@ -288,7 +291,8 @@ describe('NotificationPermissionService', () => {
         providers: [
           NotificationPermissionService,
           { provide: PLATFORM_ID, useValue: 'browser' },
-          SILENT_LOGGER_PROVIDER
+          SILENT_LOGGER_PROVIDER,
+          provideTranslateTesting()
         ]
       });
       const freshService = TestBed.inject(NotificationPermissionService);
@@ -302,7 +306,8 @@ describe('NotificationPermissionService', () => {
         providers: [
           NotificationPermissionService,
           { provide: PLATFORM_ID, useValue: 'browser' },
-          SILENT_LOGGER_PROVIDER
+          SILENT_LOGGER_PROVIDER,
+          provideTranslateTesting()
         ]
       });
       const freshService = TestBed.inject(NotificationPermissionService);
@@ -317,7 +322,8 @@ describe('NotificationPermissionService', () => {
         providers: [
           NotificationPermissionService,
           { provide: PLATFORM_ID, useValue: 'browser' },
-          SILENT_LOGGER_PROVIDER
+          SILENT_LOGGER_PROVIDER,
+          provideTranslateTesting()
         ]
       });
       const freshService = TestBed.inject(NotificationPermissionService);

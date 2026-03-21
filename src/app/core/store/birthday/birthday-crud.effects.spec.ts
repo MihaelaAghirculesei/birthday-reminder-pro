@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { BirthdayCrudEffects } from './birthday-crud.effects';
 import * as BirthdayActions from './birthday.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
@@ -90,7 +91,8 @@ describe('BirthdayCrudEffects', () => {
         { provide: PushNotificationService, useValue: pushNotificationMock },
         { provide: IdGeneratorService, useValue: idGeneratorMock },
         { provide: LoggerService, useValue: loggerMock },
-        { provide: SyncCoordinatorService, useValue: syncCoordinatorMock }
+        { provide: SyncCoordinatorService, useValue: syncCoordinatorMock },
+        provideTranslateTesting()
       ]
     });
 

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { LoggerService } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { environment } from '../../../environments/environment';
 
 describe('FirebaseAuthService', () => {
@@ -17,7 +18,8 @@ describe('FirebaseAuthService', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: LoggerService, useValue: loggerMock }
+        { provide: LoggerService, useValue: loggerMock },
+        provideTranslateTesting()
       ]
     });
 

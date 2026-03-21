@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GoogleApiErrorService, GoogleApiErrorDetails } from './google-api-error.service';
 import { LoggerService, SILENT_LOGGING } from './logger.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('GoogleApiErrorService', () => {
   let service: GoogleApiErrorService;
@@ -10,7 +11,8 @@ describe('GoogleApiErrorService', () => {
       providers: [
         GoogleApiErrorService,
         LoggerService,
-        { provide: SILENT_LOGGING, useValue: true }
+        { provide: SILENT_LOGGING, useValue: true },
+        provideTranslateTesting()
       ]
     });
 

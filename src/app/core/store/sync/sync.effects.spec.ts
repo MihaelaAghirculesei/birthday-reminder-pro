@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { SyncEffects } from './sync.effects';
 import * as SyncActions from './sync.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import * as AuthSelectors from '../auth/auth.selectors';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
@@ -51,7 +52,8 @@ describe('SyncEffects', () => {
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
         { provide: NotificationService, useValue: notificationServiceMock },
         { provide: LoggerService, useValue: loggerMock },
-        { provide: BirthdayMergeService, useValue: mergeServiceMock }
+        { provide: BirthdayMergeService, useValue: mergeServiceMock },
+        provideTranslateTesting()
       ]
     });
 

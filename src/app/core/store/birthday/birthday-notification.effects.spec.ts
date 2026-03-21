@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { BirthdayNotificationEffects } from './birthday-notification.effects';
 import * as BirthdayActions from './birthday.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService } from '../../services/notification.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 
@@ -27,7 +28,8 @@ describe('BirthdayNotificationEffects', () => {
       providers: [
         BirthdayNotificationEffects,
         provideMockActions(() => actions$),
-        { provide: NotificationService, useValue: notificationServiceMock }
+        { provide: NotificationService, useValue: notificationServiceMock },
+        provideTranslateTesting()
       ]
     });
 
@@ -107,7 +109,7 @@ describe('BirthdayNotificationEffects', () => {
 
       effects.loadTestDataSuccess$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith(
-          '1 test birthdays loaded successfully!',
+          'Imported 1 birthdays',
           'success'
         );
         done();
@@ -120,7 +122,7 @@ describe('BirthdayNotificationEffects', () => {
 
       effects.loadTestDataSuccess$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith(
-          '2 test birthdays loaded successfully!',
+          'Imported 2 birthdays',
           'success'
         );
         done();

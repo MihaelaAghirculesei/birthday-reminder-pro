@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { BirthdayMessageEffects } from './birthday-message.effects';
 import * as BirthdayActions from './birthday.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
@@ -71,7 +72,8 @@ describe('BirthdayMessageEffects', () => {
         provideMockStore({ initialState }),
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
         { provide: PushNotificationService, useValue: pushNotificationMock },
-        { provide: SyncCoordinatorService, useValue: syncCoordinatorMock }
+        { provide: SyncCoordinatorService, useValue: syncCoordinatorMock },
+        provideTranslateTesting()
       ]
     });
 

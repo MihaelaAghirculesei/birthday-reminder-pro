@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { SenderSettingsService } from './sender-settings.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('SenderSettingsService', () => {
   let service: SenderSettingsService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [provideTranslateTesting()] });
     service = TestBed.inject(SenderSettingsService);
     localStorage.removeItem('birthday-app-sender-name');
     localStorage.removeItem('birthday-app-sender-full-name');

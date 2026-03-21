@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { CategoryEffects } from './category.effects';
 import * as CategoryActions from './category.actions';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { CategoryStorageService } from '../../services/category-storage.service';
 import { BirthdayCategory } from '../../../shared';
 import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
@@ -39,7 +40,8 @@ describe('CategoryEffects', () => {
       providers: [
         CategoryEffects,
         provideMockActions(() => actions$),
-        { provide: CategoryStorageService, useValue: categoryStorageMock }
+        { provide: CategoryStorageService, useValue: categoryStorageMock },
+        provideTranslateTesting()
       ]
     });
 

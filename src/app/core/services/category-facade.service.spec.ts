@@ -5,6 +5,7 @@ import { CategoryFacadeService } from './category-facade.service';
 import { BirthdayCategory } from '../../shared';
 import * as CategoryActions from '../store/category/category.actions';
 import * as CategorySelectors from '../store/category/category.selectors';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('CategoryFacadeService', () => {
   let service: CategoryFacadeService;
@@ -53,7 +54,8 @@ describe('CategoryFacadeService', () => {
     TestBed.configureTestingModule({
       providers: [
         CategoryFacadeService,
-        { provide: Store, useValue: storeSpyObj }
+        { provide: Store, useValue: storeSpyObj },
+        provideTranslateTesting()
       ]
     });
 
@@ -118,6 +120,48 @@ describe('CategoryFacadeService', () => {
     it('should dispatch restoreCategory action', () => {
       service.restoreCategory('test-id');
       expect(storeSpy.dispatch).toHaveBeenCalledWith(CategoryActions.restoreCategory({ categoryId: 'test-id' }));
+    });
+  });
+
+  describe('resolvedCategories', () => {
+    it('should return categories as-is when no nameTranslations present', () => {
+      const resolved = service.resolvedCategories();
+      expect(resolved.length).toBe(mockCategories.length);
+      // Categories without nameTranslations are returned unchanged
+      expect(resolved[0].name).toBe('Friends');
+    });
+
+    it('should resolve name from nameTranslations when available for current lang', () => {
+      const categoriesWithTranslations: BirthdayCategory[] = [
+        { id: 'custom1', name: 'Custom EN', nameTranslations: { en: 'Custom English', it: 'Personalizzato' }, icon: 'star', color: '#FFC107' },
+        { id: 'custom2', name: 'No Translations', icon: 'star', color: '#FF0000' }
+      ];
+
+      storeSpy.select.and.callFake((selector: unknown) => {
+        if (selector === CategorySelectors.selectAllCategories) return of(categoriesWithTranslations);
+        if (selector === CategorySelectors.selectCategoriesLoaded) return of(true);
+        if (selector === CategorySelectors.selectCategoriesLoading) return of(false);
+        if (selector === CategorySelectors.selectCategoriesError) return of(null);
+        if (selector === CategorySelectors.selectDefaultCategories) return of([]);
+        if (selector === CategorySelectors.selectCustomCategories) return of([]);
+        return of(undefined);
+      });
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          CategoryFacadeService,
+          { provide: Store, useValue: storeSpy },
+          provideTranslateTesting()
+        ]
+      });
+      const svc = TestBed.inject(CategoryFacadeService);
+
+      const resolved = svc.resolvedCategories();
+      // custom1 has 'en' translation → should be resolved
+      expect(resolved[0].name).toBe('Custom English');
+      // custom2 has no nameTranslations → returns original
+      expect(resolved[1].name).toBe('No Translations');
     });
   });
 
