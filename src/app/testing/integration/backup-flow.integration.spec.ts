@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { BackupService, BackupData } from '../../core/services/backup.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
 import { Birthday } from '../../shared/models/birthday.model';
+import { provideTranslateTesting } from '../translate-testing';
 
 describe('Backup Flow Integration', () => {
   let backupService: BackupService;
@@ -32,7 +33,8 @@ describe('Backup Flow Integration', () => {
       providers: [
         BackupService,
         LoggerService,
-        { provide: SILENT_LOGGING, useValue: true }
+        { provide: SILENT_LOGGING, useValue: true },
+        provideTranslateTesting()
       ]
     });
 

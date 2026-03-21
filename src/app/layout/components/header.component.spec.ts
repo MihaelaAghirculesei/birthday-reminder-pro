@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 
 import { HeaderComponent } from './header.component';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -55,7 +56,8 @@ describe('HeaderComponent', () => {
         { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
         { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
         { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
-        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } }
+        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CategoryManagerService } from './category-manager.service';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService, NotificationService } from '../../../core';
+import { LocaleService } from '../../../core/services/locale.service';
 import { Birthday, BirthdayCategory } from '../../../shared';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
@@ -68,7 +70,8 @@ describe('CategoryManagerService', () => {
         provideMockStore(),
         { provide: MatDialog, useValue: dialogSpyObj },
         { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
-        { provide: NotificationService, useValue: notificationServiceSpyObj }
+        { provide: NotificationService, useValue: notificationServiceSpyObj },
+        provideTranslateTesting()
       ]
     });
 
@@ -147,6 +150,43 @@ describe('CategoryManagerService', () => {
       expect(addedCategory.id).toContain('test-category');
       expect(addedCategory.id).toMatch(/test-category-\d+/);
     });
+
+    it('should include other-language translation when nameOtherLang is provided', () => {
+      const mockResult = {
+        name: 'Amici',
+        nameOtherLang: '  Friends  ',
+        icon: 'people',
+        color: '#2196F3'
+      };
+
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      service.addCategory();
+
+      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      // nameTranslations should include the trimmed other-lang value
+      expect(addedCategory.nameTranslations).toBeDefined();
+      const translationValues = Object.values(addedCategory.nameTranslations!);
+      expect(translationValues).toContain('Friends');
+    });
+
+    it('should set correct otherLang when currentLang is "it"', () => {
+      const localeService = TestBed.inject(LocaleService);
+      localeService.setLanguage('it');
+
+      const mockResult = { name: 'Famiglia', nameOtherLang: '', icon: 'family_restroom', color: '#4CAF50' };
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      service.addCategory();
+
+      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      // currentLang is 'it', so nameTranslations should have 'it' key
+      expect(addedCategory.nameTranslations?.['it']).toBe('Famiglia');
+    });
   });
 
   describe('editCategory', () => {
@@ -199,6 +239,42 @@ describe('CategoryManagerService', () => {
       service.editCategory('friends');
 
       expect(categoryFacadeSpy.updateCategory).not.toHaveBeenCalled();
+    });
+
+    it('should include other-language translation when nameOtherLang has value in edit', () => {
+      const mockResult = {
+        name: 'Amici',
+        nameOtherLang: ' Friends ',
+        icon: 'people',
+        color: '#2196F3'
+      };
+
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      service.editCategory('friends');
+
+      const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
+      expect(updatedCategory.nameTranslations).toBeDefined();
+      const translationValues = Object.values(updatedCategory.nameTranslations!);
+      expect(translationValues).toContain('Friends');
+    });
+
+    it('should use Italian as current lang when locale is "it" during edit', () => {
+      const localeService = TestBed.inject(LocaleService);
+      localeService.setLanguage('it');
+
+      const mockResult = { name: 'Amici', nameOtherLang: '', icon: 'people', color: '#2196F3' };
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      service.editCategory('friends');
+
+      const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
+      // currentLang is 'it', nameTranslations should contain 'it' key
+      expect(updatedCategory.nameTranslations?.['it']).toBe('Amici');
     });
 
     it('should not open dialog for non-existent category', () => {

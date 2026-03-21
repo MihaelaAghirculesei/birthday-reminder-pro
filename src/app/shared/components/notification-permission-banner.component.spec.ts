@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationPermissionBannerComponent } from './notification-permission-banner.component';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { BehaviorSubject } from 'rxjs';
 
@@ -28,7 +29,8 @@ describe('NotificationPermissionBannerComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NotificationPermissionBannerComponent],
       providers: [
-        { provide: NotificationPermissionService, useValue: mockPermissionService }
+        { provide: NotificationPermissionService, useValue: mockPermissionService },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

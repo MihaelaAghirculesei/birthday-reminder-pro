@@ -1,5 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BirthdayEditService } from './birthday-edit.service';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { Birthday } from '../../../shared';
 
 describe('BirthdayEditService', () => {
@@ -19,7 +20,7 @@ describe('BirthdayEditService', () => {
   };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [provideTranslateTesting()] });
     service = TestBed.inject(BirthdayEditService);
   });
 

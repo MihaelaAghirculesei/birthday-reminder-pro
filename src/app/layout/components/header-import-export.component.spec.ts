@@ -3,6 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 
 import { HeaderImportExportComponent } from './header-import-export.component';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { NotificationService } from '../../core/services/notification.service';
 import { BackupService } from '../../core/services/backup.service';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
@@ -33,6 +34,7 @@ describe('HeaderImportExportComponent', () => {
         }),
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: BackupService, useValue: mockBackupService },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

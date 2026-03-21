@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DashboardComponent } from './dashboard.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { BirthdayEditService, CategoryManagerService, DashboardFacadeService, ChartDataItem } from '../services';
 import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService } from '../services/birthday-stats.service';
@@ -123,9 +124,14 @@ describe('DashboardComponent', () => {
           }
         }),
         { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
-        { provide: BirthdayStatsService, useValue: statsServiceSpyObj }
+        { provide: BirthdayStatsService, useValue: statsServiceSpyObj },
+        provideTranslateTesting()
       ]
-    }).compileComponents();
+    })
+    .overrideComponent(DashboardComponent, {
+      set: { providers: [{ provide: DashboardFacadeService, useValue: facadeSpyObj }] }
+    })
+    .compileComponents();
 
     facadeSpy = TestBed.inject(DashboardFacadeService) as jasmine.SpyObj<DashboardFacadeService>;
     editServiceSpy = TestBed.inject(BirthdayEditService) as jasmine.SpyObj<BirthdayEditService>;

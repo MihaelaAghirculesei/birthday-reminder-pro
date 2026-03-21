@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SyncStatusComponent } from './sync-status.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
 
 describe('SyncStatusComponent', () => {
@@ -17,7 +18,7 @@ describe('SyncStatusComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SyncStatusComponent, NoopAnimationsModule],
-      providers: [provideMockStore({ initialState })]
+      providers: [provideMockStore({ initialState }), provideTranslateTesting()]
     }).compileComponents();
 
     store = TestBed.inject(MockStore);

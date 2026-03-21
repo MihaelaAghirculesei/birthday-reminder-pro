@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RememberPhotoComponent } from './remember-photo.component';
+import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 
 describe('RememberPhotoComponent', () => {
   let component: RememberPhotoComponent;
@@ -7,7 +8,8 @@ describe('RememberPhotoComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RememberPhotoComponent]
+      imports: [RememberPhotoComponent],
+      providers: [provideTranslateTesting()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(RememberPhotoComponent);

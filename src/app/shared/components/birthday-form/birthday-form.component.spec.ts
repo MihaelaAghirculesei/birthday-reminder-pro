@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatNativeDateModule } from '@angular/material/core';
 import { BirthdayFormComponent } from './birthday-form.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { SILENT_LOGGER_PROVIDER, LoggerService } from '../../../core';
 import { BIRTHDAY_CATEGORIES, DEFAULT_CATEGORY } from '../../constants';
 import { Birthday } from '../../models';
@@ -13,7 +14,7 @@ describe('BirthdayFormComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BirthdayFormComponent, NoopAnimationsModule, MatNativeDateModule],
-      providers: [SILENT_LOGGER_PROVIDER],
+      providers: [SILENT_LOGGER_PROVIDER, provideTranslateTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BirthdayFormComponent);

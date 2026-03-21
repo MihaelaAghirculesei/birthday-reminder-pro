@@ -9,6 +9,7 @@ import { categoryReducer } from '../../core/store/category/category.reducer';
 import { CategoryEffects } from '../../core/store/category/category.effects';
 import { BirthdayCategory, BIRTHDAY_CATEGORIES } from '../../shared';
 import * as CategorySelectors from '../../core/store/category/category.selectors';
+import { provideTranslateTesting } from '../translate-testing';
 
 describe('Category Management Integration', () => {
   let facade: CategoryFacadeService;
@@ -68,7 +69,8 @@ describe('Category Management Integration', () => {
         provideEffects([CategoryEffects]),
         CategoryFacadeService,
         { provide: PLATFORM_ID, useValue: 'browser' },
-        { provide: CategoryStorageService, useValue: mockStorage }
+        { provide: CategoryStorageService, useValue: mockStorage },
+        provideTranslateTesting()
       ]
     });
 

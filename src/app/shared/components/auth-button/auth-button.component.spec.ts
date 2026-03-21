@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthButtonComponent } from './auth-button.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 
@@ -24,7 +25,8 @@ describe('AuthButtonComponent', () => {
       imports: [AuthButtonComponent, NoopAnimationsModule],
       providers: [
         provideMockStore({ initialState }),
-        { provide: FirebaseAuthService, useValue: authServiceMock }
+        { provide: FirebaseAuthService, useValue: authServiceMock },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

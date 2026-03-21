@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { ScheduledMessageService } from './scheduled-message.service';
+import { ScheduledMessageService } from '../../shared/services/scheduled-message.service';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
 
 describe('ScheduledMessageService', () => {
@@ -13,7 +14,8 @@ describe('ScheduledMessageService', () => {
     TestBed.configureTestingModule({
       providers: [
         ScheduledMessageService,
-        { provide: IdGeneratorService, useValue: idGeneratorMock }
+        { provide: IdGeneratorService, useValue: idGeneratorMock },
+        provideTranslateTesting()
       ]
     });
     service = TestBed.inject(ScheduledMessageService);

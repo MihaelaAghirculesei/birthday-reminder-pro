@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { ScheduledMessagesComponent } from './scheduled-messages.component';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
@@ -73,7 +74,8 @@ describe('ScheduledMessagesComponent', () => {
       imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
       providers: [
         provideMockStore(),
-        { provide: MatDialog, useValue: mockDialog }
+        { provide: MatDialog, useValue: mockDialog },
+        provideTranslateTesting()
       ]
     });
 
@@ -239,6 +241,29 @@ describe('ScheduledMessagesComponent', () => {
       fixture.detectChanges();
 
       expect(component.noBirthdays()).toBe(true);
+    });
+  });
+
+  describe('priorityLabel fallback', () => {
+    it('should use raw priority string when priority is not in PRIORITY_KEYS map', () => {
+      const unknownPriorityMessage: ScheduledMessage = {
+        ...mockMessage1,
+        id: 'mx',
+        priority: 'urgent' as unknown as 'low' | 'normal' | 'high'
+      };
+      const birthdayWithUnknownPriority = {
+        ...mockBirthdays[0],
+        scheduledMessages: [unknownPriorityMessage]
+      };
+
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [birthdayWithUnknownPriority]);
+      store.refreshState();
+      fixture.detectChanges();
+
+      const birthdaysWithMsgs = component.birthdaysWithMessages();
+      expect(birthdaysWithMsgs.length).toBe(1);
+      // When PRIORITY_KEYS['urgent'] is undefined, falls back to 'urgent'
+      expect(birthdaysWithMsgs[0].messages[0].priorityLabel).toBe('urgent');
     });
   });
 

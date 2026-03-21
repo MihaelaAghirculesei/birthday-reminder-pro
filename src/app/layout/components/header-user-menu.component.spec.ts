@@ -3,6 +3,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore } from '@ngrx/store/testing';
 
 import { HeaderUserMenuComponent } from './header-user-menu.component';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('HeaderUserMenuComponent', () => {
   let component: HeaderUserMenuComponent;
@@ -20,6 +21,7 @@ describe('HeaderUserMenuComponent', () => {
             auth: { user: null, loading: false, error: null }
           }
         }),
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

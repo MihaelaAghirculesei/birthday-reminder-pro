@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { BirthdayStatsService } from './birthday-stats.service';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { Birthday } from '../../../shared';
 import { parseLocalDate } from '../../../shared/utils/date.utils';
 
@@ -40,7 +41,7 @@ describe('BirthdayStatsService', () => {
   ];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [provideTranslateTesting()] });
     service = TestBed.inject(BirthdayStatsService);
   });
 

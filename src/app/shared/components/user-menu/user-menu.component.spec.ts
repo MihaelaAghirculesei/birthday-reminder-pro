@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { UserMenuComponent } from './user-menu.component';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
 
@@ -28,7 +29,7 @@ describe('UserMenuComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [UserMenuComponent, NoopAnimationsModule],
-      providers: [provideMockStore({ initialState })]
+      providers: [provideMockStore({ initialState }), provideTranslateTesting()]
     }).compileComponents();
 
     store = TestBed.inject(MockStore);

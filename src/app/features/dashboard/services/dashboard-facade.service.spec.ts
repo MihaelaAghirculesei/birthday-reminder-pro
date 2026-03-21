@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { DashboardFacadeService } from './dashboard-facade.service';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
 import { BirthdayStatsService } from './birthday-stats.service';
 import { Birthday, BirthdayCategory } from '../../../shared';
@@ -47,7 +48,8 @@ describe('DashboardFacadeService', () => {
 
   beforeEach(() => {
     const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [], {
-      categories: signal(mockCategories)
+      categories: signal(mockCategories),
+      resolvedCategories: signal(mockCategories)
     });
 
     const statsServiceSpyObj = jasmine.createSpyObj('BirthdayStatsService', [
@@ -68,8 +70,10 @@ describe('DashboardFacadeService', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        DashboardFacadeService,
         provideMockStore(),
-        { provide: BirthdayStatsService, useValue: statsServiceSpyObj }
+        { provide: BirthdayStatsService, useValue: statsServiceSpyObj },
+        provideTranslateTesting()
       ]
     })
       .overrideProvider(CategoryFacadeService, { useValue: categoryFacadeSpyObj });
@@ -145,6 +149,30 @@ describe('DashboardFacadeService', () => {
       expect(stats.length).toBe(2);
       expect(stats[0].name).toBe('Friends');
       expect(stats[1].name).toBe('Family');
+    });
+
+    it('should prepend orphaned entry in categoriesStats when birthdays have invalid category', () => {
+      const birthdaysWithOrphaned = [
+        ...mockBirthdays,
+        {
+          id: '99',
+          name: 'Orphan Person',
+          birthDate: '2000-03-15',
+          category: 'nonexistent-cat',
+          zodiacSign: 'Pisces',
+          reminderDays: 7,
+          notes: '',
+          scheduledMessages: []
+        }
+      ];
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, birthdaysWithOrphaned);
+      store.refreshState();
+
+      const stats = service.categoriesStats();
+      // Orphaned entry is prepended at index 0
+      const orphanedEntry = stats.find(s => s.id === '__orphaned__');
+      expect(orphanedEntry).toBeDefined();
+      expect(orphanedEntry!.count).toBe(1);
     });
 
     it('should expose categories from facade', () => {
@@ -302,11 +330,11 @@ describe('DashboardFacadeService', () => {
   });
 
   describe('Import birthdays', () => {
-    it('should import birthdays with delay', async () => {
+    it('should import birthdays with delay', () => {
       spyOn(store, 'dispatch');
       const birthdays = [mockBirthdays[0], mockBirthdays[1]];
-      await service.importBirthdays(birthdays);
-      expect(store.dispatch).toHaveBeenCalledTimes(2);
+      service.importBirthdays(birthdays);
+      expect(store.dispatch).toHaveBeenCalledTimes(1);
     });
   });
 

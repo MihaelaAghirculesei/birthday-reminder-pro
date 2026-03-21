@@ -16,6 +16,7 @@ import { BirthdayCrudEffects } from '../../core/store/birthday/birthday-crud.eff
 import { Birthday } from '../../shared/models/birthday.model';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { provideTranslateTesting } from '../translate-testing';
 
 describe('Birthday CRUD Integration', () => {
   let store: Store;
@@ -95,7 +96,8 @@ describe('Birthday CRUD Integration', () => {
         { provide: NotificationService, useValue: mockNotification },
         { provide: PushNotificationService, useValue: mockPushNotification },
         { provide: GoogleCalendarService, useValue: mockGoogleCalendar },
-        { provide: SyncCoordinatorService, useValue: mockSyncCoordinator }
+        { provide: SyncCoordinatorService, useValue: mockSyncCoordinator },
+        provideTranslateTesting()
       ]
     });
 

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationComponent } from './notification.component';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService, NotificationMessage } from '../../core/services/notification.service';
 import { BehaviorSubject } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -19,7 +20,8 @@ describe('NotificationComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NotificationComponent, NoopAnimationsModule],
       providers: [
-        { provide: NotificationService, useValue: mockNotificationService }
+        { provide: NotificationService, useValue: mockNotificationService },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 

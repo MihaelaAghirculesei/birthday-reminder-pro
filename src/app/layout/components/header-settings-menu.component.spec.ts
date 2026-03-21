@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 
 import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -52,7 +53,8 @@ describe('HeaderSettingsMenuComponent', () => {
         { provide: NotificationPermissionService, useValue: mockPermissionService },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
-        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } }
+        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 
@@ -120,6 +122,46 @@ describe('HeaderSettingsMenuComponent', () => {
     it('should update notificationsEnabled when toggle changes', () => {
       (mockPermissionService.notificationsEnabled as BehaviorSubject<boolean>).next(true);
       expect(component.notificationsEnabled()).toBe(true);
+    });
+  });
+
+  describe('notificationIcon computed', () => {
+    it('should return "notifications_active" when granted AND enabled', () => {
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(true);
+      expect(component.notificationIcon()).toBe('notifications_active');
+    });
+
+    it('should return "notifications_off" when granted but NOT enabled', () => {
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(false);
+      expect(component.notificationIcon()).toBe('notifications_off');
+    });
+
+    it('should return "notifications" when not granted', () => {
+      component.notificationsGranted.set(false);
+      component.notificationsEnabled.set(false);
+      expect(component.notificationIcon()).toBe('notifications');
+    });
+  });
+
+  describe('notificationLabel computed', () => {
+    it('should return disable key when granted AND enabled', () => {
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(true);
+      expect(component.notificationLabel()).toBe('NAV.DISABLE_NOTIFICATIONS');
+    });
+
+    it('should return enable key when not granted', () => {
+      component.notificationsGranted.set(false);
+      component.notificationsEnabled.set(false);
+      expect(component.notificationLabel()).toBe('NAV.ENABLE_NOTIFICATIONS');
+    });
+
+    it('should return enable key when granted but not enabled', () => {
+      component.notificationsGranted.set(true);
+      component.notificationsEnabled.set(false);
+      expect(component.notificationLabel()).toBe('NAV.ENABLE_NOTIFICATIONS');
     });
   });
 });

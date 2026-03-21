@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PhotoUploadComponent } from './photo-upload.component';
+import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService } from '../../core/services/notification.service';
 
 interface MockFileInputTarget {
@@ -21,7 +22,8 @@ describe('PhotoUploadComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PhotoUploadComponent],
       providers: [
-        { provide: NotificationService, useValue: mockNotificationService }
+        { provide: NotificationService, useValue: mockNotificationService },
+        provideTranslateTesting()
       ]
     }).compileComponents();
 
