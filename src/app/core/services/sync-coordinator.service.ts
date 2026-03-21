@@ -11,7 +11,8 @@ import { PendingChangesService, PendingChange } from './pending-changes.service'
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
 import { BirthdayMergeService } from './birthday-merge.service';
-import { Birthday, Category } from '../../shared/models/birthday.model';
+import { Birthday } from '../../shared/models/birthday.model';
+import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
 
 import * as SyncActions from '../store/sync/sync.actions';
 import * as AuthSelectors from '../store/auth/auth.selectors';
@@ -240,9 +241,15 @@ export class SyncCoordinatorService {
   private async processBirthdayChange(userId: string, change: PendingChange): Promise<void> {
     switch (change.changeType) {
       case 'create':
-      case 'update':
-        await firstValueFrom(this.firestoreService.saveBirthday(userId, change.data as Birthday));
+      case 'update': {
+        const result = safeParseBirthday(change.data);
+        if (!result.success) {
+          this.logger.error('[Sync] Skipping invalid birthday pending change:', change.entityId, result.error.issues);
+          return;
+        }
+        await firstValueFrom(this.firestoreService.saveBirthday(userId, result.data));
         break;
+      }
       case 'delete':
         await firstValueFrom(this.firestoreService.deleteBirthday(userId, change.entityId));
         break;
@@ -252,9 +259,15 @@ export class SyncCoordinatorService {
   private async processCategoryChange(userId: string, change: PendingChange): Promise<void> {
     switch (change.changeType) {
       case 'create':
-      case 'update':
-        await firstValueFrom(this.firestoreService.saveCategory(userId, change.data as Category));
+      case 'update': {
+        const result = safeParseCategory(change.data);
+        if (!result.success) {
+          this.logger.error('[Sync] Skipping invalid category pending change:', change.entityId, result.error.issues);
+          return;
+        }
+        await firstValueFrom(this.firestoreService.saveCategory(userId, result.data));
         break;
+      }
       case 'delete':
         await firstValueFrom(this.firestoreService.deleteCategory(userId, change.entityId));
         break;
