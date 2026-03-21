@@ -2,12 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationPermissionBannerComponent } from './notification-permission-banner.component';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
+import { SecureStorageService } from '../../core/services/secure-storage.service';
 import { BehaviorSubject } from 'rxjs';
 
 describe('NotificationPermissionBannerComponent', () => {
   let component: NotificationPermissionBannerComponent;
   let fixture: ComponentFixture<NotificationPermissionBannerComponent>;
   let mockPermissionService: jasmine.SpyObj<NotificationPermissionService>;
+  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
   let permissionStatusSubject: BehaviorSubject<NotificationPermission>;
 
   beforeEach(async () => {
@@ -26,22 +28,22 @@ describe('NotificationPermissionBannerComponent', () => {
     mockPermissionService.requestPermission.and.returnValue(Promise.resolve(true));
     mockPermissionService.showTestNotification.and.returnValue(Promise.resolve());
 
+    mockSecureStorage = jasmine.createSpyObj('SecureStorageService', ['setItem', 'getItem', 'removeItem']);
+    mockSecureStorage.setItem.and.returnValue(Promise.resolve());
+    mockSecureStorage.getItem.and.returnValue(Promise.resolve(null));
+    mockSecureStorage.removeItem.and.returnValue(Promise.resolve());
+
     await TestBed.configureTestingModule({
       imports: [NotificationPermissionBannerComponent],
       providers: [
         { provide: NotificationPermissionService, useValue: mockPermissionService },
+        { provide: SecureStorageService, useValue: mockSecureStorage },
         provideTranslateTesting()
       ]
     }).compileComponents();
 
-    localStorage.clear();
-
     fixture = TestBed.createComponent(NotificationPermissionBannerComponent);
     component = fixture.componentInstance;
-  });
-
-  afterEach(() => {
-    localStorage.clear();
   });
 
   it('should create', () => {
@@ -49,68 +51,78 @@ describe('NotificationPermissionBannerComponent', () => {
   });
 
   describe('ngOnInit', () => {
-    it('should show banner when supported and permission is default', () => {
+    it('should show banner when supported and permission is default', async () => {
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(true);
     });
 
-    it('should not show banner when not supported', () => {
+    it('should not show banner when not supported', async () => {
       mockPermissionService.isSupported.and.returnValue(false);
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should not show banner when permission is granted', () => {
+    it('should not show banner when permission is granted', async () => {
       mockPermissionService.getCurrentPermission.and.returnValue('granted');
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should not show banner when permission is denied', () => {
+    it('should not show banner when permission is denied', async () => {
       mockPermissionService.getCurrentPermission.and.returnValue('denied');
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should not show banner when dismissed recently', () => {
+    it('should not show banner when dismissed recently', async () => {
       const recentTimestamp = Date.now() - (1000 * 60 * 60);
-      localStorage.setItem('notificationBannerDismissed', recentTimestamp.toString());
+      mockSecureStorage.getItem.and.returnValue(Promise.resolve(recentTimestamp.toString()));
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should show banner when dismissed more than 7 days ago', () => {
+    it('should show banner when dismissed more than 7 days ago', async () => {
       const oldTimestamp = Date.now() - (8 * 24 * 60 * 60 * 1000);
-      localStorage.setItem('notificationBannerDismissed', oldTimestamp.toString());
+      mockSecureStorage.getItem.and.returnValue(Promise.resolve(oldTimestamp.toString()));
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component.shouldShow()).toBe(true);
-      expect(localStorage.getItem('notificationBannerDismissed')).toBeNull();
+      expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('notificationBannerDismissed');
     });
 
     it('should update shouldShow when permission status changes', (done) => {
       fixture.detectChanges();
-      expect(component.shouldShow()).toBe(true);
+      fixture.whenStable().then(() => {
+        expect(component.shouldShow()).toBe(true);
 
-      mockPermissionService.getCurrentPermission.and.returnValue('granted');
-      permissionStatusSubject.next('granted');
+        mockPermissionService.getCurrentPermission.and.returnValue('granted');
+        permissionStatusSubject.next('granted');
 
-      setTimeout(() => {
-        expect(component.shouldShow()).toBe(false);
-        done();
-      }, 50);
+        setTimeout(() => {
+          expect(component.shouldShow()).toBe(false);
+          done();
+        }, 50);
+      });
     });
   });
 
   describe('cleanup', () => {
-    it('should use DestroyRef for subscription cleanup', () => {
+    it('should use DestroyRef for subscription cleanup', async () => {
       fixture.detectChanges();
+      await fixture.whenStable();
       expect(component['destroyRef']).toBeTruthy();
     });
   });
 
   describe('requestPermission', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       fixture.detectChanges();
+      await fixture.whenStable();
     });
 
     it('should set isRequesting to true during request', async () => {
@@ -143,8 +155,9 @@ describe('NotificationPermissionBannerComponent', () => {
   });
 
   describe('dismiss', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       fixture.detectChanges();
+      await fixture.whenStable();
     });
 
     it('should set dismissed to true', () => {
@@ -158,15 +171,17 @@ describe('NotificationPermissionBannerComponent', () => {
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should save dismissed timestamp to localStorage', () => {
+    it('should save dismissed timestamp to secure storage', () => {
       const beforeTimestamp = Date.now();
       component.dismiss();
-      const savedTimestamp = localStorage.getItem('notificationBannerDismissed');
 
-      expect(savedTimestamp).toBeTruthy();
-      const timestamp = parseInt(savedTimestamp!);
-      expect(timestamp).toBeGreaterThanOrEqual(beforeTimestamp);
-      expect(timestamp).toBeLessThanOrEqual(Date.now());
+      expect(mockSecureStorage.setItem).toHaveBeenCalledWith(
+        'notificationBannerDismissed',
+        jasmine.any(String)
+      );
+      const savedTimestamp = parseInt(mockSecureStorage.setItem.calls.mostRecent().args[1] as string);
+      expect(savedTimestamp).toBeGreaterThanOrEqual(beforeTimestamp);
+      expect(savedTimestamp).toBeLessThanOrEqual(Date.now());
     });
 
     it('should update component state correctly', () => {

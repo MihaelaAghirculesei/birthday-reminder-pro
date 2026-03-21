@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
+import { SecureStorageService } from '../../core/services/secure-storage.service';
 
 @Component({
     selector: 'app-notification-permission-banner',
@@ -142,6 +143,9 @@ import { NotificationPermissionService } from '../../core/services/notification-
 })
 export class NotificationPermissionBannerComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly secureStorage = inject(SecureStorageService);
+
+  private readonly DISMISSED_KEY = 'notificationBannerDismissed';
 
   shouldShow = signal(false);
   isRequesting = signal(false);
@@ -152,13 +156,13 @@ export class NotificationPermissionBannerComponent implements OnInit {
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
-      const dismissedTimestamp = localStorage.getItem('notificationBannerDismissed');
+      const dismissedTimestamp = await this.secureStorage.getItem<string>(this.DISMISSED_KEY);
       if (dismissedTimestamp) {
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         if (parseInt(dismissedTimestamp) < sevenDaysAgo) {
-          localStorage.removeItem('notificationBannerDismissed');
+          await this.secureStorage.removeItem(this.DISMISSED_KEY);
         } else {
           this.dismissed = true;
         }
@@ -194,7 +198,7 @@ export class NotificationPermissionBannerComponent implements OnInit {
     this.dismissed = true;
     this.shouldShow.set(false);
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('notificationBannerDismissed', Date.now().toString());
+      this.secureStorage.setItem(this.DISMISSED_KEY, Date.now().toString());
     }
   }
 }
