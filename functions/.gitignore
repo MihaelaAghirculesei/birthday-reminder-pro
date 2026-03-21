@@ -8,3 +8,6 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+
+# Angular SSR bundle copied here by predeploy (build artifact)
+angular-server/
