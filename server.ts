@@ -65,9 +65,16 @@ export function app(): express.Express {
         ],
       })
       .then((html) => {
+        // Inject nonce into inline <script> tags (external scripts don't need it)
         html = html.replace(
           /<script(?![^>]*\bsrc\b)(?![^>]*\bnonce\b)([^>]*)>/gi,
           `<script$1 nonce="${nonce}">`
+        );
+        // Inject nonce into inline <style> tags (required for inlineCritical:true
+        // and for Angular Material dynamic style injection via CSP_NONCE)
+        html = html.replace(
+          /<style(?![^>]*\bnonce\b)([^>]*)>/gi,
+          `<style$1 nonce="${nonce}">`
         );
 
         res.setHeader('Content-Security-Policy', [
@@ -96,8 +103,11 @@ function run(): void {
   const port = process.env['PORT'] || 4000;
 
   const server = app();
-  server.listen(port, () => {
-  });
+  server.listen(port, () => {});
 }
 
-run();
+// Guard: only start the standalone HTTP server when executed directly.
+// When imported by a Cloud Function, run() must NOT be called.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  run();
+}
