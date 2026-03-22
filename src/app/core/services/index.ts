@@ -1,4 +1,6 @@
 export { BirthdayService } from './birthday.service';
+export { BirthdayNormalizationService } from './birthday-normalization.service';
+export { CalendarIntegrationService } from './calendar-integration.service';
 export { CategoryFacadeService } from './category-facade.service';
 export { CategoryStorageService } from './category-storage.service';
 export { NotificationService, NotificationMessage } from './notification.service';
