@@ -9,6 +9,11 @@ import { filter, take } from 'rxjs/operators';
 import { Birthday, ScheduledMessage } from '../../shared/models';
 import { parseLocalDate } from '../../shared/utils/date.utils';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
+import {
+  NOTIFICATION_POLL_INTERVAL_MS,
+  NOTIFICATION_FIRE_WINDOW_MS,
+  ONE_DAY_MS,
+} from '../constants/time.constants';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { LoggerService } from './logger.service';
 import { SenderSettingsService } from './sender-settings.service';
@@ -40,16 +45,15 @@ export class PushNotificationService {
   private birthdaysCache: Birthday[] = [];
 
   private readonly permissionService = inject(NotificationPermissionService);
+  private readonly storage = inject(IndexedDBStorageService);
+  private readonly logger = inject(LoggerService);
+  private readonly senderSettings = inject(SenderSettingsService);
 
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
   }
 
-  constructor(
-    private storage: IndexedDBStorageService,
-    private logger: LoggerService,
-    private senderSettings: SenderSettingsService
-  ) {
+  constructor() {
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
       this.intervalSubscription?.unsubscribe();
@@ -110,7 +114,7 @@ export class PushNotificationService {
 
     this.checkBrowserNotifications();
 
-    this.intervalSubscription = interval(30000)
+    this.intervalSubscription = interval(NOTIFICATION_POLL_INTERVAL_MS)
       .subscribe(() => this.checkBrowserNotifications());
   }
 
@@ -162,7 +166,7 @@ export class PushNotificationService {
     );
 
     const timeDiff = now.getTime() - thisYearBirthday.getTime();
-    const isWithinWindow = timeDiff >= 0 && timeDiff < 300000; // 5 minute window
+    const isWithinWindow = timeDiff >= 0 && timeDiff < NOTIFICATION_FIRE_WINDOW_MS;
 
     const lastSent = message.lastSentDate ? new Date(message.lastSentDate) : null;
     const notSentToday = !lastSent ||
@@ -314,7 +318,7 @@ export class PushNotificationService {
 
     const delay = scheduledTime.getTime() - now.getTime();
 
-    if (delay > 0 && delay < 86400000) {
+    if (delay > 0 && delay < ONE_DAY_MS) {
       const timeout = setTimeout(async () => {
         this.browserTimeouts.delete(key);
         if ('Notification' in window && Notification.permission === 'granted' && this.permissionService.isNotificationsEnabled()) {
