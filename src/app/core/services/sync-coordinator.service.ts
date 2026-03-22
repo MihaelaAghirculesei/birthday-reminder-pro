@@ -197,13 +197,38 @@ export class SyncCoordinatorService {
     const changes = this.pendingChanges.getChangesForEntity('birthday');
     if (changes.length === 0) return 0;
 
+    // Sort by sequenceNumber to guarantee causal ordering across all ops.
+    // For delete→create pairs on the same entity this is critical: the delete
+    // MUST reach Firestore before the create; otherwise a stale delete retry
+    // could silently wipe out the freshly created entity on the next sync pass.
+    const sorted = [...changes].sort(
+      (a, b) => (a.sequenceNumber ?? a.timestamp) - (b.sequenceNumber ?? b.timestamp)
+    );
+
     this.isSyncing = true;
     try {
       let syncedCount = 0;
+      // Tracks entity keys (entityType:entityId) whose causal chain has a failed op.
+      // Subsequent ops for the same entity are held back for the next sync round.
+      const failedEntityKeys = new Set<string>();
 
-      for (const change of changes) {
+      for (const change of sorted) {
+        const entityKey = `${change.entityType}:${change.entityId}`;
+
+        if (failedEntityKeys.has(entityKey)) {
+          // A prior op for this entity failed — skip to preserve causal order.
+          // This prevents a create from landing on the remote store before its
+          // preceding delete has been confirmed, which would risk a stale delete
+          // retry wiping out the newly created entity on the next sync round.
+          this.logger.warn('[SyncCoordinator] Skipping change blocked by prior entity failure:', change.id);
+          continue;
+        }
+
         if (change.retryCount >= MAX_RETRY_COUNT) {
           this.logger.warn('[SyncCoordinator] Max retries reached for change:', change.id);
+          // Block subsequent ops for this entity: if the delete is permanently stuck,
+          // attempting the create would leave the remote store in an inconsistent state.
+          failedEntityKeys.add(entityKey);
           continue;
         }
 
@@ -214,6 +239,7 @@ export class SyncCoordinatorService {
         } catch (error) {
           this.logger.error('[SyncCoordinator] Failed to process change:', error);
           await this.pendingChanges.markRetry(change.id);
+          failedEntityKeys.add(entityKey);
         }
       }
 

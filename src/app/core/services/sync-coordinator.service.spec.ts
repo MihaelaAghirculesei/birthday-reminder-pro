@@ -48,6 +48,8 @@ describe('SyncCoordinatorService', () => {
     } as Birthday;
   }
 
+  let seqCounter = 0;
+
   function makePendingChange(overrides: Partial<PendingChange> = {}): PendingChange {
     return {
       id: 'change-1',
@@ -57,6 +59,7 @@ describe('SyncCoordinatorService', () => {
       data: makeBirthday(),
       timestamp: Date.now(),
       retryCount: 0,
+      sequenceNumber: seqCounter++,
       ...overrides
     };
   }
@@ -313,6 +316,62 @@ describe('SyncCoordinatorService', () => {
       expect(pendingChangesMock.removeChange).toHaveBeenCalledTimes(2);
       expect(pendingChangesMock.markRetry).toHaveBeenCalledTimes(1);
       expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('c-2');
+    });
+
+    it('should block create when preceding delete for same entity fails', async () => {
+      // Simulates the delete→create causal sequence: if delete fails,
+      // the create must NOT be sent in the same pass. Without this guard
+      // the create would succeed, and the later delete retry would silently
+      // wipe out the freshly created entity.
+      const deleteChange = makePendingChange({
+        id: 'del-1', entityId: 'b-x', changeType: 'delete', data: null, sequenceNumber: 0
+      });
+      const createChange = makePendingChange({
+        id: 'cre-1', entityId: 'b-x', changeType: 'create',
+        data: makeBirthday({ id: 'b-x' }), sequenceNumber: 1
+      });
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([deleteChange, createChange]);
+      firestoreServiceMock.deleteBirthday.and.returnValue(throwError(() => new Error('Network error')));
+      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
+      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+
+      await service.processPendingChanges();
+
+      // delete was attempted and failed
+      expect(firestoreServiceMock.deleteBirthday).toHaveBeenCalledWith('user-123', 'b-x');
+      expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('del-1');
+
+      // create was NOT sent because the delete failed — causal order preserved
+      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
+      expect(pendingChangesMock.removeChange).not.toHaveBeenCalledWith('cre-1');
+    });
+
+    it('should block create when preceding delete exhausted MAX_RETRY_COUNT', async () => {
+      const exhaustedDelete = makePendingChange({
+        id: 'del-x', entityId: 'b-y', changeType: 'delete', data: null,
+        retryCount: 3, sequenceNumber: 0
+      });
+      const pendingCreate = makePendingChange({
+        id: 'cre-x', entityId: 'b-y', changeType: 'create',
+        data: makeBirthday({ id: 'b-y' }), sequenceNumber: 1
+      });
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([exhaustedDelete, pendingCreate]);
+      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
+      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+
+      await service.processPendingChanges();
+
+      // Exhausted delete is logged and skipped
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        '[SyncCoordinator] Max retries reached for change:', 'del-x'
+      );
+      // create is blocked — sending it while delete is stuck would be inconsistent
+      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        '[SyncCoordinator] Skipping change blocked by prior entity failure:', 'cre-x'
+      );
     });
   });
 
