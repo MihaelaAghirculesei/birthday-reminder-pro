@@ -31,6 +31,16 @@ export const selectSelectedCategory = createSelector(
   (filters) => filters.selectedCategory
 );
 
+export const selectSortedBirthdays = createSelector(
+  selectAllBirthdays,
+  (birthdays) =>
+    [...birthdays].sort(
+      (a, b) =>
+        getNextBirthdayDate(a.birthDate).getTime() -
+        getNextBirthdayDate(b.birthDate).getTime()
+    )
+);
+
 export const selectNext5Birthdays = createSelector(
   selectAllBirthdays,
   (birthdays) => {
