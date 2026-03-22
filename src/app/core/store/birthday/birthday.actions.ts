@@ -156,3 +156,8 @@ export const loadTestDataFailure = createAction(
   '[Birthday] Load Test Data Failure',
   props<{ error: string }>()
 );
+
+export const calendarEventIdSet = createAction(
+  '[Birthday/Calendar] Event ID Set',
+  props<{ id: string; calendarEventId: string }>()
+);

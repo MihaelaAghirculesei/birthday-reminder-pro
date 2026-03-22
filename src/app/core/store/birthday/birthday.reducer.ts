@@ -269,5 +269,9 @@ export const birthdayReducer = createReducer(
     ...state,
     loading: false,
     error
-  }))
+  })),
+
+  on(BirthdayActions.calendarEventIdSet, (state, { id, calendarEventId }) =>
+    birthdayAdapter.updateOne({ id, changes: { googleCalendarEventId: calendarEventId } }, state)
+  )
 );
