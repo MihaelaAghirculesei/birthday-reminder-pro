@@ -9,6 +9,7 @@ import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
+import { initFirebase } from './firebase.config';
 import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
@@ -34,6 +35,7 @@ function initializeApp(
   return async () => {
     try {
       localeService.initialize();
+      await initFirebase(); // lazily loads Firebase SDK into a separate chunk
       authService.initAuthListener();
       await syncCoordinator.initialize();
     } catch (error) {
