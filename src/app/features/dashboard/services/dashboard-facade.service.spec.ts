@@ -89,6 +89,8 @@ describe('DashboardFacadeService', () => {
     statsServiceSpy = TestBed.inject(BirthdayStatsService) as jasmine.SpyObj<BirthdayStatsService>;
   });
 
+  afterEach(() => store.resetSelectors());
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });

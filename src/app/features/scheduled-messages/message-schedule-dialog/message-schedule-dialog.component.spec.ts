@@ -59,6 +59,8 @@ describe('MessageScheduleDialogComponent', () => {
     component = fixture.componentInstance;
   };
 
+  afterEach(() => store.resetSelectors());
+
   beforeEach(() => {
     mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
     mockCategoryFacade = jasmine.createSpyObj('CategoryFacadeService', [], {

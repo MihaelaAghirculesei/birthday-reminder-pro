@@ -84,6 +84,8 @@ describe('CategoryManagerService', () => {
     notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
   });
 
+  afterEach(() => store.resetSelectors());
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });

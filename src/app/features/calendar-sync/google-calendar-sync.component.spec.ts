@@ -97,6 +97,8 @@ describe('GoogleCalendarSyncComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => store.resetSelectors());
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

@@ -87,6 +87,8 @@ describe('ScheduledMessagesComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => store.resetSelectors());
+
   describe('Component Creation', () => {
     it('should create', () => {
       expect(component).toBeTruthy();
