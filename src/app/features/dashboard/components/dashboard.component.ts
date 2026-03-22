@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Birthday, NotificationPermissionBannerComponent } from '../../../shared';
 import { CalendarIconComponent } from '../../../shared/icons/calendar-icon.component';
-import { GoogleCalendarSyncComponent } from '../../calendar-sync/google-calendar-sync.component';
 import { DashboardStatsComponent } from './stats/dashboard-stats.component';
 import { BirthdayChartComponent } from './birthday-chart/birthday-chart.component';
 import { CategoryFilterComponent } from './category-filter/category-filter.component';
@@ -31,7 +30,6 @@ import { BirthdayEditService, CategoryManagerService, DashboardFacadeService } f
     CategoryFilterComponent,
     BirthdayListComponent,
     NotificationPermissionBannerComponent,
-    GoogleCalendarSyncComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],

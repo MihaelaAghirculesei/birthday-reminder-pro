@@ -80,19 +80,4 @@
     }
   </div>
 
-  <div class="full-width-section">
-    @defer (on viewport) {
-      <app-google-calendar-sync></app-google-calendar-sync>
-    } @placeholder {
-      <div class="calendar-sync-placeholder">
-        <mat-icon>cloud_sync</mat-icon>
-        <span>Sincronizzazione Calendario</span>
-      </div>
-    } @loading (minimum 200ms) {
-      <div class="calendar-sync-loading">
-        <mat-icon>hourglass_empty</mat-icon>
-        <span>Caricamento...</span>
-      </div>
-    }
-  </div>
 </div>

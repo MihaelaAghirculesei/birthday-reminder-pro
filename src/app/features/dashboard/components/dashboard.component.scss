@@ -107,37 +107,6 @@
   }
 }
 
-.calendar-sync-placeholder,
-.calendar-sync-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1rem;
-  min-height: 100px;
-
-  mat-icon {
-    @include icon-size(32px);
-    opacity: 0.7;
-  }
-}
-
-.calendar-sync-loading mat-icon {
-  animation: spin 1.5s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 @include respond-to('desktop-sm') {
   .schedule-message-fab {
@@ -221,15 +190,4 @@
     }
   }
 
-  .calendar-sync-placeholder,
-  .calendar-sync-loading {
-    padding: 16px;
-    font-size: 0.85rem;
-    min-height: 60px;
-    gap: 8px;
-
-    mat-icon {
-      @include icon-size(24px);
-    }
-  }
 }
