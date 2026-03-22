@@ -162,7 +162,13 @@ export class SecureStorageService {
         return null;
       }
 
-      const parsed = JSON.parse(stored);
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(stored);
+      } catch {
+        this.logger.warn(`[SecureStorage] Malformed data for key "${key}", returning null`);
+        return null;
+      }
 
       if (this.isEncryptedData(parsed)) {
         if (!this.cryptoKey) {
