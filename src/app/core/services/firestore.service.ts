@@ -1,20 +1,8 @@
 import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  onSnapshot,
-  writeBatch,
-  Timestamp,
-  Unsubscribe,
-  DocumentData,
-  QuerySnapshot
-} from 'firebase/firestore';
+import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { Observable, Subject, from, of } from 'rxjs';
-import { getFirebaseFirestore, isFirebaseConfigured } from '../../firebase.config';
+import { getFirebaseFirestore, getFirestoreModule, isFirebaseConfigured } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
@@ -35,8 +23,9 @@ export class FirestoreService {
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
 
-  private birthdaysListener: Unsubscribe | null = null;
-  private categoriesListener: Unsubscribe | null = null;
+  // Unsubscribe is just () => void in Firebase — no runtime import needed
+  private birthdaysListener: (() => void) | null = null;
+  private categoriesListener: (() => void) | null = null;
 
   private birthdaysSubject = new Subject<Birthday[]>();
   private categoriesSubject = new Subject<Category[]>();
@@ -48,23 +37,37 @@ export class FirestoreService {
     return `users/${userId}`;
   }
 
+  /**
+   * Appends a {lastWrite: serverTimestamp()} write to the rate-limit tracker doc.
+   * Must be called on every batch that mutates user data so that the Firestore
+   * security rules' notTooFrequent() check has a document to read.
+   */
+  private addRateLimitToBatch(
+    batch: WriteBatch,
+    userId: string,
+    fs: typeof import('firebase/firestore'),
+    db: ReturnType<typeof getFirebaseFirestore>
+  ): void {
+    if (!db) return;
+    const rateLimitRef = fs.doc(db, this.getUserPath(userId), 'rateLimit', 'writes');
+    batch.set(rateLimitRef, { lastWrite: fs.serverTimestamp() });
+  }
+
   getBirthdays(userId: string): Observable<Birthday[]> {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of([]);
     }
-
     return from(this.fetchBirthdays(userId));
   }
 
   private async fetchBirthdays(userId: string): Promise<Birthday[]> {
     const db = getFirebaseFirestore();
-    if (!db) return [];
-
-    const birthdaysRef = collection(db, this.getUserPath(userId), 'birthdays');
+    const fs = getFirestoreModule();
+    if (!db || !fs) return [];
 
     try {
-      const snapshot = await getDocs(birthdaysRef);
-      return this.mapBirthdaysFromSnapshot(snapshot);
+      const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
+      return this.mapBirthdaysFromSnapshot(snapshot, fs);
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch birthdays:', error);
       throw error;
@@ -73,19 +76,17 @@ export class FirestoreService {
 
   subscribeToBirthdays(userId: string): void {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) return;
-
     this.unsubscribeFromBirthdays();
 
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const birthdaysRef = collection(db, this.getUserPath(userId), 'birthdays');
-
-    this.birthdaysListener = onSnapshot(
-      birthdaysRef,
+    this.birthdaysListener = fs.onSnapshot(
+      fs.collection(db, this.getUserPath(userId), 'birthdays'),
       (snapshot) => {
         this.ngZone.run(() => {
-          const birthdays = this.mapBirthdaysFromSnapshot(snapshot);
+          const birthdays = this.mapBirthdaysFromSnapshot(snapshot, fs);
           this.birthdaysSubject.next(birthdays);
           this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
         });
@@ -109,20 +110,24 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of(undefined);
     }
-
     return from(this.performSaveBirthday(userId, birthday));
   }
 
   private async performSaveBirthday(userId: string, birthday: Birthday): Promise<void> {
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const docRef = doc(db, this.getUserPath(userId), 'birthdays', birthday.id);
-
-    const data = this.mapBirthdayToFirestore(birthday, userId);
+    const batch = fs.writeBatch(db);
+    batch.set(
+      fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
+      this.mapBirthdayToFirestore(birthday, userId, fs),
+      { merge: true }
+    );
+    this.addRateLimitToBatch(batch, userId, fs, db);
 
     try {
-      await setDoc(docRef, data, { merge: true });
+      await batch.commit();
       this.logger.info('[Firestore] Birthday saved:', birthday.id);
     } catch (error) {
       this.logger.error('[Firestore] Failed to save birthday:', error);
@@ -134,18 +139,20 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of(undefined);
     }
-
     return from(this.performDeleteBirthday(userId, birthdayId));
   }
 
   private async performDeleteBirthday(userId: string, birthdayId: string): Promise<void> {
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const docRef = doc(db, this.getUserPath(userId), 'birthdays', birthdayId);
+    const batch = fs.writeBatch(db);
+    batch.delete(fs.doc(db, this.getUserPath(userId), 'birthdays', birthdayId));
+    this.addRateLimitToBatch(batch, userId, fs, db);
 
     try {
-      await deleteDoc(docRef);
+      await batch.commit();
       this.logger.info('[Firestore] Birthday deleted:', birthdayId);
     } catch (error) {
       this.logger.error('[Firestore] Failed to delete birthday:', error);
@@ -157,21 +164,23 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of(undefined);
     }
-
     return from(this.performBatchSave(userId, birthdays));
   }
 
   private async performBatchSave(userId: string, birthdays: Birthday[]): Promise<void> {
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const batch = writeBatch(db);
-
+    const batch = fs.writeBatch(db);
     for (const birthday of birthdays) {
-      const docRef = doc(db, this.getUserPath(userId), 'birthdays', birthday.id);
-      const data = this.mapBirthdayToFirestore(birthday, userId);
-      batch.set(docRef, data, { merge: true });
+      batch.set(
+        fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
+        this.mapBirthdayToFirestore(birthday, userId, fs),
+        { merge: true }
+      );
     }
+    this.addRateLimitToBatch(batch, userId, fs, db);
 
     try {
       await batch.commit();
@@ -186,18 +195,16 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of([]);
     }
-
     return from(this.fetchCategories(userId));
   }
 
   private async fetchCategories(userId: string): Promise<Category[]> {
     const db = getFirebaseFirestore();
-    if (!db) return [];
-
-    const categoriesRef = collection(db, this.getUserPath(userId), 'categories');
+    const fs = getFirestoreModule();
+    if (!db || !fs) return [];
 
     try {
-      const snapshot = await getDocs(categoriesRef);
+      const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'categories'));
       return this.mapCategoriesFromSnapshot(snapshot);
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch categories:', error);
@@ -207,16 +214,14 @@ export class FirestoreService {
 
   subscribeToCategories(userId: string): void {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) return;
-
     this.unsubscribeFromCategories();
 
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const categoriesRef = collection(db, this.getUserPath(userId), 'categories');
-
-    this.categoriesListener = onSnapshot(
-      categoriesRef,
+    this.categoriesListener = fs.onSnapshot(
+      fs.collection(db, this.getUserPath(userId), 'categories'),
       (snapshot) => {
         this.ngZone.run(() => {
           const categories = this.mapCategoriesFromSnapshot(snapshot);
@@ -243,25 +248,24 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of(undefined);
     }
-
     return from(this.performSaveCategory(userId, category));
   }
 
   private async performSaveCategory(userId: string, category: Category): Promise<void> {
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const docRef = doc(db, this.getUserPath(userId), 'categories', category.id);
-
-    const data = {
-      ...category,
-      ownerId: userId,
-      updatedAt: Date.now(),
-      syncStatus: 'synced'
-    };
+    const batch = fs.writeBatch(db);
+    batch.set(
+      fs.doc(db, this.getUserPath(userId), 'categories', category.id),
+      { ...category, ownerId: userId, updatedAt: Date.now(), syncStatus: 'synced' },
+      { merge: true }
+    );
+    this.addRateLimitToBatch(batch, userId, fs, db);
 
     try {
-      await setDoc(docRef, data, { merge: true });
+      await batch.commit();
       this.logger.info('[Firestore] Category saved:', category.id);
     } catch (error) {
       this.logger.error('[Firestore] Failed to save category:', error);
@@ -273,18 +277,20 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
       return of(undefined);
     }
-
     return from(this.performDeleteCategory(userId, categoryId));
   }
 
   private async performDeleteCategory(userId: string, categoryId: string): Promise<void> {
     const db = getFirebaseFirestore();
-    if (!db) return;
+    const fs = getFirestoreModule();
+    if (!db || !fs) return;
 
-    const docRef = doc(db, this.getUserPath(userId), 'categories', categoryId);
+    const batch = fs.writeBatch(db);
+    batch.delete(fs.doc(db, this.getUserPath(userId), 'categories', categoryId));
+    this.addRateLimitToBatch(batch, userId, fs, db);
 
     try {
-      await deleteDoc(docRef);
+      await batch.commit();
       this.logger.info('[Firestore] Category deleted:', categoryId);
     } catch (error) {
       this.logger.error('[Firestore] Failed to delete category:', error);
@@ -292,14 +298,17 @@ export class FirestoreService {
     }
   }
 
-  private mapBirthdaysFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Birthday[] {
+  private mapBirthdaysFromSnapshot(
+    snapshot: QuerySnapshot<DocumentData>,
+    fs: typeof import('firebase/firestore')
+  ): Birthday[] {
     const birthdays: Birthday[] = [];
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
+    for (const document of snapshot.docs) {
+      const data = document.data();
       const mapped = {
         ...data,
-        id: doc.id,
-        birthDate: data['birthDate'] instanceof Timestamp
+        id: document.id,
+        birthDate: data['birthDate'] instanceof fs.Timestamp
           ? toDateString(data['birthDate'].toDate())
           : toDateString(data['birthDate']),
         syncStatus: 'synced' as const
@@ -308,7 +317,7 @@ export class FirestoreService {
       if (result.success) {
         birthdays.push(result.data);
       } else {
-        this.logger.warn('[Firestore] Skipping invalid birthday document:', doc.id, result.error.issues);
+        this.logger.warn('[Firestore] Skipping invalid birthday document:', document.id, result.error.issues);
       }
     }
     return birthdays;
@@ -316,30 +325,29 @@ export class FirestoreService {
 
   private mapCategoriesFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Category[] {
     const categories: Category[] = [];
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      const mapped = {
-        ...data,
-        id: doc.id,
-        syncStatus: 'synced'
-      };
-      const result = safeParseCategory(mapped);
+    for (const document of snapshot.docs) {
+      const data = document.data();
+      const result = safeParseCategory({ ...data, id: document.id, syncStatus: 'synced' });
       if (result.success) {
         categories.push(result.data);
       } else {
-        this.logger.warn('[Firestore] Skipping invalid category document:', doc.id, result.error.issues);
+        this.logger.warn('[Firestore] Skipping invalid category document:', document.id, result.error.issues);
       }
     }
     return categories;
   }
 
-  private mapBirthdayToFirestore(birthday: Birthday, userId: string): Record<string, unknown> {
+  private mapBirthdayToFirestore(
+    birthday: Birthday,
+    userId: string,
+    fs: typeof import('firebase/firestore')
+  ): Record<string, unknown> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { syncStatus: _removed, ...rest } = birthday;
+    const { syncStatus: _removed, scheduledMessages: _msgs, ...rest } = birthday;
 
     const data: Record<string, unknown> = {
       ...rest,
-      birthDate: Timestamp.fromDate(parseLocalDate(birthday.birthDate)),
+      birthDate: fs.Timestamp.fromDate(parseLocalDate(birthday.birthDate)),
       ownerId: userId,
       updatedAt: Date.now()
     };
