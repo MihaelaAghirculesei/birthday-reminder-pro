@@ -67,6 +67,64 @@ describe('PendingChangesService', () => {
     expect(service.pendingCount).toBe(0);
   });
 
+  it('should preserve delete→create as a causal sequence (both ops kept)', async () => {
+    // Scenario: entity already synced remotely, user deletes then re-creates it offline.
+    // The delete MUST reach Firestore before the create; collapsing to just `create`
+    // would lose the delete and risk a stale retry wiping the freshly created entity.
+    await service.addChange('birthday', 'b-seq', 'delete', null);
+    expect(service.pendingCount).toBe(1);
+    await service.addChange('birthday', 'b-seq', 'create', { name: 'Recreated' });
+    expect(service.pendingCount).toBe(2);
+
+    const ops = service.getChangesForEntity('birthday').filter(c => c.entityId === 'b-seq');
+    expect(ops.length).toBe(2);
+    expect(ops[0].changeType).toBe('delete');
+    expect(ops[1].changeType).toBe('create');
+    // sequenceNumber must be strictly increasing so the sync processor picks the right order
+    expect(ops[0].sequenceNumber).toBeLessThan(ops[1].sequenceNumber);
+  });
+
+  it('should absorb update into the pending create in a delete→create→update sequence', async () => {
+    await service.addChange('birthday', 'b-dcu', 'delete', null);
+    await service.addChange('birthday', 'b-dcu', 'create', { name: 'v1' });
+    await service.addChange('birthday', 'b-dcu', 'update', { name: 'v2' });
+
+    // Still 2 ops: [delete, create(v2)] — the update is merged into the create
+    const ops = service.getChangesForEntity('birthday').filter(c => c.entityId === 'b-dcu');
+    expect(ops.length).toBe(2);
+    expect(ops.find(c => c.changeType === 'delete')).toBeTruthy();
+    const create = ops.find(c => c.changeType === 'create');
+    expect(create).toBeTruthy();
+    expect((create!.data as { name: string }).name).toBe('v2');
+  });
+
+  it('should collapse delete→create→delete to a single delete', async () => {
+    await service.addChange('birthday', 'b-dcd', 'delete', null);
+    await service.addChange('birthday', 'b-dcd', 'create', { name: 'Temp' });
+    expect(service.pendingCount).toBe(2);
+    await service.addChange('birthday', 'b-dcd', 'delete', null);
+
+    const ops = service.getChangesForEntity('birthday').filter(c => c.entityId === 'b-dcd');
+    expect(ops.length).toBe(1);
+    expect(ops[0].changeType).toBe('delete');
+  });
+
+  it('should assign sequenceNumbers in strictly increasing order', async () => {
+    await service.addChange('birthday', 'b-s1', 'create', {});
+    await service.addChange('birthday', 'b-s2', 'create', {});
+    await service.addChange('birthday', 'b-s3', 'create', {});
+
+    const all = service.getChangesForEntity('birthday').filter(
+      c => ['b-s1', 'b-s2', 'b-s3'].includes(c.entityId)
+    );
+    const seqs = all.map(c => c.sequenceNumber);
+    const unique = new Set(seqs);
+    expect(unique.size).toBe(seqs.length);
+    // Must be monotonically increasing when sorted by insertion order
+    const sorted = [...seqs].sort((a, b) => a - b);
+    expect(seqs).toEqual(sorted);
+  });
+
   it('should track multiple entities separately', async () => {
     await service.addChange('birthday', 'b-1', 'create', { name: 'Test 1' });
     await service.addChange('birthday', 'b-2', 'create', { name: 'Test 2' });
