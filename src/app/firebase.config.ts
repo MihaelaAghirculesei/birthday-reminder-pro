@@ -31,7 +31,8 @@ export function isFirebaseConfigured(): boolean {
  * same promise on subsequent calls.
  *
  * Must be awaited before calling any getFirebase*() or get*Module() getter.
- * Called once during APP_INITIALIZER in app.config.ts.
+ * Called on-demand: by initAuthListener() for returning users and by performGoogleSignIn()
+ * on first sign-in. Never called from APP_INITIALIZER — anonymous users never pay the cost.
  */
 export function initFirebase(): Promise<void> {
   if (!isFirebaseConfigured()) return Promise.resolve();

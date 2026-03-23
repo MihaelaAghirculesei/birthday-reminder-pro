@@ -9,11 +9,10 @@ import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
-import { initFirebase } from './firebase.config';
 import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
-import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
+import { BirthdayCrudEffects, BirthdayCalendarSyncEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
 import { categoryReducer } from './core/store/category/category.reducer';
 import { CategoryEffects } from './core/store/category/category.effects';
 import { uiReducer } from './core/store/ui/ui.reducer';
@@ -35,7 +34,8 @@ function initializeApp(
   return async () => {
     try {
       localeService.initialize();
-      await initFirebase(); // lazily loads Firebase SDK into a separate chunk
+      // Firebase is loaded on-demand: initAuthListener() triggers it for returning users,
+      // performGoogleSignIn() triggers it on first sign-in. Anonymous users never pay the cost.
       authService.initAuthListener();
       await syncCoordinator.initialize();
     } catch (error) {
@@ -60,7 +60,7 @@ export const appConfig: ApplicationConfig = {
       auth: authReducer,
       sync: syncReducer
     }),
-    provideEffects([BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects, CategoryEffects, AuthEffects, SyncEffects]),
+    provideEffects([BirthdayCrudEffects, BirthdayCalendarSyncEffects, BirthdayMessageEffects, BirthdayNotificationEffects, CategoryEffects, AuthEffects, SyncEffects]),
     ...devProviders,
     NotificationService,
     ThemeService,
