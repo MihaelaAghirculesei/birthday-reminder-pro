@@ -210,6 +210,8 @@ export const it = {
     ADD_PHOTO: 'Aggiungi Foto Ricordo',
     CLICK_TO_UPLOAD: 'Clicca per caricare un\'immagine',
     REMOVE_PHOTO: 'Rimuovi foto',
+    ARIA_ADD_PHOTO: 'Aggiungi foto del contatto',
+    ARIA_CHANGE_PHOTO: 'Cambia foto del contatto',
     ERROR_SIZE: 'Il file deve essere inferiore a 5MB',
     ERROR_TYPE: 'Seleziona un file immagine valido',
     ERROR_READ: 'Impossibile leggere il file selezionato. Riprova.'

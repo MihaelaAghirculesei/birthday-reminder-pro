@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef, inject } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,9 +15,10 @@ import { NotificationService } from '../../core/services/notification.service';
         [class.has-photo]="currentPhoto"
         (click)="triggerFileInput()"
         (keydown.enter)="triggerFileInput()"
-        (keydown.space)="triggerFileInput()"
+        (keydown.space)="$event.preventDefault(); triggerFileInput()"
         tabindex="0"
-        role="button">
+        role="button"
+        [attr.aria-label]="(currentPhoto ? 'PHOTO_UPLOAD.ARIA_CHANGE_PHOTO' : 'PHOTO_UPLOAD.ARIA_ADD_PHOTO') | translate">
     
         @if (currentPhoto) {
           <div class="photo-display">
@@ -204,6 +205,28 @@ import { NotificationService } from '../../core/services/notification.service';
       }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .photo-preview {
+        transition: none;
+
+        &:hover {
+          transform: none;
+        }
+      }
+
+      .photo-overlay {
+        transition: none;
+      }
+
+      .delete-button-circle {
+        transition: none !important;
+
+        &:hover {
+          transform: none !important;
+        }
+      }
+    }
+
     @media (max-width: 768px) {
       .photo-upload-container {
         flex-direction: column;
@@ -245,7 +268,8 @@ export class PhotoUploadComponent {
 
   @ViewChild('fileInput') private fileInputRef!: ElementRef<HTMLInputElement>;
 
-  constructor(private notificationService: NotificationService, private translate: TranslateService) {}
+  private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   triggerFileInput() {
     this.fileInputRef?.nativeElement.click();

@@ -210,6 +210,8 @@ export const en = {
     ADD_PHOTO: 'Add Remember Photo',
     CLICK_TO_UPLOAD: 'Click to upload image',
     REMOVE_PHOTO: 'Remove photo',
+    ARIA_ADD_PHOTO: 'Add contact photo',
+    ARIA_CHANGE_PHOTO: 'Change contact photo',
     ERROR_SIZE: 'File size must be less than 5MB',
     ERROR_TYPE: 'Please select a valid image file',
     ERROR_READ: 'Failed to read the selected file. Please try again.'

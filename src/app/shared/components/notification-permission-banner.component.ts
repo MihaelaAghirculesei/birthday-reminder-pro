@@ -6,14 +6,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { SecureStorageService } from '../../core/services/secure-storage.service';
+import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
 
 @Component({
     selector: 'app-notification-permission-banner',
     imports: [MatCardModule, MatIconModule, MatButtonModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
+    <div aria-live="polite" aria-atomic="true">
     @if (shouldShow()) {
-      <div class="notification-banner" data-testid="notification-banner">
+      <div class="notification-banner"
+        data-testid="notification-banner"
+        role="region"
+        aria-label="Notification permission request">
         <mat-card class="permission-card">
           <mat-card-content>
             <div class="banner-content">
@@ -48,6 +53,7 @@ import { SecureStorageService } from '../../core/services/secure-storage.service
         </mat-card>
       </div>
     }
+    </div>
     `,
     styles: [`
     .notification-banner {
@@ -95,6 +101,16 @@ import { SecureStorageService } from '../../core/services/secure-storage.service
       }
       50% {
         opacity: 0.6;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .notification-banner {
+        animation: none;
+      }
+
+      .notification-icon {
+        animation: none;
       }
     }
 
@@ -160,7 +176,7 @@ export class NotificationPermissionBannerComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       const dismissedTimestamp = await this.secureStorage.getItem<string>(this.DISMISSED_KEY);
       if (dismissedTimestamp) {
-        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const sevenDaysAgo = Date.now() - BANNER_DISMISS_TTL_MS;
         if (parseInt(dismissedTimestamp) < sevenDaysAgo) {
           await this.secureStorage.removeItem(this.DISMISSED_KEY);
         } else {
