@@ -7,7 +7,6 @@ import { BirthdayCrudEffects } from './birthday-crud.effects';
 import * as BirthdayActions from './birthday.actions';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
-import { GoogleCalendarService } from '../../services/google-calendar.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { IdGeneratorService } from '../../services/id-generator.service';
 import { LoggerService } from '../../services/logger.service';
@@ -19,7 +18,6 @@ describe('BirthdayCrudEffects', () => {
   let effects: BirthdayCrudEffects;
   let store: MockStore;
   let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
-  let googleCalendarMock: jasmine.SpyObj<GoogleCalendarService>;
   let pushNotificationMock: jasmine.SpyObj<PushNotificationService>;
   let idGeneratorMock: jasmine.SpyObj<IdGeneratorService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
@@ -58,14 +56,6 @@ describe('BirthdayCrudEffects', () => {
       'clear',
       'saveBirthdays'
     ]);
-    googleCalendarMock = jasmine.createSpyObj('GoogleCalendarService', [
-      'syncBirthdayToCalendar',
-      'updateBirthdayInCalendar',
-      'deleteBirthdayFromCalendar',
-      'isEnabled'
-    ], {
-      isSignedIn$: of(false)
-    });
     pushNotificationMock = jasmine.createSpyObj('PushNotificationService', [
       'cancelAllNotificationsForBirthday'
     ]);
@@ -74,10 +64,9 @@ describe('BirthdayCrudEffects', () => {
     syncCoordinatorMock = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange']);
 
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-    googleCalendarMock.syncBirthdayToCalendar.and.returnValue(Promise.resolve(''));
-    googleCalendarMock.updateBirthdayInCalendar.and.returnValue(Promise.resolve());
-    googleCalendarMock.deleteBirthdayFromCalendar.and.returnValue(Promise.resolve());
-    googleCalendarMock.isEnabled.and.returnValue(false);
+    offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
+    offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
+    offlineStorageMock.deleteBirthday.and.returnValue(Promise.resolve());
     idGeneratorMock.generateId.and.returnValue('new-id');
     syncCoordinatorMock.queueChange.and.returnValue(Promise.resolve());
 
@@ -87,7 +76,6 @@ describe('BirthdayCrudEffects', () => {
         provideMockActions(() => actions$),
         provideMockStore({ initialState }),
         { provide: IndexedDBStorageService, useValue: offlineStorageMock },
-        { provide: GoogleCalendarService, useValue: googleCalendarMock },
         { provide: PushNotificationService, useValue: pushNotificationMock },
         { provide: IdGeneratorService, useValue: idGeneratorMock },
         { provide: LoggerService, useValue: loggerMock },
@@ -148,9 +136,8 @@ describe('BirthdayCrudEffects', () => {
   });
 
   describe('addBirthday$', () => {
-    it('should add birthday successfully', (done) => {
+    it('should add birthday successfully without calendar sync', (done) => {
       const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
-      offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
@@ -176,28 +163,10 @@ describe('BirthdayCrudEffects', () => {
         done();
       });
     });
-
-    it('should sync to Google Calendar when event ID is returned', (done) => {
-      const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
-      googleCalendarMock.isEnabled.and.returnValue(true);
-      googleCalendarMock.syncBirthdayToCalendar.and.returnValue(Promise.resolve('event-123'));
-      offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
-
-      actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
-
-      effects.addBirthday$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.addBirthdaySuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.addBirthdaySuccess>;
-        expect(successAction.birthday.googleCalendarEventId).toBe('event-123');
-        done();
-      });
-    });
   });
 
   describe('updateBirthday$', () => {
     it('should update birthday successfully', (done) => {
-      offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
-
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
 
       effects.updateBirthday$.subscribe(action => {
@@ -223,44 +192,25 @@ describe('BirthdayCrudEffects', () => {
   });
 
   describe('deleteBirthday$', () => {
-    it('should delete birthday successfully', (done) => {
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([mockBirthday]));
-      offlineStorageMock.deleteBirthday.and.returnValue(Promise.resolve());
-
+    it('should delete birthday successfully and cancel notifications', (done) => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
         expect(offlineStorageMock.deleteBirthday).toHaveBeenCalledWith('1');
+        expect(pushNotificationMock.cancelAllNotificationsForBirthday).toHaveBeenCalledWith('1');
         done();
       });
     });
 
     it('should handle delete birthday failure', (done) => {
       const error = new Error('Delete failed');
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.reject(error));
+      offlineStorageMock.deleteBirthday.and.returnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed', id: '1' }));
-        done();
-      });
-    });
-
-    it('should delete birthday from Google Calendar if eventId exists', (done) => {
-      const birthdayWithEvent = { ...mockBirthday, googleCalendarEventId: 'event-123' };
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([birthdayWithEvent]));
-      offlineStorageMock.deleteBirthday.and.returnValue(Promise.resolve());
-      googleCalendarMock.isEnabled.and.returnValue(true);
-      googleCalendarMock.deleteBirthdayFromCalendar.and.returnValue(Promise.resolve());
-
-      actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
-
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
-        expect(googleCalendarMock.deleteBirthdayFromCalendar).toHaveBeenCalledWith('event-123');
-        expect(offlineStorageMock.deleteBirthday).toHaveBeenCalledWith('1');
         done();
       });
     });

@@ -2,10 +2,12 @@ import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, OnInitEffects } from '@ngrx/effects';
 import { Action, Store } from '@ngrx/store';
 import { of, from, forkJoin } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { withLatestFrom } from 'rxjs/operators';
 import * as BirthdayActions from './birthday.actions';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { BirthdayService } from '../../services/birthday.service';
+import { BirthdayNormalizationService } from '../../services/birthday-normalization.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { Birthday } from '../../../shared/models/birthday.model';
@@ -22,6 +24,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
   private readonly store = inject(Store);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly birthdayService = inject(BirthdayService);
+  private readonly normalization = inject(BirthdayNormalizationService);
   private readonly syncCoordinator = inject(SyncCoordinatorService);
   private readonly pushNotificationService = inject(PushNotificationService);
 
@@ -30,7 +33,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
       ofType(BirthdayActions.loadBirthdays),
       switchMap(() =>
         from(this.offlineStorage.getBirthdays()).pipe(
-          map(birthdays => birthdays.map(b => this.birthdayService.normalizeBirthdayOnLoad(b))),
+          map(birthdays => birthdays.map(b => this.normalization.normalize(b))),
           map(birthdays => BirthdayActions.loadBirthdaysSuccess({ birthdays })),
           catchError(error => of(BirthdayActions.loadBirthdaysFailure({ error: error.message })))
         )
@@ -45,13 +48,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
       mergeMap(([{ birthday }, userId]) => {
         const newBirthday = this.birthdayService.prepareBirthdayForCreate(birthday, userId);
 
-        return from(this.birthdayService.syncToGoogleCalendar(newBirthday)).pipe(
-          tap(eventId => {
-            if (eventId) {
-              newBirthday.googleCalendarEventId = eventId;
-            }
-          }),
-          switchMap(() => from(this.offlineStorage.addBirthday(newBirthday))),
+        return from(this.offlineStorage.addBirthday(newBirthday)).pipe(
           switchMap(() => userId
             ? from(this.syncCoordinator.queueChange('birthday', newBirthday.id, 'create', newBirthday))
             : of(undefined)
@@ -70,8 +67,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
       mergeMap(([{ birthday }, userId]) => {
         const normalizedBirthday = this.birthdayService.prepareBirthdayForUpdate(birthday, userId);
 
-        return from(this.birthdayService.updateGoogleCalendar(normalizedBirthday)).pipe(
-          switchMap(() => from(this.offlineStorage.updateBirthday(normalizedBirthday))),
+        return from(this.offlineStorage.updateBirthday(normalizedBirthday)).pipe(
           switchMap(() => userId
             ? from(this.syncCoordinator.queueChange('birthday', normalizedBirthday.id, 'update', normalizedBirthday))
             : of(undefined)
@@ -88,14 +84,8 @@ export class BirthdayCrudEffects implements OnInitEffects {
       ofType(BirthdayActions.deleteBirthday),
       withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
       mergeMap(([{ id }, userId]) =>
-        from(this.offlineStorage.getBirthdays()).pipe(
-          map(birthdays => birthdays.find(b => b.id === id)),
+        of(undefined).pipe(
           tap(() => this.pushNotificationService.cancelAllNotificationsForBirthday(id)),
-          switchMap(birthday =>
-            birthday?.googleCalendarEventId
-              ? from(this.birthdayService.deleteFromGoogleCalendar(birthday.googleCalendarEventId))
-              : of(undefined)
-          ),
           switchMap(() => from(this.offlineStorage.deleteBirthday(id))),
           switchMap(() => userId
             ? from(this.syncCoordinator.queueChange('birthday', id, 'delete', { id }))
