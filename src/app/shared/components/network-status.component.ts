@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { NetworkService } from '../../core';
@@ -90,5 +90,5 @@ import { NetworkService } from '../../core';
   `]
 })
 export class NetworkStatusComponent {
-  constructor(public networkService: NetworkService) {}
+  readonly networkService = inject(NetworkService);
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ScheduledMessage } from '../models';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
@@ -12,7 +12,8 @@ export interface MessageTemplate {
   providedIn: 'root'
 })
 export class ScheduledMessageService {
-  constructor(private idGenerator: IdGeneratorService, private translate: TranslateService) {}
+  private readonly idGenerator = inject(IdGeneratorService);
+  private readonly translate = inject(TranslateService);
 
   createMessage(messageData: Partial<ScheduledMessage>): ScheduledMessage {
     return {

@@ -30,8 +30,7 @@ export class BackupService {
 
   private readonly document = inject(DOCUMENT) as Document;
   private readonly platformId = inject(PLATFORM_ID);
-
-  constructor(private logger: LoggerService) {}
+  private readonly logger = inject(LoggerService);
 
   exportToJSON(birthdays: Birthday[]): void {
     const backup: BackupData = {

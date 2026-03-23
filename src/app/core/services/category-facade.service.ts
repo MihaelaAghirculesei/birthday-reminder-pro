@@ -13,6 +13,7 @@ import { LocaleService } from './locale.service';
 })
 export class CategoryFacadeService {
   private readonly localeService = inject(LocaleService);
+  private readonly store = inject(Store<AppState>);
 
   categories: Signal<BirthdayCategory[]> = toSignal(this.store.select(CategorySelectors.selectAllCategories), { initialValue: [] });
   defaultCategories: Signal<BirthdayCategory[]> = toSignal(this.store.select(CategorySelectors.selectDefaultCategories), { initialValue: [] });
@@ -29,8 +30,6 @@ export class CategoryFacadeService {
         : cat
     );
   });
-
-  constructor(private store: Store<AppState>) {}
 
   loadCategories(): void {
     this.store.dispatch(CategoryActions.loadCategories());

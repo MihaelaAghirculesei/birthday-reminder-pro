@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { Observable } from 'rxjs';
@@ -129,11 +129,8 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
     ]
 })
 export class NotificationComponent {
-  notifications$: Observable<NotificationMessage[]>;
-
-  constructor(private notificationService: NotificationService) {
-    this.notifications$ = this.notificationService.notifications;
-  }
+  private readonly notificationService = inject(NotificationService);
+  readonly notifications$: Observable<NotificationMessage[]> = this.notificationService.notifications;
 
   getIcon(type: string): string {
     switch (type) {

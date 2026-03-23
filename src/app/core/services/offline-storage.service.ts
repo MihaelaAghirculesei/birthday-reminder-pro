@@ -7,6 +7,8 @@ import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 
 const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
+const BACKOFF_BASE_MS  = 100;
+const BACKOFF_MAX_MS   = 1_000;
 
 export interface OfflineStorageService {
   getBirthdays(): Promise<Birthday[]>;
@@ -47,7 +49,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
           throw error;
         }
 
-        const delay = Math.min(100 * Math.pow(2, attempt - 1), 1000);
+        const delay = Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt - 1), BACKOFF_MAX_MS);
         this.logger.warn(`[IndexedDB] ${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }

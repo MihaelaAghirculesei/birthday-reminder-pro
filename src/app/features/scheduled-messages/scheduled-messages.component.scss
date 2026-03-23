@@ -52,10 +52,16 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-height: 75vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    @include custom-scrollbar;
 
     .birthday-message-card {
       @include surface-card;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 300px;
 
       &:hover {
         transform: translateY(-2px);

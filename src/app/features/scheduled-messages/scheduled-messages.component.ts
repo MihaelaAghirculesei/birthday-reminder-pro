@@ -19,14 +19,14 @@ import { AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
-interface EnrichedMessage extends ScheduledMessage {
+interface ScheduledMessageView extends ScheduledMessage {
   wishLinks: WishLink[];
   priorityLabel: string;
 }
 
 interface BirthdayMessageView {
   birthday: Birthday;
-  messages: EnrichedMessage[];
+  messages: ScheduledMessageView[];
 }
 
 const PRIORITY_KEYS: Record<string, string> = {

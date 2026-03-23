@@ -1,3 +1,5 @@
+import { ONE_DAY_MS } from '../../core/constants/time.constants';
+
 /** Parses YYYY-MM-DD as local Date (no timezone shift) */
 export function parseLocalDate(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -19,7 +21,7 @@ export function getDaysUntilBirthday(birthDate: string): number {
   const nextBirthday = getNextBirthdayDate(birthDate);
   nextBirthday.setHours(0, 0, 0, 0);
   const diffTime = nextBirthday.getTime() - today.getTime();
-  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+  return Math.round(diffTime / ONE_DAY_MS);
 }
 
 export function getNextBirthdayDate(birthDate: string): Date {

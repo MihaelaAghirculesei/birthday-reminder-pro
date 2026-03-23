@@ -16,7 +16,7 @@ export interface ChartDataItem {
   label: string;
 }
 
-export interface CategoryStats {
+export interface CategoryCount {
   categoryId: string;
   count: number;
 }
@@ -90,7 +90,7 @@ export class BirthdayStatsService {
     return Math.max(...chartData.map(d => d.count), 0);
   }
 
-  getCategoriesStats(birthdays: Birthday[]): CategoryStats[] {
+  getCategoriesStats(birthdays: Birthday[]): CategoryCount[] {
     const categoryCounts = new Map<string, number>();
 
     birthdays.forEach(birthday => {

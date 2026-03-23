@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
+import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/time.constants';
 
 @Component({
   selector: 'app-sync-status',
@@ -138,13 +139,13 @@ export class SyncStatusComponent {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
 
-    if (diff < 60000) return 'just now';
-    if (diff < 3600000) {
-      const mins = Math.floor(diff / 60000);
+    if (diff < ONE_MINUTE_MS) return 'just now';
+    if (diff < ONE_HOUR_MS) {
+      const mins = Math.floor(diff / ONE_MINUTE_MS);
       return `${mins} minute${mins > 1 ? 's' : ''} ago`;
     }
-    if (diff < 86400000) {
-      const hours = Math.floor(diff / 3600000);
+    if (diff < ONE_DAY_MS) {
+      const hours = Math.floor(diff / ONE_HOUR_MS);
       return `${hours} hour${hours > 1 ? 's' : ''} ago`;
     }
     return date.toLocaleDateString();

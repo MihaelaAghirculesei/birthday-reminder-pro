@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { LoggerService } from './logger.service';
 
 export interface GoogleApiErrorDetails {
@@ -48,7 +48,7 @@ const RETRYABLE_CODES = new Set([408, 429, 500, 502, 503, 504]);
   providedIn: 'root'
 })
 export class GoogleApiErrorService {
-  constructor(private logger: LoggerService) {}
+  private readonly logger = inject(LoggerService);
 
   parseError(error: unknown, context?: string): GoogleApiErrorDetails {
     const rawError = error as GoogleApiRawError;

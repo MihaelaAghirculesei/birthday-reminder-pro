@@ -29,7 +29,7 @@ import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
-interface EnrichedMessage extends ScheduledMessage {
+interface ScheduledMessageView extends ScheduledMessage {
   processedMessage: string;
   wishLinks: WishLink[];
   formattedCreatedDate: string;
@@ -66,7 +66,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
 
   messageForm: FormGroup;
   messages: ScheduledMessage[] = [];
-  enrichedMessages = signal<EnrichedMessage[]>([]);
+  enrichedMessages = signal<ScheduledMessageView[]>([]);
   templates: MessageTemplate[] = [];
   isCreatingMessage = false;
   editingMessage: ScheduledMessage | null = null;

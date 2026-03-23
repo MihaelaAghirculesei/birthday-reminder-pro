@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { IdGeneratorService } from './id-generator.service';
 
@@ -13,11 +13,10 @@ export interface NotificationMessage {
   providedIn: 'root'
 })
 export class NotificationService {
+  private readonly idGenerator = inject(IdGeneratorService);
   private notifications$ = new BehaviorSubject<NotificationMessage[]>([]);
   public notifications = this.notifications$.asObservable();
   private timers = new Map<string, ReturnType<typeof setTimeout>>();
-
-  constructor(private idGenerator: IdGeneratorService) {}
 
   private readonly defaultDurations: Record<string, number> = {
     success: 3000,
