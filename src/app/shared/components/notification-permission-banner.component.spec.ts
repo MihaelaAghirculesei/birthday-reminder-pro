@@ -192,4 +192,55 @@ describe('NotificationPermissionBannerComponent', () => {
       expect(component.shouldShow()).toBe(false);
     });
   });
+
+  describe('accessibility', () => {
+    beforeEach(async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges(); // flush signal-driven re-render after async ngOnInit
+    });
+
+    it('should have an aria-live="polite" container always present in the DOM', () => {
+      const liveRegion: HTMLElement = fixture.nativeElement.querySelector('[aria-live="polite"]');
+      expect(liveRegion).not.toBeNull();
+    });
+
+    it('should have aria-atomic="true" on the live region', () => {
+      const liveRegion: HTMLElement = fixture.nativeElement.querySelector('[aria-live="polite"]');
+      expect(liveRegion.getAttribute('aria-atomic')).toBe('true');
+    });
+
+    it('should have role="region" on the visible banner', () => {
+      const banner: HTMLElement = fixture.nativeElement.querySelector('[data-testid="notification-banner"]');
+      expect(banner).not.toBeNull();
+      expect(banner.getAttribute('role')).toBe('region');
+    });
+
+    it('should have aria-label on the visible banner', () => {
+      const banner: HTMLElement = fixture.nativeElement.querySelector('[data-testid="notification-banner"]');
+      const label = banner.getAttribute('aria-label');
+      expect(label).toBeTruthy();
+      expect(label!.length).toBeGreaterThan(0);
+    });
+
+    it('should keep aria-live container in DOM even when banner is hidden', () => {
+      component.dismiss();
+      fixture.detectChanges();
+
+      expect(component.shouldShow()).toBe(false);
+      const liveRegion: HTMLElement = fixture.nativeElement.querySelector('[aria-live="polite"]');
+      expect(liveRegion).not.toBeNull();
+    });
+
+    it('Enable Notifications button should be a native <button> element', () => {
+      const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+      const labels = Array.from(buttons).map(b => b.textContent?.trim());
+      expect(labels.some(l => l?.includes('Enable Notifications'))).toBe(true);
+    });
+
+    it('dismiss button should be a native <button> element', () => {
+      const dismissBtn: HTMLElement = fixture.nativeElement.querySelector('[data-testid="dismiss-notification-banner"]');
+      expect(dismissBtn.tagName.toLowerCase()).toBe('button');
+    });
+  });
 });
