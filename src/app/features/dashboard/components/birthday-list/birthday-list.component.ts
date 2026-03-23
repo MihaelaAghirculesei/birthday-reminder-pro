@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, signal, inject, computed, Signal, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { take, switchMap, EMPTY, map, timer } from 'rxjs';
+import { take, switchMap, EMPTY, map, timer, fromEvent } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
@@ -39,6 +41,7 @@ interface EnrichedBirthday extends Birthday {
         BirthdayItemComponent,
         BirthdayImportExportComponent,
         TranslatePipe,
+        ScrollingModule,
     ],
     templateUrl: './birthday-list.component.html',
     styleUrls: ['./birthday-list.component.scss'],
@@ -62,6 +65,18 @@ export class BirthdayListComponent implements OnChanges {
 
   isAddingTestData = signal(false);
   isClearingData = signal(false);
+
+  private readonly platformId = inject(PLATFORM_ID);
+
+  private readonly windowWidth: Signal<number> = isPlatformBrowser(this.platformId)
+    ? toSignal(
+        fromEvent(window, 'resize').pipe(map(() => window.innerWidth)),
+        { initialValue: window.innerWidth }
+      )
+    : signal(1200);
+
+  /** itemSize for CdkVirtualScrollViewport: compact (<660px) vs. full layout */
+  readonly virtualScrollItemSize = computed(() => this.windowWidth() < 660 ? 100 : 300);
 
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);

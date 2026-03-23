@@ -82,19 +82,14 @@
   }
 }
 
-.dashboard-birthday-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.birthday-virtual-scroll {
+  height: 600px;
+  width: 100%;
+  @include custom-scrollbar;
 
-  &.scrollable {
-    height: 600px;
-    overflow-y: auto;
-    padding: 8px 8px 8px 0;
-    margin-right: -7px;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    @include custom-scrollbar;
+  app-birthday-item {
+    display: block;
+    margin-bottom: 24px;
   }
 }
 

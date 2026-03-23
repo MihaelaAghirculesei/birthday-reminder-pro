@@ -75,8 +75,8 @@
     }
   }
 
-  .dashboard-birthday-list {
-    gap: 16px;
+  .birthday-virtual-scroll app-birthday-item {
+    margin-bottom: 16px;
   }
 
   .birthday-list-header {
@@ -157,8 +157,8 @@
     }
   }
 
-  .dashboard-birthday-list {
-    gap: 10px;
+  .birthday-virtual-scroll app-birthday-item {
+    margin-bottom: 10px;
   }
 
   .no-birthdays {
