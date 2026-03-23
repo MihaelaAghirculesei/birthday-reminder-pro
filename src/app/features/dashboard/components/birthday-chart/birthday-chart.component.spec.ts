@@ -40,7 +40,7 @@ describe('BirthdayChartComponent', () => {
         chartData: new SimpleChange([], mockChartData, true)
       });
 
-      expect(component.enrichedChartData.length).toBe(4);
+      expect(component.chartDataItems.length).toBe(4);
     });
 
     it('should re-enrich when maxCount changes', () => {
@@ -50,7 +50,7 @@ describe('BirthdayChartComponent', () => {
         maxCount: new SimpleChange(3, 5, false)
       });
 
-      expect(component.enrichedChartData.length).toBe(4);
+      expect(component.chartDataItems.length).toBe(4);
     });
 
     it('should re-enrich when currentMonth changes', () => {
@@ -61,7 +61,7 @@ describe('BirthdayChartComponent', () => {
         currentMonth: new SimpleChange(0, 2, false)
       });
 
-      const marchItem = component.enrichedChartData.find(i => i.month === 'Mar');
+      const marchItem = component.chartDataItems.find(i => i.month === 'Mar');
       expect(marchItem?.isCurrentMonth).toBeTrue();
     });
 
@@ -69,11 +69,11 @@ describe('BirthdayChartComponent', () => {
       component.chartData = mockChartData;
       component.maxCount = 3;
       component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
-      const firstResult = component.enrichedChartData;
+      const firstResult = component.chartDataItems;
 
       component.ngOnChanges({ totalBirthdays: new SimpleChange(0, 5, false) });
       // Reference equality: same array means no re-computation
-      expect(component.enrichedChartData).toBe(firstResult);
+      expect(component.chartDataItems).toBe(firstResult);
     });
 
     describe('heightPercent calculation', () => {
@@ -83,11 +83,11 @@ describe('BirthdayChartComponent', () => {
         component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
 
         // Jan: count=3, maxCount=3 → (3/3)*80 = 80
-        const janItem = component.enrichedChartData.find(i => i.month === 'Jan');
+        const janItem = component.chartDataItems.find(i => i.month === 'Jan');
         expect(janItem?.heightPercent).toBeCloseTo(80);
 
         // Apr: count=2, maxCount=3 → (2/3)*80 ≈ 53.33
-        const aprItem = component.enrichedChartData.find(i => i.month === 'Apr');
+        const aprItem = component.chartDataItems.find(i => i.month === 'Apr');
         expect(aprItem?.heightPercent).toBeCloseTo(53.33, 1);
       });
 
@@ -96,7 +96,7 @@ describe('BirthdayChartComponent', () => {
         component.maxCount = 0;
         component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
 
-        component.enrichedChartData.forEach(item => {
+        component.chartDataItems.forEach(item => {
           expect(item.heightPercent).toBe(0);
         });
       });
@@ -109,8 +109,8 @@ describe('BirthdayChartComponent', () => {
         component.currentMonth = 0;
         component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
 
-        const janItem = component.enrichedChartData.find(i => i.month === 'Jan');
-        const febItem = component.enrichedChartData.find(i => i.month === 'Feb');
+        const janItem = component.chartDataItems.find(i => i.month === 'Jan');
+        const febItem = component.chartDataItems.find(i => i.month === 'Feb');
         expect(janItem?.isCurrentMonth).toBeTrue();
         expect(febItem?.isCurrentMonth).toBeFalse();
       });

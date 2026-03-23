@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ChartDataItem } from '../../services';
 
-interface EnrichedChartDataItem extends ChartDataItem {
+interface ChartDataItemView extends ChartDataItem {
   heightPercent: number;
   isCurrentMonth: boolean;
 }
@@ -26,11 +26,11 @@ export class BirthdayChartComponent implements OnChanges {
   @Input() currentMonth: number = new Date().getMonth();
   @Input() totalBirthdays = 0;
 
-  enrichedChartData: EnrichedChartDataItem[] = [];
+  chartDataItems: ChartDataItemView[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['chartData'] || changes['maxCount'] || changes['currentMonth']) {
-      this.enrichedChartData = this.chartData.map(item => ({
+      this.chartDataItems = this.chartData.map(item => ({
         ...item,
         heightPercent: this.maxCount > 0 ? (item.count / this.maxCount) * 80 : 0,
         isCurrentMonth: this.MONTHS.indexOf(item.month) === this.currentMonth
@@ -38,7 +38,7 @@ export class BirthdayChartComponent implements OnChanges {
     }
   }
 
-  trackByMonth(_index: number, monthData: EnrichedChartDataItem): string {
+  trackByMonth(_index: number, monthData: ChartDataItemView): string {
     return monthData.month;
   }
 

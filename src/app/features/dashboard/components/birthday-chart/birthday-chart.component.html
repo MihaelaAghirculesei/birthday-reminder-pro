@@ -11,7 +11,7 @@
       role="img"
       [attr.aria-label]="getChartAriaLabel()"
     >
-      @for (monthData of enrichedChartData; track monthData.month) {
+      @for (monthData of chartDataItems; track monthData.month) {
         <div
           class="chart-bar"
           role="listitem"
