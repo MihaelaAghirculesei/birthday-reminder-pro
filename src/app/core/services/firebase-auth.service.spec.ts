@@ -1,8 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { FirebaseAuthService } from './firebase-auth.service';
+import {
+  FirebaseAuthService,
+  isFirebaseAuthError,
+  mapFirebaseSignInError,
+  FIREBASE_AUTH_CODES,
+} from './firebase-auth.service';
 import { LoggerService } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { environment } from '../../../environments/environment';
+import { FIREBASE_OPTIONS } from '../../firebase.config';
 
 const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
 
@@ -27,13 +32,8 @@ function injectAuthHintCookie(): void {
 describe('FirebaseAuthService', () => {
   let service: FirebaseAuthService;
   let loggerMock: jasmine.SpyObj<LoggerService>;
-  const originalFirebase = environment.firebase;
 
   beforeEach(() => {
-    // Force isFirebaseConfigured() to return false — no real Firebase calls.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (environment as any).firebase = undefined;
-
     clearAuthHintCookie();
 
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
@@ -41,6 +41,7 @@ describe('FirebaseAuthService', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: LoggerService, useValue: loggerMock },
+        { provide: FIREBASE_OPTIONS, useValue: undefined },
         provideTranslateTesting()
       ]
     });
@@ -49,8 +50,6 @@ describe('FirebaseAuthService', () => {
   });
 
   afterEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (environment as any).firebase = originalFirebase;
     clearAuthHintCookie();
   });
 
@@ -158,7 +157,10 @@ describe('FirebaseAuthService', () => {
   describe('signOut (Firebase not configured)', () => {
     it('returns a completing observable', (done) => {
       service.signOut().subscribe({
-        complete: () => done()
+        complete: () => {
+          expect().nothing();
+          done();
+        }
       });
     });
   });
@@ -173,6 +175,89 @@ describe('FirebaseAuthService', () => {
           done();
         }
       });
+    });
+  });
+
+  // ── isFirebaseAuthError type guard ────────────────────────────────────────
+
+  describe('isFirebaseAuthError', () => {
+    it('returns true for a well-formed FirebaseError', () => {
+      const err = { name: 'FirebaseError', code: 'auth/popup-blocked', message: 'Popup blocked' };
+      expect(isFirebaseAuthError(err)).toBeTrue();
+    });
+
+    it('returns true for an unknown code (open extension)', () => {
+      const err = { name: 'FirebaseError', code: 'auth/future-code', message: 'Future error' };
+      expect(isFirebaseAuthError(err)).toBeTrue();
+    });
+
+    it('returns false for a plain Error', () => {
+      expect(isFirebaseAuthError(new Error('oops'))).toBeFalse();
+    });
+
+    it('returns false when name is not FirebaseError', () => {
+      const err = { name: 'OtherError', code: 'auth/popup-blocked', message: 'msg' };
+      expect(isFirebaseAuthError(err)).toBeFalse();
+    });
+
+    it('returns false when code is missing', () => {
+      const err = { name: 'FirebaseError', message: 'no code' };
+      expect(isFirebaseAuthError(err)).toBeFalse();
+    });
+
+    it('returns false when message is missing', () => {
+      const err = { name: 'FirebaseError', code: 'auth/popup-blocked' };
+      expect(isFirebaseAuthError(err)).toBeFalse();
+    });
+
+    it('returns false for null', () => {
+      expect(isFirebaseAuthError(null)).toBeFalse();
+    });
+
+    it('returns false for a primitive', () => {
+      expect(isFirebaseAuthError('string error')).toBeFalse();
+      expect(isFirebaseAuthError(42)).toBeFalse();
+    });
+  });
+
+  // ── FIREBASE_AUTH_CODES shape ─────────────────────────────────────────────
+
+  describe('FIREBASE_AUTH_CODES', () => {
+    it('POPUP_CLOSED maps to auth/popup-closed-by-user', () => {
+      expect(FIREBASE_AUTH_CODES.POPUP_CLOSED).toBe('auth/popup-closed-by-user');
+    });
+
+    it('POPUP_BLOCKED maps to auth/popup-blocked', () => {
+      expect(FIREBASE_AUTH_CODES.POPUP_BLOCKED).toBe('auth/popup-blocked');
+    });
+  });
+
+  // ── mapFirebaseSignInError — popup error mapping ──────────────────────────
+
+  describe('mapFirebaseSignInError', () => {
+    it('maps auth/popup-closed-by-user to "Sign-in cancelled"', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/popup-closed-by-user', message: 'popup closed' };
+      expect(mapFirebaseSignInError(err).message).toBe('Sign-in cancelled');
+    });
+
+    it('maps auth/popup-blocked to human-readable message', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/popup-blocked', message: 'popup blocked' };
+      expect(mapFirebaseSignInError(err).message).toBe('Popup blocked by browser. Please allow popups for this site.');
+    });
+
+    it('maps auth/cancelled-popup-request to the Firebase message', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/cancelled-popup-request', message: 'already pending' };
+      expect(mapFirebaseSignInError(err).message).toBe('already pending');
+    });
+
+    it('uses "Sign-in failed" fallback when message is empty', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/unknown', message: '' };
+      expect(mapFirebaseSignInError(err).message).toBe('Sign-in failed');
+    });
+
+    it('returns an Error instance', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/popup-blocked', message: 'blocked' };
+      expect(mapFirebaseSignInError(err)).toBeInstanceOf(Error);
     });
   });
 });

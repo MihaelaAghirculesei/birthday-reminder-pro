@@ -6,7 +6,8 @@ import {
   getFirebaseAuth,
   getFirebaseAuthModule,
   initFirebase,
-  isFirebaseConfigured,
+  checkFirebaseOptions,
+  FIREBASE_OPTIONS,
 } from '../../firebase.config';
 import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
@@ -16,6 +17,71 @@ export interface AuthUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+}
+
+// ── Firebase Auth error types ─────────────────────────────────────────────────
+
+/**
+ * Firebase Auth error codes for the Google sign-in popup flow.
+ * Typed as const so each value is a string literal, enabling exhaustive
+ * narrowing in switch statements.
+ */
+export const FIREBASE_AUTH_CODES = {
+  POPUP_CLOSED:    'auth/popup-closed-by-user',
+  POPUP_BLOCKED:   'auth/popup-blocked',
+  CANCELLED:       'auth/cancelled-popup-request',
+  NETWORK_ERROR:   'auth/network-request-failed',
+  TOO_MANY_REQS:   'auth/too-many-requests',
+  USER_DISABLED:   'auth/user-disabled',
+} as const;
+
+export type FirebaseAuthCode =
+  typeof FIREBASE_AUTH_CODES[keyof typeof FIREBASE_AUTH_CODES];
+
+/**
+ * Structural mirror of the Firebase SDK `AuthError`, defined locally so the
+ * Firebase package is never imported at module scope (keeping it lazy).
+ *
+ * `name: 'FirebaseError'` is the discriminant — the SDK unconditionally sets
+ * this on every error it throws, making it a reliable runtime tag.
+ *
+ * `code` accepts both the known literal union AND arbitrary strings
+ * (`string & {}`) so future Firebase codes don't break compilation while
+ * still giving autocomplete for the codes we explicitly handle.
+ */
+export interface FirebaseAuthError {
+  readonly name:    'FirebaseError';
+  readonly code:    FirebaseAuthCode | (string & {});
+  readonly message: string;
+}
+
+/**
+ * Maps a Firebase Auth error to a user-facing Error with a localised message.
+ * Exported for unit testing without requiring Firebase SDK mocks.
+ */
+export function mapFirebaseSignInError(error: FirebaseAuthError): Error {
+  switch (error.code) {
+    case FIREBASE_AUTH_CODES.POPUP_CLOSED:
+      return new Error('Sign-in cancelled');
+    case FIREBASE_AUTH_CODES.POPUP_BLOCKED:
+      return new Error('Popup blocked by browser. Please allow popups for this site.');
+    default:
+      return new Error(error.message || 'Sign-in failed');
+  }
+}
+
+/**
+ * Type guard that narrows `unknown` to `FirebaseAuthError` without any cast.
+ * Checks the structural shape plus the `'FirebaseError'` name discriminant.
+ */
+export function isFirebaseAuthError(err: unknown): err is FirebaseAuthError {
+  if (typeof err !== 'object' || err === null) return false;
+  const e = err as Record<string, unknown>;
+  return (
+    e['name']    === 'FirebaseError' &&
+    typeof e['code']    === 'string' &&
+    typeof e['message'] === 'string'
+  );
 }
 
 /**
@@ -59,6 +125,11 @@ export class FirebaseAuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
+  private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
+
+  private get isFirebaseConfigured(): boolean {
+    return checkFirebaseOptions(this.firebaseOptions);
+  }
 
   private readonly userSubject = new BehaviorSubject<AuthUser | null>(null);
   private readonly loadingSubject = new BehaviorSubject<boolean>(true);
@@ -93,7 +164,7 @@ export class FirebaseAuthService {
       return;
     }
 
-    if (!isFirebaseConfigured()) {
+    if (!this.isFirebaseConfigured) {
       this.logger.warn('[FirebaseAuth] Firebase not configured, running in offline mode');
       this.loadingSubject.next(false);
       return;
@@ -155,7 +226,7 @@ export class FirebaseAuthService {
     if (!isPlatformBrowser(this.platformId)) {
       throw new Error('Auth not available on server');
     }
-    if (!isFirebaseConfigured()) {
+    if (!this.isFirebaseConfigured) {
       throw new Error('Firebase not configured. Add credentials to environment.ts');
     }
     return this.performGoogleSignIn();
@@ -166,7 +237,7 @@ export class FirebaseAuthService {
       return from(Promise.reject(new Error('Auth not available on server')));
     }
 
-    if (!isFirebaseConfigured()) {
+    if (!this.isFirebaseConfigured) {
       return from(Promise.reject(new Error('Firebase not configured. Add credentials to environment.ts')));
     }
 
@@ -219,17 +290,12 @@ export class FirebaseAuthService {
       setAuthHint();
       return this.mapFirebaseUser(result.user);
     } catch (error: unknown) {
-      const firebaseError = error as { code?: string; message?: string };
-      this.logger.error('[FirebaseAuth] Google sign-in failed:', firebaseError);
-
-      if (firebaseError.code === 'auth/popup-closed-by-user') {
-        throw new Error('Sign-in cancelled');
+      if (isFirebaseAuthError(error)) {
+        this.logger.error('[FirebaseAuth] Google sign-in failed:', error);
+        throw mapFirebaseSignInError(error);
       }
-      if (firebaseError.code === 'auth/popup-blocked') {
-        throw new Error('Popup blocked by browser. Please allow popups for this site.');
-      }
-
-      throw new Error(firebaseError.message || 'Sign-in failed');
+      // Non-Firebase error (network timeout, internal, etc.) — re-throw as-is.
+      throw error instanceof Error ? error : new Error('Sign-in failed');
     }
   }
 
@@ -271,7 +337,7 @@ export class FirebaseAuthService {
       return from(Promise.resolve());
     }
 
-    if (!isFirebaseConfigured()) {
+    if (!this.isFirebaseConfigured) {
       return from(Promise.resolve());
     }
 
