@@ -19,11 +19,38 @@ export interface AuthUser {
 }
 
 /**
- * Persisted across page loads to determine whether the Firebase SDK should be
- * loaded eagerly (returning authenticated user) or skipped (anonymous user).
- * Set on successful sign-in, cleared on sign-out or session expiry.
+ * Cookie name for the auth hint.
+ *
+ * The `__Secure-` prefix is enforced by the browser: the cookie is accepted
+ * only when set over a secure context (HTTPS / localhost), making it impossible
+ * for plain-HTTP pages or subdomains to inject or overwrite it.
+ *
+ * Additional attributes applied at write-time:
+ *  - `Secure`         — only transmitted over HTTPS (reinforces the prefix)
+ *  - `SameSite=Strict`— never sent on cross-site requests (CSRF defence)
+ *  - `Max-Age=30d`    — auto-expires; unlike localStorage, no permanent residue
+ *  - `Path=/`         — scoped to the whole application
+ *
+ * The cookie is intentionally NOT `HttpOnly` because `initAuthListener()` must
+ * be able to read it client-side to decide whether to load the Firebase SDK.
+ * The stored value is `'1'` — a non-sensitive boolean hint, not a credential.
  */
-const AUTH_HINT_KEY = 'fb_auth_hint';
+const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
+const AUTH_HINT_MAX_AGE = 30 * 24 * 3600; // 30 days in seconds
+
+function setAuthHint(): void {
+  document.cookie =
+    `${AUTH_HINT_COOKIE}=1; Secure; SameSite=Strict; Max-Age=${AUTH_HINT_MAX_AGE}; Path=/`;
+}
+
+function clearAuthHint(): void {
+  document.cookie =
+    `${AUTH_HINT_COOKIE}=; Secure; SameSite=Strict; Max-Age=0; Path=/`;
+}
+
+function hasAuthHint(): boolean {
+  return document.cookie.split(';').some(c => c.trim().startsWith(`${AUTH_HINT_COOKIE}=1`));
+}
 
 @Injectable({
   providedIn: 'root'
@@ -53,10 +80,10 @@ export class FirebaseAuthService {
    * Initialises the Firebase auth state listener.
    *
    * Strategy:
-   *  - Anonymous / first-time users: no hint in localStorage → Firebase SDK is
-   *    NOT loaded; loading resolves immediately. SDK loads on demand when the
-   *    user explicitly triggers sign-in via {@link performGoogleSignInDirect}.
-   *  - Returning users (hint present): Firebase SDK is loaded asynchronously
+   *  - Anonymous / first-time users: no hint cookie → Firebase SDK is NOT loaded;
+   *    loading resolves immediately. SDK loads on demand when the user explicitly
+   *    triggers sign-in via {@link performGoogleSignInDirect}.
+   *  - Returning users (hint cookie present): Firebase SDK is loaded asynchronously
    *    (fire-and-forget, does not block APP_INITIALIZER) and the auth-state
    *    listener is wired up to restore the session transparently.
    */
@@ -72,8 +99,8 @@ export class FirebaseAuthService {
       return;
     }
 
-    const hasAuthHint = !!localStorage.getItem(AUTH_HINT_KEY);
-    if (!hasAuthHint) {
+    const authHintPresent = hasAuthHint();
+    if (!authHintPresent) {
       // Anonymous user — skip Firebase SDK entirely; resolve loading immediately.
       this.loadingSubject.next(false);
       return;
@@ -107,11 +134,11 @@ export class FirebaseAuthService {
       this.ngZone.run(() => {
         if (user) {
           this.userSubject.next(this.mapFirebaseUser(user));
-          localStorage.setItem(AUTH_HINT_KEY, '1');
+          setAuthHint();
           this.logger.info('[FirebaseAuth] User signed in:', user.email);
         } else {
           this.userSubject.next(null);
-          localStorage.removeItem(AUTH_HINT_KEY);
+          clearAuthHint();
           this.logger.info('[FirebaseAuth] User signed out');
         }
         this.loadingSubject.next(false);
@@ -189,7 +216,7 @@ export class FirebaseAuthService {
     try {
       const result = await signInWithPopup(auth, provider);
       this.logger.info('[FirebaseAuth] Google sign-in successful');
-      localStorage.setItem(AUTH_HINT_KEY, '1');
+      setAuthHint();
       return this.mapFirebaseUser(result.user);
     } catch (error: unknown) {
       const firebaseError = error as { code?: string; message?: string };
@@ -225,7 +252,7 @@ export class FirebaseAuthService {
             const credential = GoogleAuthProvider.credential(response.credential);
             const result = await signInWithCredential(auth, credential);
             this.logger.info('[FirebaseAuth] GIS sign-in successful');
-            localStorage.setItem(AUTH_HINT_KEY, '1');
+            setAuthHint();
             resolve(this.mapFirebaseUser(result.user));
           } catch (error) {
             this.logger.error('[FirebaseAuth] GIS credential sign-in failed:', error);
@@ -256,13 +283,13 @@ export class FirebaseAuthService {
     const authModule = getFirebaseAuthModule();
 
     if (!auth || !authModule) {
-      localStorage.removeItem(AUTH_HINT_KEY);
+      clearAuthHint();
       return;
     }
 
     try {
       await authModule.signOut(auth);
-      localStorage.removeItem(AUTH_HINT_KEY);
+      clearAuthHint();
       this.logger.info('[FirebaseAuth] Sign-out successful');
     } catch (error) {
       this.logger.error('[FirebaseAuth] Sign-out failed:', error);

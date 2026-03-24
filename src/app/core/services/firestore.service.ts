@@ -305,13 +305,26 @@ export class FirestoreService {
     const birthdays: Birthday[] = [];
     for (const document of snapshot.docs) {
       const data = document.data();
+      const raw = Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== null)
+      );
+      const scheduledMessages = Array.isArray(raw['scheduledMessages'])
+        ? raw['scheduledMessages'].map((msg: Record<string, unknown>) =>
+            Object.fromEntries(
+              Object.entries(msg)
+                .filter(([, v]) => v !== null)
+                .map(([k, v]) => [k, v instanceof fs.Timestamp ? v.toMillis() : v])
+            )
+          )
+        : undefined;
       const mapped = {
-        ...data,
+        ...raw,
         id: document.id,
         birthDate: data['birthDate'] instanceof fs.Timestamp
           ? toDateString(data['birthDate'].toDate())
           : toDateString(data['birthDate']),
-        syncStatus: 'synced' as const
+        syncStatus: 'synced' as const,
+        ...(scheduledMessages !== undefined && { scheduledMessages })
       };
       const result = safeParseBirthday(mapped);
       if (result.success) {
@@ -351,6 +364,17 @@ export class FirestoreService {
       ownerId: userId,
       updatedAt: Date.now()
     };
+
+    // Firestore documents have a hard 1 MB limit. Never write base64-encoded
+    // photos (up to 7 MB) into a document. Only Firebase Storage CDN URLs are
+    // persisted; base64 blobs are skipped so the existing Firestore value is
+    // preserved via merge:true until the photo is re-uploaded to Storage.
+    for (const field of ['photo', 'rememberPhoto']) {
+      const val = data[field];
+      if (typeof val === 'string' && val.startsWith('data:')) {
+        delete data[field];
+      }
+    }
 
     for (const key of Object.keys(data)) {
       if (data[key] === undefined) {
