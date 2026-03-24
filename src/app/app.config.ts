@@ -4,6 +4,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
 import { LocaleService } from './core/services/locale.service';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -51,7 +52,9 @@ const devProviders = isDevMode()
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
-    provideAnimationsAsync(),
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? provideNoopAnimations()
+      : provideAnimationsAsync(),
     provideNativeDateAdapter(),
     provideStore({
       birthdays: birthdayReducer,

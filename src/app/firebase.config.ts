@@ -1,5 +1,6 @@
+import { InjectionToken } from '@angular/core';
 import { environment } from '../environments/environment';
-import type { FirebaseApp } from 'firebase/app';
+import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
@@ -14,18 +15,38 @@ let _storageModule: typeof import('firebase/storage') | null = null;
 let _initPromise: Promise<void> | null = null;
 
 /**
- * Returns true if the Firebase environment config has real credentials
- * (not placeholder values).
+ * DI token for the Firebase client configuration.
+ *
+ * Defaults to `environment.firebase` in production.
+ * Override with `{ provide: FIREBASE_OPTIONS, useValue: undefined }` in tests
+ * to keep Firebase un-initialised without mutating the `environment` object.
+ */
+export const FIREBASE_OPTIONS = new InjectionToken<FirebaseOptions | undefined>(
+  'FIREBASE_OPTIONS',
+  { providedIn: 'root', factory: () => environment.firebase }
+);
+
+/**
+ * Pure predicate — accepts an explicit config value so it can be used both
+ * by injectable services (passing their injected token value) and by the
+ * module-level `initFirebase()` (passing `environment.firebase` directly).
+ */
+export function checkFirebaseOptions(opts: FirebaseOptions | undefined): boolean {
+  return !!(
+    opts?.apiKey &&
+    !opts.apiKey.startsWith('YOUR_') &&
+    opts?.projectId &&
+    !opts.projectId.startsWith('YOUR_')
+  );
+}
+
+/**
+ * Module-level convenience — used internally by `initFirebase()`.
+ * Services should prefer injecting `FIREBASE_OPTIONS` and calling
+ * `checkFirebaseOptions(this.firebaseOptions)` instead.
  */
 export function isFirebaseConfigured(): boolean {
-  const config = environment.firebase;
-  return !!(
-    config &&
-    config.apiKey &&
-    !config.apiKey.startsWith('YOUR_') &&
-    config.projectId &&
-    !config.projectId.startsWith('YOUR_')
-  );
+  return checkFirebaseOptions(environment.firebase);
 }
 
 /**
