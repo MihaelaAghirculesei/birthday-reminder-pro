@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { CategoryManagerService } from './category-manager.service';
@@ -91,20 +91,21 @@ describe('CategoryManagerService', () => {
   });
 
   describe('addCategory', () => {
-    it('should open dialog with correct configuration', () => {
+    it('should open dialog with correct configuration', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(null));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
       expect(callArgs[1]?.width).toBe('min(600px, 90vw)');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('add');
-    });
+    }));
 
-    it('should add category when dialog returns result', () => {
+    it('should add category when dialog returns result', fakeAsync(() => {
       const mockResult = {
         name: 'New Category',
         icon: 'star',
@@ -116,6 +117,7 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       expect(categoryFacadeSpy.addCategory).toHaveBeenCalled();
       const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
@@ -123,19 +125,20 @@ describe('CategoryManagerService', () => {
       expect(addedCategory.icon).toBe('star');
       expect(addedCategory.color).toBe('#FFC107');
       expect(addedCategory.id).toBeTruthy();
-    });
+    }));
 
-    it('should not add category when dialog is cancelled', () => {
+    it('should not add category when dialog is cancelled', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(null));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       expect(categoryFacadeSpy.addCategory).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should generate unique category ID', () => {
+    it('should generate unique category ID', fakeAsync(() => {
       const mockResult = {
         name: 'Test Category',
         icon: 'star',
@@ -147,13 +150,14 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
       expect(addedCategory.id).toContain('test-category');
       expect(addedCategory.id).toMatch(/test-category-\d+/);
-    });
+    }));
 
-    it('should include other-language translation when nameOtherLang is provided', () => {
+    it('should include other-language translation when nameOtherLang is provided', fakeAsync(() => {
       const mockResult = {
         name: 'Amici',
         nameOtherLang: '  Friends  ',
@@ -166,15 +170,16 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
       // nameTranslations should include the trimmed other-lang value
       expect(addedCategory.nameTranslations).toBeDefined();
       const translationValues = Object.values(addedCategory.nameTranslations!);
       expect(translationValues).toContain('Friends');
-    });
+    }));
 
-    it('should set correct otherLang when currentLang is "it"', () => {
+    it('should set correct otherLang when currentLang is "it"', fakeAsync(() => {
       const localeService = TestBed.inject(LocaleService);
       localeService.setLanguage('it');
 
@@ -184,11 +189,12 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.addCategory();
+      flushMicrotasks();
 
       const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
       // currentLang is 'it', so nameTranslations should have 'it' key
       expect(addedCategory.nameTranslations?.['it']).toBe('Famiglia');
-    });
+    }));
   });
 
   describe('editCategory', () => {
@@ -199,20 +205,21 @@ describe('CategoryManagerService', () => {
       expect(dialogSpy.open).not.toHaveBeenCalled();
     });
 
-    it('should open edit dialog for existing category', () => {
+    it('should open edit dialog for existing category', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(null));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.editCategory('friends');
+      flushMicrotasks();
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('edit');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.category?.id).toBe('friends');
-    });
+    }));
 
-    it('should update category when dialog returns result', () => {
+    it('should update category when dialog returns result', fakeAsync(() => {
       const mockResult = {
         name: 'Updated Friends',
         icon: 'people',
@@ -224,6 +231,7 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.editCategory('friends');
+      flushMicrotasks();
 
       expect(categoryFacadeSpy.updateCategory).toHaveBeenCalled();
       const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
@@ -231,19 +239,20 @@ describe('CategoryManagerService', () => {
       expect(updatedCategory.name).toBe('Updated Friends');
       expect(updatedCategory.icon).toBe('people');
       expect(updatedCategory.color).toBe('#00FF00');
-    });
+    }));
 
-    it('should not update when dialog is cancelled', () => {
+    it('should not update when dialog is cancelled', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(null));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.editCategory('friends');
+      flushMicrotasks();
 
       expect(categoryFacadeSpy.updateCategory).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should include other-language translation when nameOtherLang has value in edit', () => {
+    it('should include other-language translation when nameOtherLang has value in edit', fakeAsync(() => {
       const mockResult = {
         name: 'Amici',
         nameOtherLang: ' Friends ',
@@ -256,14 +265,15 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.editCategory('friends');
+      flushMicrotasks();
 
       const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
       expect(updatedCategory.nameTranslations).toBeDefined();
       const translationValues = Object.values(updatedCategory.nameTranslations!);
       expect(translationValues).toContain('Friends');
-    });
+    }));
 
-    it('should use Italian as current lang when locale is "it" during edit', () => {
+    it('should use Italian as current lang when locale is "it" during edit', fakeAsync(() => {
       const localeService = TestBed.inject(LocaleService);
       localeService.setLanguage('it');
 
@@ -273,11 +283,12 @@ describe('CategoryManagerService', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       service.editCategory('friends');
+      flushMicrotasks();
 
       const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
       // currentLang is 'it', nameTranslations should contain 'it' key
       expect(updatedCategory.nameTranslations?.['it']).toBe('Amici');
-    });
+    }));
 
     it('should not open dialog for non-existent category', () => {
       service.editCategory('non-existent');

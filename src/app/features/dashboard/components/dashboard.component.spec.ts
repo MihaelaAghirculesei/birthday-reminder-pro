@@ -274,7 +274,21 @@ describe('DashboardComponent', () => {
       expect(dialogSpy.open).toHaveBeenCalled();
     });
 
-    it('should blur button before opening dialog', () => {
+    it('should open dialog with correct configuration', () => {
+      component.onOpenMessageDialog();
+      expect(dialogSpy.open).toHaveBeenCalledWith(
+        jasmine.any(Function),
+        jasmine.objectContaining({
+          width: '800px',
+          maxWidth: '95vw',
+          maxHeight: '90vh',
+          autoFocus: 'dialog',
+          restoreFocus: true,
+        })
+      );
+    });
+
+    it('should blur button when event target is the button itself', () => {
       const button = document.createElement('button');
       spyOn(button, 'blur');
       const event = new MouseEvent('click');
@@ -282,6 +296,37 @@ describe('DashboardComponent', () => {
 
       component.onOpenMessageDialog(event);
       expect(button.blur).toHaveBeenCalled();
+    });
+
+    it('should blur ancestor button when event target is a child element', () => {
+      const button = document.createElement('button');
+      const icon = document.createElement('mat-icon');
+      button.appendChild(icon);
+      document.body.appendChild(button);
+      spyOn(button, 'blur');
+      const event = new MouseEvent('click');
+      Object.defineProperty(event, 'target', { value: icon, enumerable: true });
+
+      component.onOpenMessageDialog(event);
+      expect(button.blur).toHaveBeenCalled();
+      document.body.removeChild(button);
+    });
+
+    it('should not call blur when event target has no ancestor button', () => {
+      const div = document.createElement('div');
+      document.body.appendChild(div);
+      const event = new MouseEvent('click');
+      Object.defineProperty(event, 'target', { value: div, enumerable: true });
+
+      // Should not throw; dialog still opens
+      expect(() => component.onOpenMessageDialog(event)).not.toThrow();
+      expect(dialogSpy.open).toHaveBeenCalled();
+      document.body.removeChild(div);
+    });
+
+    it('should open dialog even without event argument', () => {
+      component.onOpenMessageDialog(undefined);
+      expect(dialogSpy.open).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -334,6 +379,75 @@ describe('DashboardComponent', () => {
       button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       document.body.removeChild(button);
       expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
+    });
+
+    it('should not cancel edit when clicking on mat-icon', () => {
+      Object.defineProperty(editServiceSpy, 'currentEditingId', {
+        get: () => '1',
+        configurable: true
+      });
+      const icon = document.createElement('mat-icon');
+      document.body.appendChild(icon);
+      icon.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(icon);
+      expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
+    });
+
+    it('should not cancel edit when clicking on add-birthday-card', () => {
+      Object.defineProperty(editServiceSpy, 'currentEditingId', {
+        get: () => '1',
+        configurable: true
+      });
+      const card = document.createElement('div');
+      card.className = 'add-birthday-card';
+      document.body.appendChild(card);
+      card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(card);
+      expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
+    });
+
+    it('should not cancel edit when clicking on category-filter', () => {
+      Object.defineProperty(editServiceSpy, 'currentEditingId', {
+        get: () => '1',
+        configurable: true
+      });
+      const filter = document.createElement('div');
+      filter.className = 'category-filter';
+      document.body.appendChild(filter);
+      filter.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(filter);
+      expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
+    });
+
+    it('should not cancel edit when clicking inside a birthday item that has active edit inputs', () => {
+      Object.defineProperty(editServiceSpy, 'currentEditingId', {
+        get: () => '1',
+        configurable: true
+      });
+      const item = document.createElement('div');
+      item.className = 'dashboard-birthday-item';
+      const input = document.createElement('input');
+      input.className = 'edit-name-input';
+      item.appendChild(input);
+      document.body.appendChild(item);
+      input.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(item);
+      expect(editServiceSpy.cancelEdit).not.toHaveBeenCalled();
+    });
+
+    it('should cancel edit when clicking inside a birthday item that has no edit inputs', () => {
+      Object.defineProperty(editServiceSpy, 'currentEditingId', {
+        get: () => '1',
+        configurable: true
+      });
+      const item = document.createElement('div');
+      item.className = 'dashboard-birthday-item';
+      const span = document.createElement('span');
+      item.appendChild(span);
+      document.body.appendChild(item);
+      span.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.body.removeChild(item);
+      expect(editServiceSpy.cancelEdit).toHaveBeenCalled();
     });
   });
 

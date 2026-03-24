@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
 import { CategoryFacadeService, NotificationService } from '../../../core';
 import { LocaleService } from '../../../core/services/locale.service';
-import { CategoryDialogComponent } from '../components/category-dialog/category-dialog.component';
 import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
 import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
@@ -29,7 +28,9 @@ export class CategoryManagerService {
     { initialValue: [] }
   );
 
-  addCategory(): void {
+  async addCategory(): Promise<void> {
+    const { CategoryDialogComponent } = await import('../components/category-dialog/category-dialog.component');
+
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
       width: 'min(600px, 90vw)',
       maxWidth: '90vw',
@@ -60,7 +61,7 @@ export class CategoryManagerService {
       });
   }
 
-  editCategory(categoryId: string): void {
+  async editCategory(categoryId: string): Promise<void> {
     if (categoryId === '__orphaned__') {
       this.handleOrphanedCategoryEdit();
       return;
@@ -70,6 +71,8 @@ export class CategoryManagerService {
     const category = allCategories.find(c => c.id === categoryId);
 
     if (!category) return;
+
+    const { CategoryDialogComponent } = await import('../components/category-dialog/category-dialog.component');
 
     const dialogRef = this.dialog.open(CategoryDialogComponent, {
       width: 'min(600px, 90vw)',

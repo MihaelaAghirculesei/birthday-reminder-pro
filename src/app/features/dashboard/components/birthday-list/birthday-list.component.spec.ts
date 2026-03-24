@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -186,12 +186,13 @@ describe('BirthdayListComponent', () => {
   });
 
   describe('Edit dialog', () => {
-    it('should open edit dialog with correct data', () => {
+    it('should open edit dialog with correct data', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(undefined));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       component.editBirthday(mockBirthdays[0]);
+      flushMicrotasks();
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
@@ -199,9 +200,9 @@ describe('BirthdayListComponent', () => {
         birthday: mockBirthdays[0],
         categories: mockCategories
       });
-    });
+    }));
 
-    it('should update birthday when dialog returns result (empty fields fall back to undefined)', () => {
+    it('should update birthday when dialog returns result (empty fields fall back to undefined)', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -221,11 +222,12 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       component.editBirthday(mockBirthdays[0]);
+      flushMicrotasks();
 
       expect(store.dispatch).toHaveBeenCalled();
-    });
+    }));
 
-    it('should update birthday preserving contact info when provided', () => {
+    it('should update birthday preserving contact info when provided', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -245,11 +247,12 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       component.editBirthday(mockBirthdays[0]);
+      flushMicrotasks();
 
       expect(store.dispatch).toHaveBeenCalled();
-    });
+    }));
 
-    it('should fall back to birthday.name when edited name is empty after trim', () => {
+    it('should fall back to birthday.name when edited name is empty after trim', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -269,9 +272,10 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       component.editBirthday(mockBirthdays[0]);
+      flushMicrotasks();
 
       expect(store.dispatch).toHaveBeenCalled();
-    });
+    }));
 
     it('should not update birthday when dialog is cancelled', () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);

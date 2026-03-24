@@ -15,7 +15,7 @@ import { take, switchMap, EMPTY, map, timer, fromEvent } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
-import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
+import type { BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
 import { sanitizeBirthdayData, safeParseBirthday } from '../../../../shared/schemas/birthday.schema';
@@ -140,7 +140,9 @@ export class BirthdayListComponent implements OnChanges {
     return birthday.id;
   }
 
-  editBirthday(birthday: Birthday): void {
+  async editBirthday(birthday: Birthday): Promise<void> {
+    const { BirthdayEditDialogComponent } = await import('../birthday-edit-dialog/birthday-edit-dialog.component');
+
     const dialogData: BirthdayEditDialogData = {
       birthday,
       categories: this.categories
