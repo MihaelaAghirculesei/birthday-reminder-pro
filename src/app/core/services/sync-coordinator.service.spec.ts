@@ -1,28 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { SyncCoordinatorService } from './sync-coordinator.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import * as SyncActions from '../store/sync/sync.actions';
-import { FirebaseAuthService, AuthUser } from './firebase-auth.service';
-import { FirestoreService } from './firestore.service';
-import { IndexedDBStorageService } from './offline-storage.service';
-import { PendingChangesService, PendingChange } from './pending-changes.service';
+import { CloudSyncService } from './cloud-sync.service';
+import { SyncQueueProcessorService } from './sync-queue-processor.service';
+import { PendingChangesService } from './pending-changes.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
-import { BirthdayMergeService, MergeResult } from './birthday-merge.service';
-import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import * as SyncActions from '../store/sync/sync.actions';
+import { AuthUser } from './firebase-auth.service';
+import { BehaviorSubject } from 'rxjs';
 import { Birthday } from '../../shared/models/birthday.model';
 
 describe('SyncCoordinatorService', () => {
   let service: SyncCoordinatorService;
   let store: MockStore;
-  let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
-  let firestoreServiceMock: jasmine.SpyObj<FirestoreService>;
-  let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
+  let cloudSyncMock: jasmine.SpyObj<CloudSyncService>;
+  let queueProcessorMock: jasmine.SpyObj<SyncQueueProcessorService>;
   let pendingChangesMock: jasmine.SpyObj<PendingChangesService>;
   let networkServiceMock: Partial<NetworkService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
-  let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
   let networkOnline$: BehaviorSubject<boolean>;
 
   const mockUser: AuthUser = {
@@ -37,80 +34,43 @@ describe('SyncCoordinatorService', () => {
     sync: { state: 'idle', lastSyncAt: null, pendingChanges: 0, error: null, isOnline: true }
   };
 
-  function makeBirthday(overrides: Partial<Birthday> = {}): Birthday {
-    return {
-      id: 'b-1',
-      name: 'Mario Rossi',
-      birthDate: '1990-05-15',
-      zodiacSign: 'Taurus',
-      daysUntilBirthday: 90,
-      ...overrides
-    } as Birthday;
-  }
-
-  let seqCounter = 0;
-
-  function makePendingChange(overrides: Partial<PendingChange> = {}): PendingChange {
-    return {
-      id: 'change-1',
-      entityType: 'birthday',
-      entityId: 'b-1',
-      changeType: 'create',
-      data: makeBirthday(),
-      timestamp: Date.now(),
-      retryCount: 0,
-      sequenceNumber: seqCounter++,
-      ...overrides
-    };
-  }
-
   beforeEach(() => {
     networkOnline$ = new BehaviorSubject<boolean>(true);
 
-    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', ['initAuthListener'], {
-      currentUser: null,
-      isAuthenticated: false
-    });
-    firestoreServiceMock = jasmine.createSpyObj('FirestoreService', [
-      'subscribeToBirthdays', 'subscribeToCategories', 'unsubscribeAll',
-      'getBirthdays', 'saveBirthdaysBatch', 'saveBirthday', 'deleteBirthday',
-      'saveCategory', 'deleteCategory'
-    ], {
-      birthdays$: new Subject(),
-      categories$: new Subject()
-    });
-    offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays', 'saveBirthdays'
+    cloudSyncMock = jasmine.createSpyObj('CloudSyncService', [
+      'setupListeners', 'teardownListeners', 'checkForMigration', 'migrateLocalToCloud'
     ]);
-    pendingChangesMock = jasmine.createSpyObj('PendingChangesService', [
-      'initialize', 'addChange', 'removeChange', 'markRetry', 'getChangesForEntity'
-    ], {
+    cloudSyncMock.migrateLocalToCloud.and.returnValue(Promise.resolve(0));
+    cloudSyncMock.checkForMigration.and.returnValue(Promise.resolve());
+
+    queueProcessorMock = jasmine.createSpyObj('SyncQueueProcessorService', [
+      'updatePendingCount', 'queueChange', 'processPendingChanges'
+    ]);
+    queueProcessorMock.queueChange.and.returnValue(Promise.resolve());
+    queueProcessorMock.processPendingChanges.and.returnValue(Promise.resolve(0));
+
+    pendingChangesMock = jasmine.createSpyObj('PendingChangesService', ['initialize'], {
       changes$: new BehaviorSubject<unknown[]>([]).asObservable(),
       pendingCount: 0
     });
+    pendingChangesMock.initialize.and.returnValue(Promise.resolve());
+
     networkServiceMock = {
       online$: networkOnline$.asObservable(),
       isOnline: true
     } as Partial<NetworkService>;
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
-    mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
-    mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
 
-    pendingChangesMock.initialize.and.returnValue(Promise.resolve());
-    pendingChangesMock.getChangesForEntity.and.returnValue([]);
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
 
     TestBed.configureTestingModule({
       providers: [
         SyncCoordinatorService,
         provideMockStore({ initialState }),
-        { provide: FirebaseAuthService, useValue: authServiceMock },
-        { provide: FirestoreService, useValue: firestoreServiceMock },
-        { provide: IndexedDBStorageService, useValue: offlineStorageMock },
+        { provide: CloudSyncService, useValue: cloudSyncMock },
+        { provide: SyncQueueProcessorService, useValue: queueProcessorMock },
         { provide: PendingChangesService, useValue: pendingChangesMock },
         { provide: NetworkService, useValue: networkServiceMock },
         { provide: LoggerService, useValue: loggerMock },
-        { provide: BirthdayMergeService, useValue: mergeServiceMock },
         provideTranslateTesting()
       ]
     });
@@ -128,546 +88,92 @@ describe('SyncCoordinatorService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('initialize should set up pending changes', async () => {
-    await service.initialize();
-    expect(pendingChangesMock.initialize).toHaveBeenCalled();
-    expect(loggerMock.info).toHaveBeenCalledWith('[SyncCoordinator] Initialized');
-  });
-
-  it('initialize should not run twice', async () => {
-    await service.initialize();
-    await service.initialize();
-    expect(pendingChangesMock.initialize).toHaveBeenCalledTimes(1);
-  });
-
-  it('queueChange should add change to pending', async () => {
-    pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-    await service.queueChange('birthday', 'b-1', 'create', { name: 'Test' });
-    expect(pendingChangesMock.addChange).toHaveBeenCalledWith(
-      'birthday', 'b-1', 'create', { name: 'Test' }
-    );
-  });
-
-  it('processPendingChanges should do nothing without user', async () => {
-    await service.processPendingChanges();
-    expect(pendingChangesMock.getChangesForEntity).not.toHaveBeenCalled();
-  });
-
-  it('migrateLocalToCloud should throw without user', async () => {
-    try {
-      await service.migrateLocalToCloud();
-      fail('Should have thrown');
-    } catch (err: unknown) {
-      expect((err as Error).message).toBe('User not authenticated');
-    }
-  });
-
-  it('migrateLocalToCloud should return 0 when no local data', async () => {
-    Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-
-    const count = await service.migrateLocalToCloud();
-    expect(count).toBe(0);
-  });
-
-  it('migrateLocalToCloud should upload local birthdays', async () => {
-    Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-    const localBirthdays = [
-      { id: 'b-1', name: 'Test', birthDate: '2000-01-01' }
-    ];
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays as Birthday[]));
-    firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-    offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-
-    const count = await service.migrateLocalToCloud();
-    expect(count).toBe(1);
-    expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalled();
-    expect(offlineStorageMock.saveBirthdays).toHaveBeenCalled();
-  });
-
-  it('should use DestroyRef for cleanup', () => {
-    expect(service['destroyRef']).toBeTruthy();
-  });
-
-  describe('processPendingChanges', () => {
-    beforeEach(() => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+  describe('initialize', () => {
+    it('should initialize pending changes and update count', async () => {
+      await service.initialize();
+      expect(pendingChangesMock.initialize).toHaveBeenCalled();
+      expect(queueProcessorMock.updatePendingCount).toHaveBeenCalled();
     });
 
-    it('should skip when offline', async () => {
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
-      await service.processPendingChanges();
-      expect(pendingChangesMock.getChangesForEntity).not.toHaveBeenCalled();
+    it('should log initialized message', async () => {
+      await service.initialize();
+      expect(loggerMock.info).toHaveBeenCalledWith('[SyncCoordinator] Initialized');
     });
 
-    it('should skip when no pending changes', async () => {
-      pendingChangesMock.getChangesForEntity.and.returnValue([]);
-      await service.processPendingChanges();
-      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
+    it('should not run twice', async () => {
+      await service.initialize();
+      await service.initialize();
+      expect(pendingChangesMock.initialize).toHaveBeenCalledTimes(1);
     });
 
-    it('should process birthday create change', async () => {
-      const birthday = makeBirthday({ id: 'b-new' });
-      const change = makePendingChange({
-        id: 'c-1', entityId: 'b-new', changeType: 'create', data: birthday
-      });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledWith('user-123', birthday);
-      expect(pendingChangesMock.removeChange).toHaveBeenCalledWith('c-1');
-    });
-
-    it('should process birthday update change', async () => {
-      const birthday = makeBirthday({ id: 'b-1', name: 'Updated' });
-      const change = makePendingChange({
-        id: 'c-2', entityId: 'b-1', changeType: 'update', data: birthday
-      });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledWith('user-123', birthday);
-    });
-
-    it('should process birthday delete change', async () => {
-      const change = makePendingChange({
-        id: 'c-3', entityId: 'b-1', changeType: 'delete', data: null
-      });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(firestoreServiceMock.deleteBirthday).toHaveBeenCalledWith('user-123', 'b-1');
-      expect(pendingChangesMock.removeChange).toHaveBeenCalledWith('c-3');
-    });
-
-    it('should process multiple changes in order', async () => {
-      const changes = [
-        makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create' }),
-        makePendingChange({ id: 'c-2', entityId: 'b-2', changeType: 'create' }),
-        makePendingChange({ id: 'c-3', entityId: 'b-3', changeType: 'delete' })
-      ];
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(pendingChangesMock.removeChange).toHaveBeenCalledTimes(3);
-    });
-
-    it('should skip changes that exceeded MAX_RETRY_COUNT', async () => {
-      const change = makePendingChange({
-        id: 'c-1', retryCount: 3
-      });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-
-      await service.processPendingChanges();
-
-      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncCoordinator] Max retries reached for change:', 'c-1'
-      );
-    });
-
-    it('should increment retry on failure', async () => {
-      const change = makePendingChange({ id: 'c-1', retryCount: 1 });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(throwError(() => new Error('Network error')));
-      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('c-1');
-      expect(loggerMock.error).toHaveBeenCalled();
-    });
-
-    it('should handle partial failures (some succeed, some fail)', async () => {
-      const changes = [
-        makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create' }),
-        makePendingChange({ id: 'c-2', entityId: 'b-2', changeType: 'create' }),
-        makePendingChange({ id: 'c-3', entityId: 'b-3', changeType: 'create' })
-      ];
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
-
-      let callCount = 0;
-      firestoreServiceMock.saveBirthday.and.callFake(() => {
-        callCount++;
-        if (callCount === 2) {
-          return throwError(() => new Error('Firestore error'));
-        }
-        return of(undefined);
-      });
-
-      await service.processPendingChanges();
-
-      expect(pendingChangesMock.removeChange).toHaveBeenCalledTimes(2);
-      expect(pendingChangesMock.markRetry).toHaveBeenCalledTimes(1);
-      expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('c-2');
-    });
-
-    it('should block create when preceding delete for same entity fails', async () => {
-      // Simulates the delete→create causal sequence: if delete fails,
-      // the create must NOT be sent in the same pass. Without this guard
-      // the create would succeed, and the later delete retry would silently
-      // wipe out the freshly created entity.
-      const deleteChange = makePendingChange({
-        id: 'del-1', entityId: 'b-x', changeType: 'delete', data: null, sequenceNumber: 0
-      });
-      const createChange = makePendingChange({
-        id: 'cre-1', entityId: 'b-x', changeType: 'create',
-        data: makeBirthday({ id: 'b-x' }), sequenceNumber: 1
-      });
-
-      pendingChangesMock.getChangesForEntity.and.returnValue([deleteChange, createChange]);
-      firestoreServiceMock.deleteBirthday.and.returnValue(throwError(() => new Error('Network error')));
-      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      // delete was attempted and failed
-      expect(firestoreServiceMock.deleteBirthday).toHaveBeenCalledWith('user-123', 'b-x');
-      expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('del-1');
-
-      // create was NOT sent because the delete failed — causal order preserved
-      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
-      expect(pendingChangesMock.removeChange).not.toHaveBeenCalledWith('cre-1');
-    });
-
-    it('should block create when preceding delete exhausted MAX_RETRY_COUNT', async () => {
-      const exhaustedDelete = makePendingChange({
-        id: 'del-x', entityId: 'b-y', changeType: 'delete', data: null,
-        retryCount: 3, sequenceNumber: 0
-      });
-      const pendingCreate = makePendingChange({
-        id: 'cre-x', entityId: 'b-y', changeType: 'create',
-        data: makeBirthday({ id: 'b-y' }), sequenceNumber: 1
-      });
-
-      pendingChangesMock.getChangesForEntity.and.returnValue([exhaustedDelete, pendingCreate]);
-      pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      // Exhausted delete is logged and skipped
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncCoordinator] Max retries reached for change:', 'del-x'
-      );
-      // create is blocked — sending it while delete is stuck would be inconsistent
-      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncCoordinator] Skipping change blocked by prior entity failure:', 'cre-x'
-      );
-    });
-  });
-
-  describe('processPendingChanges concurrency guard', () => {
-    beforeEach(() => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-    });
-
-    it('should not run concurrently — second call defers until first completes', async () => {
-      let resolveFirst!: () => void;
-      const blockingPromise = new Promise<void>((resolve) => { resolveFirst = resolve; });
-
-      const birthday = makeBirthday({ id: 'b-1' });
-      const change = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday });
-
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-
-      firestoreServiceMock.saveBirthday.and.callFake(() => {
-        return new Observable((subscriber) => {
-          blockingPromise.then(() => {
-            subscriber.next(undefined);
-            subscriber.complete();
-          });
-        });
-      });
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
+    it('should dispatch setOnlineStatus when network changes', async () => {
       const dispatchSpy = spyOn(store, 'dispatch');
+      await service.initialize();
 
-      // First call starts processing and blocks on the Observable
-      const firstRun = service.processPendingChanges();
-      // Second call arrives while first is in progress — should defer, not start processing
-      const secondRun = service.processPendingChanges();
+      networkOnline$.next(false);
 
-      // Second call returns immediately (deferred)
-      await secondRun;
-
-      // saveBirthday was called once by the first run; second run deferred via syncAgain
-      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
-      expect(pendingChangesMock.getChangesForEntity).toHaveBeenCalledTimes(1);
-
-      // Unblock the first run
-      resolveFirst();
-      await firstRun;
-
-      // After first run completes with syncAgain=true, it dispatches pushPendingChanges
-      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.setOnlineStatus({ isOnline: false }));
     });
 
-    it('should not duplicate writes when called concurrently', async () => {
-      const birthday = makeBirthday({ id: 'b-dup' });
-      const change = makePendingChange({ id: 'c-dup', entityId: 'b-dup', changeType: 'create', data: birthday });
+    it('should call cloudSync.setupListeners and checkForMigration when user signs in', async () => {
+      await service.initialize();
 
-      let callCount = 0;
-      pendingChangesMock.getChangesForEntity.and.callFake(() => {
-        callCount++;
-        if (callCount === 1) return [change];
-        return [];
+      store.setState({
+        ...initialState,
+        auth: { user: mockUser, loading: false, error: null, initialized: true }
       });
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
 
-      await Promise.all([
-        service.processPendingChanges(),
-        service.processPendingChanges(),
-        service.processPendingChanges()
-      ]);
-
-      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
+      expect(cloudSyncMock.setupListeners).toHaveBeenCalledWith('user-123');
+      expect(cloudSyncMock.checkForMigration).toHaveBeenCalledWith('user-123');
     });
 
-    it('should dispatch pushPendingChanges after first run if a call arrived during sync', async () => {
-      const birthday1 = makeBirthday({ id: 'b-1' });
-      const change1 = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday1 });
+    it('should call cloudSync.teardownListeners when user signs out', async () => {
+      await service.initialize();
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([change1]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-      const dispatchSpy = spyOn(store, 'dispatch');
-
-      const firstRun = service.processPendingChanges();
-      service.processPendingChanges(); // deferred via syncAgain
-
-      await firstRun;
-
-      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
-    });
-  });
-
-  describe('processCategoryChange', () => {
-    beforeEach(() => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-    });
-
-    it('should process category create/update via saveCategory', async () => {
-      const categoryData = { id: 'cat-1', name: 'Family', color: '#ff0000', icon: 'group' };
-      const change = makePendingChange({
-        id: 'c-cat-1', entityType: 'category', entityId: 'cat-1',
-        changeType: 'create', data: categoryData
+      store.setState({
+        ...initialState,
+        auth: { user: mockUser, loading: false, error: null, initialized: true }
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveCategory.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-
-      await service.processPendingChanges();
-
-      expect(firestoreServiceMock.saveCategory).toHaveBeenCalledWith('user-123', categoryData);
-    });
-
-    it('should process category delete via deleteCategory', async () => {
-      const change = makePendingChange({
-        id: 'c-cat-2', entityType: 'category', entityId: 'cat-1',
-        changeType: 'delete', data: null
+      store.setState({
+        ...initialState,
+        auth: { user: null, loading: false, error: null, initialized: true }
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.deleteCategory.and.returnValue(of(undefined));
-      pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
 
-      await service.processPendingChanges();
+      expect(cloudSyncMock.teardownListeners).toHaveBeenCalled();
+    });
 
-      expect(firestoreServiceMock.deleteCategory).toHaveBeenCalledWith('user-123', 'cat-1');
+    it('should update pending count when changes$ emits', async () => {
+      const changesSubject = new BehaviorSubject<unknown[]>([]);
+      Object.defineProperty(pendingChangesMock, 'changes$', { get: () => changesSubject.asObservable() });
+
+      await service.initialize();
+      queueProcessorMock.updatePendingCount.calls.reset();
+
+      changesSubject.next([{ id: 'c-1' }]);
+
+      expect(queueProcessorMock.updatePendingCount).toHaveBeenCalled();
     });
   });
 
-  describe('queueChange with immediate processing', () => {
-    it('should dispatch pushPendingChanges when online and authenticated', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-
-      pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-      const dispatchSpy = spyOn(store, 'dispatch');
-
-      await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
-
-      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
+  describe('delegation', () => {
+    it('migrateLocalToCloud delegates to cloudSync', async () => {
+      cloudSyncMock.migrateLocalToCloud.and.returnValue(Promise.resolve(5));
+      const result = await service.migrateLocalToCloud();
+      expect(cloudSyncMock.migrateLocalToCloud).toHaveBeenCalled();
+      expect(result).toBe(5);
     });
 
-    it('should not dispatch when offline', async () => {
-      Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
-
-      pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-      const dispatchSpy = spyOn(store, 'dispatch');
-
-      await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
-
-      expect(dispatchSpy).not.toHaveBeenCalledWith(SyncActions.pushPendingChanges());
+    it('queueChange delegates to queueProcessor', async () => {
+      const birthday = { id: 'b-1' } as Birthday;
+      await service.queueChange('birthday', 'b-1', 'create', birthday);
+      expect(queueProcessorMock.queueChange).toHaveBeenCalledWith('birthday', 'b-1', 'create', birthday);
     });
 
-    it('should not dispatch when not authenticated', async () => {
-      Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => false });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-
-      pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-      const dispatchSpy = spyOn(store, 'dispatch');
-
-      await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
-
-      expect(dispatchSpy).not.toHaveBeenCalledWith(SyncActions.pushPendingChanges());
-    });
-  });
-
-  describe('mergeCloudWithLocal', () => {
-    beforeEach(() => {
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-      firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-    });
-
-    it('should call mergeService.merge with latest-wins strategy', async () => {
-      const cloudBirthdays = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
-      const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      mergeServiceMock.merge.and.returnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [] });
-
-      await service['mergeCloudWithLocal'](cloudBirthdays, 'user-123');
-
-      expect(mergeServiceMock.merge).toHaveBeenCalledWith(
-        localBirthdays,
-        cloudBirthdays,
-        { strategy: 'latest-wins' }
-      );
-    });
-
-    it('should save merged result to IndexedDB', async () => {
-      const mergedBirthdays = [makeBirthday({ id: 'b-1', name: 'Merged' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: mergedBirthdays, toUpload: [] });
-
-      await service['mergeCloudWithLocal']([], 'user-123');
-
-      expect(offlineStorageMock.saveBirthdays).toHaveBeenCalledWith(mergedBirthdays);
-    });
-
-    it('should upload toUpload items to cloud when online', async () => {
-      const toUploadItems = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-
-      await service['mergeCloudWithLocal']([], 'user-123');
-
-      expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalledWith('user-123', toUploadItems);
-    });
-
-    it('should not upload when offline', async () => {
-      const toUploadItems = [makeBirthday({ id: 'local-1' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
-
-      await service['mergeCloudWithLocal']([], 'user-123');
-
-      expect(firestoreServiceMock.saveBirthdaysBatch).not.toHaveBeenCalled();
-    });
-
-    it('should not upload when toUpload is empty', async () => {
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-
-      await service['mergeCloudWithLocal']([], 'user-123');
-
-      expect(firestoreServiceMock.saveBirthdaysBatch).not.toHaveBeenCalled();
-    });
-
-    it('should dispatch syncSuccess after merge', async () => {
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
-      spyOn(store, 'dispatch');
-
-      await service['mergeCloudWithLocal']([], 'user-123');
-
-      expect(store.dispatch).toHaveBeenCalledWith(
-        jasmine.objectContaining({ type: '[Sync] Success' })
-      );
-    });
-  });
-
-  describe('migrateLocalToCloud', () => {
-    it('should add sync metadata to migrated birthdays', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      const localBirthdays = [makeBirthday({ id: 'b-1' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-
-      await service.migrateLocalToCloud();
-
-      const uploadedBirthdays = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
-      expect(uploadedBirthdays[0].ownerId).toBe('user-123');
-      expect(uploadedBirthdays[0].syncStatus).toBe('synced');
-      expect(uploadedBirthdays[0].updatedAt).toBeDefined();
-    });
-
-    it('should update local storage with sync metadata', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      const localBirthdays = [makeBirthday({ id: 'b-1' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-
-      await service.migrateLocalToCloud();
-
-      const savedBirthdays = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
-      expect(savedBirthdays[0].syncStatus).toBe('synced');
-    });
-
-    it('should migrate multiple birthdays', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      const localBirthdays = [
-        makeBirthday({ id: 'b-1' }),
-        makeBirthday({ id: 'b-2' }),
-        makeBirthday({ id: 'b-3' })
-      ];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-
-      const count = await service.migrateLocalToCloud();
-      expect(count).toBe(3);
-    });
-
-    it('should preserve existing updatedAt during migration', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
-      const existingTimestamp = 1700000000000;
-      const localBirthdays = [makeBirthday({ id: 'b-1', updatedAt: existingTimestamp })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-
-      await service.migrateLocalToCloud();
-
-      const uploadedBirthdays = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
-      expect(uploadedBirthdays[0].updatedAt).toBe(existingTimestamp);
+    it('processPendingChanges delegates to queueProcessor', async () => {
+      queueProcessorMock.processPendingChanges.and.returnValue(Promise.resolve(3));
+      const result = await service.processPendingChanges();
+      expect(queueProcessorMock.processPendingChanges).toHaveBeenCalled();
+      expect(result).toBe(3);
     });
   });
 });
