@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { Injector } from '@angular/core';
 import { GlobalErrorHandler } from './global-error-handler.service';
 import { NotificationService } from './notification.service';
 import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
@@ -10,30 +9,22 @@ describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
   let errorReporterSpy: jasmine.SpyObj<ErrorReporter>;
-  let injectorSpy: jasmine.SpyObj<Injector>;
 
   beforeEach(() => {
     notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['show']);
     errorReporterSpy = jasmine.createSpyObj('ErrorReporter', ['captureError']);
-    injectorSpy = jasmine.createSpyObj('Injector', ['get']);
-    injectorSpy.get.and.callFake((token: unknown) => {
-      if (token === ERROR_REPORTER) {
-        return errorReporterSpy;
-      }
-      return notificationServiceSpy;
-    });
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: Injector, useValue: injectorSpy },
         GlobalErrorHandler,
         SILENT_LOGGER_PROVIDER,
-        provideTranslateTesting()
+        provideTranslateTesting(),
+        { provide: ERROR_REPORTER, useValue: errorReporterSpy },
+        { provide: NotificationService, useValue: notificationServiceSpy }
       ]
     });
 
     errorHandler = TestBed.inject(GlobalErrorHandler);
-    // Note: console spies are set up globally in test-setup.ts
   });
 
   it('should create', () => {
@@ -118,6 +109,33 @@ describe('GlobalErrorHandler', () => {
         'error',
         5000
       );
+    });
+
+    it('should produce structured technicalMessage for result-based Google API errors', () => {
+      const error = { result: { error: { code: 403, message: 'Forbidden' } } };
+
+      errorHandler.handleError(error);
+
+      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      expect(report.technicalMessage).toBe('Google API error 403: Forbidden');
+    });
+
+    it('should fall back to "No message" when result.error.message is absent', () => {
+      const error = { result: { error: { code: 401 } } };
+
+      errorHandler.handleError(error);
+
+      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      expect(report.technicalMessage).toBe('Google API error 401: No message');
+    });
+
+    it('should use the error message string for message-based Google API errors', () => {
+      const error = new Error('gapi is not defined');
+
+      errorHandler.handleError(error);
+
+      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      expect(report.technicalMessage).toBe('gapi is not defined');
     });
   });
 
@@ -228,11 +246,15 @@ describe('GlobalErrorHandler', () => {
       expect(() => errorHandler.handleError(error)).not.toThrow();
     });
 
-    it('should handle injector failure gracefully', () => {
-      injectorSpy.get.and.throwError('Injector failed');
+    it('should handle both reporter and notification failure gracefully', () => {
+      // Simulates total pipeline failure: reporter throws, then notification also throws
+      const consoleErrorSpy = spyOn(console, 'error');
+      errorReporterSpy.captureError.and.throwError('Reporter failed');
+      notificationServiceSpy.show.and.throwError('Notification failed');
       const error = new Error('Test error');
 
       expect(() => errorHandler.handleError(error)).not.toThrow();
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 
@@ -249,17 +271,15 @@ describe('GlobalErrorHandler', () => {
       expect(report.timestamp).toBeDefined();
     });
 
-    it('should handle missing ERROR_REPORTER token gracefully', () => {
-      injectorSpy.get.and.callFake((token: unknown) => {
-        if (token === ERROR_REPORTER) {
-          throw new Error('No provider for ERROR_REPORTER');
-        }
-        return notificationServiceSpy;
-      });
+    it('should handle missing ERROR_REPORTER gracefully and still notify user', () => {
+      // Simulate captureError throwing (e.g. no provider / broken reporter)
+      errorReporterSpy.captureError.and.throwError('No provider for ERROR_REPORTER');
+      const consoleErrorSpy = spyOn(console, 'error');
 
       const error = new Error('Test error');
       expect(() => errorHandler.handleError(error)).not.toThrow();
       expect(notificationServiceSpy.show).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 
@@ -340,11 +360,42 @@ describe('GlobalErrorHandler', () => {
 
   describe('reportError – captureError failure recovery', () => {
     it('should not throw and still notify user if captureError itself throws', () => {
+      const consoleErrorSpy = spyOn(console, 'error');
       errorReporterSpy.captureError.and.throwError('Reporting pipeline failed');
       const error = new Error('Test error');
 
       expect(() => errorHandler.handleError(error)).not.toThrow();
       expect(notificationServiceSpy.show).toHaveBeenCalled();
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should log both reporter failure and original error to console.error', () => {
+      const reporterFailure = new Error('Reporting pipeline failed');
+      errorReporterSpy.captureError.and.throwError(reporterFailure.message);
+      const originalError = new Error('Original error');
+
+      const consoleErrorSpy = spyOn(console, 'error');
+      errorHandler.handleError(originalError);
+
+      // Two console.error calls: one for the reporter failure, one for the original error
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+      const [firstCall, secondCall] = consoleErrorSpy.calls.allArgs();
+      expect(firstCall[0]).toContain('[GlobalErrorHandler]');
+      expect(firstCall[0]).toContain('reporter failed');
+      expect(secondCall[0]).toContain('[GlobalErrorHandler]');
+      expect(secondCall[1]).toBe(originalError);
+    });
+
+    it('should emit console.error with original error even when reporter throws', () => {
+      errorReporterSpy.captureError.and.throwError('No provider for ERROR_REPORTER');
+      const originalError = new Error('Original error');
+
+      const consoleErrorSpy = spyOn(console, 'error');
+      errorHandler.handleError(originalError);
+
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+      const secondCall = consoleErrorSpy.calls.allArgs()[1];
+      expect(secondCall[1]).toBe(originalError);
     });
   });
 

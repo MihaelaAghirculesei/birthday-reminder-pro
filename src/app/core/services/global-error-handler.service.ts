@@ -9,15 +9,22 @@ interface ErrorContext {
   technicalMessage: string;
 }
 
-interface GoogleAPIError {
-  result?: {
-    error?: {
-      code?: number;
-      message?: string;
+interface GoogleResultAPIError {
+  readonly result: {
+    readonly error: {
+      readonly code: number;
+      readonly message?: string;
     };
   };
-  message?: string;
+  readonly message?: string;
 }
+
+interface GoogleMessageAPIError {
+  readonly result?: undefined;
+  readonly message: string;
+}
+
+type GoogleAPIError = GoogleResultAPIError | GoogleMessageAPIError;
 
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
@@ -49,7 +56,7 @@ export class GlobalErrorHandler implements ErrorHandler {
       return {
         type: 'GoogleAPI',
         userMessage: 'Google Calendar sync failed. Please try again.',
-        technicalMessage: errorMessage
+        technicalMessage: this.getGoogleAPIErrorMessage(error)
       };
     }
 
@@ -86,26 +93,36 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   private isGoogleAPIError(error: unknown): error is GoogleAPIError {
     if (!this.isObject(error)) return false;
-
-    const hasResultError = this.hasGoogleResultError(error);
-    const hasGoogleMessage = this.hasGoogleMessage(error);
-
-    return hasResultError || hasGoogleMessage;
+    return this.hasGoogleResultError(error) || this.hasGoogleMessage(error);
   }
 
-  private hasGoogleResultError(error: Record<string, unknown>): boolean {
-    return typeof error['result'] === 'object' &&
-           error['result'] !== null &&
-           'error' in error['result'] &&
-           typeof error['result']['error'] === 'object' &&
-           error['result']['error'] !== null &&
-           'code' in error['result']['error'] &&
-           typeof (error['result']['error'] as Record<string, unknown>)['code'] === 'number';
+  private hasGoogleResultError(error: unknown): error is GoogleResultAPIError {
+    if (typeof error !== 'object' || error === null) return false;
+    const e = error as Record<string, unknown>;
+    return typeof e['result'] === 'object' &&
+           e['result'] !== null &&
+           'error' in e['result'] &&
+           typeof (e['result'] as Record<string, unknown>)['error'] === 'object' &&
+           (e['result'] as Record<string, unknown>)['error'] !== null &&
+           'code' in ((e['result'] as Record<string, unknown>)['error'] as object) &&
+           typeof ((e['result'] as Record<string, unknown>)['error'] as Record<string, unknown>)['code'] === 'number';
   }
 
-  private hasGoogleMessage(error: Record<string, unknown>): boolean {
-    return typeof error['message'] === 'string' &&
-           (error['message'].includes('gapi') || error['message'].includes('Google'));
+  private hasGoogleMessage(error: unknown): error is GoogleMessageAPIError {
+    if (typeof error !== 'object' || error === null) return false;
+    const e = error as Record<string, unknown>;
+    return typeof e['message'] === 'string' &&
+           (e['message'].includes('gapi') || (e['message'] as string).includes('Google'));
+  }
+
+  private getGoogleAPIErrorMessage(error: GoogleAPIError): string {
+    if (error.result !== undefined) {
+      // Narrowed to GoogleResultAPIError — no optional chaining needed
+      const { code, message } = error.result.error;
+      return `Google API error ${code}: ${message ?? 'No message'}`;
+    }
+    // Narrowed to GoogleMessageAPIError — message is guaranteed string
+    return error.message;
   }
 
   private isNetworkError(error: unknown): boolean {
@@ -166,8 +183,12 @@ export class GlobalErrorHandler implements ErrorHandler {
         url: typeof window !== 'undefined' ? window.location.href : undefined,
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
       });
-    } catch {
-      // Silently fail - error reporting should never cause errors
+    } catch (reporterError) {
+      // Use console.error as the last-resort fallback — this.logger itself may
+      // be broken, but console.error is a browser primitive that never throws.
+      // Log both the reporter failure and the original error so neither is lost.
+      console.error('[GlobalErrorHandler] Error reporter failed:', reporterError);
+      console.error('[GlobalErrorHandler] Original unhandled error:', error);
     }
   }
 
