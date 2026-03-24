@@ -1,6 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID, NgZone } from '@angular/core';
 import { GoogleCalendarService } from './google-calendar.service';
+import { GoogleApiLoaderService } from './google-api-loader.service';
+import { GoogleCalendarAuthService } from './google-calendar-auth.service';
 import { SecureStorageService } from './secure-storage.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
@@ -9,6 +11,8 @@ import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;
+  let auth: GoogleCalendarAuthService;
+  let loader: GoogleApiLoaderService;
   let mockTokenClient: jasmine.SpyObj<TokenClient>;
   let mockOauth2: jasmine.SpyObj<GoogleAccountsOAuth2>;
   let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
@@ -101,6 +105,8 @@ describe('GoogleCalendarService', () => {
     TestBed.configureTestingModule({
       providers: [
         GoogleCalendarService,
+        GoogleApiLoaderService,
+        GoogleCalendarAuthService,
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: SecureStorageService, useValue: mockSecureStorage },
         SILENT_LOGGER_PROVIDER,
@@ -109,6 +115,8 @@ describe('GoogleCalendarService', () => {
     });
 
     service = TestBed.inject(GoogleCalendarService);
+    auth = TestBed.inject(GoogleCalendarAuthService);
+    loader = TestBed.inject(GoogleApiLoaderService);
   });
 
   afterEach(() => {
@@ -141,9 +149,9 @@ describe('GoogleCalendarService', () => {
 
   describe('Token Management with GIS', () => {
     beforeEach(async () => {
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
     });
 
     it('should handle successful token response', fakeAsync(() => {
@@ -169,11 +177,8 @@ describe('GoogleCalendarService', () => {
       const ngZone = TestBed.inject(NgZone);
       let rejectedError: unknown = null;
 
-      const pendingPromise = new Promise<void>((resolve, reject) => {
-        (service as unknown as { pendingTokenPromise: { resolve: () => void; reject: (e: Error) => void } }).pendingTokenPromise = {
-          resolve,
-          reject
-        };
+      const pendingPromise = new Promise<string>((resolve, reject) => {
+        auth.pendingTokenPromise = { resolve, reject };
       });
 
       pendingPromise.catch((error) => {
@@ -200,7 +205,7 @@ describe('GoogleCalendarService', () => {
 
     it('should revoke token on sign out', async () => {
       currentToken = { access_token: 'test-token' };
-      (service as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
 
       await service.signOut();
 
@@ -233,10 +238,10 @@ describe('GoogleCalendarService', () => {
 
   describe('Token Refresh', () => {
     beforeEach(() => {
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
-      (service as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
+      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
     });
 
     it('should refresh token when expiring soon', fakeAsync(() => {
@@ -254,7 +259,7 @@ describe('GoogleCalendarService', () => {
         }
       });
 
-      (service as unknown as { ensureValidToken: () => Promise<void> }).ensureValidToken();
+      auth.ensureValidToken();
       tick();
 
       expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' });
@@ -264,7 +269,7 @@ describe('GoogleCalendarService', () => {
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
 
-      (service as unknown as { ensureValidToken: () => Promise<void> }).ensureValidToken();
+      auth.ensureValidToken();
       tick();
 
       expect(mockTokenClient.requestAccessToken).not.toHaveBeenCalled();
@@ -296,7 +301,8 @@ describe('GoogleCalendarService', () => {
         }
       });
 
-      (service as unknown as { executeWithRetry: <T>(op: () => Promise<T>) => Promise<T> }).executeWithRetry(operation);
+      (service as unknown as { executeWithRetry: <T>(op: () => Promise<T>, ctx: string) => Promise<T> })
+        .executeWithRetry(operation, 'test');
       tick();
 
       expect(operation).toHaveBeenCalledTimes(2);
@@ -305,10 +311,10 @@ describe('GoogleCalendarService', () => {
 
   describe('Calendar Operations', () => {
     beforeEach(() => {
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
-      (service as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
+      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
       service.updateSettings({ enabled: true, calendarId: 'primary', syncMode: 'one-way', reminderMinutes: 1440 });
 
       const expiresAt = Date.now() + 600000;
@@ -336,7 +342,7 @@ describe('GoogleCalendarService', () => {
     });
 
     it('should throw error when getting calendars while not signed in', async () => {
-      (service as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(false);
+      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(false);
       try {
         await service.getCalendars();
         fail('Should have thrown error');
@@ -450,10 +456,10 @@ describe('GoogleCalendarService', () => {
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'stored-token', expires_at: expiresAt });
 
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
-      (service as unknown as { restoreSession: () => Promise<void> }).restoreSession();
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
+      auth.restoreSession(loader.isGapiLoaded);
       tick();
 
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith({ access_token: 'stored-token' });
@@ -463,10 +469,10 @@ describe('GoogleCalendarService', () => {
       const expiresAt = Date.now() - 1000;
       storedData.set('googleCalendarToken', { access_token: 'expired-token', expires_at: expiresAt });
 
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
-      (service as unknown as { restoreSession: () => Promise<void> }).restoreSession();
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
+      auth.restoreSession(loader.isGapiLoaded);
       tick();
 
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
@@ -479,9 +485,9 @@ describe('GoogleCalendarService', () => {
     });
 
     it('should return true when fully initialized', () => {
-      (service as unknown as { isGapiLoaded: boolean }).isGapiLoaded = true;
-      (service as unknown as { isGisLoaded: boolean }).isGisLoaded = true;
-      (service as unknown as { initializeTokenClient: () => void }).initializeTokenClient();
+      loader.isGapiLoaded = true;
+      loader.isGisLoaded = true;
+      auth.initTokenClient('test-client-id', 'test-scopes');
 
       expect(service.isInitialized()).toBe(true);
     });
