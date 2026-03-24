@@ -32,6 +32,14 @@ describe('BirthdayCrudEffects', () => {
   };
 
   const initialState = {
+    birthdays: {
+      ids: [],
+      entities: {},
+      filters: { searchTerm: '', selectedCategory: null },
+      loading: false,
+      error: null,
+      optimisticBackup: {}
+    },
     auth: {
       user: null,
       loading: false,

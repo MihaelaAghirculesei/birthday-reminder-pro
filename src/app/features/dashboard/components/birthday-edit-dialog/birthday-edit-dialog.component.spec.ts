@@ -1,6 +1,9 @@
+import { TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from './birthday-edit-dialog.component';
 import { Birthday, BirthdayCategory } from '../../../../shared';
+import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
+import { FirebaseAuthService } from '../../../../core/services/firebase-auth.service';
 
 describe('BirthdayEditDialogComponent', () => {
   let component: BirthdayEditDialogComponent;
@@ -32,9 +35,26 @@ describe('BirthdayEditDialogComponent', () => {
     categories: mockCategories
   };
 
+  /** Creates a component instance inside Angular's injection context. */
+  function make(data: BirthdayEditDialogData): BirthdayEditDialogComponent {
+    let comp!: BirthdayEditDialogComponent;
+    TestBed.runInInjectionContext(() => {
+      comp = new BirthdayEditDialogComponent(dialogRefSpy, data);
+    });
+    return comp;
+  }
+
   beforeEach(() => {
     dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
-    component = new BirthdayEditDialogComponent(dialogRefSpy, mockDialogData);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PhotoStorageService,  useValue: jasmine.createSpyObj('PhotoStorageService',  ['uploadPhoto', 'fileToBase64']) },
+        { provide: FirebaseAuthService,  useValue: jasmine.createSpyObj('FirebaseAuthService',  [], { currentUser: null }) },
+      ]
+    });
+
+    component = make(mockDialogData);
   });
 
   it('should create', () => {
@@ -60,24 +80,21 @@ describe('BirthdayEditDialogComponent', () => {
 
     it('should use empty string for missing notes', () => {
       const birthdayWithoutNotes = { ...mockBirthday, notes: undefined };
-      const dataWithoutNotes = { birthday: birthdayWithoutNotes, categories: mockCategories };
-      const newComponent = new BirthdayEditDialogComponent(dialogRefSpy, dataWithoutNotes);
+      const newComponent = make({ birthday: birthdayWithoutNotes, categories: mockCategories });
 
       expect(newComponent.editingData.notes).toBe('');
     });
 
     it('should use empty string for missing category', () => {
       const birthdayWithoutCategory = { ...mockBirthday, category: undefined };
-      const dataWithoutCategory = { birthday: birthdayWithoutCategory, categories: mockCategories };
-      const newComponent = new BirthdayEditDialogComponent(dialogRefSpy, dataWithoutCategory);
+      const newComponent = make({ birthday: birthdayWithoutCategory, categories: mockCategories });
 
       expect(newComponent.editingData.category).toBe('');
     });
 
     it('should use null for missing photos', () => {
       const birthdayWithoutPhotos = { ...mockBirthday, photo: undefined, rememberPhoto: undefined };
-      const dataWithoutPhotos = { birthday: birthdayWithoutPhotos, categories: mockCategories };
-      const newComponent = new BirthdayEditDialogComponent(dialogRefSpy, dataWithoutPhotos);
+      const newComponent = make({ birthday: birthdayWithoutPhotos, categories: mockCategories });
 
       expect(newComponent.editingData.photo).toBeNull();
       expect(newComponent.editingData.rememberPhoto).toBeNull();
@@ -168,8 +185,7 @@ describe('BirthdayEditDialogComponent', () => {
 
     it('should show warning on init when no contact info exists', () => {
       const noContactBirthday = { ...mockBirthday, email: '', phone: '', telegramUsername: '' };
-      const data = { birthday: noContactBirthday, categories: mockCategories };
-      const comp = new BirthdayEditDialogComponent(dialogRefSpy, data);
+      const comp = make({ birthday: noContactBirthday, categories: mockCategories });
 
       expect(comp.contactWarning).toBeTrue();
     });

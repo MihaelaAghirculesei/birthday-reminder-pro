@@ -37,9 +37,9 @@ export const BirthdaySchema = z.object({
   zodiacSign: z.string().optional(),
   googleCalendarEventId: z.string().optional(),
   category: z.string().optional(),
-  email: z.string().email().max(254).optional(),
-  phone: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/).optional(),
-  telegramUsername: z.string().regex(/^[a-zA-Z0-9_]{5,32}$/).optional(),
+  email: z.string().email().max(254).optional().catch(undefined),
+  phone: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/).optional().catch(undefined),
+  telegramUsername: z.string().regex(/^[a-zA-Z0-9_]{5,32}$/).optional().catch(undefined),
   scheduledMessages: z.array(ScheduledMessageSchema).optional(),
   daysUntilBirthday: z.number().optional()
 }).merge(SyncMetadataSchema);

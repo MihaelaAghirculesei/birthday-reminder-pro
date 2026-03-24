@@ -263,6 +263,9 @@ import { NotificationService } from '../../core/services/notification.service';
 })
 export class PhotoUploadComponent {
   @Input() currentPhoto: string | null = null;
+  /** Emits the raw File as soon as it passes validation (before FileReader completes). */
+  @Output() fileSelected = new EventEmitter<File>();
+  /** Emits the base64 data URL after FileReader completes (used for local preview). */
   @Output() photoSelected = new EventEmitter<string>();
   @Output() photoRemoved = new EventEmitter<void>();
 
@@ -290,7 +293,11 @@ export class PhotoUploadComponent {
         return;
       }
 
-     const reader = new FileReader();
+      // Emit the raw File before the async FileReader so parents can begin
+      // an upload to Firebase Storage immediately without waiting for base64.
+      this.fileSelected.emit(file);
+
+      const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
         if (base64String.length > 7_000_000) {

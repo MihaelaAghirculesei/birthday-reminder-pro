@@ -10,8 +10,10 @@ import { BirthdayService } from '../../services/birthday.service';
 import { BirthdayNormalizationService } from '../../services/birthday-normalization.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { PushNotificationService } from '../../services/push-notification.service';
+import { PhotoStorageService } from '../../services/photo-storage.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import * as AuthSelectors from '../auth/auth.selectors';
+import * as BirthdaySelectors from './birthday.selectors';
 
 @Injectable()
 export class BirthdayCrudEffects implements OnInitEffects {
@@ -27,6 +29,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
   private readonly normalization = inject(BirthdayNormalizationService);
   private readonly syncCoordinator = inject(SyncCoordinatorService);
   private readonly pushNotificationService = inject(PushNotificationService);
+  private readonly photoStorage = inject(PhotoStorageService);
 
   loadBirthdays$ = createEffect(() =>
     this.actions$.pipe(
@@ -82,10 +85,24 @@ export class BirthdayCrudEffects implements OnInitEffects {
   deleteBirthday$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.deleteBirthday),
-      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
-      mergeMap(([{ id }, userId]) =>
-        of(undefined).pipe(
+      withLatestFrom(
+        this.store.select(AuthSelectors.selectUserId),
+        this.store.select(BirthdaySelectors.selectAllBirthdays)
+      ),
+      mergeMap(([{ id }, userId, allBirthdays]) => {
+        const birthday = allBirthdays.find(b => b.id === id);
+
+        // Fire-and-forget Storage cleanup: we don't want a Storage error to
+        // block the local delete. Errors are logged inside deletePhotoByUrl().
+        const photoCleanup = Promise.all([
+          birthday?.photo ? this.photoStorage.deletePhotoByUrl(birthday.photo) : Promise.resolve(),
+          birthday?.rememberPhoto ? this.photoStorage.deletePhotoByUrl(birthday.rememberPhoto) : Promise.resolve(),
+        ]);
+
+        return of(undefined).pipe(
           tap(() => this.pushNotificationService.cancelAllNotificationsForBirthday(id)),
+          // Wait for Storage cleanup but don't let its failure propagate.
+          switchMap(() => from(photoCleanup.catch(() => undefined))),
           switchMap(() => from(this.offlineStorage.deleteBirthday(id))),
           switchMap(() => userId
             ? from(this.syncCoordinator.queueChange('birthday', id, 'delete', { id }))
@@ -93,8 +110,8 @@ export class BirthdayCrudEffects implements OnInitEffects {
           ),
           map(() => BirthdayActions.deleteBirthdaySuccess({ id })),
           catchError(error => of(BirthdayActions.deleteBirthdayFailure({ error: error.message, id })))
-        )
-      )
+        );
+      })
     )
   );
 

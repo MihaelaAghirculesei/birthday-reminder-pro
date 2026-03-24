@@ -118,6 +118,7 @@
           </div>
           <app-photo-upload
             [currentPhoto]="editingData.photo"
+            (fileSelected)="onPhotoFileSelected($event)"
             (photoSelected)="onPhotoSelected($event)"
             (photoRemoved)="onPhotoRemoved()"
           ></app-photo-upload>
@@ -133,6 +134,7 @@
           </div>
           <app-photo-upload
             [currentPhoto]="editingData.rememberPhoto"
+            (fileSelected)="onRememberPhotoFileSelected($event)"
             (photoSelected)="onRememberPhotoSelected($event)"
             (photoRemoved)="onRememberPhotoRemoved()"
           ></app-photo-upload>
@@ -157,7 +159,7 @@
       <mat-icon>close</mat-icon>
       Cancel
     </button>
-    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages || !isContactValid()">
+    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages || !isContactValid() || isSaving">
       <mat-icon>check</mat-icon>
       Save Changes
     </button>

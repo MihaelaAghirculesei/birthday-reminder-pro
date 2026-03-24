@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   ReactiveFormsModule,
@@ -21,6 +21,8 @@ import { getZodiacSign } from '../../utils';
 import { toDateString } from '../../utils/date.utils';
 import { BirthdaySchema, sanitizeBirthdayData } from '../../schemas/birthday.schema';
 import { LoggerService } from '../../../core';
+import { PhotoStorageService } from '../../../core/services/photo-storage.service';
+import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 
 @Component({
   selector: 'app-birthday-form',
@@ -46,9 +48,16 @@ export class BirthdayFormComponent {
 
   private readonly fb = inject(FormBuilder);
   private readonly logger = inject(LoggerService);
+  private readonly photoStorage = inject(PhotoStorageService);
+  private readonly authService = inject(FirebaseAuthService);
 
   birthdayForm: FormGroup;
+  /** Base64 preview shown in the component while upload is in progress. */
   selectedPhoto: string | null = null;
+  /** Raw File reference held for upload to Firebase Storage on submit. */
+  private selectedFile: File | null = null;
+  /** Prevents double-submit during async photo upload. */
+  readonly isSubmitting = signal(false);
 
   constructor() {
     this.birthdayForm = this.fb.group({
@@ -61,15 +70,29 @@ export class BirthdayFormComponent {
     });
   }
 
-  onSubmit(): void {
-    if (this.birthdayForm.valid) {
+  async onSubmit(): Promise<void> {
+    if (!this.birthdayForm.valid || this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+
+    try {
       const birthDate = toDateString(this.birthdayForm.value.birthDate);
       const zodiacSign = getZodiacSign(birthDate);
+
+      // Resolve the final photo value: CDN URL if authenticated, base64 fallback otherwise.
+      let resolvedPhoto: string | null | undefined = this.selectedPhoto;
+      if (this.selectedFile) {
+        const userId = this.authService.currentUser?.uid;
+        if (userId) {
+          resolvedPhoto = await this.photoStorage.uploadPhoto(this.selectedFile, userId, 'photo');
+        }
+        // Anonymous users: selectedPhoto already holds the base64 preview — use it as-is.
+      }
 
       const formData = sanitizeBirthdayData({
         ...this.birthdayForm.value,
         birthDate,
-        photo: this.selectedPhoto,
+        photo: resolvedPhoto,
         zodiacSign: zodiacSign.name,
       });
 
@@ -84,9 +107,18 @@ export class BirthdayFormComponent {
       this.birthdaySubmitted.emit(formData as Omit<Birthday, 'id'>);
       this.birthdayForm.reset({ reminderDays: 7, category: DEFAULT_CATEGORY });
       this.selectedPhoto = null;
+      this.selectedFile = null;
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 
+  /** Called when PhotoUploadComponent emits the raw File (before FileReader). */
+  onFileSelected(file: File): void {
+    this.selectedFile = file;
+  }
+
+  /** Called when PhotoUploadComponent emits the base64 preview (after FileReader). */
   onPhotoSelected(photo: string): void {
     this.selectedPhoto = photo;
     this.birthdayForm.patchValue({ photo });
@@ -94,6 +126,7 @@ export class BirthdayFormComponent {
 
   onPhotoRemoved(): void {
     this.selectedPhoto = null;
+    this.selectedFile = null;
     this.birthdayForm.patchValue({ photo: null });
   }
 

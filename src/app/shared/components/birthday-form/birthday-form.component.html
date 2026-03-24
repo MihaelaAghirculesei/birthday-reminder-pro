@@ -1,6 +1,7 @@
 <form [formGroup]="birthdayForm" (ngSubmit)="onSubmit()" class="birthday-form">
   <app-photo-upload
     [currentPhoto]="selectedPhoto"
+    (fileSelected)="onFileSelected($event)"
     (photoSelected)="onPhotoSelected($event)"
     (photoRemoved)="onPhotoRemoved()">
   </app-photo-upload>
@@ -55,7 +56,7 @@
       mat-raised-button
       color="primary"
       type="submit"
-      [disabled]="birthdayForm.invalid"
+      [disabled]="birthdayForm.invalid || isSubmitting()"
       class="submit-button"
       data-testid="save-birthday-button">
       <mat-icon>add</mat-icon>

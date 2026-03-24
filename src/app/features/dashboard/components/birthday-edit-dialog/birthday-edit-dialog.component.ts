@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { Component, Inject, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -9,6 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday, BirthdayCategory, PhotoUploadComponent, MessageSchedulerComponent } from '../../../../shared';
+import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
+import { FirebaseAuthService } from '../../../../core/services/firebase-auth.service';
 
 export interface BirthdayEditDialogData {
   birthday: Birthday;
@@ -50,7 +52,11 @@ export interface BirthdayEditDialogResult {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayEditDialogComponent {
+  private readonly photoStorage = inject(PhotoStorageService);
+  private readonly authService = inject(FirebaseAuthService);
+
   hasUnsavedMessages = false;
+  isSaving = false;
   contactWarning = false;
   editedBirthday: Birthday;
   editingData: {
@@ -64,6 +70,11 @@ export class BirthdayEditDialogComponent {
     phone: string;
     telegramUsername: string;
   };
+
+  /** Pending File for the profile photo — uploaded on save. */
+  private photoFile: File | null = null;
+  /** Pending File for the remember photo — uploaded on save. */
+  private rememberPhotoFile: File | null = null;
 
   constructor(
     public dialogRef: MatDialogRef<BirthdayEditDialogComponent>,
@@ -86,15 +97,26 @@ export class BirthdayEditDialogComponent {
 
   @HostListener('window:keydown.escape')
   handleEscapeKey(): void {
-    this.onCancel();
+    if (!this.isSaving) this.onCancel();
   }
 
+  /** Stores the raw File for upload; base64 preview is handled by photoSelected. */
+  onPhotoFileSelected(file: File): void {
+    this.photoFile = file;
+  }
+
+  /** Updates the preview shown while the photo hasn't been uploaded yet. */
   onPhotoSelected(photoDataUrl: string): void {
     this.editingData.photo = photoDataUrl;
   }
 
   onPhotoRemoved(): void {
+    this.photoFile = null;
     this.editingData.photo = null;
+  }
+
+  onRememberPhotoFileSelected(file: File): void {
+    this.rememberPhotoFile = file;
   }
 
   onRememberPhotoSelected(photoDataUrl: string): void {
@@ -102,6 +124,7 @@ export class BirthdayEditDialogComponent {
   }
 
   onRememberPhotoRemoved(): void {
+    this.rememberPhotoFile = null;
     this.editingData.rememberPhoto = null;
   }
 
@@ -141,14 +164,36 @@ export class BirthdayEditDialogComponent {
     this.dialogRef.close();
   }
 
-  onSave(): void {
-    if (!this.isContactValid()) {
-      return;
+  async onSave(): Promise<void> {
+    if (!this.isContactValid() || this.isSaving) return;
+
+    this.isSaving = true;
+
+    try {
+      const userId = this.authService.currentUser?.uid;
+
+      // Upload pending files to Firebase Storage (no-op for anonymous users: returns base64).
+      if (this.photoFile) {
+        this.editingData.photo = userId
+          ? await this.photoStorage.uploadPhoto(this.photoFile, userId, 'photo')
+          : await this.photoStorage.fileToBase64(this.photoFile);
+        this.photoFile = null;
+      }
+
+      if (this.rememberPhotoFile) {
+        this.editingData.rememberPhoto = userId
+          ? await this.photoStorage.uploadPhoto(this.rememberPhotoFile, userId, 'rememberPhoto')
+          : await this.photoStorage.fileToBase64(this.rememberPhotoFile);
+        this.rememberPhotoFile = null;
+      }
+
+      const result: BirthdayEditDialogResult = {
+        birthday: this.data.birthday,
+        editedData: { ...this.editingData },
+      };
+      this.dialogRef.close(result);
+    } finally {
+      this.isSaving = false;
     }
-    const result: BirthdayEditDialogResult = {
-      birthday: this.data.birthday,
-      editedData: this.editingData
-    };
-    this.dialogRef.close(result);
   }
 }

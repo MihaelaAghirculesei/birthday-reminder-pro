@@ -2,12 +2,15 @@ import { environment } from '../environments/environment';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _storage: FirebaseStorage | null = null;
 let _authModule: typeof import('firebase/auth') | null = null;
 let _firestoreModule: typeof import('firebase/firestore') | null = null;
+let _storageModule: typeof import('firebase/storage') | null = null;
 let _initPromise: Promise<void> | null = null;
 
 /**
@@ -27,7 +30,7 @@ export function isFirebaseConfigured(): boolean {
 
 /**
  * Lazily loads the Firebase SDK into a separate chunk and initializes the
- * app/auth/firestore singletons. Safe to call multiple times — returns the
+ * app/auth/firestore/storage singletons. Safe to call multiple times — returns the
  * same promise on subsequent calls.
  *
  * Must be awaited before calling any getFirebase*() or get*Module() getter.
@@ -39,14 +42,16 @@ export function initFirebase(): Promise<void> {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
-    const [appModule, authModule, firestoreModule] = await Promise.all([
+    const [appModule, authModule, firestoreModule, storageModule] = await Promise.all([
       import('firebase/app'),
       import('firebase/auth'),
       import('firebase/firestore'),
+      import('firebase/storage'),
     ]);
 
     _authModule = authModule;
     _firestoreModule = firestoreModule;
+    _storageModule = storageModule;
 
     if (!_app) {
       const { initializeApp, getApps } = appModule;
@@ -58,6 +63,7 @@ export function initFirebase(): Promise<void> {
 
     _auth = authModule.getAuth(_app);
     _db = firestoreModule.getFirestore(_app);
+    _storage = storageModule.getStorage(_app);
   })();
 
   return _initPromise;
@@ -68,6 +74,7 @@ export function initFirebase(): Promise<void> {
 export function getFirebaseApp(): FirebaseApp | null { return _app; }
 export function getFirebaseAuth(): Auth | null { return _auth; }
 export function getFirebaseFirestore(): Firestore | null { return _db; }
+export function getFirebaseStorage(): FirebaseStorage | null { return _storage; }
 
 /**
  * Full firebase/auth module — needed by FirebaseAuthService to call
@@ -83,6 +90,14 @@ export function getFirebaseAuthModule(): typeof import('firebase/auth') | null {
  */
 export function getFirestoreModule(): typeof import('firebase/firestore') | null {
   return _firestoreModule;
+}
+
+/**
+ * Full firebase/storage module — needed by PhotoStorageService to call
+ * ref, uploadBytes, getDownloadURL, deleteObject, etc. without a static import.
+ */
+export function getStorageModule(): typeof import('firebase/storage') | null {
+  return _storageModule;
 }
 
 // Legacy aliases kept for backwards compatibility
