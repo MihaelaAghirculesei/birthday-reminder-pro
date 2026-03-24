@@ -5,6 +5,7 @@
 
 export const environment = {
   production: true,
+  errorReportingEndpoint: undefined as string | undefined,
   googleCalendar: {
     clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
   },
