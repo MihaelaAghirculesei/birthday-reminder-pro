@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { PushNotificationService } from './push-notification.service';
+import { BrowserNotificationSchedulerService } from './browser-notification-scheduler.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { NotificationPermissionService } from './notification-permission.service';
@@ -11,7 +12,6 @@ describe('PushNotificationService', () => {
   let service: PushNotificationService;
   let mockStorage: jasmine.SpyObj<IndexedDBStorageService>;
   let mockPermissionService: jasmine.SpyObj<NotificationPermissionService>;
-
 
   const mockBirthday: Birthday = {
     id: 'b1',
@@ -61,6 +61,7 @@ describe('PushNotificationService', () => {
     TestBed.configureTestingModule({
       providers: [
         PushNotificationService,
+        BrowserNotificationSchedulerService,
         { provide: IndexedDBStorageService, useValue: mockStorage },
         { provide: NotificationPermissionService, useValue: mockPermissionService },
         SILENT_LOGGER_PROVIDER,
@@ -72,8 +73,13 @@ describe('PushNotificationService', () => {
     service = TestBed.inject(PushNotificationService);
   });
 
-  /** Helper: set the in-memory cache directly for tests that need specific birthday data. */
+  /**
+   * Seed the store so BrowserNotificationSchedulerService's cache subscription
+   * receives the correct birthdays.
+   */
   function setCache(birthdays: Birthday[]): void {
+    // Directly assign the internal cache rather than going through the store
+    // observable chain, which avoids timing issues with async subscriptions.
     (service as unknown as { birthdaysCache: Birthday[] }).birthdaysCache = birthdays;
   }
 
@@ -578,16 +584,15 @@ describe('PushNotificationService', () => {
     it('should skip checkBrowserNotifications when notifications disabled', () => {
       mockPermissionService.isNotificationsEnabled.and.returnValue(false);
       setCache([{ ...mockBirthday, scheduledMessages: [mockMessage] }]);
-
-      // Should not throw and should not iterate over birthdays
-      expect(() => (service as unknown as { checkBrowserNotifications: () => void }).checkBrowserNotifications()).not.toThrow();
+      const scheduler = TestBed.inject(BrowserNotificationSchedulerService);
+      expect(() => scheduler.checkBrowserNotifications()).not.toThrow();
     });
 
     it('should run checkBrowserNotifications without errors when enabled', () => {
       mockPermissionService.isNotificationsEnabled.and.returnValue(true);
       setCache([{ ...mockBirthday, scheduledMessages: [mockMessage] }]);
-
-      expect(() => (service as unknown as { checkBrowserNotifications: () => void }).checkBrowserNotifications()).not.toThrow();
+      const scheduler = TestBed.inject(BrowserNotificationSchedulerService);
+      expect(() => scheduler.checkBrowserNotifications()).not.toThrow();
     });
   });
 

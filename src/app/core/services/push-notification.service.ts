@@ -1,4 +1,4 @@
-import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, DestroyRef, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
@@ -36,6 +36,7 @@ export class PushNotificationService {
   private isNative = Capacitor.isNativePlatform();
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ngZone = inject(NgZone);
   private readonly store = inject(Store);
   private browserTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private intervalSubscription?: Subscription;
@@ -114,8 +115,12 @@ export class PushNotificationService {
 
     this.checkBrowserNotifications();
 
-    this.intervalSubscription = interval(NOTIFICATION_POLL_INTERVAL_MS)
-      .subscribe(() => this.checkBrowserNotifications());
+    // Run outside Angular Zone so Zone.js does not track this periodic timer.
+    // Change detection is triggered inside the interval callback when needed.
+    this.ngZone.runOutsideAngular(() => {
+      this.intervalSubscription = interval(NOTIFICATION_POLL_INTERVAL_MS)
+        .subscribe(() => this.ngZone.run(() => this.checkBrowserNotifications()));
+    });
   }
 
   private scheduleBirthdayTimeouts(birthdays: Birthday[]): void {
