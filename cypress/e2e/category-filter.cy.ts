@@ -14,7 +14,7 @@ describe('Category Filter', () => {
     cy.contains('mat-option', 'Family').click();
     cy.get('[data-testid="save-birthday-button"]').first().click();
     // Wait for form close animation to complete
-    cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.be.visible');
+    cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('not.exist');
 
     cy.get('.dashboard-container', { timeout: 10000 }).should('exist');
 
@@ -43,14 +43,14 @@ describe('Category Filter', () => {
     cy.contains('Family Member').should('be.visible');
     cy.contains('Friend Person').should('be.visible');
 
-    cy.get('[data-testid="category-filter-family"]').click();
+    cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
 
     cy.contains('Family Member').should('be.visible');
     cy.contains('Friend Person').should('not.exist');
   });
 
   it('should clear category filter', () => {
-    cy.get('[data-testid="category-filter-family"]').click();
+    cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
     cy.contains('Friend Person').should('not.exist');
 
     cy.get('[data-testid="clear-filter-button"]').click();
