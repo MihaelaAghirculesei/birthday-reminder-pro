@@ -2,7 +2,7 @@ import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { Observable, Subject, from, of } from 'rxjs';
-import { getFirebaseFirestore, getFirestoreModule, isFirebaseConfigured } from '../../firebase.config';
+import { getFirebaseFirestore, getFirestoreModule, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
@@ -22,6 +22,11 @@ export class FirestoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
+  private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
+
+  private get isFirebaseConfigured(): boolean {
+    return checkFirebaseOptions(this.firebaseOptions);
+  }
 
   // Unsubscribe is just () => void in Firebase — no runtime import needed
   private birthdaysListener: (() => void) | null = null;
@@ -54,7 +59,7 @@ export class FirestoreService {
   }
 
   getBirthdays(userId: string): Observable<Birthday[]> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of([]);
     }
     return from(this.fetchBirthdays(userId));
@@ -75,7 +80,7 @@ export class FirestoreService {
   }
 
   subscribeToBirthdays(userId: string): void {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) return;
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) return;
     this.unsubscribeFromBirthdays();
 
     const db = getFirebaseFirestore();
@@ -107,7 +112,7 @@ export class FirestoreService {
   }
 
   saveBirthday(userId: string, birthday: Birthday): Observable<void> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of(undefined);
     }
     return from(this.performSaveBirthday(userId, birthday));
@@ -136,7 +141,7 @@ export class FirestoreService {
   }
 
   deleteBirthday(userId: string, birthdayId: string): Observable<void> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of(undefined);
     }
     return from(this.performDeleteBirthday(userId, birthdayId));
@@ -161,7 +166,7 @@ export class FirestoreService {
   }
 
   saveBirthdaysBatch(userId: string, birthdays: Birthday[]): Observable<void> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of(undefined);
     }
     return from(this.performBatchSave(userId, birthdays));
@@ -192,7 +197,7 @@ export class FirestoreService {
   }
 
   getCategories(userId: string): Observable<Category[]> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of([]);
     }
     return from(this.fetchCategories(userId));
@@ -213,7 +218,7 @@ export class FirestoreService {
   }
 
   subscribeToCategories(userId: string): void {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) return;
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) return;
     this.unsubscribeFromCategories();
 
     const db = getFirebaseFirestore();
@@ -245,7 +250,7 @@ export class FirestoreService {
   }
 
   saveCategory(userId: string, category: Category): Observable<void> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of(undefined);
     }
     return from(this.performSaveCategory(userId, category));
@@ -274,7 +279,7 @@ export class FirestoreService {
   }
 
   deleteCategory(userId: string, categoryId: string): Observable<void> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return of(undefined);
     }
     return from(this.performDeleteCategory(userId, categoryId));

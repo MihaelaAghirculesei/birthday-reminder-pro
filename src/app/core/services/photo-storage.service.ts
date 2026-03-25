@@ -4,7 +4,8 @@ import {
   getFirebaseStorage,
   getStorageModule,
   initFirebase,
-  isFirebaseConfigured,
+  checkFirebaseOptions,
+  FIREBASE_OPTIONS,
 } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 
@@ -26,6 +27,11 @@ import { LoggerService } from './logger.service';
 export class PhotoStorageService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+  private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
+
+  private get isFirebaseConfigured(): boolean {
+    return checkFirebaseOptions(this.firebaseOptions);
+  }
 
   // ─── Type guards ──────────────────────────────────────────────────────────
 
@@ -57,7 +63,7 @@ export class PhotoStorageService {
     userId: string,
     type: 'photo' | 'rememberPhoto'
   ): Promise<string> {
-    if (!isPlatformBrowser(this.platformId) || !isFirebaseConfigured()) {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
       return this.fileToBase64(file);
     }
 
@@ -90,7 +96,7 @@ export class PhotoStorageService {
    * Silently no-ops for non-Storage URLs (base64, external CDNs, empty strings).
    */
   async deletePhotoByUrl(url: string): Promise<void> {
-    if (!url || !this.isStorageUrl(url) || !isFirebaseConfigured()) return;
+    if (!url || !this.isStorageUrl(url) || !this.isFirebaseConfigured) return;
 
     try {
       await initFirebase();

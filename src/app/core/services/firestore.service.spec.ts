@@ -2,34 +2,25 @@ import { TestBed } from '@angular/core/testing';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
-import { environment } from '../../../environments/environment';
+import { FIREBASE_OPTIONS } from '../../firebase.config';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('FirestoreService', () => {
   let service: FirestoreService;
   let loggerMock: jasmine.SpyObj<LoggerService>;
-  const originalFirebase = environment.firebase;
 
   beforeEach(() => {
-    // Force isFirebaseConfigured() to return false — no real Firebase calls
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (environment as any).firebase = undefined;
-
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
 
     TestBed.configureTestingModule({
       providers: [
         { provide: LoggerService, useValue: loggerMock },
+        { provide: FIREBASE_OPTIONS, useValue: undefined },
         provideTranslateTesting()
       ]
     });
 
     service = TestBed.inject(FirestoreService);
-  });
-
-  afterEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (environment as any).firebase = originalFirebase;
   });
 
   it('should create', () => {
