@@ -29,16 +29,15 @@
         <div
           class="category-stat-card"
           [class.selected]="selectedCategory === categoryStats.id"
-          (click)="selectCategory(categoryStats.id)"
-          role="button"
-          tabindex="0"
-          [attr.aria-label]="getCategoryAriaLabel(categoryStats)"
-          [attr.aria-pressed]="selectedCategory === categoryStats.id"
           [attr.data-testid]="'category-filter-' + categoryStats.id"
-          (keydown.enter)="selectCategory(categoryStats.id)"
-          (keydown.space)="selectCategory(categoryStats.id)"
           >
-          <div class="category-card-background"></div>
+          <button
+            class="category-select-btn"
+            (click)="selectCategory(categoryStats.id)"
+            [attr.aria-label]="getCategoryAriaLabel(categoryStats)"
+            [attr.aria-pressed]="selectedCategory === categoryStats.id"
+          ></button>
+          <div class="category-card-background" aria-hidden="true"></div>
           <div class="category-stat-content">
             <div class="category-icon-section">
               <app-category-icon

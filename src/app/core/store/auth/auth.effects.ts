@@ -14,6 +14,13 @@ export class AuthEffects {
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
 
+  /** Bridge Firebase auth state (including session restoration on reload) to the NgRx store. */
+  syncAuthState$ = createEffect(() =>
+    this.authService.user$.pipe(
+      map(user => AuthActions.authStateChanged({ user }))
+    )
+  );
+
   signInWithGoogle$ = createEffect(
     () =>
       this.actions$.pipe(

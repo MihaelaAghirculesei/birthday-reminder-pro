@@ -11,6 +11,7 @@ import * as UIActions from '../store/ui/ui.actions';
 })
 export class ThemeService {
   private readonly STORAGE_KEY = 'birthday-app-dark-mode';
+  private transitionTimer: ReturnType<typeof setTimeout> | null = null;
 
   darkMode: Signal<boolean> = toSignal(this.store.select(selectDarkMode), { initialValue: false });
 
@@ -41,6 +42,10 @@ export class ThemeService {
   private applyTheme(isDark: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    if (this.transitionTimer !== null) {
+      clearTimeout(this.transitionTimer);
+    }
+
     document.body.classList.add('theme-transitioning');
 
     if (isDark) {
@@ -49,8 +54,9 @@ export class ThemeService {
       document.body.classList.remove('dark-theme');
     }
 
-    setTimeout(() => {
+    this.transitionTimer = setTimeout(() => {
       document.body.classList.remove('theme-transitioning');
+      this.transitionTimer = null;
     }, 600);
   }
 

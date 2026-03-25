@@ -23,11 +23,11 @@ describe('AuthEffects', () => {
   };
 
   beforeEach(() => {
-    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [
-      'signInWithGoogle',
-      'signOut',
-      'initAuthListener'
-    ]);
+    authServiceMock = jasmine.createSpyObj(
+      'FirebaseAuthService',
+      ['signInWithGoogle', 'signOut', 'initAuthListener'],
+      { user$: of(null) }
+    );
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
 
     TestBed.configureTestingModule({

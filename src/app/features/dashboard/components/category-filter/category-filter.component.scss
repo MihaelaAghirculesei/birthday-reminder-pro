@@ -186,6 +186,22 @@
   }
 }
 
+// Invisible full-card button that handles the "select category" action.
+// Positioned absolutely behind the content (z-index: 0) so the edit/delete
+// buttons (z-index: 10) remain independently clickable.
+.category-select-btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 0;
+  border-radius: inherit;
+}
+
 .category-card-background {
   position: absolute;
   top: -20px;

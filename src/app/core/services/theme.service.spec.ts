@@ -106,6 +106,25 @@ describe('ThemeService', () => {
 
       expect(localStorage.setItem).toHaveBeenCalledWith('birthday-app-dark-mode', 'false');
     }));
+
+    it('should cancel the previous timer when theme changes rapidly', fakeAsync(() => {
+      service = TestBed.inject(ThemeService);
+
+      // Toggle theme 3 times in rapid succession (within 600 ms window)
+      darkModeSubject.next(true);
+      tick(100);
+      darkModeSubject.next(false);
+      tick(100);
+      darkModeSubject.next(true);
+      tick(100);
+
+      // After only 300 ms total, the class should still be present (last timer pending)
+      expect(document.body.classList.contains('theme-transitioning')).toBe(true);
+
+      // Advance past the single surviving timer
+      tick(500);
+      expect(document.body.classList.contains('theme-transitioning')).toBe(false);
+    }));
   });
 
   describe('Server-side rendering', () => {
