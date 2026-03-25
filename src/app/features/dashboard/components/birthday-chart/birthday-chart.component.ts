@@ -18,6 +18,8 @@ interface ChartDataItemView extends ChartDataItem {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayChartComponent implements OnChanges {
+  private static nextId = 0;
+
   private readonly translate = inject(TranslateService);
   private readonly MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -25,6 +27,9 @@ export class BirthdayChartComponent implements OnChanges {
   @Input() maxCount = 0;
   @Input() currentMonth: number = new Date().getMonth();
   @Input() totalBirthdays = 0;
+
+  /** Stable DOM id used by aria-describedby on the <figure>. */
+  readonly chartDescId = `chart-desc-${++BirthdayChartComponent.nextId}`;
 
   chartDataItems: ChartDataItemView[] = [];
 
@@ -44,10 +49,5 @@ export class BirthdayChartComponent implements OnChanges {
 
   getChartAriaLabel(): string {
     return this.translate.instant('CHART.ARIA_TOTAL', { total: this.totalBirthdays });
-  }
-
-  getBarAriaLabel(month: string, count: number): string {
-    const key = count === 1 ? 'CHART.BAR_ARIA_ONE' : 'CHART.BAR_ARIA_MANY';
-    return this.translate.instant(key, { month, count });
   }
 }

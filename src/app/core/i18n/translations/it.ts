@@ -336,7 +336,9 @@ export const it = {
     NO_DATA: 'Aggiungi dei compleanni per vedere il grafico!',
     ARIA_TOTAL: 'Grafico a barre della distribuzione dei compleanni nei 12 mesi. Totale: {{total}} compleanni',
     BAR_ARIA_ONE: '{{month}}: {{count}} compleanno',
-    BAR_ARIA_MANY: '{{month}}: {{count}} compleanni'
+    BAR_ARIA_MANY: '{{month}}: {{count}} compleanni',
+    TABLE_MONTH: 'Mese',
+    TABLE_COUNT: 'Compleanni'
   },
   FOOTER: {
     TAGLINE: 'Fatto con ❤️ per non dimenticare mai i momenti speciali'

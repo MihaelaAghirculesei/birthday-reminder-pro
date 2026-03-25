@@ -6,38 +6,70 @@
     </mat-card-title>
   </mat-card-header>
   <mat-card-content>
-    <div
-      class="chart-container"
-      role="img"
-      [attr.aria-label]="getChartAriaLabel()"
+    <!--
+      <figure> ha role="figure" implicito.
+      aria-label  → nome breve del grafico (letto subito dallo SR)
+      aria-describedby → punta alla <figcaption> con il testo descrittivo completo
+    -->
+    <figure
+      class="chart-figure"
+      [attr.aria-label]="'CHART.TITLE' | translate"
+      [attr.aria-describedby]="chartDescId"
     >
-      @for (monthData of chartDataItems; track monthData.month) {
-        <div
-          class="chart-bar"
-          role="listitem"
-          [attr.aria-label]="getBarAriaLabel(monthData.month, monthData.count)"
-        >
-          @if (monthData.count > 0) {
-            <div class="bar-value" aria-hidden="true">
-              {{ monthData.count }}
-            </div>
+      <!-- Descrizione completa per screen reader (visivamente nascosta) -->
+      <figcaption [id]="chartDescId" class="sr-only">
+        {{ getChartAriaLabel() }}
+      </figcaption>
+
+      <!--
+        Tabella dati accessibile (sr-only): alternativa testuale al grafico.
+        Gli screen reader possono navigarla cella per cella per i dettagli mensili.
+      -->
+      <table class="sr-only">
+        <caption>{{ 'CHART.TITLE' | translate }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ 'CHART.TABLE_MONTH' | translate }}</th>
+            <th scope="col">{{ 'CHART.TABLE_COUNT' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of chartDataItems; track item.month) {
+            <tr>
+              <td>{{ item.label }}</td>
+              <td>{{ item.count }}</td>
+            </tr>
           }
-          <div class="bar-container">
-            <div
-              class="bar"
-              [style.height.%]="monthData.heightPercent"
-              [class.current-month]="monthData.isCurrentMonth"
-              aria-hidden="true"
-            ></div>
+        </tbody>
+      </table>
+
+      <!--
+        Grafico visivo: aria-hidden perché i dati sono già esposti dalla tabella.
+        Nessun role/aria ridondante sulle barre.
+      -->
+      <div class="chart-container" aria-hidden="true">
+        @for (monthData of chartDataItems; track monthData.month) {
+          <div class="chart-bar">
+            @if (monthData.count > 0) {
+              <div class="bar-value">{{ monthData.count }}</div>
+            }
+            <div class="bar-container">
+              <div
+                class="bar"
+                [style.height.%]="monthData.heightPercent"
+                [class.current-month]="monthData.isCurrentMonth"
+              ></div>
+            </div>
+            <div class="bar-label">{{ monthData.month }}</div>
           </div>
-          <div class="bar-label" aria-hidden="true">{{ monthData.month }}</div>
+        }
+      </div>
+
+      @if (totalBirthdays === 0) {
+        <div class="chart-legend" role="status" aria-live="polite">
+          <p class="no-data-text">{{ 'CHART.NO_DATA' | translate }}</p>
         </div>
       }
-    </div>
-    @if (totalBirthdays === 0) {
-      <div class="chart-legend" role="status" aria-live="polite">
-        <p class="no-data-text">{{ 'CHART.NO_DATA' | translate }}</p>
-      </div>
-    }
+    </figure>
   </mat-card-content>
 </mat-card>

@@ -133,22 +133,63 @@ describe('BirthdayChartComponent', () => {
     });
   });
 
-  describe('getBarAriaLabel', () => {
-    it('should use singular key when count is 1', () => {
-      const label = component.getBarAriaLabel('February', 1);
-      expect(typeof label).toBe('string');
-      expect(label.length).toBeGreaterThan(0);
+  describe('chartDescId', () => {
+    it('should have a stable non-empty id', () => {
+      expect(component.chartDescId).toBeTruthy();
+      expect(typeof component.chartDescId).toBe('string');
     });
 
-    it('should use plural key when count is > 1', () => {
-      const label = component.getBarAriaLabel('January', 3);
-      expect(typeof label).toBe('string');
-      expect(label.length).toBeGreaterThan(0);
+    it('should generate unique ids across instances', () => {
+      const fixture2 = TestBed.createComponent(BirthdayChartComponent);
+      expect(fixture2.componentInstance.chartDescId).not.toBe(component.chartDescId);
+    });
+  });
+
+  describe('accessible DOM structure', () => {
+    beforeEach(() => {
+      component.chartData = mockChartData;
+      component.maxCount = 3;
+      component.totalBirthdays = 6;
+      component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
+      fixture.detectChanges();
     });
 
-    it('should use plural key when count is 0', () => {
-      const label = component.getBarAriaLabel('March', 0);
-      expect(typeof label).toBe('string');
+    it('should render a <figure> with aria-label and aria-describedby', () => {
+      const fig = fixture.nativeElement.querySelector('figure.chart-figure') as HTMLElement;
+      expect(fig).toBeTruthy();
+      expect(fig.getAttribute('aria-label')).toBeTruthy();
+      expect(fig.getAttribute('aria-describedby')).toBe(component.chartDescId);
+    });
+
+    it('should render a sr-only <figcaption> whose id matches chartDescId', () => {
+      const caption = fixture.nativeElement.querySelector(`figcaption#${component.chartDescId}`) as HTMLElement;
+      expect(caption).toBeTruthy();
+      expect(caption.classList).toContain('sr-only');
+      expect(caption.textContent?.trim().length).toBeGreaterThan(0);
+    });
+
+    it('should render a sr-only <table> with <caption>, thead and data rows', () => {
+      const table = fixture.nativeElement.querySelector('table.sr-only') as HTMLTableElement;
+      expect(table).toBeTruthy();
+      expect(table.querySelector('caption')).toBeTruthy();
+      const headers = table.querySelectorAll('thead th');
+      expect(headers.length).toBe(2);
+      const rows = table.querySelectorAll('tbody tr');
+      expect(rows.length).toBe(mockChartData.length);
+    });
+
+    it('should render the visual .chart-container with aria-hidden="true"', () => {
+      const container = fixture.nativeElement.querySelector('.chart-container') as HTMLElement;
+      expect(container).toBeTruthy();
+      expect(container.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('visual bars should not carry aria roles or aria-labels', () => {
+      const bars = fixture.nativeElement.querySelectorAll('.chart-bar') as NodeListOf<HTMLElement>;
+      bars.forEach(bar => {
+        expect(bar.getAttribute('role')).toBeNull();
+        expect(bar.getAttribute('aria-label')).toBeNull();
+      });
     });
   });
 });

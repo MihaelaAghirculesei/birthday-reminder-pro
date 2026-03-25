@@ -372,9 +372,16 @@ textarea:focus:not(:focus-visible) {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
+  }
+
+  // Prevent the decorative theme-flash overlay from triggering at all
+  body.theme-transitioning::after {
+    animation: none !important;
   }
 }
 

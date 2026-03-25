@@ -336,7 +336,9 @@ export const en = {
     NO_DATA: 'Add some birthdays to see the chart!',
     ARIA_TOTAL: 'Bar chart showing birthday distribution across 12 months. Total: {{total}} birthdays',
     BAR_ARIA_ONE: '{{month}}: {{count}} birthday',
-    BAR_ARIA_MANY: '{{month}}: {{count}} birthdays'
+    BAR_ARIA_MANY: '{{month}}: {{count}} birthdays',
+    TABLE_MONTH: 'Month',
+    TABLE_COUNT: 'Birthdays'
   },
   FOOTER: {
     TAGLINE: 'Made with ❤️ to never forget special moments'
