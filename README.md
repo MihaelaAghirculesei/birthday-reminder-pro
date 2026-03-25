@@ -1,10 +1,10 @@
 # Birthday Reminder App
 
-A birthday management application built with Angular 17. Never forget a birthday again with calendar sync, notifications, and offline support.
+A birthday management application built with Angular 19. Never forget a birthday again with calendar sync, notifications, and offline support.
 
 [![CI](https://github.com/MihaelaAghirculesei/birthday-reminder-app/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaelaAghirculesei/birthday-reminder-app/actions/workflows/ci.yml)
-[![Angular](https://img.shields.io/badge/Angular-17.3-red?logo=angular)](https://angular.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Angular](https://img.shields.io/badge/Angular-19-red?logo=angular)](https://angular.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue?logo=capacitor)](https://capacitorjs.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -18,6 +18,7 @@ A birthday management application built with Angular 17. Never forget a birthday
 - [Architecture](#architecture)
 - [Getting Started](#getting-started)
 - [Build & Deployment](#build--deployment)
+- [Testing](#testing)
 - [Roadmap](#roadmap)
 - [License](#license)
 
@@ -25,10 +26,11 @@ A birthday management application built with Angular 17. Never forget a birthday
 
 ## About
 
-I built this app to practice NgRx state management and learn how to build offline-first applications. It's a personal project where I wanted to explore cross-platform development with Capacitor.
+I built this app to practice NgRx state management and learn how to build offline-first applications. It's a personal project where I wanted to explore cross-platform development with Capacitor and Firebase.
 
 The app manages birthdays with features like:
 - Works offline using IndexedDB
+- Optional cloud sync via Firebase Firestore (auth users only)
 - Syncs with Google Calendar (one-way or two-way)
 - Sends notifications on web and Android
 - Exports/imports data in multiple formats
@@ -71,11 +73,18 @@ The app manages birthdays with features like:
 - Monthly distribution chart
 - Category statistics
 
+**Cloud Sync (Firebase)**
+- Google sign-in with Firebase Auth
+- Real-time sync across devices via Firestore
+- Photos uploaded to Firebase Storage CDN
+- Firebase SDK is fully lazy — anonymous users pay zero cost
+- Automatic migration of local-only data on first sign-in
+
 **Offline Support**
 - Works completely offline using IndexedDB
 - Service worker caches assets
 - Network status indicator
-- Syncs when back online
+- Pending changes queued and synced when back online
 
 **Other**
 - Dark mode with automatic theme switching
@@ -90,13 +99,13 @@ The app manages birthdays with features like:
 ## Tech Stack
 
 **Frontend**
-- Angular 17.3.12 (standalone components)
-- TypeScript 5.4.2
-- Angular Material 17.3.10
+- Angular 19 (standalone components, Signals, SSR)
+- TypeScript 5.8
+- Angular Material 19
 - RxJS 7.8.0
 
 **State Management**
-- NgRx 17.2.0 (Store, Effects, Entity adapters, Selectors)
+- NgRx 19 (Store, Effects, Entity adapters, Selectors)
 - DevTools for debugging
 
 **Mobile & PWA**
@@ -104,68 +113,70 @@ The app manages birthdays with features like:
 - Angular Service Worker for offline caching
 - @capacitor/local-notifications for native notifications
 
-**Storage & APIs**
-- IndexedDB (custom service)
+**Storage & Cloud**
+- IndexedDB (offline-first source of truth)
+- Firebase Auth + Firestore (cloud sync, auth users only)
+- Firebase Storage (photo CDN, lazy-loaded)
 - LocalStorage for settings
-- Google Calendar API v3
+
+**External APIs**
+- Google Calendar API v3 (one-way and two-way sync)
 - Google OAuth 2.0
 
 **Development**
-- Angular CLI 17.3.17
-- Karma & Jasmine for testing
+- Angular CLI 21
+- Karma & Jasmine for unit tests
+- Cypress for E2E tests
 
 ---
 
 ## Architecture
 
+> For a deep dive, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ### State Management
 
-I'm using NgRx for state management with the Redux pattern:
+Five NgRx slices:
 
 ```
 AppState
-├── birthdays: BirthdayState (Entity State)
-│   ├── entities: { [id: string]: Birthday }
-│   ├── ids: string[]
-│   ├── filters: { searchTerm, selectedMonth, selectedCategory, sortOrder }
-│   └── ui: { loading, error, selectedBirthdayId }
-├── categories: CategoryState (Entity State)
-│   ├── entities: { [id: string]: BirthdayCategory }
-│   └── ids: string[]
-└── calendar: CalendarState
-    └── settings: GoogleCalendarSettings
+├── birthdays: BirthdayState  (EntityState<Birthday> + filters + optimisticBackup)
+├── categories: CategoryState (EntityState<Category>)
+├── auth: AuthState           (user | null, loading, initialized)
+├── sync: SyncStatus          (state, pendingChanges, lastSyncAt, isOnline)
+└── ui: UIState               (theme, notifications, local UI flags)
 ```
 
 ### Data Flow
-Component → Action → Effect → Service (IndexedDB/API) → Effect → Reducer → Selector → Component
 
-### Services
+```
+Component
+  └─► dispatch(action)
+        └─► Effects (side effects: IndexedDB, Firestore, APIs)
+              └─► dispatch(*Success / *Failure)
+                    └─► Reducer (pure state update)
+                          └─► Selector (memoized)
+                                └─► Component re-renders
+```
 
-- Facade Services: `DashboardFacadeService`, `CategoryFacadeService`
-- `BirthdayService` for birthday business logic (ID, zodiac, metadata, normalization)
-- `GoogleCalendarService` for Calendar API
-- `PushNotificationService` for notifications
-- `IndexedDBStorageService` for data persistence
-- `BackupService` for import/export
-- `NetworkService` for online/offline status
+### Offline-First
+
+IndexedDB is the source of truth. Every write goes to IndexedDB first. Firestore is a cloud replica synced via a pending-changes queue. The app works fully offline; sync resumes automatically when back online.
 
 ### Component Structure
 
 ```
 src/app/
-├── core/                    # Singleton services, state management
-│   ├── store/              # NgRx store, actions, reducers, effects
-│   └── services/           # Core business logic services
-├── features/               # Feature modules
-│   ├── dashboard/          # Main dashboard with stats and list
+├── core/                    # Singleton services, NgRx store
+│   ├── store/              # actions, reducers, effects, selectors
+│   └── services/           # domain, storage, auth, sync, notification services
+├── features/               # Feature areas
+│   ├── dashboard/          # Main UI (birthday list, stats, charts)
 │   ├── calendar-sync/      # Google Calendar integration UI
-│   └── scheduled-messages/ # Message scheduling feature
-├── shared/                 # Shared components, models, utilities
-│   ├── components/         # Reusable UI components
-│   ├── models/             # TypeScript interfaces
-│   ├── utils/              # Utility functions
-│   └── icons/              # Custom SVG icon components
-└── layout/                 # Header, footer components
+│   ├── scheduled-messages/ # Message scheduling
+│   └── home/               # Landing page
+├── shared/                 # Reusable components, models, pipes, utils
+└── layout/                 # Header component
 ```
 
 ---
@@ -174,9 +185,9 @@ src/app/
 
 ### Prerequisites
 
-- Node.js 18.x or higher
-- npm 9.x or higher
-- Angular CLI 17.x
+- Node.js 20.x or higher
+- npm 10.x or higher
+- Angular CLI 21.x (`npm install -g @angular/cli`)
 - Android Studio (optional, for Android build)
 
 ### Installation
@@ -242,25 +253,20 @@ src/app/
 
    For production, update `src/environments/environment.prod.ts` with separate credentials.
 
-   > 💡 **Tip**: Use different OAuth credentials for development and production environments.
+   > **Tip**: Use different OAuth credentials for development and production environments.
+
+5. **Configure Firebase** (Optional — for cloud sync and photo storage)
+
+   Copy `src/app/firebase.config.ts` and fill in your Firebase project credentials.
+   The app detects placeholder values and disables cloud sync automatically.
 
 ### Development Server
 
-Run the application in development mode:
-
 ```bash
-ng serve
+npm start
 ```
 
-Navigate to `http://localhost:4200/`. The app will reload automatically on file changes.
-
-### Running Tests
-
-Execute unit tests via Karma:
-
-```bash
-ng test
-```
+Navigate to `http://localhost:4203/`. The app will reload automatically on file changes.
 
 ---
 
@@ -301,7 +307,7 @@ Build and run with SSR:
 
 ```bash
 ng build
-npm run serve:ssr:birthday-reminder-app
+npm run serve:ssr:birthday-reminder-pro
 ```
 
 Note: SSR server runs on the built production files.
@@ -425,7 +431,7 @@ Coverage:
 ng test --code-coverage
 ```
 
-E2E tests are planned but not implemented yet.
+E2E tests run with Cypress: `npm run e2e`
 
 ---
 
