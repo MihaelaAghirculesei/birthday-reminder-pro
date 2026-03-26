@@ -23,21 +23,21 @@ import { NotificationPermissionService } from '../../core/services/notification-
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-menu #settingsMenu="matMenu" [class]="menuClass">
-      <button mat-menu-item (click)="openSenderSettings()">
-        <mat-icon>badge</mat-icon>
-        <span>{{ 'NAV.MESSAGE_SIGNATURE' | translate }}</span>
+      <button mat-menu-item (click)="openSenderSettings()" [attr.aria-label]="'NAV.MESSAGE_SIGNATURE' | translate">
+        <mat-icon aria-hidden="true">badge</mat-icon>
+        <span aria-hidden="true">{{ 'NAV.MESSAGE_SIGNATURE' | translate }}</span>
       </button>
-      <button mat-menu-item (click)="toggleNotifications()">
-        <mat-icon>{{ notificationIcon() }}</mat-icon>
-        <span>{{ notificationLabel() | translate }}</span>
+      <button mat-menu-item (click)="toggleNotifications()" [attr.aria-label]="notificationLabel() | translate">
+        <mat-icon aria-hidden="true">{{ notificationIcon() }}</mat-icon>
+        <span aria-hidden="true">{{ notificationLabel() | translate }}</span>
       </button>
-      <button mat-menu-item (click)="themeService.toggleDarkMode()">
-        <mat-icon>{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-        <span>{{ (themeService.darkMode() ? 'NAV.LIGHT_THEME' : 'NAV.DARK_THEME') | translate }}</span>
+      <button mat-menu-item (click)="themeService.toggleDarkMode()" [attr.aria-label]="(themeService.darkMode() ? 'NAV.LIGHT_THEME' : 'NAV.DARK_THEME') | translate">
+        <mat-icon aria-hidden="true">{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        <span aria-hidden="true">{{ (themeService.darkMode() ? 'NAV.LIGHT_THEME' : 'NAV.DARK_THEME') | translate }}</span>
       </button>
-      <button mat-menu-item (click)="localeService.toggleLanguage()">
-        <mat-icon>translate</mat-icon>
-        <span>{{ 'LANG.SWITCH' | translate }}</span>
+      <button mat-menu-item (click)="localeService.toggleLanguage()" [attr.aria-label]="'LANG.SWITCH' | translate">
+        <mat-icon aria-hidden="true">translate</mat-icon>
+        <span aria-hidden="true">{{ 'LANG.SWITCH' | translate }}</span>
       </button>
     </mat-menu>
   `
