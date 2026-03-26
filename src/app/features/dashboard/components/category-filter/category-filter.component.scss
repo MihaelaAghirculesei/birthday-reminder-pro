@@ -223,6 +223,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  pointer-events: none;
 }
 
 .category-icon-section {
@@ -312,6 +313,7 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 10;
+  pointer-events: auto;
 }
 
 .category-stat-card:hover .category-actions,
@@ -340,10 +342,21 @@
   padding: 0 !important;
   min-width: 32px !important;
   line-height: 32px !important;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  appearance: none;
 
-  mat-icon {
+  img.category-action-icon {
     @include icon-size(18px, true);
-    line-height: 18px !important;
+    filter: brightness(0);
+    display: block;
+
+    :host-context(body.dark-theme) & {
+      filter: brightness(0) invert(1);
+    }
   }
 
   &.edit-btn {
