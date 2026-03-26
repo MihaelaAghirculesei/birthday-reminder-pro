@@ -22,8 +22,10 @@ const CATEGORY_KEY_MAP: Record<string, string> = {
     <div class="category-icon-wrapper"
          [style.background-color]="iconColor"
          [matTooltip]="categoryTooltipKey | translate"
-         [class]="cssClass">
-      <mat-icon class="category-icon">
+         [class]="cssClass"
+         role="img"
+         [attr.aria-label]="categoryTooltipKey | translate">
+      <mat-icon aria-hidden="true" class="category-icon">
         {{ iconName }}
       </mat-icon>
     </div>
