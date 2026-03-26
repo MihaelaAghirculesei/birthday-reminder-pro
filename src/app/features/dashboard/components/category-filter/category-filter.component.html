@@ -36,7 +36,7 @@
             (click)="selectCategory(categoryStats.id)"
             [attr.aria-label]="getCategoryAriaLabel(categoryStats)"
             [attr.aria-pressed]="selectedCategory === categoryStats.id"
-          ></button>
+          ><span class="sr-only">{{ getCategoryAriaLabel(categoryStats) }}</span></button>
           <div class="category-card-background" aria-hidden="true"></div>
           <div class="category-stat-content">
             <div class="category-icon-section">
@@ -56,22 +56,18 @@
             </div>
             <div class="category-actions">
               <button
-                mat-icon-button
                 class="category-action-btn edit-btn"
                 (click)="editCategory($event, categoryStats.id)"
                 [matTooltip]="'CATEGORY_FILTER.EDIT_TOOLTIP' | translate"
-                [attr.aria-label]="'CATEGORY_FILTER.EDIT_ARIA' | translate: {name: categoryStats.name}"
                 >
-                <mat-icon>edit</mat-icon>
+                <img src="assets/icons/edit-button.svg" [attr.alt]="'CATEGORY_FILTER.EDIT_ARIA' | translate: {name: categoryStats.name}" class="category-action-icon" width="18" height="18"/>
               </button>
               <button
-                mat-icon-button
                 class="category-action-btn delete-btn"
                 (click)="deleteCategory($event, categoryStats.id)"
                 [matTooltip]="'CATEGORY_FILTER.DELETE_TOOLTIP' | translate"
-                [attr.aria-label]="'CATEGORY_FILTER.DELETE_ARIA' | translate: {name: categoryStats.name}"
                 >
-                <mat-icon>delete</mat-icon>
+                <img src="assets/icons/delete-button.png" [attr.alt]="'CATEGORY_FILTER.DELETE_ARIA' | translate: {name: categoryStats.name}" class="category-action-icon" width="18" height="18"/>
               </button>
               @if (selectedCategory === categoryStats.id) {
                 <div class="selection-indicator">
