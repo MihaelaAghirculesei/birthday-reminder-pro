@@ -196,6 +196,7 @@
 
 .edit-button-circle {
   @include circular-button(55px, $btn-edit-start, $btn-edit-end);
+  position: relative;
 
   :host-context(body.dark-theme) & {
     background: var(--button-edit) !important;

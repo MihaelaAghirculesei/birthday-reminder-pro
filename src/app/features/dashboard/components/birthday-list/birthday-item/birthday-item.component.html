@@ -115,34 +115,20 @@
     ></app-remember-photo>
     <div class="toolbar-spacer"></div>
     <button
-      mat-icon-button
-      color="primary"
       (click)="onEdit($event)"
       class="edit-button-circle"
       [matTooltip]="'BIRTHDAY_ITEM.EDIT_BIRTHDAY' | translate"
-      [attr.aria-label]="('BIRTHDAY_ITEM.EDIT' | translate) + ' ' + birthday.name"
       data-testid="edit-birthday-button"
       >
-      <mat-icon class="edit-icon">edit</mat-icon>
+      <img src="assets/icons/edit-button.svg" [attr.alt]="('BIRTHDAY_ITEM.EDIT' | translate) + ' ' + birthday.name" class="edit-icon" width="24" height="24" loading="lazy" decoding="async"/>
     </button>
     <button
-      mat-icon-button
-      color="warn"
       (click)="onDelete()"
       class="delete-button-circle"
       [matTooltip]="'BIRTHDAY_ITEM.DELETE_BIRTHDAY' | translate"
-      [attr.aria-label]="('BIRTHDAY_ITEM.DELETE' | translate) + ' ' + birthday.name"
       data-testid="delete-birthday-button"
       >
-      <img
-        src="assets/icons/delete-button.png"
-        alt="Delete"
-        class="delete-icon"
-        width="34"
-        height="34"
-        loading="lazy"
-        decoding="async"
-        />
+      <img src="assets/icons/delete-button.png" [attr.alt]="('BIRTHDAY_ITEM.DELETE' | translate) + ' ' + birthday.name" class="delete-icon" width="34" height="34" loading="lazy" decoding="async"/>
     </button>
   </div>
 </div>
