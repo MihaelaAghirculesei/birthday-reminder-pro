@@ -23,25 +23,25 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
   template: `
     <mat-menu #importMenu="matMenu" [class]="menuClass">
       <button mat-menu-item (click)="importJSON.click()">
-        <mat-icon>data_object</mat-icon>
+        <mat-icon aria-hidden="true">data_object</mat-icon>
         <span>{{ 'IMPORT_EXPORT.IMPORT_JSON' | translate }}</span>
       </button>
       <button mat-menu-item (click)="importCSV.click()">
-        <mat-icon>table_chart</mat-icon>
+        <mat-icon aria-hidden="true">table_chart</mat-icon>
         <span>{{ 'IMPORT_EXPORT.IMPORT_CSV' | translate }}</span>
       </button>
       <button mat-menu-item (click)="importVCard.click()">
-        <mat-icon>contact_page</mat-icon>
+        <mat-icon aria-hidden="true">contact_page</mat-icon>
         <span>{{ 'IMPORT_EXPORT.IMPORT_VCARD' | translate }}</span>
       </button>
     </mat-menu>
     <mat-menu #exportMenu="matMenu" [class]="menuClass">
       <button mat-menu-item (click)="exportJSON()">
-        <mat-icon>data_object</mat-icon>
+        <mat-icon aria-hidden="true">data_object</mat-icon>
         <span>{{ 'IMPORT_EXPORT.EXPORT_JSON' | translate }}</span>
       </button>
       <button mat-menu-item (click)="exportCSV()">
-        <mat-icon>table_chart</mat-icon>
+        <mat-icon aria-hidden="true">table_chart</mat-icon>
         <span>{{ 'IMPORT_EXPORT.EXPORT_CSV' | translate }}</span>
       </button>
     </mat-menu>
