@@ -25,27 +25,27 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
   template: `
     <nav class="nav-strip" role="navigation" aria-label="Main navigation">
       <a mat-button routerLink="/" class="nav-strip-item">
-        <mat-icon>home</mat-icon>
+        <mat-icon aria-hidden="true">home</mat-icon>
         <span>{{ 'NAV.DASHBOARD' | translate }}</span>
       </a>
       <a mat-button routerLink="/scheduled-messages" class="nav-strip-item">
-        <mat-icon>schedule_send</mat-icon>
+        <mat-icon aria-hidden="true">schedule_send</mat-icon>
         <span>{{ 'NAV.MESSAGES' | translate }}</span>
       </a>
-      <button mat-button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item">
-        <mat-icon>settings</mat-icon>
-        <span>{{ 'NAV.SETTINGS' | translate }}</span>
-        <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+      <button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item">
+        <img src="assets/icons/settings-button.svg" [attr.alt]="'NAV.SETTINGS' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
+        <span aria-hidden="true">{{ 'NAV.SETTINGS' | translate }}</span>
+        <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
-      <button mat-button [matMenuTriggerFor]="stripImportExport.importMenu" class="nav-strip-item">
-        <mat-icon>upload_file</mat-icon>
-        <span>{{ 'NAV.IMPORT' | translate }}</span>
-        <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+      <button [matMenuTriggerFor]="stripImportExport.importMenu" class="nav-strip-item">
+        <img src="assets/icons/import-button.svg" [attr.alt]="'NAV.IMPORT' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
+        <span aria-hidden="true">{{ 'NAV.IMPORT' | translate }}</span>
+        <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
-      <button mat-button [matMenuTriggerFor]="stripImportExport.exportMenu" class="nav-strip-item">
-        <mat-icon>download</mat-icon>
-        <span>{{ 'NAV.EXPORT' | translate }}</span>
-        <mat-icon class="nav-strip-arrow">arrow_drop_down</mat-icon>
+      <button [matMenuTriggerFor]="stripImportExport.exportMenu" class="nav-strip-item">
+        <img src="assets/icons/export-button.svg" [attr.alt]="'NAV.EXPORT' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
+        <span aria-hidden="true">{{ 'NAV.EXPORT' | translate }}</span>
+        <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
       <app-header-user-menu
         mode="desktop"
@@ -79,6 +79,24 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
       :host-context(body.dark-theme) & {
         background: rgba(255, 255, 255, 0.06);
         border-top-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    button.nav-strip-item {
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    .nav-strip-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      filter: brightness(0);
+
+      :host-context(body.dark-theme) & {
+        filter: brightness(0) invert(1);
       }
     }
 
