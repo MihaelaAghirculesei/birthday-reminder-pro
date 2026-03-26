@@ -41,28 +41,28 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
     <header class="app-header" role="banner">
       <div class="header-top">
         <button mat-icon-button [matMenuTriggerFor]="navMenu" #navMenuTrigger="matMenuTrigger" [attr.aria-label]="'NAV.OPEN_MENU' | translate" class="menu-btn">
-          <mat-icon>menu</mat-icon>
+          <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
         <mat-menu #navMenu="matMenu" class="nav-menu-panel nav-menu-main" xPosition="after" yPosition="below" [overlapTrigger]="true">
           <a mat-menu-item routerLink="/" [attr.aria-label]="'NAV.GO_DASHBOARD' | translate">
-            <mat-icon>home</mat-icon>
+            <mat-icon aria-hidden="true">home</mat-icon>
             <span>{{ 'NAV.DASHBOARD' | translate }}</span>
           </a>
           <a mat-menu-item routerLink="/scheduled-messages" [attr.aria-label]="'NAV.GO_MESSAGES' | translate">
-            <mat-icon>schedule_send</mat-icon>
+            <mat-icon aria-hidden="true">schedule_send</mat-icon>
             <span>{{ 'NAV.MESSAGES' | translate }}</span>
           </a>
           <mat-divider></mat-divider>
           <button mat-menu-item [matMenuTriggerFor]="mobileSettings.settingsMenu">
-            <mat-icon>settings</mat-icon>
+            <mat-icon aria-hidden="true">settings</mat-icon>
             <span>{{ 'NAV.SETTINGS' | translate }}</span>
           </button>
           <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.importMenu">
-            <mat-icon>upload_file</mat-icon>
+            <mat-icon aria-hidden="true">upload_file</mat-icon>
             <span>{{ 'NAV.IMPORT' | translate }}</span>
           </button>
           <button mat-menu-item [matMenuTriggerFor]="mobileImportExport.exportMenu">
-            <mat-icon>download</mat-icon>
+            <mat-icon aria-hidden="true">download</mat-icon>
             <span>{{ 'NAV.EXPORT' | translate }}</span>
           </button>
           <mat-divider></mat-divider>
@@ -81,7 +81,7 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
         <h1 class="hero-title" id="main-title">
           <picture>
             <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="46" height="46">
-            <img src="assets/icons/logo-reminder.png" alt="Birthday Memories application logo" class="app-logo" width="46" height="46" loading="eager" decoding="sync">
+            <img src="assets/icons/logo-reminder.png" alt="" class="app-logo" width="46" height="46" loading="eager" decoding="sync">
           </picture>
           {{ 'APP.TITLE' | translate }}
         </h1>
