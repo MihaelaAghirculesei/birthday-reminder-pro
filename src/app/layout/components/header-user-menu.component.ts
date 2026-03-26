@@ -20,16 +20,16 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
       @if (isAuthenticated) {
         <div mat-menu-item disabled class="user-info-menu-item">
           @if (userPhotoURL) {
-            <mat-icon class="avatar-icon">
-              <img [ngSrc]="userPhotoURL" [alt]="userDisplayName || 'User'" class="menu-user-avatar" width="24" height="24" referrerpolicy="no-referrer" />
+            <mat-icon aria-hidden="true" class="avatar-icon">
+              <img [ngSrc]="userPhotoURL" alt="" class="menu-user-avatar" width="24" height="24" referrerpolicy="no-referrer" />
             </mat-icon>
           } @else {
-            <mat-icon>account_circle</mat-icon>
+            <mat-icon aria-hidden="true">account_circle</mat-icon>
           }
           <span>{{ userDisplayName || 'User' }} · <small class="menu-user-email">{{ userEmail }}</small></span>
         </div>
         <button mat-menu-item (click)="signOutClicked.emit()">
-          <mat-icon>logout</mat-icon>
+          <mat-icon aria-hidden="true">logout</mat-icon>
           <span>Sign out</span>
         </button>
       } @else if (!authLoading) {
@@ -42,12 +42,12 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
           @if (userPhotoURL) {
             <img [ngSrc]="userPhotoURL" [alt]="userDisplayName || 'User'" class="nav-strip-avatar" width="28" height="28" referrerpolicy="no-referrer" />
           } @else {
-            <mat-icon class="nav-strip-user-icon">account_circle</mat-icon>
+            <mat-icon aria-hidden="true" class="nav-strip-user-icon">account_circle</mat-icon>
           }
           <span class="nav-strip-user-name">{{ userDisplayName || 'User' }}</span>
         </div>
         <button mat-button (click)="signOutClicked.emit()" class="nav-strip-item nav-strip-signout">
-          <mat-icon>logout</mat-icon>
+          <mat-icon aria-hidden="true">logout</mat-icon>
           <span>Sign out</span>
         </button>
       } @else if (!authLoading) {
