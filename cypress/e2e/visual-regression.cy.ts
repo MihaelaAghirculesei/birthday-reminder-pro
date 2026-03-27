@@ -159,7 +159,7 @@ describe('Visual Regression — Category filter', () => {
 
   it('category filter · family active', () => {
     // Click the Family category chip/button (use text since no testid on chips)
-    cy.contains('Family').click();
+    cy.contains('Family').scrollIntoView().click({ force: true });
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(300);
     cy.visualSnapshot('Category filter — Family · light');
@@ -167,7 +167,7 @@ describe('Visual Regression — Category filter', () => {
 
   it('category filter · friends active · dark theme', () => {
     cy.enableDarkMode();
-    cy.contains('Friends').click();
+    cy.contains('Friends').scrollIntoView().click({ force: true });
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(300);
     cy.visualSnapshot('Category filter — Friends · dark');
