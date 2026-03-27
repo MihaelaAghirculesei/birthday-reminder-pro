@@ -17,14 +17,15 @@ const ZODIAC_KEY_MAP: Record<string, string> = {
     <button class="zodiac-button"
             [class]="'zodiac-' + zodiacSign?.toLowerCase()"
             [title]="zodiacNameKey | translate"
-            [attr.aria-label]="zodiacNameKey | translate"
             type="button">
-      {{ symbol }}
+      <span class="zodiac-symbol" aria-hidden="true">{{ symbol }}</span>
+      <span class="zodiac-label">{{ zodiacNameKey | translate }}</span>
     </button>
   `,
     styles: [`
     .zodiac-button {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       width: 56px;
@@ -40,6 +41,7 @@ const ZODIAC_KEY_MAP: Record<string, string> = {
       line-height: 1;
       text-align: center;
       vertical-align: middle;
+      gap: 1px;
 
       &::before {
         content: '';
@@ -72,6 +74,23 @@ const ZODIAC_KEY_MAP: Record<string, string> = {
         &::before {
           opacity: 0.5;
         }
+      }
+
+      .zodiac-symbol {
+        font-size: 26px;
+        line-height: 1;
+      }
+
+      .zodiac-label {
+        font-size: 8px;
+        line-height: 1;
+        max-width: 50px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: inherit;
+        font-weight: 700;
+        letter-spacing: -0.3px;
       }
     }
 
