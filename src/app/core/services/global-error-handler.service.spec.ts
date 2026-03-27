@@ -163,6 +163,32 @@ describe('GlobalErrorHandler', () => {
         5000
       );
     });
+
+    it('should categorize plain Error "Failed to fetch" (non-TypeError) as network error', () => {
+      // Exercises isNetworkError second branch: isErrorLike + message.includes('Failed to fetch')
+      const error = new Error('Failed to fetch');
+
+      errorHandler.handleError(error);
+
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
+        'Network connection lost. Changes will sync when online.',
+        'warning',
+        5000
+      );
+    });
+
+    it('should NOT categorize a non-errorLike object as network error', () => {
+      // Exercises isNetworkError early-return: !isErrorLike(error) → false → falls to Unknown
+      const error = { code: 'ECONNREFUSED' };
+
+      errorHandler.handleError(error);
+
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
+        'An unexpected error occurred.',
+        'error',
+        5000
+      );
+    });
   });
 
   describe('NgRx errors', () => {

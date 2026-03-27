@@ -230,6 +230,22 @@ describe('FirebaseAuthService', () => {
     it('POPUP_BLOCKED maps to auth/popup-blocked', () => {
       expect(FIREBASE_AUTH_CODES.POPUP_BLOCKED).toBe('auth/popup-blocked');
     });
+
+    it('CANCELLED maps to auth/cancelled-popup-request', () => {
+      expect(FIREBASE_AUTH_CODES.CANCELLED).toBe('auth/cancelled-popup-request');
+    });
+
+    it('NETWORK_ERROR maps to auth/network-request-failed', () => {
+      expect(FIREBASE_AUTH_CODES.NETWORK_ERROR).toBe('auth/network-request-failed');
+    });
+
+    it('TOO_MANY_REQS maps to auth/too-many-requests', () => {
+      expect(FIREBASE_AUTH_CODES.TOO_MANY_REQS).toBe('auth/too-many-requests');
+    });
+
+    it('USER_DISABLED maps to auth/user-disabled', () => {
+      expect(FIREBASE_AUTH_CODES.USER_DISABLED).toBe('auth/user-disabled');
+    });
   });
 
   // ── mapFirebaseSignInError — popup error mapping ──────────────────────────
@@ -258,6 +274,30 @@ describe('FirebaseAuthService', () => {
     it('returns an Error instance', () => {
       const err = { name: 'FirebaseError' as const, code: 'auth/popup-blocked', message: 'blocked' };
       expect(mapFirebaseSignInError(err)).toBeInstanceOf(Error);
+    });
+
+    it('passes through the message for auth/network-request-failed', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/network-request-failed', message: 'network error' };
+      expect(mapFirebaseSignInError(err).message).toBe('network error');
+    });
+
+    it('passes through the message for auth/too-many-requests', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/too-many-requests', message: 'too many requests' };
+      expect(mapFirebaseSignInError(err).message).toBe('too many requests');
+    });
+
+    it('passes through the message for auth/user-disabled', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/user-disabled', message: 'user disabled' };
+      expect(mapFirebaseSignInError(err).message).toBe('user disabled');
+    });
+  });
+
+  // ── performGoogleSignInDirect (Firebase not configured) ───────────────────
+
+  describe('performGoogleSignInDirect (Firebase not configured)', () => {
+    it('rejects with "Firebase not configured"', async () => {
+      await expectAsync(service.performGoogleSignInDirect())
+        .toBeRejectedWithError(/Firebase not configured/);
     });
   });
 });

@@ -4,6 +4,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SyncStatusComponent } from './sync-status.component';
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
+import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/time.constants';
 
 describe('SyncStatusComponent', () => {
   let component: SyncStatusComponent;
@@ -188,6 +189,52 @@ describe('SyncStatusComponent', () => {
       fixture.detectChanges();
 
       expect(component.tooltip()).toBe('');
+    });
+
+    describe('formatTime branches', () => {
+      const syncSummaryWith = (lastSync: Date) => ({
+        state: 'idle' as const,
+        isOnline: true,
+        pendingCount: 0,
+        lastSync,
+        hasError: false
+      });
+
+      it('should format 1 minute ago (singular)', () => {
+        store.overrideSelector(SyncSelectors.selectSyncSummary, syncSummaryWith(new Date(Date.now() - ONE_MINUTE_MS)));
+        store.refreshState();
+        fixture.detectChanges();
+        expect(component.tooltip()).toContain('Last sync: 1 minute ago');
+      });
+
+      it('should format 5 minutes ago (plural)', () => {
+        store.overrideSelector(SyncSelectors.selectSyncSummary, syncSummaryWith(new Date(Date.now() - 5 * ONE_MINUTE_MS)));
+        store.refreshState();
+        fixture.detectChanges();
+        expect(component.tooltip()).toContain('Last sync: 5 minutes ago');
+      });
+
+      it('should format 1 hour ago (singular)', () => {
+        store.overrideSelector(SyncSelectors.selectSyncSummary, syncSummaryWith(new Date(Date.now() - ONE_HOUR_MS)));
+        store.refreshState();
+        fixture.detectChanges();
+        expect(component.tooltip()).toContain('Last sync: 1 hour ago');
+      });
+
+      it('should format 3 hours ago (plural)', () => {
+        store.overrideSelector(SyncSelectors.selectSyncSummary, syncSummaryWith(new Date(Date.now() - 3 * ONE_HOUR_MS)));
+        store.refreshState();
+        fixture.detectChanges();
+        expect(component.tooltip()).toContain('Last sync: 3 hours ago');
+      });
+
+      it('should fall back to toLocaleDateString for dates >= 1 day ago', () => {
+        const oldDate = new Date(Date.now() - ONE_DAY_MS);
+        store.overrideSelector(SyncSelectors.selectSyncSummary, syncSummaryWith(oldDate));
+        store.refreshState();
+        fixture.detectChanges();
+        expect(component.tooltip()).toContain(`Last sync: ${oldDate.toLocaleDateString()}`);
+      });
     });
   });
 });

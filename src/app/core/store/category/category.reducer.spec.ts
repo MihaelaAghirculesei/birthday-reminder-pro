@@ -58,6 +58,18 @@ describe('Category Reducer', () => {
 
       expect(state.entities['custom-1']).toEqual(mockCategory);
       expect(state.customCategoryIds).toContain('custom-1');
+      expect(state.error).toBeNull();
+    });
+
+    it('should set error on addCategoryFailure and preserve existing entities', () => {
+      const withCategory = categoryReducer(
+        initialCategoryState,
+        CategoryActions.addCategorySuccess({ category: mockCategory })
+      );
+      const state = categoryReducer(withCategory, CategoryActions.addCategoryFailure({ error: 'Add failed' }));
+
+      expect(state.error).toBe('Add failed');
+      expect(state.entities['custom-1']).toEqual(mockCategory);
     });
   });
 
@@ -73,6 +85,18 @@ describe('Category Reducer', () => {
       const state = categoryReducer(initialState, action);
 
       expect(state.entities['custom-1']?.name).toBe('Updated Work');
+      expect(state.error).toBeNull();
+    });
+
+    it('should set error on updateCategoryFailure and leave entities unchanged', () => {
+      const withCategory = categoryReducer(
+        initialCategoryState,
+        CategoryActions.addCategorySuccess({ category: mockCategory })
+      );
+      const state = categoryReducer(withCategory, CategoryActions.updateCategoryFailure({ error: 'Update failed' }));
+
+      expect(state.error).toBe('Update failed');
+      expect(state.entities['custom-1']).toEqual(mockCategory);
     });
   });
 
@@ -87,6 +111,17 @@ describe('Category Reducer', () => {
       const state = categoryReducer(initialState, action);
 
       expect(state.deletedCategoryIds).toContain('custom-1');
+      expect(state.error).toBeNull();
+    });
+
+    it('should set error on deleteCategoryFailure and leave deletedCategoryIds unchanged', () => {
+      const state = categoryReducer(
+        initialCategoryState,
+        CategoryActions.deleteCategoryFailure({ error: 'Delete failed' })
+      );
+
+      expect(state.error).toBe('Delete failed');
+      expect(state.deletedCategoryIds).toEqual([]);
     });
   });
 
@@ -102,6 +137,20 @@ describe('Category Reducer', () => {
       const newState = categoryReducer(state, action);
 
       expect(newState.deletedCategoryIds).not.toContain('custom-1');
+      expect(newState.error).toBeNull();
+    });
+
+    it('should set error on restoreCategoryFailure and leave deletedCategoryIds unchanged', () => {
+      let state = categoryReducer(
+        initialCategoryState,
+        CategoryActions.addCategorySuccess({ category: mockCategory })
+      );
+      state = categoryReducer(state, CategoryActions.deleteCategorySuccess({ categoryId: 'custom-1' }));
+
+      const newState = categoryReducer(state, CategoryActions.restoreCategoryFailure({ error: 'Restore failed' }));
+
+      expect(newState.error).toBe('Restore failed');
+      expect(newState.deletedCategoryIds).toContain('custom-1');
     });
   });
 });

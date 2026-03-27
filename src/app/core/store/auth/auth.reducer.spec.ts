@@ -105,4 +105,88 @@ describe('Auth Reducer', () => {
       expect(state.error).toBeNull();
     });
   });
+
+  // ─── State Machine Transitions ───────────────────────────────────────────────
+
+  describe('Transitions', () => {
+    const reduce = (...actions: Parameters<typeof authReducer>[1][]) =>
+      actions.reduce((s, a) => authReducer(s, a), initialAuthState);
+
+    it('sign-in happy path: loading → authenticated', () => {
+      const state = reduce(
+        AuthActions.signInWithGoogle(),
+        AuthActions.signInSuccess({ user: mockUser }),
+        AuthActions.authStateChanged({ user: mockUser })
+      );
+      expect(state).toEqual(jasmine.objectContaining({
+        user: mockUser,
+        loading: false,
+        error: null
+      }));
+    });
+
+    it('sign-in failure → error recovery → retry success', () => {
+      const afterFailure = reduce(
+        AuthActions.signInWithGoogle(),
+        AuthActions.signInFailure({ error: 'popup-closed' })
+      );
+      expect(afterFailure.error).toBe('popup-closed');
+      expect(afterFailure.loading).toBeFalse();
+
+      const afterRecovery = reduce(
+        AuthActions.signInWithGoogle(),
+        AuthActions.signInFailure({ error: 'popup-closed' }),
+        AuthActions.clearAuthError(),
+        AuthActions.signInWithGoogle(),
+        AuthActions.signInSuccess({ user: mockUser })
+      );
+      expect(afterRecovery).toEqual(jasmine.objectContaining({
+        user: mockUser,
+        loading: false,
+        error: null
+      }));
+    });
+
+    it('sign-out happy path: authenticated → signed out', () => {
+      const state = reduce(
+        AuthActions.signInSuccess({ user: mockUser }),
+        AuthActions.signOut(),
+        AuthActions.signOutSuccess(),
+        AuthActions.authStateChanged({ user: null })
+      );
+      expect(state).toEqual(jasmine.objectContaining({
+        user: null,
+        loading: false,
+        error: null
+      }));
+    });
+
+    it('sign-out failure → retry → success', () => {
+      const state = reduce(
+        AuthActions.signInSuccess({ user: mockUser }),
+        AuthActions.signOut(),
+        AuthActions.signOutFailure({ error: 'network-error' }),
+        AuthActions.signOut(),
+        AuthActions.signOutSuccess()
+      );
+      expect(state.user).toBeNull();
+      expect(state.loading).toBeFalse();
+      expect(state.error).toBeNull();
+    });
+
+    it('app boot: uninitialized → initialized → user arrives via listener', () => {
+      const afterInit = authReducer(initialAuthState, AuthActions.authInitialized());
+      expect(afterInit.initialized).toBeTrue();
+      expect(afterInit.user).toBeNull();
+
+      const afterListener = authReducer(afterInit, AuthActions.authStateChanged({ user: mockUser }));
+      expect(afterListener.user).toEqual(mockUser);
+    });
+
+    it('does not mutate previous state snapshots', () => {
+      const before = { ...initialAuthState };
+      authReducer(initialAuthState, AuthActions.signInWithGoogle());
+      expect(initialAuthState).toEqual(before);
+    });
+  });
 });

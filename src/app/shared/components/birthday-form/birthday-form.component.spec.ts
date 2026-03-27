@@ -6,15 +6,27 @@ import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { SILENT_LOGGER_PROVIDER, LoggerService } from '../../../core';
 import { BIRTHDAY_CATEGORIES, DEFAULT_CATEGORY } from '../../constants';
 import { Birthday } from '../../models';
+import { PhotoStorageService } from '../../../core/services/photo-storage.service';
+import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 
 describe('BirthdayFormComponent', () => {
   let component: BirthdayFormComponent;
   let fixture: ComponentFixture<BirthdayFormComponent>;
+  let photoStorageSpy: jasmine.SpyObj<PhotoStorageService>;
+  let authServiceStub: { currentUser: { uid: string } | null };
 
   beforeEach(async () => {
+    photoStorageSpy = jasmine.createSpyObj('PhotoStorageService', ['uploadPhoto']);
+    authServiceStub = { currentUser: null };
+
     await TestBed.configureTestingModule({
       imports: [BirthdayFormComponent, NoopAnimationsModule, MatNativeDateModule],
-      providers: [SILENT_LOGGER_PROVIDER, provideTranslateTesting()],
+      providers: [
+        SILENT_LOGGER_PROVIDER,
+        provideTranslateTesting(),
+        { provide: PhotoStorageService, useValue: photoStorageSpy },
+        { provide: FirebaseAuthService, useValue: authServiceStub },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BirthdayFormComponent);
@@ -116,6 +128,11 @@ describe('BirthdayFormComponent', () => {
       component.onPhotoRemoved();
       expect(component.birthdayForm.get('photo')?.value).toBeNull();
     });
+
+    it('should store the file reference on onFileSelected', () => {
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+      expect(() => component.onFileSelected(mockFile)).not.toThrow();
+    });
   });
 
   describe('onSubmit', () => {
@@ -129,11 +146,11 @@ describe('BirthdayFormComponent', () => {
       });
     }
 
-    it('should emit birthdaySubmitted with valid form data', () => {
+    it('should emit birthdaySubmitted with valid form data', async () => {
       fillValidForm();
       spyOn(component.birthdaySubmitted, 'emit');
 
-      component.onSubmit();
+      await component.onSubmit();
 
       expect(component.birthdaySubmitted.emit).toHaveBeenCalledTimes(1);
       const emitted = (component.birthdaySubmitted.emit as jasmine.Spy).calls.first().args[0] as Omit<Birthday, 'id'>;
@@ -141,55 +158,92 @@ describe('BirthdayFormComponent', () => {
       expect(emitted['birthDate']).toBe('1990-06-15');
     });
 
-    it('should reset form after successful submit', () => {
+    it('should reset form after successful submit', async () => {
       fillValidForm();
       spyOn(component.birthdaySubmitted, 'emit');
 
-      component.onSubmit();
+      await component.onSubmit();
 
       expect(component.birthdayForm.get('name')?.value).toBeFalsy();
       expect(component.birthdayForm.get('reminderDays')?.value).toBe(7);
       expect(component.birthdayForm.get('category')?.value).toBe(DEFAULT_CATEGORY);
     });
 
-    it('should clear selectedPhoto after successful submit', () => {
+    it('should clear selectedPhoto after successful submit', async () => {
       fillValidForm();
       component.selectedPhoto = 'data:image/png;base64,abc';
       spyOn(component.birthdaySubmitted, 'emit');
 
-      component.onSubmit();
+      await component.onSubmit();
 
       expect(component.selectedPhoto).toBeNull();
     });
 
-    it('should not emit when form is invalid', () => {
+    it('should not emit when form is invalid', async () => {
       spyOn(component.birthdaySubmitted, 'emit');
 
-      component.onSubmit();
+      await component.onSubmit();
 
       expect(component.birthdaySubmitted.emit).not.toHaveBeenCalled();
     });
 
-    it('should log error and not emit on Zod validation failure', () => {
+    it('should not submit when isSubmitting is true', async () => {
+      fillValidForm();
+      spyOn(component.birthdaySubmitted, 'emit');
+      component.isSubmitting.set(true);
+
+      await component.onSubmit();
+
+      expect(component.birthdaySubmitted.emit).not.toHaveBeenCalled();
+    });
+
+    it('should upload photo via PhotoStorageService for authenticated users', async () => {
+      fillValidForm();
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+      const cdnUrl = 'https://cdn.example.com/photo.jpg';
+      authServiceStub.currentUser = { uid: 'user-123' };
+      photoStorageSpy.uploadPhoto.and.returnValue(Promise.resolve(cdnUrl));
+      component.onFileSelected(mockFile);
+      component.selectedPhoto = 'data:image/png;base64,abc';
+      spyOn(component.birthdaySubmitted, 'emit');
+
+      await component.onSubmit();
+
+      expect(photoStorageSpy.uploadPhoto).toHaveBeenCalledWith(mockFile, 'user-123', 'photo');
+      expect(component.birthdaySubmitted.emit).toHaveBeenCalledTimes(1);
+    });
+
+    it('should keep base64 photo for anonymous users without uploading', async () => {
+      fillValidForm();
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+      authServiceStub.currentUser = null;
+      component.onFileSelected(mockFile);
+      component.selectedPhoto = 'data:image/png;base64,abc';
+      spyOn(component.birthdaySubmitted, 'emit');
+
+      await component.onSubmit();
+
+      expect(photoStorageSpy.uploadPhoto).not.toHaveBeenCalled();
+      expect(component.birthdaySubmitted.emit).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log error and not emit when Zod validation fails', async () => {
       const logger = TestBed.inject(LoggerService);
       spyOn(logger, 'error');
       spyOn(component.birthdaySubmitted, 'emit');
-
-      // Set a valid Angular form but with data that will fail Zod validation
-      // Name exceeds Zod max of 200 characters
+      // '  ' passes Angular validators (required + minLength(2)) but
+      // fails Zod's trim().min(1) — triggering the !result.success branch.
       component.birthdayForm.patchValue({
-        name: 'A'.repeat(50), // valid for Angular (max 50), valid for Zod (max 200)
+        name: '  ',
         birthDate: new Date(1990, 5, 15),
         category: 'friends',
         reminderDays: 7,
       });
 
-      // Directly test: make the Zod schema reject by patching the form value after validation
-      // We can trigger a Zod failure by setting an invalid phone format through the sanitized data
-      // Simpler approach: just verify the happy path works and trust Zod integration
-      // Instead, verify that form submission works for valid data
-      component.onSubmit();
-      expect(component.birthdaySubmitted.emit).toHaveBeenCalled();
+      await component.onSubmit();
+
+      expect(logger.error).toHaveBeenCalled();
+      expect(component.birthdaySubmitted.emit).not.toHaveBeenCalled();
     });
   });
 

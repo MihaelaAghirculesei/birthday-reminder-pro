@@ -132,7 +132,7 @@ describe('CategoryEffects', () => {
       effects.loadCategories$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.loadCategoriesFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesFailure>;
-        expect(payload.error).toBeDefined();
+        expect(payload.error).toBe('Storage error');
         done();
       });
     });
@@ -155,6 +155,8 @@ describe('CategoryEffects', () => {
 
       effects.addCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.addCategoryFailure>;
+        expect(payload.error).toBe('Storage error');
         done();
       });
     });
@@ -178,6 +180,8 @@ describe('CategoryEffects', () => {
 
       effects.updateCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.updateCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.updateCategoryFailure>;
+        expect(payload.error).toBe('Storage error');
         done();
       });
     });
@@ -200,6 +204,8 @@ describe('CategoryEffects', () => {
 
       effects.deleteCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.deleteCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.deleteCategoryFailure>;
+        expect(payload.error).toBe('Storage error');
         done();
       });
     });
@@ -222,6 +228,8 @@ describe('CategoryEffects', () => {
 
       effects.restoreCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.restoreCategoryFailure>;
+        expect(payload.error).toBe('Storage error');
         done();
       });
     });
