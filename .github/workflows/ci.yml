@@ -128,23 +128,29 @@ jobs:
 
       - name: Check coverage thresholds
         run: |
-          STATEMENTS=$(cat coverage/lcov-report/index.html | grep -oP 'statements.*?\K\d+\.\d+' | head -1 || echo "0")
-          BRANCHES=$(cat coverage/lcov-report/index.html | grep -oP 'branches.*?\K\d+\.\d+' | head -1 || echo "0")
-          FUNCTIONS=$(cat coverage/lcov-report/index.html | grep -oP 'functions.*?\K\d+\.\d+' | head -1 || echo "0")
+          SUMMARY=coverage/birthday-reminder-pro/coverage-summary.json
 
-          echo "Coverage: Statements=$STATEMENTS%, Branches=$BRANCHES%, Functions=$FUNCTIONS%"
+          jq -r '
+            .total |
+            "Statements: \(.statements.pct)%  (min 80%)",
+            "Branches:   \(.branches.pct)%  (min 75%)",
+            "Functions:  \(.functions.pct)%  (min 80%)",
+            "Lines:      \(.lines.pct)%  (min 80%)"
+          ' "$SUMMARY"
 
-          if (( $(echo "$STATEMENTS < 85" | bc -l) )); then
-            echo "❌ Statement coverage ($STATEMENTS%) is below 85%"
+          BELOW=$(jq -r '
+            .total |
+            (if .statements.pct < 80 then "statements \(.statements.pct)% < 80%" else empty end),
+            (if .branches.pct   < 75 then "branches \(.branches.pct)% < 75%"     else empty end),
+            (if .functions.pct  < 80 then "functions \(.functions.pct)% < 80%"   else empty end),
+            (if .lines.pct      < 80 then "lines \(.lines.pct)% < 80%"           else empty end)
+          ' "$SUMMARY")
+
+          if [ -n "$BELOW" ]; then
+            echo "Coverage below threshold:"
+            echo "$BELOW" | sed 's/^/  /'
             exit 1
           fi
-
-          if (( $(echo "$FUNCTIONS < 85" | bc -l) )); then
-            echo "❌ Function coverage ($FUNCTIONS%) is below 85%"
-            exit 1
-          fi
-
-          echo "✅ Coverage thresholds met!"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

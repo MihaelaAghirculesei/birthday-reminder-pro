@@ -27,7 +27,8 @@ module.exports = function (config) {
         { type: 'html' },
         { type: 'text-summary' },
         { type: 'lcovonly' },
-        { type: 'json' }
+        { type: 'json' },
+        { type: 'json-summary' }
       ],
       check: {
         global: {
@@ -45,21 +46,9 @@ module.exports = function (config) {
       }
     },
     reporters: ['progress', 'kjhtml', 'coverage'],
-    browsers: ['ChromeHeadlessCI'],
+    browsers: ['ChromeHeadlessNoNoise'],
     customLaunchers: {
       ChromeHeadlessNoNoise: {
-        base: 'ChromeHeadless',
-        flags: [
-          '--disable-background-networking',
-          '--disable-default-apps',
-          '--disable-extensions',
-          '--disable-translate',
-          '--disable-sync',
-          '--disable-component-extensions-with-background-pages',
-          '--no-first-run'
-        ]
-      },
-      ChromeHeadlessCI: {
         base: 'ChromeHeadless',
         flags: [
           '--no-sandbox',
