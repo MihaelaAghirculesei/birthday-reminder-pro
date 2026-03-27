@@ -117,13 +117,6 @@ describe('BirthdayChartComponent', () => {
     });
   });
 
-  describe('trackByMonth', () => {
-    it('should return the month string', () => {
-      const item = { month: 'Jan', count: 3, label: 'January', heightPercent: 80, isCurrentMonth: true };
-      expect(component.trackByMonth(0, item)).toBe('Jan');
-    });
-  });
-
   describe('getChartAriaLabel', () => {
     it('should return translated aria label with total', () => {
       component.totalBirthdays = 6;
@@ -168,9 +161,10 @@ describe('BirthdayChartComponent', () => {
       expect(caption.textContent?.trim().length).toBeGreaterThan(0);
     });
 
-    it('should render a sr-only <table> with <caption>, thead and data rows', () => {
+    it('should render a sr-only <table> with aria-label, <caption>, thead and data rows', () => {
       const table = fixture.nativeElement.querySelector('table.sr-only') as HTMLTableElement;
       expect(table).toBeTruthy();
+      expect(table.getAttribute('aria-label')).toBeTruthy();
       expect(table.querySelector('caption')).toBeTruthy();
       const headers = table.querySelectorAll('thead th');
       expect(headers.length).toBe(2);

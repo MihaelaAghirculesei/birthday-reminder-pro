@@ -43,10 +43,6 @@ export class BirthdayChartComponent implements OnChanges {
     }
   }
 
-  trackByMonth(_index: number, monthData: ChartDataItemView): string {
-    return monthData.month;
-  }
-
   getChartAriaLabel(): string {
     return this.translate.instant('CHART.ARIA_TOTAL', { total: this.totalBirthdays });
   }
