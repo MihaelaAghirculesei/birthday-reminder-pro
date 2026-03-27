@@ -21,7 +21,7 @@
 
 .chart-container {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   height: 180px;
   padding: 16px 0;
@@ -44,7 +44,7 @@
   flex-direction: column;
   align-items: center;
   height: 120px;
-  justify-content: end;
+  justify-content: flex-end;
 }
 
 .bar {
