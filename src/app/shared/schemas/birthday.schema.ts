@@ -3,35 +3,46 @@ import { z } from 'zod';
 export const SyncStatusSchema = z.enum(['synced', 'pending', 'conflict', 'local-only']);
 
 export const SyncMetadataSchema = z.object({
-  updatedAt: z.number().optional(),
+  updatedAt: z.number().int().nonnegative().optional(),
   ownerId: z.string().nullable().optional(),
   syncStatus: SyncStatusSchema.optional(),
-  lastSyncedAt: z.number().optional()
+  lastSyncedAt: z.number().int().nonnegative().optional()
 });
 
 export const ScheduledMessageSchema = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   title: z.string(),
   message: z.string(),
-  scheduledTime: z.string(),
+  scheduledTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Must be HH:MM (00:00–23:59)'),
   active: z.boolean(),
   createdDate: z.coerce.date(),
   lastSentDate: z.coerce.date().optional(),
   messageType: z.enum(['text', 'html']),
   priority: z.enum(['low', 'normal', 'high']),
-  sentCount: z.number().optional(),
+  sentCount: z.number().int().nonnegative().optional(),
   nextScheduledDate: z.coerce.date().optional(),
   notificationSent: z.boolean().optional(),
   lastNotificationId: z.string().optional(),
   birthdayId: z.string().optional()
 });
 
+const BIRTH_DATE_RE = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+
+/** Guards against V8's silent day overflow (e.g. Feb 30 → Mar 2). */
+const isValidCalendarDate = (s: string): boolean => {
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+};
+
 export const BirthdaySchema = z.object({
-  id: z.string(),
-  name: z.string().min(1).max(200),
-  birthDate: z.string(),
+  id: z.string().min(1),
+  name: z.string().trim().min(1).max(200),
+  birthDate: z.string()
+    .regex(BIRTH_DATE_RE, 'Must be a valid YYYY-MM-DD date')
+    .refine(isValidCalendarDate, { message: 'Invalid calendar date' }),
   notes: z.string().max(1000).optional(),
-  reminderDays: z.number().min(1).max(365).optional(),
+  reminderDays: z.number().int().min(1).max(365).optional(),
   photo: z.string().max(7_000_000).optional(),
   rememberPhoto: z.string().max(7_000_000).optional(),
   zodiacSign: z.string().optional(),
@@ -45,9 +56,9 @@ export const BirthdaySchema = z.object({
 }).merge(SyncMetadataSchema);
 
 export const CategorySchema = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   name: z.string().min(1).max(100),
-  icon: z.string(),
+  icon: z.string().min(1),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   isCustom: z.boolean().optional()
 }).merge(SyncMetadataSchema);

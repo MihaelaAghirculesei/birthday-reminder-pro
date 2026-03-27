@@ -2,7 +2,7 @@ import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { Observable, Subject, from, of } from 'rxjs';
-import { getFirebaseFirestore, getFirestoreModule, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
+import { firebaseGetters, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
@@ -51,7 +51,7 @@ export class FirestoreService {
     batch: WriteBatch,
     userId: string,
     fs: typeof import('firebase/firestore'),
-    db: ReturnType<typeof getFirebaseFirestore>
+    db: ReturnType<typeof firebaseGetters.getFirebaseFirestore>
   ): void {
     if (!db) return;
     const rateLimitRef = fs.doc(db, this.getUserPath(userId), 'rateLimit', 'writes');
@@ -66,8 +66,8 @@ export class FirestoreService {
   }
 
   private async fetchBirthdays(userId: string): Promise<Birthday[]> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return [];
 
     try {
@@ -83,8 +83,8 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) return;
     this.unsubscribeFromBirthdays();
 
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     this.birthdaysListener = fs.onSnapshot(
@@ -119,8 +119,8 @@ export class FirestoreService {
   }
 
   private async performSaveBirthday(userId: string, birthday: Birthday): Promise<void> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     const batch = fs.writeBatch(db);
@@ -148,8 +148,8 @@ export class FirestoreService {
   }
 
   private async performDeleteBirthday(userId: string, birthdayId: string): Promise<void> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     const batch = fs.writeBatch(db);
@@ -173,8 +173,8 @@ export class FirestoreService {
   }
 
   private async performBatchSave(userId: string, birthdays: Birthday[]): Promise<void> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     const batch = fs.writeBatch(db);
@@ -204,8 +204,8 @@ export class FirestoreService {
   }
 
   private async fetchCategories(userId: string): Promise<Category[]> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return [];
 
     try {
@@ -221,8 +221,8 @@ export class FirestoreService {
     if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) return;
     this.unsubscribeFromCategories();
 
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     this.categoriesListener = fs.onSnapshot(
@@ -257,8 +257,8 @@ export class FirestoreService {
   }
 
   private async performSaveCategory(userId: string, category: Category): Promise<void> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     const batch = fs.writeBatch(db);
@@ -286,8 +286,8 @@ export class FirestoreService {
   }
 
   private async performDeleteCategory(userId: string, categoryId: string): Promise<void> {
-    const db = getFirebaseFirestore();
-    const fs = getFirestoreModule();
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
     const batch = fs.writeBatch(db);
@@ -360,7 +360,6 @@ export class FirestoreService {
     userId: string,
     fs: typeof import('firebase/firestore')
   ): Record<string, unknown> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { syncStatus: _removed, scheduledMessages: _msgs, ...rest } = birthday;
 
     const data: Record<string, unknown> = {

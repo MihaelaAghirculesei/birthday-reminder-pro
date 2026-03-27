@@ -13,7 +13,9 @@ export interface BackupData {
 }
 
 const BackupBirthdaySchema = BirthdaySchema.extend({
-  id: z.string().optional()
+  id: z.string().optional(),
+  // Accept any string here; toDateString() normalises ISO datetimes → YYYY-MM-DD after parse
+  birthDate: z.string()
 });
 
 const BackupSchema = z.object({
