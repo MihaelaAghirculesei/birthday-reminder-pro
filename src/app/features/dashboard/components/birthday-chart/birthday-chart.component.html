@@ -25,7 +25,7 @@
         Tabella dati accessibile (sr-only): alternativa testuale al grafico.
         Gli screen reader possono navigarla cella per cella per i dettagli mensili.
       -->
-      <table class="sr-only">
+      <table class="sr-only" [attr.aria-label]="'CHART.TITLE' | translate">
         <caption>{{ 'CHART.TITLE' | translate }}</caption>
         <thead>
           <tr>
