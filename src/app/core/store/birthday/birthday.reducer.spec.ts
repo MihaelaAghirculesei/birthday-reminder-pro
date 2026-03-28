@@ -96,6 +96,41 @@ describe('Birthday Reducer', () => {
       expect(state.entities['1']?.name).toBe('John Doe');
       expect(state.optimisticBackup['1']).toBeUndefined();
     });
+
+    it('should not create backup when entity does not exist', () => {
+      const state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.updateBirthday({ birthday: mockBirthday })
+      );
+
+      expect(state.optimisticBackup['1']).toBeUndefined();
+    });
+
+    it('should isolate backups across concurrent updates and clear only the confirmed one', () => {
+      const b2: Birthday = { id: '2', name: 'Bob', birthDate: '1985-07-22' };
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
+      state = birthdayReducer(state, BirthdayActions.addBirthdaySuccess({ birthday: b2 }));
+
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane' } }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...b2, name: 'Robert' } }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: { ...mockBirthday, name: 'Jane' } }));
+
+      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup['2']).toEqual(b2);
+    });
+
+    it('should not rollback when failure carries no id', () => {
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' } }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Network error' }));
+
+      expect(state.entities['1']?.name).toBe('Jane Doe');
+      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+      expect(state.error).toBe('Network error');
+    });
   });
 
   describe('Delete Actions (Optimistic)', () => {
@@ -137,7 +172,13 @@ describe('Birthday Reducer', () => {
       expect(state.optimisticBackup['1']).toBeUndefined();
     });
 
-});
+    it('should not create backup when deleting a non-existent entity', () => {
+      const state = birthdayReducer(initialBirthdayState, BirthdayActions.deleteBirthday({ id: 'ghost' }));
+
+      expect(state.optimisticBackup['ghost']).toBeUndefined();
+    });
+
+  });
 
   describe('Filter Actions', () => {
     it('should update search term', () => {
