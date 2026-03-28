@@ -301,3 +301,55 @@ describe('FirebaseAuthService', () => {
     });
   });
 });
+
+// ── Lazy-loading guarantee: Firebase configured but no auth-hint cookie ───────
+//
+// When Firebase IS configured and the user is anonymous (no hint cookie),
+// initAuthListener() must exit early WITHOUT calling initFirebase().
+// The proof: loading$ resolves to false synchronously — initFirebase() is
+// async (dynamic import), so it cannot emit false in the same microtask.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('FirebaseAuthService — lazy-loading guarantee (anonymous session)', () => {
+  let service: FirebaseAuthService;
+  let loggerMock: jasmine.SpyObj<LoggerService>;
+
+  beforeEach(() => {
+    clearAuthHintCookie();
+
+    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: LoggerService, useValue: loggerMock },
+        // Provide real-looking Firebase options so isFirebaseConfigured() returns true.
+        // The anonymous fast-path must be taken regardless.
+        { provide: FIREBASE_OPTIONS, useValue: { apiKey: 'test-api-key', projectId: 'test-project' } },
+        provideTranslateTesting(),
+      ],
+    });
+
+    service = TestBed.inject(FirebaseAuthService);
+  });
+
+  afterEach(() => clearAuthHintCookie());
+
+  it('resolves loading$ synchronously — initFirebase() was never awaited', () => {
+    const emissions: boolean[] = [];
+    service.loading$.subscribe(v => emissions.push(v));
+
+    service.initAuthListener();
+
+    // BehaviorSubject starts at true, then the no-hint branch emits false in the
+    // same synchronous call. initFirebase() is async and cannot produce this
+    // emission in the same tick → synchronous [true, false] proves it was skipped.
+    expect(emissions).toEqual([true, false]);
+  });
+
+  it('leaves user unauthenticated after initAuthListener()', () => {
+    service.initAuthListener();
+
+    expect(service.isAuthenticated).toBeFalse();
+    expect(service.currentUser).toBeNull();
+  });
+});
