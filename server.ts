@@ -10,6 +10,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
+import { environment } from './src/environments/environment';
+import { checkFirebaseOptions } from './src/app/firebase.config';
 
 export function app(): express.Express {
   const server = express();
@@ -85,7 +87,7 @@ export function app(): express.Express {
           `font-src 'self' https://fonts.gstatic.com data:`,
           `img-src 'self' data: blob: https:`,
           `connect-src 'self' ws://localhost:* https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://identitytoolkit.googleapis.com https://firebaseinstallations.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://lh3.googleusercontent.com`,
-          `frame-src 'self' https://accounts.google.com https://birthday-app-2026.firebaseapp.com`,
+          `frame-src 'self' https://accounts.google.com${checkFirebaseOptions(environment.firebase) ? ` https://${environment.firebase.authDomain}` : ''}`,
           `object-src 'none'`,
           `base-uri 'self'`,
           `form-action 'self' https://accounts.google.com`,
