@@ -78,7 +78,6 @@ export const birthdayReducer = createReducer(
 
   // Optimistic success: clear backup
   on(BirthdayActions.updateBirthdaySuccess, (state, { birthday }) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [birthday.id]: _removed, ...remainingBackup } = state.optimisticBackup;
     return {
       ...state,
@@ -92,8 +91,7 @@ export const birthdayReducer = createReducer(
   on(BirthdayActions.updateBirthdayFailure, (state, { error, id }) => {
     if (id && state.optimisticBackup[id]) {
       const backup = state.optimisticBackup[id];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
+        const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
       return birthdayAdapter.updateOne(
         { id, changes: backup },
         { ...state, loading: false, error, optimisticBackup: remainingBackup }
@@ -118,7 +116,6 @@ export const birthdayReducer = createReducer(
 
   // Optimistic delete success: clear backup
   on(BirthdayActions.deleteBirthdaySuccess, (state, { id }) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
     return {
       ...state,
@@ -132,7 +129,6 @@ export const birthdayReducer = createReducer(
   on(BirthdayActions.deleteBirthdayFailure, (state, { error, id }) => {
     if (id && state.optimisticBackup[id]) {
       const backup = state.optimisticBackup[id];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
       return birthdayAdapter.addOne(backup, {
         ...state,
