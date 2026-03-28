@@ -86,6 +86,12 @@ The app manages birthdays with features like:
 - Network status indicator
 - Pending changes queued and synced when back online
 
+**Accessibility**
+- Screen reader support (tested with NVDA)
+- Skip-to-content link
+- ARIA labels and roles throughout
+- axe-core automated accessibility checks (zero critical/serious violations)
+
 **Other**
 - Dark mode with automatic theme switching
 - Undo last deletion
@@ -124,9 +130,9 @@ The app manages birthdays with features like:
 - Google OAuth 2.0
 
 **Development**
-- Angular CLI 21
-- Karma & Jasmine for unit tests
-- Cypress for E2E tests
+- Angular CLI 21.x
+- Karma & Jasmine (unit tests)
+- Cypress 15 (E2E, visual regression, accessibility with cypress-axe)
 
 ---
 
@@ -318,74 +324,20 @@ Note: SSR server runs on the built production files.
 
 ```
 birthday-reminder-app/
-├── src/
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── services/
-│   │   │   │   ├── birthday-facade.service.ts
-│   │   │   │   ├── category-facade.service.ts
-│   │   │   │   ├── google-calendar.service.ts
-│   │   │   │   ├── push-notification.service.ts
-│   │   │   │   ├── offline-storage.service.ts
-│   │   │   │   ├── backup.service.ts
-│   │   │   │   └── notification.service.ts
-│   │   │   └── store/
-│   │   │       ├── birthday/
-│   │   │       │   ├── birthday.actions.ts
-│   │   │       │   ├── birthday.reducer.ts
-│   │   │       │   ├── birthday.effects.ts
-│   │   │       │   ├── birthday.selectors.ts
-│   │   │       │   └── birthday.state.ts
-│   │   │       ├── category/
-│   │   │       │   └── [similar structure]
-│   │   │       └── app.state.ts
-│   │   ├── features/
-│   │   │   ├── dashboard/
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── dashboard.component.ts
-│   │   │   │   │   ├── birthday-list/
-│   │   │   │   │   ├── birthday-chart/
-│   │   │   │   │   ├── stats/
-│   │   │   │   │   └── category-filter/
-│   │   │   │   └── services/
-│   │   │   ├── calendar-sync/
-│   │   │   │   └── google-calendar-sync.component.ts
-│   │   │   └── scheduled-messages/
-│   │   │       ├── scheduled-messages.component.ts
-│   │   │       ├── message-schedule-dialog/
-│   │   │       └── scheduled-message.service.ts
-│   │   ├── shared/
-│   │   │   ├── components/
-│   │   │   │   ├── photo-upload.component.ts
-│   │   │   │   ├── notification.component.ts
-│   │   │   │   ├── zodiac-icon.component.ts
-│   │   │   │   └── network-status.component.ts
-│   │   │   ├── models/
-│   │   │   │   └── birthday.model.ts
-│   │   │   ├── utils/
-│   │   │   │   └── date/
-│   │   │   │       ├── zodiac.util.ts
-│   │   │   │       └── age.util.ts
-│   │   │   └── constants/
-│   │   │       ├── categories.ts
-│   │   │       └── months.constants.ts
-│   │   ├── layout/
-│   │   │   ├── header.component.ts
-│   │   │   └── footer.component.ts
-│   │   ├── app.component.ts
-│   │   ├── app.config.ts
-│   │   └── app.routes.ts
-│   ├── environments/
-│   │   ├── environment.ts
-│   │   └── environment.prod.ts
-│   ├── manifest.webmanifest
-│   ├── ngsw-config.json
-│   └── index.html
-├── android/                 # Capacitor Android project
-├── capacitor.config.ts
-├── package.json
-├── tsconfig.json
-└── angular.json
+├── src/app/
+│   ├── core/               # Singleton services, NgRx store slices
+│   │   ├── services/       # Facades, storage, auth, sync, notifications
+│   │   └── store/          # Actions, reducers, effects, selectors (birthday, category, auth, sync, ui)
+│   ├── features/           # Feature areas
+│   │   ├── dashboard/      # Main UI: birthday list, stats, charts, category filter
+│   │   ├── calendar-sync/  # Google Calendar integration
+│   │   └── scheduled-messages/ # Message scheduling
+│   ├── shared/             # Reusable components, models, pipes, utils
+│   └── layout/             # Header component
+├── cypress/
+│   └── e2e/                # E2E, visual regression, accessibility tests
+├── android/                # Capacitor Android project
+└── functions/              # Firebase Cloud Functions
 ```
 
 ---
@@ -404,11 +356,13 @@ birthday-reminder-app/
 - Message scheduling
 - Photo uploads
 - PWA with service worker
+- Unit tests (Jasmine/Karma)
+- E2E tests (Cypress, CI-ready)
+- Visual regression snapshots
+- Accessibility (NVDA, axe-core)
 
 **Working on**
 - Responsive design
-- Unit tests
-- E2E tests
 
 **Future ideas**
 - i18n support
@@ -421,17 +375,20 @@ birthday-reminder-app/
 
 ## Testing
 
-Run tests with:
+**Unit tests** (Karma/Jasmine):
 ```bash
 ng test
-```
-
-Coverage:
-```bash
 ng test --code-coverage
 ```
 
-E2E tests run with Cypress: `npm run e2e`
+**E2E tests** (Cypress):
+```bash
+npm run e2e          # standard E2E suite
+npm run e2e:visual   # visual regression snapshots
+npm run ci:local     # full CI suite (unit + E2E)
+```
+
+The E2E suite covers: IndexedDB as source of truth, network error handling, and accessibility (axe-core, zero critical/serious violations).
 
 ---
 
@@ -461,8 +418,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Angular](https://angular.io/)
 - [NgRx](https://ngrx.io/)
 - [Angular Material](https://material.angular.io/)
+- [Firebase](https://firebase.google.com/) (Auth, Firestore, Storage)
 - [Capacitor](https://capacitorjs.com/)
 - [Google Calendar API](https://developers.google.com/calendar)
+- [Cypress](https://www.cypress.io/) + [cypress-axe](https://github.com/component-driven/cypress-axe)
 
 ---
 

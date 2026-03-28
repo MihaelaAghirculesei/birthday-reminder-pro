@@ -124,7 +124,7 @@ jobs:
         run: npm run env:init
 
       - name: Run unit tests with coverage
-        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
+        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadlessNoNoise --code-coverage
 
       - name: Check coverage thresholds
         run: |
