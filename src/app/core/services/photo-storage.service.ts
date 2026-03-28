@@ -43,9 +43,14 @@ export class PhotoStorageService {
     );
   }
 
-  /** Returns true for base64-encoded data URLs (legacy format). */
+  /** Returns true for base64-encoded data URLs (legacy format, safe MIME types only). */
   isBase64(value: string): boolean {
-    return value.startsWith('data:image/');
+    const SAFE_PREFIXES = [
+      'data:image/jpeg;',
+      'data:image/png;',
+      'data:image/webp;',
+    ] as const;
+    return SAFE_PREFIXES.some(prefix => value.startsWith(prefix));
   }
 
   // ─── Upload ───────────────────────────────────────────────────────────────

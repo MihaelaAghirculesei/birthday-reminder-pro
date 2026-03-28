@@ -55,9 +55,14 @@ describe('PhotoStorageService', () => {
     let service: PhotoStorageService;
     beforeEach(() => (service = setup()));
 
-    it('returns true for data: image strings', () => {
+    it('returns true for safe MIME types (jpeg, png, webp)', () => {
       expect(service.isBase64(BASE64_PNG)).toBeTrue();
       expect(service.isBase64('data:image/jpeg;base64,abc')).toBeTrue();
+      expect(service.isBase64('data:image/webp;base64,abc')).toBeTrue();
+    });
+
+    it('returns false for svg (XSS vector)', () => {
+      expect(service.isBase64('data:image/svg+xml;base64,abc')).toBeFalse();
     });
 
     it('returns false for storage URLs and empty strings', () => {
