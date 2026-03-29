@@ -73,13 +73,14 @@ describe('HeaderComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signOut());
   });
 
-  describe('ngOnDestroy', () => {
-    it('removes scroll listeners from window and body', () => {
-      spyOn(window, 'removeEventListener');
-      spyOn(document.body, 'removeEventListener');
-      component.ngOnDestroy();
-      expect(window.removeEventListener).toHaveBeenCalled();
-      expect(document.body.removeEventListener).toHaveBeenCalled();
+  describe('scroll cleanup on destroy', () => {
+    it('stops calling onScroll after component is destroyed', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const onScrollSpy = spyOn<any>(component, 'onScroll');
+      fixture.destroy();
+      window.dispatchEvent(new Event('scroll'));
+      document.body.dispatchEvent(new Event('scroll'));
+      expect(onScrollSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -131,15 +132,14 @@ describe('HeaderComponent', () => {
 });
 
 describe('HeaderComponent – server platform', () => {
-  it('does not attach scroll listeners during ngOnInit', async () => {
+  it('does not attach scroll listeners on server platform', async () => {
     await TestBed.configureTestingModule({
       imports: [HeaderComponent, NoopAnimationsModule, RouterTestingModule],
       providers: buildProviders('server')
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(HeaderComponent);
     spyOn(window, 'addEventListener');
-    fixture.detectChanges();
+    TestBed.createComponent(HeaderComponent).detectChanges();
 
     expect(window.addEventListener).not.toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, ElementRef, ViewChild, PLATFORM_ID, NgZone } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
@@ -8,7 +8,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { fromEvent, merge } from 'rxjs';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NetworkStatusComponent } from '../../shared/components/network-status.component';
 
 import { AppState } from '../../core/store/app.state';
@@ -421,11 +422,12 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
 
   `]
 })
-export class HeaderComponent implements OnInit, OnDestroy {
+export class HeaderComponent implements OnInit {
   private readonly store = inject(Store<AppState>);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly el = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
@@ -460,17 +462,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.lastScrollY = this.getScrollY();
+      const opts = { passive: true } as AddEventListenerOptions;
       this.ngZone.runOutsideAngular(() => {
-        window.addEventListener('scroll', this.onScroll, { passive: true });
-        document.body.addEventListener('scroll', this.onScroll, { passive: true });
+        merge(
+          fromEvent(window, 'scroll', opts as EventListenerOptions),
+          fromEvent(document.body, 'scroll', opts as EventListenerOptions)
+        )
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => this.onScroll());
       });
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      window.removeEventListener('scroll', this.onScroll);
-      document.body.removeEventListener('scroll', this.onScroll);
     }
   }
 
