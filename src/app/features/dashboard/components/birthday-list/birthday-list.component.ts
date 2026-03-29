@@ -75,8 +75,8 @@ export class BirthdayListComponent implements OnChanges {
       )
     : signal(1200);
 
-  /** itemSize for CdkVirtualScrollViewport: compact (<660px) vs. full layout */
-  readonly virtualScrollItemSize = computed(() => this.windowWidth() < 660 ? 100 : 300);
+  /** itemSize for CdkVirtualScrollViewport: compact (<=680px matches tablet-md CSS breakpoint) vs. full layout */
+  readonly virtualScrollItemSize = computed(() => this.windowWidth() <= 680 ? 100 : 300);
 
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
