@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
@@ -7,8 +7,16 @@ import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 
 const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
-const BACKOFF_BASE_MS  = 100;
-const BACKOFF_MAX_MS   = 1_000;
+
+export interface RetryConfig {
+  baseMs: number;
+  maxMs: number;
+}
+
+export const RETRY_CONFIG = new InjectionToken<RetryConfig>('RetryConfig', {
+  providedIn: 'root',
+  factory: () => ({ baseMs: 100, maxMs: 1_000 })
+});
 
 export interface OfflineStorageService {
   getBirthdays(): Promise<Birthday[]>;
@@ -27,6 +35,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
   private platformId = inject(PLATFORM_ID);
   private logger = inject(LoggerService);
   private connection = inject(IndexedDBConnectionService);
+  private retryConfig = inject(RETRY_CONFIG);
   private storeName = 'birthdays';
   private messagesStoreName = 'scheduledMessages';
 
@@ -49,7 +58,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
           throw error;
         }
 
-        const delay = Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt - 1), BACKOFF_MAX_MS);
+        const delay = Math.min(this.retryConfig.baseMs * Math.pow(2, attempt - 1), this.retryConfig.maxMs);
         this.logger.warn(`[IndexedDB] ${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }

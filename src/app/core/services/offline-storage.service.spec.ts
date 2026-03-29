@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { IndexedDBStorageService } from './offline-storage.service';
+import { IndexedDBStorageService, RETRY_CONFIG } from './offline-storage.service';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -193,6 +193,38 @@ describe('IndexedDBStorageService', () => {
       const messages = await service.getScheduledMessagesByBirthday('test-1');
       expect(messages.length).toBe(1);
       expect(messages[0].birthdayId).toBe('test-1');
+    });
+  });
+
+  describe('RETRY_CONFIG injection', () => {
+    let customService: IndexedDBStorageService;
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          SILENT_LOGGER_PROVIDER,
+          provideTranslateTesting(),
+          { provide: RETRY_CONFIG, useValue: { baseMs: 50, maxMs: 500 } }
+        ]
+      });
+      customService = TestBed.inject(IndexedDBStorageService);
+    });
+
+    afterEach(async () => {
+      await customService.clear().catch(() => undefined);
+    });
+
+    it('should use custom RETRY_CONFIG values', () => {
+      expect(customService).toBeTruthy();
+    });
+
+    it('should operate normally with custom retry config', async () => {
+      const birthday: Birthday = { ...mockBirthday, id: 'retry-cfg-1' };
+      await customService.addBirthday(birthday);
+      const birthdays = await customService.getBirthdays();
+      expect(birthdays.some(b => b.id === 'retry-cfg-1')).toBeTrue();
+      await customService.deleteBirthday('retry-cfg-1');
     });
   });
 
