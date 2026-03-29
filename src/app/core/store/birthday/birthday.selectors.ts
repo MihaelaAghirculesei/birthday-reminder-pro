@@ -66,15 +66,29 @@ export const selectAverageAge = createSelector(
   }
 );
 
-export const selectMessagesByBirthday = (birthdayId: string) => createSelector(
-  selectBirthdayEntities,
-  (entities) => {
+// Returns the same MemoizedSelector instance for the same key, ensuring the
+// memoization cache is shared across all callers (e.g. withLatestFrom in effects
+// and component subscriptions) rather than discarded on every call.
+function memoizeByKey<V>(factory: (key: string) => V): (key: string) => V {
+  const cache = new Map<string, V>();
+  return (key: string): V => {
+    if (!cache.has(key)) cache.set(key, factory(key));
+    return cache.get(key)!;
+  };
+}
+
+export const selectMessagesByBirthday = memoizeByKey((birthdayId: string) =>
+  createSelector(selectBirthdayEntities, (entities) => {
     const birthday = entities[birthdayId];
     return birthday?.scheduledMessages || [];
-  }
+  })
 );
 
-export const selectBirthdayById = (id: string) => createSelector(
-  selectBirthdayEntities,
-  (entities) => entities[id]
+export const selectBirthdayById = memoizeByKey((id: string) =>
+  createSelector(selectBirthdayEntities, (entities) => entities[id])
+);
+
+export const selectOptimisticBackup = createSelector(
+  selectBirthdayState,
+  (state) => state.optimisticBackup
 );

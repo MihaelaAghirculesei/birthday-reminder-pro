@@ -72,6 +72,39 @@ describe('Birthday Selectors', () => {
     expect(selector(state)).toEqual(mockBirthdays[1]);
   });
 
+  it('should return undefined for a non-existent id', () => {
+    const selector = fromSelectors.selectBirthdayById('non-existent');
+    expect(selector(state)).toBeUndefined();
+  });
+
+  describe('selectBirthdayById memoization', () => {
+    it('should return the same selector instance for the same id', () => {
+      const selectorA = fromSelectors.selectBirthdayById('1');
+      const selectorB = fromSelectors.selectBirthdayById('1');
+      expect(selectorA).toBe(selectorB);
+    });
+
+    it('should return different selector instances for different ids', () => {
+      const selector1 = fromSelectors.selectBirthdayById('1');
+      const selector2 = fromSelectors.selectBirthdayById('2');
+      expect(selector1).not.toBe(selector2);
+    });
+  });
+
+  describe('selectMessagesByBirthday memoization', () => {
+    it('should return the same selector instance for the same birthdayId', () => {
+      const selectorA = fromSelectors.selectMessagesByBirthday('1');
+      const selectorB = fromSelectors.selectMessagesByBirthday('1');
+      expect(selectorA).toBe(selectorB);
+    });
+
+    it('should return different selector instances for different birthdayIds', () => {
+      const selector1 = fromSelectors.selectMessagesByBirthday('1');
+      const selector2 = fromSelectors.selectMessagesByBirthday('2');
+      expect(selector1).not.toBe(selector2);
+    });
+  });
+
   describe('Individual Filter Selectors', () => {
     it('should select search term', () => {
       const filters = { ...initialBirthdayFilters, searchTerm: 'test' };

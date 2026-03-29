@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -186,13 +186,13 @@ describe('BirthdayListComponent', () => {
   });
 
   describe('Edit dialog', () => {
-    it('should open edit dialog with correct data', fakeAsync(() => {
+    it('should open edit dialog with correct data', async () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(undefined));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
-      component.editBirthday(mockBirthdays[0]);
-      flushMicrotasks();
+      await component.editBirthday(mockBirthdays[0]);
+      await fixture.whenStable();
 
       expect(dialogSpy.open).toHaveBeenCalled();
       const callArgs = dialogSpy.open.calls.first().args;
@@ -200,9 +200,9 @@ describe('BirthdayListComponent', () => {
         birthday: mockBirthdays[0],
         categories: mockCategories
       });
-    }));
+    });
 
-    it('should update birthday when dialog returns result (empty fields fall back to undefined)', fakeAsync(() => {
+    it('should update birthday when dialog returns result (empty fields fall back to undefined)', async () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -221,13 +221,13 @@ describe('BirthdayListComponent', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       spyOn(store, 'dispatch');
-      component.editBirthday(mockBirthdays[0]);
-      flushMicrotasks();
+      await component.editBirthday(mockBirthdays[0]);
+      await fixture.whenStable();
 
       expect(store.dispatch).toHaveBeenCalled();
-    }));
+    });
 
-    it('should update birthday preserving contact info when provided', fakeAsync(() => {
+    it('should update birthday preserving contact info when provided', async () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -246,13 +246,13 @@ describe('BirthdayListComponent', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       spyOn(store, 'dispatch');
-      component.editBirthday(mockBirthdays[0]);
-      flushMicrotasks();
+      await component.editBirthday(mockBirthdays[0]);
+      await fixture.whenStable();
 
       expect(store.dispatch).toHaveBeenCalled();
-    }));
+    });
 
-    it('should fall back to birthday.name when edited name is empty after trim', fakeAsync(() => {
+    it('should fall back to birthday.name when edited name is empty after trim', async () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of({
         birthday: mockBirthdays[0],
@@ -271,19 +271,20 @@ describe('BirthdayListComponent', () => {
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       spyOn(store, 'dispatch');
-      component.editBirthday(mockBirthdays[0]);
-      flushMicrotasks();
+      await component.editBirthday(mockBirthdays[0]);
+      await fixture.whenStable();
 
       expect(store.dispatch).toHaveBeenCalled();
-    }));
+    });
 
-    it('should not update birthday when dialog is cancelled', () => {
+    it('should not update birthday when dialog is cancelled', async () => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
       mockDialogRef.afterClosed.and.returnValue(of(undefined));
       dialogSpy.open.and.returnValue(mockDialogRef);
 
       spyOn(store, 'dispatch');
-      component.editBirthday(mockBirthdays[0]);
+      await component.editBirthday(mockBirthdays[0]);
+      await fixture.whenStable();
 
       expect(store.dispatch).not.toHaveBeenCalled();
     });
