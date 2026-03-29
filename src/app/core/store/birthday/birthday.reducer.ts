@@ -4,6 +4,29 @@ import { Birthday } from '../../../shared/models/birthday.model';
 import { BirthdayState, initialBirthdayFilters } from './birthday.state';
 import * as BirthdayActions from './birthday.actions';
 
+export const MAX_OPTIMISTIC_BACKUP_SIZE = 50;
+
+/**
+ * Adds an entry to the optimistic backup dictionary with two safety guards:
+ * - Does NOT overwrite an existing backup for the same id (preserves the true
+ *   pre-optimistic state across repeated updates on the same entity).
+ * - Evicts the oldest entry when the dictionary reaches MAX_OPTIMISTIC_BACKUP_SIZE,
+ *   bounding memory growth even if many operations fail in sequence.
+ */
+function addToBackup(
+  backup: Record<string, Birthday>,
+  id: string,
+  entity: Birthday
+): Record<string, Birthday> {
+  if (id in backup) return backup;
+  const keys = Object.keys(backup);
+  if (keys.length >= MAX_OPTIMISTIC_BACKUP_SIZE) {
+    const { [keys[0]]: _evicted, ...trimmed } = backup as Record<string, Birthday>;
+    return { ...trimmed, [id]: entity };
+  }
+  return { ...backup, [id]: entity };
+}
+
 export const birthdayAdapter: EntityAdapter<Birthday> = createEntityAdapter<Birthday>({
   selectId: (birthday: Birthday) => birthday.id,
   sortComparer: false
@@ -69,7 +92,7 @@ export const birthdayReducer = createReducer(
         loading: false,
         error: null,
         optimisticBackup: previous
-          ? { ...state.optimisticBackup, [birthday.id]: previous }
+          ? addToBackup(state.optimisticBackup, birthday.id, previous)
           : state.optimisticBackup
       }
     );
@@ -109,7 +132,7 @@ export const birthdayReducer = createReducer(
       loading: false,
       error: null,
       optimisticBackup: entity
-        ? { ...state.optimisticBackup, [id]: entity }
+        ? addToBackup(state.optimisticBackup, id, entity)
         : state.optimisticBackup
     });
   }),

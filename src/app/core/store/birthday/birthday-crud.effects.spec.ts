@@ -6,6 +6,7 @@ import { Action } from '@ngrx/store';
 import { BirthdayCrudEffects } from './birthday-crud.effects';
 import * as BirthdayActions from './birthday.actions';
 import * as AuthSelectors from '../auth/auth.selectors';
+import * as BirthdaySelectors from './birthday.selectors';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
@@ -232,6 +233,8 @@ describe('BirthdayCrudEffects', () => {
 
   describe('deleteBirthday$', () => {
     it('should delete birthday successfully and cancel notifications', (done) => {
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
+      store.refreshState();
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
@@ -242,7 +245,21 @@ describe('BirthdayCrudEffects', () => {
       });
     });
 
+    it('should dispatch deleteBirthdayFailure when birthday is not in optimistic backup', (done) => {
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, {});
+      store.refreshState();
+      actions$ = of(BirthdayActions.deleteBirthday({ id: 'missing-id' }));
+
+      effects.deleteBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Birthday not found', id: 'missing-id' }));
+        expect(offlineStorageMock.deleteBirthday).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
     it('should handle delete birthday failure', (done) => {
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
+      store.refreshState();
       const error = new Error('Delete failed');
       offlineStorageMock.deleteBirthday.and.returnValue(Promise.reject(error));
 
@@ -256,6 +273,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should queue sync change when user is authenticated', (done) => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
       store.refreshState();
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));

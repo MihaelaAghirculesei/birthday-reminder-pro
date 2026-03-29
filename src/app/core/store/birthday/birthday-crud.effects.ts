@@ -87,16 +87,22 @@ export class BirthdayCrudEffects implements OnInitEffects {
       ofType(BirthdayActions.deleteBirthday),
       withLatestFrom(
         this.store.select(AuthSelectors.selectUserId),
-        this.store.select(BirthdaySelectors.selectAllBirthdays)
+        this.store.select(BirthdaySelectors.selectOptimisticBackup)
       ),
-      mergeMap(([{ id }, userId, allBirthdays]) => {
-        const birthday = allBirthdays.find(b => b.id === id);
+      mergeMap(([{ id }, userId, optimisticBackup]) => {
+        // The reducer removes the entity optimistically before this effect runs,
+        // but saves a backup so we can still access photo URLs for cleanup.
+        const birthday = optimisticBackup[id];
+
+        if (!birthday) {
+          return of(BirthdayActions.deleteBirthdayFailure({ error: 'Birthday not found', id }));
+        }
 
         // Fire-and-forget Storage cleanup: we don't want a Storage error to
         // block the local delete. Errors are logged inside deletePhotoByUrl().
         const photoCleanup = Promise.all([
-          birthday?.photo ? this.photoStorage.deletePhotoByUrl(birthday.photo) : Promise.resolve(),
-          birthday?.rememberPhoto ? this.photoStorage.deletePhotoByUrl(birthday.rememberPhoto) : Promise.resolve(),
+          birthday.photo ? this.photoStorage.deletePhotoByUrl(birthday.photo) : Promise.resolve(),
+          birthday.rememberPhoto ? this.photoStorage.deletePhotoByUrl(birthday.rememberPhoto) : Promise.resolve(),
         ]);
 
         return of(undefined).pipe(
