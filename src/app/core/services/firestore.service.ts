@@ -1,12 +1,18 @@
 import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
-import { Observable, Subject, from, of } from 'rxjs';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
 import { firebaseGetters, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
 import { toDateString, parseLocalDate } from '../../shared/utils/date.utils';
+
+/** Firebase error codes that indicate transient failures safe to retry. */
+const RETRYABLE_CODES = new Set(['unavailable', 'deadline-exceeded', 'internal']);
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 500;
 
 export interface FirestoreDocument {
   id: string;
@@ -32,11 +38,53 @@ export class FirestoreService {
   private birthdaysListener: (() => void) | null = null;
   private categoriesListener: (() => void) | null = null;
 
-  private birthdaysSubject = new Subject<Birthday[]>();
-  private categoriesSubject = new Subject<Category[]>();
+  private birthdaysSubject = new BehaviorSubject<Birthday[]>([]);
+  private categoriesSubject = new BehaviorSubject<Category[]>([]);
 
   readonly birthdays$ = this.birthdaysSubject.asObservable();
   readonly categories$ = this.categoriesSubject.asObservable();
+
+  // Exposed for testing — production uses real setTimeout delay.
+  /** @internal */
+  protected delayMs(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private isRetryable(error: unknown): boolean {
+    if (error != null && typeof error === 'object' && 'code' in error) {
+      const code = String((error as { code: unknown }).code);
+      // Firebase codes may be namespaced: 'firestore/unavailable' → 'unavailable'
+      const bare = code.includes('/') ? code.split('/').pop()! : code;
+      return RETRYABLE_CODES.has(bare);
+    }
+    return false;
+  }
+
+  /**
+   * Runs `fn`, retrying up to MAX_RETRIES times with exponential backoff when
+   * the error is a transient Firestore error (unavailable, deadline-exceeded, internal).
+   * Non-retryable errors are propagated immediately.
+   */
+  private async withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await fn();
+      } catch (error) {
+        if (attempt < MAX_RETRIES && this.isRetryable(error)) {
+          const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+          this.logger.warn(
+            `[Firestore] ${label} attempt ${attempt + 1} failed (retryable), retrying in ${delay}ms`,
+            error
+          );
+          await this.delayMs(delay);
+        } else {
+          throw error;
+        }
+      }
+    }
+    /* istanbul ignore next */
+    throw new Error('[Firestore] withRetry: unreachable');
+  }
 
   private getUserPath(userId: string): string {
     return `users/${userId}`;
@@ -71,8 +119,10 @@ export class FirestoreService {
     if (!db || !fs) return [];
 
     try {
-      const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
-      return this.mapBirthdaysFromSnapshot(snapshot, fs);
+      return await this.withRetry(async () => {
+        const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
+        return this.mapBirthdaysFromSnapshot(snapshot, fs);
+      }, 'fetch birthdays');
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch birthdays:', error);
       throw error;
@@ -123,16 +173,17 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    const batch = fs.writeBatch(db);
-    batch.set(
-      fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
-      this.mapBirthdayToFirestore(birthday, userId, fs),
-      { merge: true }
-    );
-    this.addRateLimitToBatch(batch, userId, fs, db);
-
     try {
-      await batch.commit();
+      await this.withRetry(async () => {
+        const batch = fs.writeBatch(db);
+        batch.set(
+          fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
+          this.mapBirthdayToFirestore(birthday, userId, fs),
+          { merge: true }
+        );
+        this.addRateLimitToBatch(batch, userId, fs, db);
+        await batch.commit();
+      }, 'save birthday');
       this.logger.info('[Firestore] Birthday saved:', birthday.id);
     } catch (error) {
       this.logger.error('[Firestore] Failed to save birthday:', error);
@@ -152,12 +203,13 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    const batch = fs.writeBatch(db);
-    batch.delete(fs.doc(db, this.getUserPath(userId), 'birthdays', birthdayId));
-    this.addRateLimitToBatch(batch, userId, fs, db);
-
     try {
-      await batch.commit();
+      await this.withRetry(async () => {
+        const batch = fs.writeBatch(db);
+        batch.delete(fs.doc(db, this.getUserPath(userId), 'birthdays', birthdayId));
+        this.addRateLimitToBatch(batch, userId, fs, db);
+        await batch.commit();
+      }, 'delete birthday');
       this.logger.info('[Firestore] Birthday deleted:', birthdayId);
     } catch (error) {
       this.logger.error('[Firestore] Failed to delete birthday:', error);
@@ -177,18 +229,19 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    const batch = fs.writeBatch(db);
-    for (const birthday of birthdays) {
-      batch.set(
-        fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
-        this.mapBirthdayToFirestore(birthday, userId, fs),
-        { merge: true }
-      );
-    }
-    this.addRateLimitToBatch(batch, userId, fs, db);
-
     try {
-      await batch.commit();
+      await this.withRetry(async () => {
+        const batch = fs.writeBatch(db);
+        for (const birthday of birthdays) {
+          batch.set(
+            fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
+            this.mapBirthdayToFirestore(birthday, userId, fs),
+            { merge: true }
+          );
+        }
+        this.addRateLimitToBatch(batch, userId, fs, db);
+        await batch.commit();
+      }, 'batch save birthdays');
       this.logger.info('[Firestore] Batch save completed:', birthdays.length);
     } catch (error) {
       this.logger.error('[Firestore] Batch save failed:', error);
@@ -209,8 +262,10 @@ export class FirestoreService {
     if (!db || !fs) return [];
 
     try {
-      const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'categories'));
-      return this.mapCategoriesFromSnapshot(snapshot);
+      return await this.withRetry(async () => {
+        const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'categories'));
+        return this.mapCategoriesFromSnapshot(snapshot);
+      }, 'fetch categories');
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch categories:', error);
       throw error;
@@ -261,16 +316,17 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    const batch = fs.writeBatch(db);
-    batch.set(
-      fs.doc(db, this.getUserPath(userId), 'categories', category.id),
-      { ...category, ownerId: userId, updatedAt: Date.now(), syncStatus: 'synced' },
-      { merge: true }
-    );
-    this.addRateLimitToBatch(batch, userId, fs, db);
-
     try {
-      await batch.commit();
+      await this.withRetry(async () => {
+        const batch = fs.writeBatch(db);
+        batch.set(
+          fs.doc(db, this.getUserPath(userId), 'categories', category.id),
+          { ...category, ownerId: userId, updatedAt: Date.now(), syncStatus: 'synced' },
+          { merge: true }
+        );
+        this.addRateLimitToBatch(batch, userId, fs, db);
+        await batch.commit();
+      }, 'save category');
       this.logger.info('[Firestore] Category saved:', category.id);
     } catch (error) {
       this.logger.error('[Firestore] Failed to save category:', error);
@@ -290,17 +346,34 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    const batch = fs.writeBatch(db);
-    batch.delete(fs.doc(db, this.getUserPath(userId), 'categories', categoryId));
-    this.addRateLimitToBatch(batch, userId, fs, db);
-
     try {
-      await batch.commit();
+      await this.withRetry(async () => {
+        const batch = fs.writeBatch(db);
+        batch.delete(fs.doc(db, this.getUserPath(userId), 'categories', categoryId));
+        this.addRateLimitToBatch(batch, userId, fs, db);
+        await batch.commit();
+      }, 'delete category');
       this.logger.info('[Firestore] Category deleted:', categoryId);
     } catch (error) {
       this.logger.error('[Firestore] Failed to delete category:', error);
       throw error;
     }
+  }
+
+  /** Converts a Firestore Timestamp to milliseconds; returns any other value unchanged. */
+  private mapTimestamp(v: unknown): number | unknown {
+    if (v != null && typeof v === 'object' &&
+        typeof (v as { toMillis?: unknown }).toMillis === 'function') {
+      return (v as { toMillis: () => number }).toMillis();
+    }
+    return v;
+  }
+
+  /** Returns a shallow copy of `obj` with all null-valued entries removed. */
+  private stripNulls<T>(obj: Record<string, T>): Record<string, T> {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([, v]) => v !== null)
+    ) as Record<string, T>;
   }
 
   private mapBirthdaysFromSnapshot(
@@ -310,15 +383,12 @@ export class FirestoreService {
     const birthdays: Birthday[] = [];
     for (const document of snapshot.docs) {
       const data = document.data();
-      const raw = Object.fromEntries(
-        Object.entries(data).filter(([, v]) => v !== null)
-      );
+      const raw = this.stripNulls(data as Record<string, unknown>);
       const scheduledMessages = Array.isArray(raw['scheduledMessages'])
         ? raw['scheduledMessages'].map((msg: Record<string, unknown>) =>
             Object.fromEntries(
-              Object.entries(msg)
-                .filter(([, v]) => v !== null)
-                .map(([k, v]) => [k, v instanceof fs.Timestamp ? v.toMillis() : v])
+              Object.entries(this.stripNulls(msg))
+                .map(([k, v]) => [k, this.mapTimestamp(v)])
             )
           )
         : undefined;

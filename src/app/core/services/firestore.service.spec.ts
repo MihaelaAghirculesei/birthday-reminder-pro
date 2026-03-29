@@ -34,9 +34,35 @@ describe('FirestoreService', () => {
       expect(service.birthdays$.subscribe).toBeDefined();
     });
 
+    it('birthdays$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', (done) => {
+      service.birthdays$.subscribe((value) => {
+        expect(value).toEqual([]);
+        done();
+      });
+    });
+
+    it('birthdays$ replays last value to a late subscriber — no first-snapshot loss', (done) => {
+      const earlyBirthday = { id: 'b-early', name: 'Early', birthDate: '2000-01-01' } as Birthday;
+      (service as unknown as { birthdaysSubject: { next: (v: Birthday[]) => void } })
+        .birthdaysSubject.next([earlyBirthday]);
+
+      // Subscribe AFTER the emission — BehaviorSubject guarantees delivery
+      service.birthdays$.subscribe((value) => {
+        expect(value).toEqual([earlyBirthday]);
+        done();
+      });
+    });
+
     it('categories$ should be an observable', () => {
       expect(service.categories$).toBeTruthy();
       expect(service.categories$.subscribe).toBeDefined();
+    });
+
+    it('categories$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', (done) => {
+      service.categories$.subscribe((value) => {
+        expect(value).toEqual([]);
+        done();
+      });
     });
 
     it('unsubscribeFromBirthdays should not throw when no listener', () => {
@@ -105,7 +131,9 @@ describe('FirestoreService', () => {
   });
 
   describe('error branches', () => {
-    const networkError = new Error('network-error');
+    // Use a non-retryable error code (permission-denied is not in RETRYABLE_CODES)
+    // so these tests verify immediate log+rethrow without triggering retry loops.
+    const networkError = Object.assign(new Error('Permission denied'), { code: 'permission-denied' });
     const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
 
     let service: FirestoreService;
@@ -124,6 +152,10 @@ describe('FirestoreService', () => {
       });
 
       service = TestBed.inject(FirestoreService);
+      // Disable real delays (non-retryable errors don't trigger delays anyway,
+      // but guard against accidental retries slowing down the suite).
+      spyOn(service as unknown as { delayMs: (ms: number) => Promise<void> }, 'delayMs')
+        .and.returnValue(Promise.resolve());
 
       mockBatch = {
         set: jasmine.createSpy('batch.set'),
@@ -250,6 +282,242 @@ describe('FirestoreService', () => {
           expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to delete category:', networkError);
           done();
         }
+      });
+    });
+  });
+
+  describe('private mapper helpers', () => {
+    const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
+    let service: FirestoreService;
+
+    interface InspectableService {
+      mapTimestamp: (v: unknown) => number | unknown;
+      stripNulls: <T>(obj: Record<string, T>) => Record<string, T>;
+    }
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: LoggerService, useValue: jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']) },
+          { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
+          provideTranslateTesting()
+        ]
+      });
+      service = TestBed.inject(FirestoreService);
+    });
+
+    describe('mapTimestamp', () => {
+      it('converts a Timestamp-like object (has toMillis) to its millis value', () => {
+        const ts = { toMillis: () => 1700000000000 };
+        const result = (service as unknown as InspectableService).mapTimestamp(ts);
+        expect(result).toBe(1700000000000);
+      });
+
+      it('returns string values unchanged', () => {
+        expect((service as unknown as InspectableService).mapTimestamp('hello')).toBe('hello');
+      });
+
+      it('returns numeric values unchanged', () => {
+        expect((service as unknown as InspectableService).mapTimestamp(42)).toBe(42);
+      });
+
+      it('returns null unchanged', () => {
+        expect((service as unknown as InspectableService).mapTimestamp(null)).toBeNull();
+      });
+
+      it('returns undefined unchanged', () => {
+        expect((service as unknown as InspectableService).mapTimestamp(undefined)).toBeUndefined();
+      });
+
+      it('returns plain objects without toMillis unchanged', () => {
+        const obj = { foo: 'bar' };
+        expect((service as unknown as InspectableService).mapTimestamp(obj)).toBe(obj);
+      });
+    });
+
+    describe('stripNulls', () => {
+      it('removes null-valued entries and keeps the rest', () => {
+        const input = { a: 'keep', b: null, c: 42, d: null } as Record<string, unknown>;
+        expect((service as unknown as InspectableService).stripNulls(input))
+          .toEqual({ a: 'keep', c: 42 });
+      });
+
+      it('returns empty object when all values are null', () => {
+        const input = { x: null, y: null } as Record<string, unknown>;
+        expect((service as unknown as InspectableService).stripNulls(input)).toEqual({});
+      });
+
+      it('returns all entries unchanged when no nulls are present', () => {
+        const input = { a: 1, b: 'two', c: false } as Record<string, unknown>;
+        expect((service as unknown as InspectableService).stripNulls(input))
+          .toEqual({ a: 1, b: 'two', c: false });
+      });
+
+      it('keeps undefined and 0 and empty-string — only null is stripped', () => {
+        const input = { a: undefined, b: 0, c: '', d: null } as Record<string, unknown>;
+        expect((service as unknown as InspectableService).stripNulls(input))
+          .toEqual({ a: undefined, b: 0, c: '' });
+      });
+    });
+  });
+
+  describe('retry behavior', () => {
+    const retryableError = Object.assign(new Error('Service unavailable'), { code: 'unavailable' });
+    const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
+
+    let service: FirestoreService;
+    let loggerMock: jasmine.SpyObj<LoggerService>;
+
+    interface DelayableService { delayMs: (ms: number) => Promise<void> }
+    interface InspectableService { isRetryable: (e: unknown) => boolean }
+
+    beforeEach(() => {
+      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: LoggerService, useValue: loggerMock },
+          { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
+          provideTranslateTesting()
+        ]
+      });
+
+      service = TestBed.inject(FirestoreService);
+      // Replace delay with a no-op so retry tests complete without real waits
+      spyOn(service as unknown as DelayableService, 'delayMs').and.returnValue(Promise.resolve());
+
+      spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
+        {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
+      );
+    });
+
+    it('isRetryable returns true for "unavailable"', () => {
+      const err = Object.assign(new Error(), { code: 'unavailable' });
+      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+    });
+
+    it('isRetryable returns true for namespaced "firestore/unavailable"', () => {
+      const err = Object.assign(new Error(), { code: 'firestore/unavailable' });
+      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+    });
+
+    it('isRetryable returns true for "deadline-exceeded" and "internal"', () => {
+      const fn = (service as unknown as InspectableService).isRetryable.bind(service);
+      expect(fn(Object.assign(new Error(), { code: 'deadline-exceeded' }))).toBeTrue();
+      expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBeTrue();
+    });
+
+    it('isRetryable returns false for non-retryable Firebase codes', () => {
+      const fn = (service as unknown as InspectableService).isRetryable.bind(service);
+      expect(fn(Object.assign(new Error(), { code: 'permission-denied' }))).toBeFalse();
+      expect(fn(Object.assign(new Error(), { code: 'not-found' }))).toBeFalse();
+      expect(fn(Object.assign(new Error(), { code: 'unauthenticated' }))).toBeFalse();
+    });
+
+    it('isRetryable returns false for errors without a code property', () => {
+      const fn = (service as unknown as InspectableService).isRetryable.bind(service);
+      expect(fn(new Error('plain error'))).toBeFalse();
+      expect(fn('string error')).toBeFalse();
+      expect(fn(null)).toBeFalse();
+      expect(fn(42)).toBeFalse();
+    });
+
+    it('saveBirthday retries once on retryable error and succeeds', (done) => {
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() =>
+          ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve()
+        )
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const birthday = { id: 'b-retry', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        complete: () => {
+          expect(callCount).toBe(2);
+          expect(loggerMock.warn).toHaveBeenCalled();
+          expect(loggerMock.info).toHaveBeenCalledWith('[Firestore] Birthday saved:', 'b-retry');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('saveBirthday exhausts retries (4 total attempts) and rethrows', (done) => {
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() => {
+          callCount++;
+          return Promise.reject(retryableError);
+        })
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const birthday = { id: 'b-exhaust', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        error: (err) => {
+          expect(err).toBe(retryableError);
+          expect(callCount).toBe(4); // 1 initial + 3 retries
+          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', retryableError);
+          done();
+        }
+      });
+    });
+
+    it('getBirthdays retries on retryable error and succeeds', (done) => {
+      let callCount = 0;
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        collection: jasmine.createSpy().and.returnValue({}),
+        getDocs: jasmine.createSpy().and.callFake(() =>
+          ++callCount === 1
+            ? Promise.reject(retryableError)
+            : Promise.resolve({ docs: [] })
+        ),
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.getBirthdays('user-123').subscribe({
+        next: (result) => {
+          expect(result).toEqual([]);
+          expect(callCount).toBe(2);
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('deleteCategory retries on retryable error and succeeds', (done) => {
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        delete: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() =>
+          ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve()
+        )
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.deleteCategory('user-123', 'c-retry').subscribe({
+        complete: () => {
+          expect(callCount).toBe(2);
+          done();
+        },
+        error: done.fail
       });
     });
   });
