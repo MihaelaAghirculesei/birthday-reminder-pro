@@ -13,7 +13,7 @@ import { routes } from './app.routes';
 import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
-import { BirthdayCrudEffects, BirthdayCalendarSyncEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
+import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
 import { categoryReducer } from './core/store/category/category.reducer';
 import { CategoryEffects } from './core/store/category/category.effects';
 import { uiReducer } from './core/store/ui/ui.reducer';
@@ -63,7 +63,7 @@ export const appConfig: ApplicationConfig = {
       auth: authReducer,
       sync: syncReducer
     }),
-    provideEffects([BirthdayCrudEffects, BirthdayCalendarSyncEffects, BirthdayMessageEffects, BirthdayNotificationEffects, CategoryEffects, AuthEffects, SyncEffects]),
+    provideEffects([BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects, CategoryEffects, AuthEffects, SyncEffects]),
     ...devProviders,
     NotificationService,
     ThemeService,

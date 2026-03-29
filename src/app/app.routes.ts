@@ -14,14 +14,15 @@ export const routes: Routes = [
     canActivate: [authGuard],
     data: { preload: true }
   },
-  // Google Calendar Sync — disabled pending Google OAuth verification
-  // To re-enable: uncomment and add the menu item back in header-settings-menu.component.ts
-  // {
-  //   path: 'calendar-sync',
-  //   loadComponent: () => import('./features/calendar-sync/google-calendar-sync.component').then(m => m.GoogleCalendarSyncComponent),
-  //   canActivate: [authGuard],
-  //   data: { preload: false }
-  // },
+  // Google Calendar Sync — route active; UI entry-point disabled pending Google OAuth verification
+  // To re-enable navigation: add the menu item back in header-settings-menu.component.ts
+  {
+    path: 'calendar-sync',
+    loadChildren: () =>
+      import('./features/calendar-sync/calendar-sync.routes').then(m => m.calendarSyncRoutes),
+    canActivate: [authGuard],
+    data: { preload: false }
+  },
   {
     path: '**',
     redirectTo: ''
