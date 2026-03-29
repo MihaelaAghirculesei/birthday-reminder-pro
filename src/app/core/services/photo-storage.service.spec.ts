@@ -133,5 +133,17 @@ describe('PhotoStorageService', () => {
       const result = await service.fileToBase64(makeFile());
       expect(result).toMatch(/^data:image\/jpeg;base64,/);
     });
+
+    it('rejects when FileReader triggers onerror', async () => {
+      const service = setup();
+      const origFileReader = window.FileReader;
+      (window as unknown as { FileReader: unknown }).FileReader = class {
+        onload: (() => void) | null = null;
+        onerror: ((e?: unknown) => void) | null = null;
+        readAsDataURL(_f: File): void { setTimeout(() => this.onerror?.(), 0); }
+      };
+      await expectAsync(service.fileToBase64(makeFile())).toBeRejected();
+      (window as unknown as { FileReader: unknown }).FileReader = origFileReader;
+    });
   });
 });

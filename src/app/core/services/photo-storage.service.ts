@@ -133,7 +133,7 @@ export class PhotoStorageService {
   ): Promise<string> {
     if (!this.isBase64(base64)) return base64;
 
-    const file = this.base64ToFile(base64, `${type}.jpg`);
+    const file = await this.base64ToFile(base64, `${type}.jpg`);
     return this.uploadPhoto(file, userId, type);
   }
 
@@ -143,20 +143,15 @@ export class PhotoStorageService {
   fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = e => resolve(e.target!.result as string);
-      reader.onerror = () => reject(new Error('FileReader failed'));
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'));
       reader.readAsDataURL(file);
     });
   }
 
-  private base64ToFile(base64: string, filename: string): File {
-    const [header, data] = base64.split(',');
-    const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return new File([bytes], filename, { type: mime });
+  private async base64ToFile(base64: string, filename: string): Promise<File> {
+    const res = await fetch(base64);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
   }
 }
