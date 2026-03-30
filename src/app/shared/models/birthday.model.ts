@@ -23,6 +23,8 @@ export interface Birthday extends SyncMetadata {
   telegramUsername?: string;
   scheduledMessages?: ScheduledMessage[];
   daysUntilBirthday?: number;
+  /** True when saved offline as anonymous with a base64 photo pending migration to Firebase Storage. */
+  needsMigration?: boolean;
 }
 
 export interface ScheduledMessage {
