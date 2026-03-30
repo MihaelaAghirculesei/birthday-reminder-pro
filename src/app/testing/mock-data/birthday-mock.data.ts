@@ -82,21 +82,20 @@ export function generateMockBirthdays(idGenerator: () => string): Birthday[] {
   }));
 }
 
-export function createMockBirthday(
-  idGenerator: () => string,
-  overrides: Partial<Birthday> = {}
-): Birthday {
+export function createMockBirthday(overrides: Partial<Birthday> = {}): Birthday {
   const defaultDate = '1990-01-15';
-  return {
-    id: idGenerator(),
-    name: 'Test User',
-    birthDate: defaultDate,
-    zodiacSign: getZodiacSign(defaultDate).name,
+  const birthDate = overrides.birthDate ?? defaultDate;
+  const name = overrides.name ?? 'Test User';
+  const base: Birthday = {
+    id: 'mock-id-1',
+    name,
+    birthDate,
+    zodiacSign: getZodiacSign(birthDate).name,
     reminderDays: 7,
     category: 'friends',
     notes: 'Test notes',
-    photo: generateAvatarUrl('Test User'),
+    photo: generateAvatarUrl(name),
     scheduledMessages: [],
-    ...overrides
   };
+  return { ...base, ...overrides };
 }

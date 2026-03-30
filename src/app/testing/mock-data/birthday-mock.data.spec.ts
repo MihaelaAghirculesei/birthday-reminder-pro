@@ -128,35 +128,34 @@ describe('Birthday Mock Data', () => {
 
   describe('createMockBirthday', () => {
     it('should create a birthday with default values', () => {
-      const birthday = createMockBirthday(mockIdGenerator);
+      const birthday = createMockBirthday();
 
-      expect(birthday.id).toBe('test-id-123');
+      expect(birthday.id).toBe('mock-id-1');
       expect(birthday.name).toBe('Test User');
       expect(birthday.category).toBe('friends');
       expect(birthday.reminderDays).toBe(7);
     });
 
-    it('should use the provided ID generator', () => {
-      let counter = 0;
-      const customIdGen = () => `custom-${++counter}`;
-
-      const b1 = createMockBirthday(customIdGen);
-      const b2 = createMockBirthday(customIdGen);
+    it('should allow overriding the id', () => {
+      const b1 = createMockBirthday({ id: 'custom-1' });
+      const b2 = createMockBirthday({ id: 'custom-2' });
 
       expect(b1.id).toBe('custom-1');
       expect(b2.id).toBe('custom-2');
     });
 
     it('should calculate zodiac sign for default date', () => {
-      const birthday = createMockBirthday(mockIdGenerator);
+      const birthday = createMockBirthday();
       expect(birthday.zodiacSign).toBeTruthy();
     });
 
+    it('should recompute zodiac sign when birthDate is overridden', () => {
+      const birthday = createMockBirthday({ birthDate: '1990-07-15' });
+      expect(birthday.zodiacSign).toBe('Cancer');
+    });
+
     it('should allow overriding specific fields', () => {
-      const birthday = createMockBirthday(mockIdGenerator, {
-        name: 'Custom Name',
-        category: 'family'
-      });
+      const birthday = createMockBirthday({ name: 'Custom Name', category: 'family' });
 
       expect(birthday.name).toBe('Custom Name');
       expect(birthday.category).toBe('family');
@@ -165,7 +164,7 @@ describe('Birthday Mock Data', () => {
 
     it('should allow overriding all fields', () => {
       const customDate = '2000-06-15';
-      const birthday = createMockBirthday(mockIdGenerator, {
+      const birthday = createMockBirthday({
         name: 'Full Override',
         birthDate: customDate,
         category: 'colleagues',
@@ -181,13 +180,13 @@ describe('Birthday Mock Data', () => {
     });
 
     it('should generate avatar URL for default user', () => {
-      const birthday = createMockBirthday(mockIdGenerator);
+      const birthday = createMockBirthday();
       expect(birthday.photo).toContain('ui-avatars.com');
       expect(birthday.photo).toContain('Test%20User');
     });
 
     it('should initialize empty scheduledMessages', () => {
-      const birthday = createMockBirthday(mockIdGenerator);
+      const birthday = createMockBirthday();
       expect(birthday.scheduledMessages).toEqual([]);
     });
   });
