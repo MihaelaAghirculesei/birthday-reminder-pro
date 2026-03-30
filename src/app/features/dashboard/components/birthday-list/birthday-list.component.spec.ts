@@ -4,8 +4,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BirthdayListComponent } from './birthday-list.component';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
-import { Birthday, BirthdayCategory } from '../../../../shared';
+import { BirthdayCategory } from '../../../../shared';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { createMockBirthday } from '../../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayListComponent', () => {
   let component: BirthdayListComponent;
@@ -13,27 +14,9 @@ describe('BirthdayListComponent', () => {
   let store: MockStore;
   let dialogSpy: jasmine.SpyObj<MatDialog>;
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'Alice Johnson',
-      birthDate: '1992-03-10',
-      category: 'friends',
-      zodiacSign: 'Pisces',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    },
-    {
-      id: '2',
-      name: 'Bob Williams',
-      birthDate: '1988-08-25',
-      category: 'family',
-      zodiacSign: 'Virgo',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'Alice Johnson', birthDate: '1992-03-10', category: 'friends', notes: '' }),
+    createMockBirthday({ id: '2', name: 'Bob Williams', birthDate: '1988-08-25', category: 'family', notes: '' }),
   ];
 
   const mockCategories: BirthdayCategory[] = [

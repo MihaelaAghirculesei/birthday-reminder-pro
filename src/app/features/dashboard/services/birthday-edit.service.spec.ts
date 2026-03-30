@@ -1,23 +1,19 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BirthdayEditService } from './birthday-edit.service';
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { Birthday } from '../../../shared';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayEditService', () => {
   let service: BirthdayEditService;
 
-  const mockBirthday: Birthday = {
+  const mockBirthday = createMockBirthday({
     id: '1',
     name: 'John Doe',
     birthDate: '1990-01-15',
     category: 'friends',
-    zodiacSign: 'Capricorn',
-    reminderDays: 7,
-    notes: 'Test notes',
     photo: 'photo.jpg',
     rememberPhoto: 'remember.jpg',
-    scheduledMessages: []
-  };
+  });
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideTranslateTesting()] });

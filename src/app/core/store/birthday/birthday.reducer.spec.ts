@@ -1,14 +1,10 @@
 import { birthdayReducer, initialBirthdayState, MAX_OPTIMISTIC_BACKUP_SIZE } from './birthday.reducer';
 import * as BirthdayActions from './birthday.actions';
 import { Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('Birthday Reducer', () => {
-  const mockBirthday: Birthday = {
-    id: '1',
-    name: 'John Doe',
-    birthDate: '1990-05-15',
-    category: 'friends'
-  };
+  const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-05-15', category: 'friends' });
 
   it('should return initial state', () => {
     const action = { type: 'Unknown' };

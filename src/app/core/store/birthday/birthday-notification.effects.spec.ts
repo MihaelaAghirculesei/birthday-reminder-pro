@@ -6,20 +6,14 @@ import { BirthdayNotificationEffects } from './birthday-notification.effects';
 import * as BirthdayActions from './birthday.actions';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService } from '../../services/notification.service';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayNotificationEffects', () => {
   let actions$: Observable<Action>;
   let effects: BirthdayNotificationEffects;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
 
-  const mockBirthday: Birthday = {
-    id: '1',
-    name: 'John Doe',
-    birthDate: '1990-01-15',
-    category: 'Family',
-    zodiacSign: 'Capricorn'
-  };
+  const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', category: 'Family' });
 
   beforeEach(() => {
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);

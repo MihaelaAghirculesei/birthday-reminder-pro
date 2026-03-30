@@ -9,7 +9,7 @@ import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayMessageEffects', () => {
   let actions$: Observable<Action>;
@@ -19,13 +19,7 @@ describe('BirthdayMessageEffects', () => {
   let pushNotificationMock: jasmine.SpyObj<PushNotificationService>;
   let syncCoordinatorMock: jasmine.SpyObj<SyncCoordinatorService>;
 
-  const mockBirthday: Birthday = {
-    id: '1',
-    name: 'John Doe',
-    birthDate: '1990-01-15',
-    category: 'Family',
-    zodiacSign: 'Capricorn'
-  };
+  const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', category: 'Family' });
 
   const initialState = {
     auth: {

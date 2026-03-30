@@ -3,41 +3,15 @@ import { BirthdayStatsService } from './birthday-stats.service';
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { Birthday } from '../../../shared';
 import { parseLocalDate } from '../../../shared/utils/date.utils';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayStatsService', () => {
   let service: BirthdayStatsService;
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'Alice',
-      birthDate: '1990-01-15',
-      category: 'friends',
-      zodiacSign: 'Capricorn',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    },
-    {
-      id: '2',
-      name: 'Bob',
-      birthDate: '1985-06-20',
-      category: 'family',
-      zodiacSign: 'Gemini',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    },
-    {
-      id: '3',
-      name: 'Charlie',
-      birthDate: '1992-01-10',
-      category: 'friends',
-      zodiacSign: 'Capricorn',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'Alice', birthDate: '1990-01-15', category: 'friends', notes: '' }),
+    createMockBirthday({ id: '2', name: 'Bob', birthDate: '1985-06-20', category: 'family', notes: '' }),
+    createMockBirthday({ id: '3', name: 'Charlie', birthDate: '1992-01-10', category: 'friends', notes: '' }),
   ];
 
   beforeEach(() => {

@@ -4,6 +4,7 @@ import { MessageScheduleDialogComponent } from './message-schedule-dialog.compon
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
 import { Birthday } from '../../../shared/models';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { signal } from '@angular/core';
@@ -25,10 +26,10 @@ interface BirthdayOptionView {
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const mockBirthdays: Birthday[] = [
-  { id: '1', name: 'John Doe',    birthDate: '1990-01-15', category: 'friends' },
-  { id: '2', name: 'Jane Smith',  birthDate: '1995-06-20', category: 'family'  },
-  { id: '3', name: 'Bob Wilson',  birthDate: '1988-12-10', category: 'work'    },
+const mockBirthdays = [
+  createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'friends' }),
+  createMockBirthday({ id: '2', name: 'Jane Smith', birthDate: '1995-06-20', category: 'family' }),
+  createMockBirthday({ id: '3', name: 'Bob Wilson', birthDate: '1988-12-10', category: 'work' }),
 ];
 
 // ---------------------------------------------------------------------------

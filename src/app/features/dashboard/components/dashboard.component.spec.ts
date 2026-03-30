@@ -10,6 +10,7 @@ import { BirthdayStatsService } from '../services/birthday-stats.service';
 import { provideMockStore } from '@ngrx/store/testing';
 import { Birthday, BirthdayCategory } from '../../../shared';
 import { CategoryStats } from './category-filter/category-filter.component';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -19,27 +20,9 @@ describe('DashboardComponent', () => {
   let dialogSpy: jasmine.SpyObj<MatDialog>;
   let categoryManagerSpy: jasmine.SpyObj<CategoryManagerService>;
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      birthDate: '1990-01-15',
-      category: 'friends',
-      zodiacSign: 'Capricorn',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      birthDate: '1985-06-20',
-      category: 'family',
-      zodiacSign: 'Gemini',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'friends', notes: '' }),
+    createMockBirthday({ id: '2', name: 'Jane Smith', birthDate: '1985-06-20', category: 'family', notes: '' }),
   ];
 
   const mockCategories: BirthdayCategory[] = [

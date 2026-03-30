@@ -5,7 +5,8 @@ import { CategoryManagerService } from './category-manager.service';
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService, NotificationService } from '../../../core';
 import { LocaleService } from '../../../core/services/locale.service';
-import { Birthday, BirthdayCategory } from '../../../shared';
+import { BirthdayCategory } from '../../../shared';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
@@ -29,27 +30,9 @@ describe('CategoryManagerService', () => {
     { id: 'work', name: 'Work', icon: 'business_center', color: '#FF9800' }
   ];
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'Alice',
-      birthDate: '1990-01-15',
-      category: 'friends',
-      zodiacSign: 'Capricorn',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    },
-    {
-      id: '2',
-      name: 'Bob',
-      birthDate: '1985-06-20',
-      category: 'work',
-      zodiacSign: 'Gemini',
-      reminderDays: 7,
-      notes: '',
-      scheduledMessages: []
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'Alice', birthDate: '1990-01-15', category: 'friends', notes: '' }),
+    createMockBirthday({ id: '2', name: 'Bob', birthDate: '1985-06-20', category: 'work', notes: '' }),
   ];
 
   beforeEach(() => {

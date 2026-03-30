@@ -1,31 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { BackupService, BackupData } from '../../core/services/backup.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
-import { Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../translate-testing';
+import { createMockBirthday } from '../mock-data/birthday-mock.data';
 
 describe('Backup Flow Integration', () => {
   let backupService: BackupService;
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: 'test-1',
-      name: 'Alice Johnson',
-      birthDate: '1990-06-15',
-      category: 'family',
-      notes: 'Loves chocolate',
-      zodiacSign: 'Gemini',
-      scheduledMessages: []
-    },
-    {
-      id: 'test-2',
-      name: 'Bob Smith',
-      birthDate: '1985-12-25',
-      category: 'friends',
-      notes: 'Birthday on Christmas!',
-      zodiacSign: 'Capricorn',
-      scheduledMessages: []
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: 'test-1', name: 'Alice Johnson', birthDate: '1990-06-15', category: 'family', notes: 'Loves chocolate' }),
+    createMockBirthday({ id: 'test-2', name: 'Bob Smith', birthDate: '1985-12-25', category: 'friends', notes: 'Birthday on Christmas!' }),
   ];
 
   beforeEach(() => {

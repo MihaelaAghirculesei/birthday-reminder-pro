@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { BirthdayImportExportComponent } from './birthday-import-export.component';
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { BackupService, NotificationService } from '../../../../../core';
-import { Birthday } from '../../../../../shared';
+import { createMockBirthday } from '../../../../../testing/mock-data/birthday-mock.data';
 
 interface MockFileInputEvent {
   target: HTMLInputElement | { files: File[] };
@@ -15,23 +15,9 @@ describe('BirthdayImportExportComponent', () => {
   let backupServiceSpy: jasmine.SpyObj<BackupService>;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      birthDate: '1990-01-15',
-      zodiacSign: 'Capricorn',
-      reminderDays: 7,
-      category: 'friends'
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      birthDate: '1992-05-20',
-      zodiacSign: 'Taurus',
-      reminderDays: 7,
-      category: 'family'
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'friends' }),
+    createMockBirthday({ id: '2', name: 'Jane Smith', birthDate: '1992-05-20', category: 'family' }),
   ];
 
   beforeEach(async () => {

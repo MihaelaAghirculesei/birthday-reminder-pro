@@ -1,29 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from './birthday-edit-dialog.component';
-import { Birthday, BirthdayCategory } from '../../../../shared';
+import { BirthdayCategory } from '../../../../shared';
 import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
 import { FirebaseAuthService } from '../../../../core/services/firebase-auth.service';
+import { createMockBirthday } from '../../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayEditDialogComponent', () => {
   let component: BirthdayEditDialogComponent;
   let dialogRefSpy: jasmine.SpyObj<MatDialogRef<BirthdayEditDialogComponent>>;
 
-  const mockBirthday: Birthday = {
+  const mockBirthday = createMockBirthday({
     id: '1',
     name: 'John Doe',
     birthDate: '1990-01-15',
     category: 'friends',
-    zodiacSign: 'Capricorn',
-    reminderDays: 7,
-    notes: 'Test notes',
     photo: 'photo.jpg',
     rememberPhoto: 'remember.jpg',
     email: 'john@example.com',
     phone: '+1234567890',
     telegramUsername: 'johndoe',
-    scheduledMessages: []
-  };
+  });
 
   const mockCategories: BirthdayCategory[] = [
     { id: 'friends', name: 'Friends', icon: 'group', color: '#4CAF50' },

@@ -14,6 +14,7 @@ import { IdGeneratorService } from '../../services/id-generator.service';
 import { LoggerService } from '../../services/logger.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('BirthdayCrudEffects', () => {
   let actions$: Observable<Action>;
@@ -25,13 +26,7 @@ describe('BirthdayCrudEffects', () => {
   let loggerMock: jasmine.SpyObj<LoggerService>;
   let syncCoordinatorMock: jasmine.SpyObj<SyncCoordinatorService>;
 
-  const mockBirthday: Birthday = {
-    id: '1',
-    name: 'John Doe',
-    birthDate: '1990-01-15',
-    category: 'Family',
-    zodiacSign: 'Capricorn'
-  };
+  const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', category: 'Family' });
 
   const initialState = {
     birthdays: {
