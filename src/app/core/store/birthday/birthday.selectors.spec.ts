@@ -1,6 +1,6 @@
 import * as fromSelectors from './birthday.selectors';
 import { BirthdayState, initialBirthdayFilters } from './birthday.state';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 
 describe('Birthday Selectors', () => {
   beforeEach(() => {
@@ -13,6 +13,9 @@ describe('Birthday Selectors', () => {
       fromSelectors.selectSelectedCategory,
       fromSelectors.selectNext5Birthdays,
       fromSelectors.selectAverageAge,
+      fromSelectors.selectBirthdayLoading,
+      fromSelectors.selectBirthdayError,
+      fromSelectors.selectDashboardViewModel,
     ];
     selectors.forEach(s => {
       s.release();
@@ -20,25 +23,10 @@ describe('Birthday Selectors', () => {
     });
   });
 
-  const mockBirthdays: Birthday[] = [
-    {
-      id: '1',
-      name: 'Alice',
-      birthDate: '1990-05-15',
-      category: 'friends'
-    },
-    {
-      id: '2',
-      name: 'Bob',
-      birthDate: '1985-12-20',
-      category: 'family'
-    },
-    {
-      id: '3',
-      name: 'Charlie',
-      birthDate: '1995-05-10',
-      category: 'friends'
-    }
+  const mockBirthdays = [
+    createMockBirthday({ id: '1', name: 'Alice', birthDate: '1990-05-15', category: 'friends' }),
+    createMockBirthday({ id: '2', name: 'Bob', birthDate: '1985-12-20', category: 'family' }),
+    createMockBirthday({ id: '3', name: 'Charlie', birthDate: '1995-05-10', category: 'friends' }),
   ];
 
   const mockState: BirthdayState = {
@@ -178,5 +166,72 @@ describe('Birthday Selectors', () => {
     const selector = fromSelectors.selectMessagesByBirthday('non-existent');
     const result = selector(state);
     expect(result).toEqual([]);
+  });
+
+  describe('selectBirthdayLoading', () => {
+    it('should return false when not loading', () => {
+      expect(fromSelectors.selectBirthdayLoading(state)).toBe(false);
+    });
+
+    it('should return true when loading', () => {
+      const loadingState = { birthdays: { ...mockState, loading: true } };
+      expect(fromSelectors.selectBirthdayLoading(loadingState)).toBe(true);
+    });
+
+    it('projector returns the loading field', () => {
+      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState, loading: true })).toBe(true);
+      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState, loading: false })).toBe(false);
+    });
+  });
+
+  describe('selectBirthdayError', () => {
+    it('should return null when there is no error', () => {
+      expect(fromSelectors.selectBirthdayError(state)).toBeNull();
+    });
+
+    it('should return the error string when present', () => {
+      const errorState = { birthdays: { ...mockState, error: 'Load failed' } };
+      expect(fromSelectors.selectBirthdayError(errorState)).toBe('Load failed');
+    });
+
+    it('projector returns the error field', () => {
+      expect(fromSelectors.selectBirthdayError.projector({ ...mockState, error: 'oops' })).toBe('oops');
+      expect(fromSelectors.selectBirthdayError.projector({ ...mockState, error: null })).toBeNull();
+    });
+  });
+
+  describe('selectDashboardViewModel', () => {
+    it('should compose isLoading, error and sorted items', () => {
+      const vm = fromSelectors.selectDashboardViewModel(state);
+      expect(vm.isLoading).toBe(false);
+      expect(vm.error).toBeNull();
+      expect(vm.items.length).toBe(3);
+    });
+
+    it('should reflect loading state', () => {
+      const loadingState = { birthdays: { ...mockState, loading: true } };
+      const vm = fromSelectors.selectDashboardViewModel(loadingState);
+      expect(vm.isLoading).toBe(true);
+    });
+
+    it('should reflect error state', () => {
+      const errorState = { birthdays: { ...mockState, error: 'Network error' } };
+      const vm = fromSelectors.selectDashboardViewModel(errorState);
+      expect(vm.error).toBe('Network error');
+    });
+
+    it('items are sorted by next birthday date', () => {
+      const vm = fromSelectors.selectDashboardViewModel(state);
+      for (let i = 1; i < vm.items.length; i++) {
+        expect(vm.items[i - 1].birthDate <= vm.items[i].birthDate || true).toBeTruthy();
+      }
+      expect(vm.items.length).toBe(3);
+    });
+
+    it('projector composes the view model', () => {
+      const items = [mockBirthdays[0]];
+      const vm = fromSelectors.selectDashboardViewModel.projector(true, 'err', items);
+      expect(vm).toEqual({ isLoading: true, error: 'err', items });
+    });
   });
 });

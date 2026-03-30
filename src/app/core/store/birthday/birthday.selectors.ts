@@ -92,3 +92,20 @@ export const selectOptimisticBackup = createSelector(
   selectBirthdayState,
   (state) => state.optimisticBackup
 );
+
+export const selectBirthdayLoading = createSelector(
+  selectBirthdayState,
+  (state) => state.loading
+);
+
+export const selectBirthdayError = createSelector(
+  selectBirthdayState,
+  (state) => state.error
+);
+
+export const selectDashboardViewModel = createSelector(
+  selectBirthdayLoading,
+  selectBirthdayError,
+  selectSortedBirthdays,
+  (isLoading, error, items) => ({ isLoading, error, items })
+);
