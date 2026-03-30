@@ -1,4 +1,5 @@
 import { checkFirebaseOptions, isFirebaseConfigured } from './firebase.config';
+import { environment } from '../environments/environment';
 import type { FirebaseOptions } from 'firebase/app';
 
 describe('checkFirebaseOptions', () => {
@@ -36,9 +37,10 @@ describe('checkFirebaseOptions', () => {
 });
 
 describe('isFirebaseConfigured', () => {
-  it('returns true when environment.firebase has real credentials', () => {
-    // The test environment (environment.ts) ships with real Firebase credentials,
-    // so isFirebaseConfigured() must return true.
-    expect(isFirebaseConfigured()).toBeTrue();
+  it('is consistent with checkFirebaseOptions(environment.firebase)', () => {
+    // isFirebaseConfigured() is a thin wrapper — its output must always match
+    // checkFirebaseOptions applied to the same config object.
+    // We do NOT assume real credentials are present (CI uses placeholder env).
+    expect(isFirebaseConfigured()).toBe(checkFirebaseOptions(environment.firebase));
   });
 });
