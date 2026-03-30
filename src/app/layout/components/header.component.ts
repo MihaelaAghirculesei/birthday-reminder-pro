@@ -469,7 +469,7 @@ export class HeaderComponent implements OnInit {
           fromEvent(document.body, 'scroll', opts as EventListenerOptions)
         )
           .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(() => this.onScroll());
+          .subscribe((_event: Event) => this.onScroll());
       });
     }
   }
