@@ -79,6 +79,7 @@ export function app(): express.Express {
           `<style$1 nonce="${nonce}">`
         );
 
+        const firebaseConfigured = checkFirebaseOptions(environment.firebase);
         res.setHeader('Content-Security-Policy', [
           `default-src 'self'`,
           `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://accounts.google.com https://*.gstatic.com`,
@@ -86,8 +87,19 @@ export function app(): express.Express {
           `style-src-elem 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
           `font-src 'self' https://fonts.gstatic.com data:`,
           `img-src 'self' data: blob: https:`,
-          `connect-src 'self' ws://localhost:* https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://identitytoolkit.googleapis.com https://firebaseinstallations.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://lh3.googleusercontent.com`,
-          `frame-src 'self' https://accounts.google.com${checkFirebaseOptions(environment.firebase) ? ` https://${environment.firebase.authDomain}` : ''}`,
+          [
+            `connect-src 'self'`,
+            `https://www.googleapis.com`,
+            `https://accounts.google.com`,
+            `https://oauth2.googleapis.com`,
+            `https://identitytoolkit.googleapis.com`,
+            `https://firebaseinstallations.googleapis.com`,
+            `https://securetoken.googleapis.com`,
+            `https://firestore.googleapis.com`,
+            `https://lh3.googleusercontent.com`,
+            ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
+          ].join(' '),
+          `frame-src 'self' https://accounts.google.com${firebaseConfigured ? ` https://${environment.firebase.authDomain}` : ''}`,
           `object-src 'none'`,
           `base-uri 'self'`,
           `form-action 'self' https://accounts.google.com`,
