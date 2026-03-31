@@ -1,37 +1,16 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
-import {
-  getFirebaseStorage,
-  getStorageModule,
-  initFirebase,
-  checkFirebaseOptions,
-  FIREBASE_OPTIONS,
-} from '../../firebase.config';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { LoggerService } from './logger.service';
+import { NotificationService } from './notification.service';
+import { FIREBASE_OPTIONS, checkFirebaseOptions, storageGetters } from '../../firebase.config';
+import type { FirebaseOptions } from 'firebase/app';
 
-/**
- * Handles photo storage using Firebase Storage (CDN) instead of base64 blobs.
- *
- * Storage path convention:
- *   users/{userId}/photos/{randomUUID}_{type}.{ext}
- *
- * The UUID is decoupled from the birthday ID so photos can be uploaded before
- * the birthday record is created (i.e., during the add-birthday flow where the
- * birthday ID is assigned later by the NgRx effect).
- *
- * Offline / unauthenticated fallback: if Firebase is not configured or the
- * upload fails, the method returns a base64 data URL so the birthday can still
- * be saved locally.
- */
 @Injectable({ providedIn: 'root' })
 export class PhotoStorageService {
-  private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
-  private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
-
-  private get isFirebaseConfigured(): boolean {
-    return checkFirebaseOptions(this.firebaseOptions);
-  }
+  private readonly notification = inject(NotificationService);
+  private readonly firebaseOptions = inject<FirebaseOptions | undefined>(FIREBASE_OPTIONS);
+  private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
 
   // ─── Type guards ──────────────────────────────────────────────────────────
 
@@ -56,40 +35,36 @@ export class PhotoStorageService {
   // ─── Upload ───────────────────────────────────────────────────────────────
 
   /**
-   * Uploads a File to Firebase Storage and returns its public CDN download URL.
-   *
-   * Falls back to a base64 data URL when:
-   *  - running on the server (SSR)
-   *  - Firebase is not configured (offline / missing credentials)
-   *  - the upload itself fails (network error, quota exceeded, etc.)
+   * Uploads a photo to Firebase Storage and returns the CDN download URL.
+   * Falls back to a base64 data URL when running on the server (SSR),
+   * when Firebase is not configured, or when the upload fails.
+   * Shows a warning notification when falling back due to an upload error.
    */
   async uploadPhoto(
     file: File,
     userId: string,
     type: 'photo' | 'rememberPhoto'
   ): Promise<string> {
-    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured) {
+    if (this.isServer || !checkFirebaseOptions(this.firebaseOptions)) {
       return this.fileToBase64(file);
     }
 
     try {
-      await initFirebase();
-      const storage = getFirebaseStorage();
-      const st = getStorageModule();
-      if (!storage || !st) return this.fileToBase64(file);
+      await storageGetters.initFirebase();
+      const storage = storageGetters.getFirebaseStorage();
+      const storageModule = storageGetters.getStorageModule();
+      if (!storage || !storageModule) {
+        return this.fileToBase64(file);
+      }
 
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const uid = crypto.randomUUID();
-      const path = `users/${userId}/photos/${uid}_${type}.${ext}`;
-      const storageRef = st.ref(storage, path);
-
-      await st.uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
-      const url = await st.getDownloadURL(storageRef);
-
-      this.logger.info('[PhotoStorage] Uploaded:', path);
-      return url;
-    } catch (error) {
-      this.logger.error('[PhotoStorage] Upload failed, falling back to base64:', error);
+      const { ref, uploadBytes, getDownloadURL } = storageModule;
+      const path = `users/${userId}/${type}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      return await getDownloadURL(storageRef);
+    } catch (err) {
+      this.logger.warn('PhotoStorageService: upload failed, falling back to base64', err);
+      this.notification.show('Foto salvata in locale — cloud sync in sospeso', 'warning');
       return this.fileToBase64(file);
     }
   }
@@ -98,24 +73,23 @@ export class PhotoStorageService {
 
   /**
    * Deletes a photo from Firebase Storage by its download URL.
-   * Silently no-ops for non-Storage URLs (base64, external CDNs, empty strings).
+   * No-op for empty strings, non-storage URLs, or when Firebase is not configured.
    */
   async deletePhotoByUrl(url: string): Promise<void> {
-    if (!url || !this.isStorageUrl(url) || !this.isFirebaseConfigured) return;
+    if (!url || !this.isStorageUrl(url) || !checkFirebaseOptions(this.firebaseOptions)) {
+      return;
+    }
 
     try {
-      await initFirebase();
-      const storage = getFirebaseStorage();
-      const st = getStorageModule();
-      if (!storage || !st) return;
+      await storageGetters.initFirebase();
+      const storage = storageGetters.getFirebaseStorage();
+      const storageModule = storageGetters.getStorageModule();
+      if (!storage || !storageModule) return;
 
-      // st.ref() accepts full HTTPS download URLs in addition to storage paths.
-      const storageRef = st.ref(storage, url);
-      await st.deleteObject(storageRef);
-      this.logger.info('[PhotoStorage] Deleted:', url);
-    } catch (error) {
-      // The object may have already been deleted or the URL may have expired.
-      this.logger.warn('[PhotoStorage] Delete skipped or failed:', error);
+      const { ref, deleteObject } = storageModule;
+      await deleteObject(ref(storage, url));
+    } catch (err) {
+      this.logger.warn('PhotoStorageService: delete failed', err);
     }
   }
 
