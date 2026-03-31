@@ -161,3 +161,8 @@ export const calendarEventIdSet = createAction(
   '[Birthday/Calendar] Event ID Set',
   props<{ id: string; calendarEventId: string }>()
 );
+
+export const calendarSyncFailed = createAction(
+  '[Birthday/Calendar] Sync Failed',
+  props<{ operation: 'add' | 'update' | 'delete'; error: string }>()
+);
