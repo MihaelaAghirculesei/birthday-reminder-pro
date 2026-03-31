@@ -15,6 +15,7 @@ import { LoggerService } from '../../services/logger.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { PhotoStorageService } from '../../services/photo-storage.service';
 
 describe('BirthdayCrudEffects', () => {
   let actions$: Observable<Action>;
@@ -25,6 +26,7 @@ describe('BirthdayCrudEffects', () => {
   let idGeneratorMock: jasmine.SpyObj<IdGeneratorService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
   let syncCoordinatorMock: jasmine.SpyObj<SyncCoordinatorService>;
+  let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
 
   const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', category: 'Family' });
 
@@ -68,6 +70,8 @@ describe('BirthdayCrudEffects', () => {
     idGeneratorMock = jasmine.createSpyObj('IdGeneratorService', ['generateId']);
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
     syncCoordinatorMock = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange']);
+    photoStorageMock = jasmine.createSpyObj('PhotoStorageService', ['deletePhotoByUrl']);
+    photoStorageMock.deletePhotoByUrl.and.resolveTo();
 
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
     offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
@@ -88,6 +92,7 @@ describe('BirthdayCrudEffects', () => {
         { provide: IdGeneratorService, useValue: idGeneratorMock },
         { provide: LoggerService, useValue: loggerMock },
         { provide: SyncCoordinatorService, useValue: syncCoordinatorMock },
+        { provide: PhotoStorageService, useValue: photoStorageMock },
         provideTranslateTesting()
       ]
     });
@@ -276,6 +281,29 @@ describe('BirthdayCrudEffects', () => {
       effects.deleteBirthday$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
         expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete', { id: '1' });
+        done();
+      });
+    });
+
+    it('should log a warning and still succeed when photo Storage cleanup rejects', (done) => {
+      const birthdayWithPhoto = createMockBirthday({
+        id: '1',
+        photo: 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media',
+      });
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': birthdayWithPhoto });
+      store.refreshState();
+      photoStorageMock.deletePhotoByUrl.and.rejectWith(new Error('Storage error'));
+
+      actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
+
+      effects.deleteBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+        expect(loggerMock.warn).toHaveBeenCalledWith(
+          jasmine.stringContaining('[BirthdayCrudEffects]'),
+          '1',
+          jasmine.any(String),
+          jasmine.any(Error)
+        );
         done();
       });
     });
