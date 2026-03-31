@@ -11,6 +11,7 @@ import { BirthdayNormalizationService } from '../../services/birthday-normalizat
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { PhotoStorageService } from '../../services/photo-storage.service';
+import { LoggerService } from '../../services/logger.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import * as AuthSelectors from '../auth/auth.selectors';
 import * as BirthdaySelectors from './birthday.selectors';
@@ -30,6 +31,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
   private readonly syncCoordinator = inject(SyncCoordinatorService);
   private readonly pushNotificationService = inject(PushNotificationService);
   private readonly photoStorage = inject(PhotoStorageService);
+  private readonly logger = inject(LoggerService);
 
   loadBirthdays$ = createEffect(() =>
     this.actions$.pipe(
@@ -108,7 +110,17 @@ export class BirthdayCrudEffects implements OnInitEffects {
         return of(undefined).pipe(
           tap(() => this.pushNotificationService.cancelAllNotificationsForBirthday(id)),
           // Wait for Storage cleanup but don't let its failure propagate.
-          switchMap(() => from(photoCleanup.catch(() => undefined))),
+          // URLs that fail to delete become candidates for OrphanPhotoCleanupService.
+          switchMap(() => from(
+            photoCleanup.catch(err =>
+              this.logger.warn(
+                '[BirthdayCrudEffects] Photo storage cleanup failed for birthday',
+                id,
+                '— URLs may be orphaned in Storage:',
+                err
+              )
+            )
+          )),
           switchMap(() => from(this.offlineStorage.deleteBirthday(id))),
           switchMap(() => userId
             ? from(this.syncCoordinator.queueChange('birthday', id, 'delete', { id }))
