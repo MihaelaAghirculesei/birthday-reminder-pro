@@ -134,6 +134,20 @@ export const firebaseGetters = {
   getFirestoreModule: (): typeof import('firebase/firestore') | null => _firestoreModule,
 };
 
+/**
+ * Mutable accessor bag for Firebase Storage getters.
+ *
+ * ES-module named exports are compiled as non-configurable/non-writable
+ * properties by Webpack, making them impossible to spy on with Jasmine.
+ * A plain-object property IS writable, so tests can do:
+ *   spyOn(storageGetters, 'getFirebaseStorage').and.returnValue(...)
+ */
+export const storageGetters = {
+  initFirebase: (): Promise<void> => initFirebase(),
+  getFirebaseStorage: (): FirebaseStorage | null => _storage,
+  getStorageModule: (): typeof import('firebase/storage') | null => _storageModule,
+};
+
 // Legacy aliases kept for backwards compatibility
 export const FIREBASE_APP = getFirebaseApp;
 export const FIREBASE_AUTH = getFirebaseAuth;
