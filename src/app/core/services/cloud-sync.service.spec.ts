@@ -7,6 +7,7 @@ import { IndexedDBStorageService } from './offline-storage.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
 import { BirthdayMergeService, MergeResult } from './birthday-merge.service';
+import { PhotoStorageService } from './photo-storage.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
 import { of, Subject, throwError } from 'rxjs';
@@ -21,6 +22,7 @@ describe('CloudSyncService', () => {
   let networkServiceMock: Partial<NetworkService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
   let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
+  let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -65,6 +67,9 @@ describe('CloudSyncService', () => {
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
     mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
     mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
+    photoStorageMock = jasmine.createSpyObj<PhotoStorageService>('PhotoStorageService', ['isBase64', 'migrateBase64', 'deletePhotoByUrl', 'uploadPhoto', 'isStorageUrl', 'fileToBase64']);
+    photoStorageMock.isBase64.and.returnValue(false);
+    photoStorageMock.migrateBase64.and.callFake((val: string) => Promise.resolve(val));
 
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
     offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
@@ -80,6 +85,7 @@ describe('CloudSyncService', () => {
         { provide: NetworkService, useValue: networkServiceMock },
         { provide: LoggerService, useValue: loggerMock },
         { provide: BirthdayMergeService, useValue: mergeServiceMock },
+        { provide: PhotoStorageService, useValue: photoStorageMock },
         provideTranslateTesting()
       ]
     });
@@ -249,7 +255,24 @@ describe('CloudSyncService', () => {
         jasmine.objectContaining({ type: '[Sync] Success' })
       );
     });
-  });
+  
+    it('should migrate base64 photos in toUpload items before cloud upload', async () => {
+      const base64Photo = 'data:image/jpeg;base64,/9j/abc';
+      const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
+      const local = makeBirthday({ id: 'local-photo', photo: base64Photo, needsMigration: true });
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([local]));
+      mergeServiceMock.merge.and.returnValue({ merged: [local], toUpload: [local] });
+      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+
+      await service.mergeCloudWithLocal([], 'user-123');
+
+      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      expect(uploaded[0].photo).toBe(storageUrl);
+      expect(uploaded[0].needsMigration).toBeFalse();
+    });
+});
 
   describe('migrateLocalToCloud', () => {
     it('should throw when user is not authenticated', async () => {
@@ -317,5 +340,32 @@ describe('CloudSyncService', () => {
       const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
       expect(uploaded[0].updatedAt).toBe(existingTimestamp);
     });
-  });
+  
+    it('should migrate base64 photos to Storage before upload', async () => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      const base64Photo = 'data:image/jpeg;base64,/9j/abc';
+      const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
+      const b = makeBirthday({ id: 'b-photo', photo: base64Photo, needsMigration: true });
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
+      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+
+      await service.migrateLocalToCloud();
+
+      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      expect(uploaded[0].photo).toBe(storageUrl);
+      expect(uploaded[0].needsMigration).toBeFalse();
+    });
+
+    it('should skip photo migration for birthdays without base64 photos', async () => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
+      const b = makeBirthday({ id: 'b-cdn', photo: storageUrl });
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
+
+      await service.migrateLocalToCloud();
+
+      expect(photoStorageMock.migrateBase64).not.toHaveBeenCalled();
+    });
+});
 });

@@ -8,12 +8,16 @@ import * as AuthActions from './auth.actions';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { FirebaseAuthService, AuthUser } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { LoggerService } from '../../services/logger.service';
+import { OrphanPhotoCleanupService } from '../../services/orphan-photo-cleanup.service';
 
 describe('AuthEffects', () => {
   let actions$: Observable<Action>;
   let effects: AuthEffects;
   let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
   let notificationServiceMock: jasmine.SpyObj<NotificationService>;
+  let orphanCleanupMock: jasmine.SpyObj<OrphanPhotoCleanupService>;
+  let loggerMock: jasmine.SpyObj<LoggerService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -29,6 +33,9 @@ describe('AuthEffects', () => {
       { user$: of(null) }
     );
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
+    orphanCleanupMock = jasmine.createSpyObj('OrphanPhotoCleanupService', ['cleanupOrphans']);
+    orphanCleanupMock.cleanupOrphans.and.resolveTo();
+    loggerMock = jasmine.createSpyObj('LoggerService', ['warn', 'info', 'error']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -41,6 +48,8 @@ describe('AuthEffects', () => {
         }),
         { provide: FirebaseAuthService, useValue: authServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
+        { provide: OrphanPhotoCleanupService, useValue: orphanCleanupMock },
+        { provide: LoggerService, useValue: loggerMock },
         provideTranslateTesting()
       ]
     });
@@ -158,6 +167,27 @@ describe('AuthEffects', () => {
         );
         done();
       });
+    });
+  });
+
+  describe('scheduleOrphanCleanup$', () => {
+    it('should trigger orphan cleanup when auth state changes to a signed-in user', (done) => {
+      actions$ = of(AuthActions.authStateChanged({ user: mockUser }));
+
+      effects.scheduleOrphanCleanup$.subscribe(() => {
+        expect(orphanCleanupMock.cleanupOrphans).toHaveBeenCalledOnceWith(mockUser.uid);
+        done();
+      });
+    });
+
+    it('should not trigger cleanup when auth state changes to null (signed out)', () => {
+      actions$ = of(AuthActions.authStateChanged({ user: null }));
+
+      effects.scheduleOrphanCleanup$.subscribe(() => {
+        fail('should not emit for a null user');
+      });
+
+      expect(orphanCleanupMock.cleanupOrphans).not.toHaveBeenCalled();
     });
   });
 });

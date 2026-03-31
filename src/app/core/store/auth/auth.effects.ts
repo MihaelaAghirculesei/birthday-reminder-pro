@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { map, exhaustMap, catchError, tap } from 'rxjs/operators';
+import { map, exhaustMap, catchError, tap, filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
+import { LoggerService } from '../../services/logger.service';
+import { OrphanPhotoCleanupService } from '../../services/orphan-photo-cleanup.service';
 import * as AuthActions from './auth.actions';
 
 @Injectable()
@@ -13,6 +15,8 @@ export class AuthEffects {
   private readonly authService = inject(FirebaseAuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
+  private readonly orphanCleanup = inject(OrphanPhotoCleanupService);
+  private readonly logger = inject(LoggerService);
 
   /** Bridge Firebase auth state (including session restoration on reload) to the NgRx store. */
   syncAuthState$ = createEffect(() =>
@@ -93,6 +97,25 @@ export class AuthEffects {
           this.notificationService.show(
             this.translate.instant('NOTIFICATIONS.SIGN_OUT_FAILED', { error }),
             'error'
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  /**
+   * Triggers the orphan-photo cleanup job whenever auth state settles with a
+   * signed-in user. Throttled internally to at most once per 24 h.
+   * Fire-and-forget: errors are logged but never propagated.
+   */
+  scheduleOrphanCleanup$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.authStateChanged),
+        filter(({ user }) => user !== null),
+        tap(({ user }) => {
+          this.orphanCleanup.cleanupOrphans(user!.uid).catch(err =>
+            this.logger.warn('[AuthEffects] Orphan photo cleanup error:', err)
           );
         })
       ),

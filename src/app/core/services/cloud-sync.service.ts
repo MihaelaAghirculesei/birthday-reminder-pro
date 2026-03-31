@@ -8,6 +8,7 @@ import { FirestoreService } from './firestore.service';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
+import { PhotoStorageService } from './photo-storage.service';
 import { BirthdayMergeService } from './birthday-merge.service';
 import { Birthday } from '../../shared/models/birthday.model';
 
@@ -28,6 +29,7 @@ export class CloudSyncService {
   private readonly networkService = inject(NetworkService);
   private readonly mergeService = inject(BirthdayMergeService);
   private readonly logger = inject(LoggerService);
+  private readonly photoStorage = inject(PhotoStorageService);
   private readonly destroyRef = inject(DestroyRef);
 
   private subscriptions: Subscription[] = [];
@@ -98,11 +100,14 @@ export class CloudSyncService {
       return 0;
     }
 
-    const birthdaysWithMeta: Birthday[] = localBirthdays.map((b) => ({
+    const migratedBirthdays = await this.migratePhotos(localBirthdays, userId);
+
+    const birthdaysWithMeta: Birthday[] = migratedBirthdays.map((b) => ({
       ...b,
       ownerId: userId,
       updatedAt: b.updatedAt || Date.now(),
-      syncStatus: 'synced' as const
+      syncStatus: 'synced' as const,
+      needsMigration: false,
     }));
 
     await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, birthdaysWithMeta));
@@ -119,13 +124,46 @@ export class CloudSyncService {
       strategy: 'latest-wins'
     });
 
-    await this.offlineStorage.saveBirthdays(merged);
+    // Migrate base64 photos in items marked for cloud upload
+    const migratedToUpload = toUpload.length > 0
+      ? await this.migratePhotos(toUpload, userId)
+      : toUpload;
 
-    if (toUpload.length > 0 && this.networkService.isOnline) {
-      await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, toUpload));
+    // Reflect any migrated photo URLs in the full merged set
+    const migratedMap = new Map(migratedToUpload.map((b) => [b.id, b]));
+    const finalMerged = merged.map((b) => migratedMap.get(b.id) ?? b);
+
+    await this.offlineStorage.saveBirthdays(finalMerged);
+
+    if (migratedToUpload.length > 0 && this.networkService.isOnline) {
+      await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, migratedToUpload));
     }
 
     this.store.dispatch(SyncActions.syncSuccess({ timestamp: Date.now() }));
-    this.logger.info('[CloudSync] Merge complete. Total:', merged.length);
+    this.logger.info('[CloudSync] Merge complete. Total:', finalMerged.length);
+  }
+
+  private async migratePhotos(birthdays: Birthday[], userId: string): Promise<Birthday[]> {
+    return Promise.all(
+      birthdays.map(async (birthday) => {
+        const hasBase64Photo = this.photoStorage.isBase64(birthday.photo ?? '');
+        const hasBase64RememberPhoto = this.photoStorage.isBase64(birthday.rememberPhoto ?? '');
+
+        if (!birthday.needsMigration && !hasBase64Photo && !hasBase64RememberPhoto) {
+          return birthday;
+        }
+
+        const [photo, rememberPhoto] = await Promise.all([
+          hasBase64Photo
+            ? this.photoStorage.migrateBase64(birthday.photo!, userId, 'photo')
+            : Promise.resolve(birthday.photo),
+          hasBase64RememberPhoto
+            ? this.photoStorage.migrateBase64(birthday.rememberPhoto!, userId, 'rememberPhoto')
+            : Promise.resolve(birthday.rememberPhoto),
+        ]);
+
+        return { ...birthday, photo, rememberPhoto, needsMigration: false };
+      })
+    );
   }
 }
