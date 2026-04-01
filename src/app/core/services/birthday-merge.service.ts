@@ -55,7 +55,7 @@ export class BirthdayMergeService {
     }
 
     return {
-      merged: deduplicate ? this.deduplicateByName(merged) : merged,
+      merged: deduplicate ? this.deduplicateByNameAndDate(merged) : merged,
       toUpload
     };
   }
@@ -84,7 +84,7 @@ export class BirthdayMergeService {
     }
 
     return {
-      merged: deduplicate ? this.deduplicateByName(merged) : merged,
+      merged: deduplicate ? this.deduplicateByNameAndDate(merged) : merged,
       toUpload: []
     };
   }
@@ -114,7 +114,14 @@ export class BirthdayMergeService {
     };
   }
 
-  private deduplicateByName(birthdays: Birthday[]): Birthday[] {
+  /**
+   * Deduplicates birthdays using a composite key of normalized name + exact birthDate.
+   * - Name comparison is case-insensitive and whitespace-trimmed.
+   * - Entries with the same name but different dates are kept (treated as different people).
+   * - Partial name matching is intentionally NOT performed (too ambiguous).
+   * - When duplicates exist, the entry with the highest updatedAt timestamp wins.
+   */
+  private deduplicateByNameAndDate(birthdays: Birthday[]): Birthday[] {
     const seen = new Map<string, Birthday>();
     for (const b of birthdays) {
       const key = `${b.name.trim().toLowerCase()}|${b.birthDate}`;

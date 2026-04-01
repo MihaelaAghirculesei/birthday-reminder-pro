@@ -261,7 +261,7 @@ describe('BirthdayMergeService', () => {
     });
   });
 
-  describe('deduplication', () => {
+  describe('deduplication (deduplicateByNameAndDate)', () => {
     it('should deduplicate by name+birthDate keeping the newer one', () => {
       const local = [
         makeBirthday({ id: 'b-1', name: 'mario rossi', birthDate: '1990-05-15', updatedAt: 3000 })
@@ -276,7 +276,7 @@ describe('BirthdayMergeService', () => {
       expect(result.merged[0].id).toBe('b-1');
     });
 
-    it('should not deduplicate entries with different birth dates', () => {
+    it('should not deduplicate entries with same name but different birth dates (treated as different people)', () => {
       const local = [
         makeBirthday({ id: 'b-1', name: 'Mario Rossi', birthDate: '1990-05-15' })
       ];
@@ -301,6 +301,47 @@ describe('BirthdayMergeService', () => {
 
       expect(result.merged.length).toBe(1);
       expect(result.merged[0].id).toBe('b-1');
+    });
+
+    it('should keep the cloud entry when it is newer', () => {
+      const local = [
+        makeBirthday({ id: 'b-1', name: 'LUIGI BIANCHI', birthDate: '1985-03-10', updatedAt: 500 })
+      ];
+      const cloud = [
+        makeBirthday({ id: 'b-2', name: 'Luigi Bianchi', birthDate: '1985-03-10', updatedAt: 9000 })
+      ];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged.length).toBe(1);
+      expect(result.merged[0].id).toBe('b-2');
+      expect(result.merged[0].updatedAt).toBe(9000);
+    });
+
+    it('should not perform partial name matching (partial names stay as separate entries)', () => {
+      const local = [
+        makeBirthday({ id: 'b-1', name: 'Mario', birthDate: '1990-05-15' })
+      ];
+      const cloud = [
+        makeBirthday({ id: 'b-2', name: 'Mario Rossi', birthDate: '1990-05-15' })
+      ];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged.length).toBe(2);
+    });
+
+    it('should deduplicate via cloud-wins strategy when explicitly requested', () => {
+      const local = [
+        makeBirthday({ id: 'b-local', name: 'Anna Verdi', birthDate: '2000-01-01' })
+      ];
+      const cloud = [
+        makeBirthday({ id: 'b-cloud', name: 'anna verdi', birthDate: '2000-01-01' })
+      ];
+
+      const result = service.merge(local, cloud, { strategy: 'cloud-wins', deduplicate: true });
+
+      expect(result.merged.length).toBe(1);
     });
   });
 });
