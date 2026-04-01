@@ -3,6 +3,8 @@ import { IndexedDBStorageService, RETRY_CONFIG } from './offline-storage.service
 import { Birthday, ScheduledMessage } from '../../shared';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { IndexedDBConnectionService } from './indexeddb-connection.service';
+import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
 
 describe('IndexedDBStorageService', () => {
   let service: IndexedDBStorageService;
@@ -293,6 +295,162 @@ describe('IndexedDBStorageService', () => {
       const birthdays = await service.getBirthdays();
       expect(birthdays[0].name).toBe('New Name');
       expect(birthdays[0].notes).toBe('Extra notes');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // _dataVersion stamping
+  // -------------------------------------------------------------------------
+
+  describe('_dataVersion stamping on writes', () => {
+    let connection: IndexedDBConnectionService;
+
+    beforeEach(() => {
+      connection = TestBed.inject(IndexedDBConnectionService);
+    });
+
+    function getRaw(
+      db: IDBDatabase,
+      id: string
+    ): Promise<Record<string, unknown> | undefined> {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['birthdays'], 'readonly');
+        const request = tx.objectStore('birthdays').get(id);
+        request.onsuccess = () => resolve(request.result as Record<string, unknown> | undefined);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    it('should stamp _dataVersion when adding a birthday', async () => {
+      const birthday: Birthday = { ...mockBirthday, id: 'stamp-add' };
+      await service.addBirthday(birthday);
+
+      const db = await connection.getDB();
+      const raw = await getRaw(db, 'stamp-add');
+      expect(raw?.['_dataVersion']).toBe(CURRENT_DATA_VERSION);
+    });
+
+    it('should stamp _dataVersion when updating a birthday', async () => {
+      const birthday: Birthday = { ...mockBirthday, id: 'stamp-update' };
+      await service.addBirthday(birthday);
+      await service.updateBirthday({ ...birthday, name: 'Updated' });
+
+      const db = await connection.getDB();
+      const raw = await getRaw(db, 'stamp-update');
+      expect(raw?.['_dataVersion']).toBe(CURRENT_DATA_VERSION);
+    });
+
+    it('should stamp _dataVersion when saving birthdays batch', async () => {
+      const birthday: Birthday = { ...mockBirthday, id: 'stamp-save' };
+      await service.saveBirthdays([birthday]);
+
+      const db = await connection.getDB();
+      const raw = await getRaw(db, 'stamp-save');
+      expect(raw?.['_dataVersion']).toBe(CURRENT_DATA_VERSION);
+    });
+
+    it('should strip _dataVersion from returned Birthday objects (Zod strips unknown keys)', async () => {
+      const birthday: Birthday = { ...mockBirthday, id: 'strip-version' };
+      await service.addBirthday(birthday);
+
+      const birthdays = await service.getBirthdays();
+      const found = birthdays.find(b => b.id === 'strip-version');
+      expect(found).toBeDefined();
+      expect((found as unknown as Record<string, unknown>)['_dataVersion']).toBeUndefined();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Migration fallback in getBirthdays
+  // -------------------------------------------------------------------------
+
+  describe('Migration fallback in getBirthdays', () => {
+    let connection: IndexedDBConnectionService;
+    let migrationService: IdbDataMigrationService;
+
+    beforeEach(() => {
+      connection = TestBed.inject(IndexedDBConnectionService);
+      migrationService = TestBed.inject(IdbDataMigrationService);
+    });
+
+    function putRawBirthday(db: IDBDatabase, record: object): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['birthdays'], 'readwrite');
+        tx.objectStore('birthdays').put(record);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    function deleteRawBirthday(db: IDBDatabase, id: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(['birthdays'], 'readwrite');
+        tx.objectStore('birthdays').delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    it('should rescue a stale record that fails Zod but is fixed by migration', async () => {
+      const db = await connection.getDB();
+      // A record with an invalid birthDate will fail the Zod regex after toDateString
+      // produces 'NaN-NaN-NaN'. The migration spy fixes it before re-validation.
+      await putRawBirthday(db, {
+        id: 'rescue-test',
+        name: 'Legacy User',
+        birthDate: 'invalid-date-string'
+      });
+
+      spyOn(migrationService, 'migrateRawBirthday').and.callFake((raw) => ({
+        ...raw,
+        birthDate: '1990-05-10',
+        _dataVersion: CURRENT_DATA_VERSION
+      }));
+
+      const birthdays = await service.getBirthdays();
+      const found = birthdays.find(b => b.id === 'rescue-test');
+      expect(found).toBeDefined();
+      expect(found!.name).toBe('Legacy User');
+      expect(found!.birthDate).toBe('1990-05-10');
+
+      await deleteRawBirthday(db, 'rescue-test').catch(() => undefined);
+    });
+
+    it('should skip a record when migration also cannot produce a valid result', async () => {
+      const db = await connection.getDB();
+      await putRawBirthday(db, {
+        id: 'unfixable',
+        name: 'Ghost',
+        birthDate: 'invalid-date-string'
+      });
+
+      // Migration runs but birthDate remains invalid
+      spyOn(migrationService, 'migrateRawBirthday').and.callFake((raw) => ({
+        ...raw,
+        _dataVersion: CURRENT_DATA_VERSION
+        // birthDate is still 'invalid-date-string'
+      }));
+
+      const birthdays = await service.getBirthdays();
+      expect(birthdays.find(b => b.id === 'unfixable')).toBeUndefined();
+
+      await deleteRawBirthday(db, 'unfixable').catch(() => undefined);
+    });
+
+    it('should skip a record when migration throws', async () => {
+      const db = await connection.getDB();
+      await putRawBirthday(db, {
+        id: 'migration-throws',
+        name: 'Error User',
+        birthDate: 'invalid-date-string'
+      });
+
+      spyOn(migrationService, 'migrateRawBirthday').and.throwError('migration error');
+
+      const birthdays = await service.getBirthdays();
+      expect(birthdays.find(b => b.id === 'migration-throws')).toBeUndefined();
+
+      await deleteRawBirthday(db, 'migration-throws').catch(() => undefined);
     });
   });
 });

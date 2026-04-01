@@ -5,6 +5,7 @@ import { toDateString } from '../../shared/utils/date.utils';
 import { sanitizeBirthdayData, safeParseBirthday, safeParseScheduledMessage } from '../../shared/schemas/birthday.schema';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
+import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
 
 const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
 
@@ -36,6 +37,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
   private logger = inject(LoggerService);
   private connection = inject(IndexedDBConnectionService);
   private retryConfig = inject(RETRY_CONFIG);
+  private dataMigration = inject(IdbDataMigrationService);
   private storeName = 'birthdays';
   private messagesStoreName = 'scheduledMessages';
 
@@ -67,6 +69,53 @@ export class IndexedDBStorageService implements OfflineStorageService {
     throw lastError;
   }
 
+  /** Stamps _dataVersion on a record before writing to IDB. */
+  private withVersion<T extends object>(record: T): T & { _dataVersion: number } {
+    return { ...record, _dataVersion: CURRENT_DATA_VERSION };
+  }
+
+  /**
+   * Attempts to migrate a raw IDB record that failed Zod validation.
+   * Returns the rescued Birthday and its migrated raw form, or null if
+   * migration cannot produce a valid record.
+   */
+  private tryMigrateBirthday(
+    raw: Record<string, unknown>
+  ): { birthday: Birthday; raw: Record<string, unknown> } | null {
+    try {
+      const migrated = this.dataMigration.migrateRawBirthday(raw);
+      const sanitized = sanitizeBirthdayData({
+        ...migrated,
+        birthDate: toDateString(migrated['birthDate'] as string)
+      });
+      const result = safeParseBirthday(sanitized);
+      if (result.success) {
+        return { birthday: result.data, raw: migrated };
+      }
+      this.logger.warn(
+        '[IndexedDB] Skipping invalid birthday (migration could not fix):',
+        raw['id'],
+        result.error.issues
+      );
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Persists migrated records back to IDB in a single write transaction. */
+  private async persistMigratedBirthdays(
+    records: Record<string, unknown>[]
+  ): Promise<void> {
+    const db = await this.connection.getDB();
+    return new Promise<void>((resolve, reject) => {
+      const tx = db.transaction([this.storeName], 'readwrite');
+      records.forEach((r) => tx.objectStore(this.storeName).put(r));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   async getBirthdays(): Promise<Birthday[]> {
     if (!isPlatformBrowser(this.platformId)) {
       return [];
@@ -83,6 +132,8 @@ export class IndexedDBStorageService implements OfflineStorageService {
           request.onerror = () => reject(request.error);
           request.onsuccess = () => {
             const birthdays: Birthday[] = [];
+            const toMigrate: Record<string, unknown>[] = [];
+
             for (const raw of request.result) {
               const sanitized = sanitizeBirthdayData({
                 ...raw,
@@ -92,9 +143,22 @@ export class IndexedDBStorageService implements OfflineStorageService {
               if (result.success) {
                 birthdays.push(result.data);
               } else {
-                this.logger.warn('[IndexedDB] Skipping invalid birthday record:', raw.id, result.error.issues);
+                const rescued = this.tryMigrateBirthday(raw as Record<string, unknown>);
+                if (rescued) {
+                  birthdays.push(rescued.birthday);
+                  toMigrate.push(rescued.raw);
+                } else {
+                  this.logger.warn('[IndexedDB] Skipping invalid birthday record:', raw.id, result.error.issues);
+                }
               }
             }
+
+            if (toMigrate.length > 0) {
+              this.persistMigratedBirthdays(toMigrate).catch((err) =>
+                this.logger.warn('[IndexedDB] Failed to persist migrated birthdays:', err)
+              );
+            }
+
             resolve(birthdays);
           };
         });
@@ -119,7 +183,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         store.clear();
 
         birthdays.forEach(birthday => {
-          store.add(birthday);
+          store.add(this.withVersion(birthday));
         });
 
         transaction.oncomplete = () => resolve();
@@ -138,7 +202,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
-        const request = store.add(birthday);
+        const request = store.add(this.withVersion(birthday));
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
@@ -158,7 +222,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
         const store = transaction.objectStore(this.storeName);
 
         birthdays.forEach(birthday => {
-          store.add(birthday);
+          store.add(this.withVersion(birthday));
         });
 
         transaction.oncomplete = () => resolve();
@@ -177,7 +241,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
         const store = transaction.objectStore(this.storeName);
-        const request = store.put(birthday);
+        const request = store.put(this.withVersion(birthday));
 
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve();
