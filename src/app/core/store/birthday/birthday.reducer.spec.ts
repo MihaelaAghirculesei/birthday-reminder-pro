@@ -127,6 +127,26 @@ describe('Birthday Reducer', () => {
       expect(state.optimisticBackup['1']).toEqual(mockBirthday);
       expect(state.error).toBe('Network error');
     });
+
+    it('should warn user when failure carries id but backup is missing (race/eviction)', () => {
+      // Simulate evicted backup: entity is in optimistic state but no backup exists
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      // Apply optimistic update so entity is in a "dirty" state
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' } }));
+      // Manually clear the backup to simulate eviction/race
+      state = { ...state, optimisticBackup: {} };
+
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', id: '1' }));
+
+      // Entity stays inconsistent (no backup to restore from)
+      expect(state.entities['1']?.name).toBe('Jane Doe');
+      // But error warns the user
+      expect(state.error).toBe('Le modifiche potrebbero non essere state salvate');
+      expect(state.loading).toBe(false);
+    });
   });
 
   describe('Delete Actions (Optimistic)', () => {
@@ -172,6 +192,25 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, BirthdayActions.deleteBirthday({ id: 'ghost' }));
 
       expect(state.optimisticBackup['ghost']).toBeUndefined();
+    });
+
+    it('should warn user when delete failure carries id but backup is missing (race/eviction)', () => {
+      // Entity was optimistically removed but backup was evicted before failure arrived
+      let state = birthdayReducer(
+        initialBirthdayState,
+        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+      );
+      state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
+      // Manually clear backup to simulate eviction/race
+      state = { ...state, optimisticBackup: {} };
+
+      state = birthdayReducer(state, BirthdayActions.deleteBirthdayFailure({ error: 'Failed', id: '1' }));
+
+      // Entity cannot be restored (no backup)
+      expect(state.entities['1']).toBeUndefined();
+      // But error warns the user
+      expect(state.error).toBe('Le modifiche potrebbero non essere state salvate');
+      expect(state.loading).toBe(false);
     });
 
   });
@@ -465,6 +504,45 @@ describe('Birthday Reducer', () => {
 
       expect(state).toBe(initialBirthdayState);
     });
+  });
+
+  describe('Import Actions', () => {
+    it('should set loading on importBirthdays', () => {
+      const action = BirthdayActions.importBirthdays({ birthdays: [mockBirthday] });
+      const state = birthdayReducer(initialBirthdayState, action);
+
+      expect(state.loading).toBe(true);
+      expect(state.error).toBeNull();
+    });
+
+    it('should add many birthdays on importBirthdaysSuccess', () => {
+      const action = BirthdayActions.importBirthdaysSuccess({ birthdays: [mockBirthday] });
+      const state = birthdayReducer(initialBirthdayState, action);
+
+      expect(state.entities['1']).toEqual(mockBirthday);
+      expect(state.loading).toBe(false);
+    });
+
+    it('should set error on importBirthdaysFailure', () => {
+      const action = BirthdayActions.importBirthdaysFailure({ error: 'Import failed' });
+      const state = birthdayReducer(initialBirthdayState, action);
+
+      expect(state.error).toBe('Import failed');
+      expect(state.loading).toBe(false);
+    });
+  });
+
+  it('should set googleCalendarEventId on calendarEventIdSet', () => {
+    let state = birthdayReducer(
+      initialBirthdayState,
+      BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
+    );
+    state = birthdayReducer(
+      state,
+      BirthdayActions.calendarEventIdSet({ id: '1', calendarEventId: 'cal-event-123' })
+    );
+
+    expect(state.entities['1']?.googleCalendarEventId).toBe('cal-event-123');
   });
 
   describe('Test Data Actions', () => {

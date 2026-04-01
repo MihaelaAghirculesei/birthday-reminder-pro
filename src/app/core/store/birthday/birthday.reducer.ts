@@ -114,13 +114,19 @@ export const birthdayReducer = createReducer(
   on(BirthdayActions.updateBirthdayFailure, (state, { error, id }) => {
     if (id && state.optimisticBackup[id]) {
       const backup = state.optimisticBackup[id];
-        const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
+      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
       return birthdayAdapter.updateOne(
         { id, changes: backup },
         { ...state, loading: false, error, optimisticBackup: remainingBackup }
       );
     }
-    return { ...state, loading: false, error };
+    // id present but no backup: eviction or race — entity may be inconsistent
+    const missingBackup = id != null && !(id in state.optimisticBackup);
+    return {
+      ...state,
+      loading: false,
+      error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
+    };
   }),
 
 
@@ -160,7 +166,13 @@ export const birthdayReducer = createReducer(
         optimisticBackup: remainingBackup
       });
     }
-    return { ...state, loading: false, error };
+    // id present but no backup: eviction or race — entity may be permanently gone
+    const missingBackup = id != null && !(id in state.optimisticBackup);
+    return {
+      ...state,
+      loading: false,
+      error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
+    };
   }),
 
   on(BirthdayActions.setSearchTerm, (state, { searchTerm }) => ({
