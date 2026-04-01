@@ -46,6 +46,7 @@ export class DashboardComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
 
   readonly currentMonth = new Date().getMonth();
+  readonly forceLoad = !!(window as Window & { Cypress?: unknown }).Cypress;
 
   ngOnInit(): void {
     this.ngZone.runOutsideAngular(() => {
