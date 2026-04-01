@@ -166,10 +166,13 @@ export class GlobalErrorHandler implements ErrorHandler {
 
   private logError(error: unknown, context: ErrorContext): void {
     this.logger.group(`🔴 ${context.type} Error`);
-    this.logger.error('Error:', error);
-    this.logger.error('Technical:', context.technicalMessage);
-    this.logger.error('User message:', context.userMessage);
-    this.logger.groupEnd();
+    try {
+      this.logger.error('Error:', error);
+      this.logger.error('Technical:', context.technicalMessage);
+      this.logger.error('User message:', context.userMessage);
+    } finally {
+      this.logger.groupEnd();
+    }
   }
 
   private reportError(error: unknown, context: ErrorContext): void {

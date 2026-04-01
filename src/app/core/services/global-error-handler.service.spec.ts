@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { GlobalErrorHandler } from './global-error-handler.service';
 import { NotificationService } from './notification.service';
 import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('GlobalErrorHandler', () => {
@@ -306,6 +306,24 @@ describe('GlobalErrorHandler', () => {
       expect(() => errorHandler.handleError(error)).not.toThrow();
       expect(notificationServiceSpy.show).toHaveBeenCalled();
       expect(consoleErrorSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('logError – try-finally guarantees groupEnd()', () => {
+    it('should call groupEnd even if logger.error throws', () => {
+      const logger = TestBed.inject(LoggerService);
+      spyOn(logger, 'group');
+      spyOn(logger, 'groupEnd');
+      spyOn(logger, 'error').and.throwError('Logger failed');
+
+      try {
+        errorHandler.handleError(new Error('test'));
+      } catch {
+        // logger.error throws; only the groupEnd guarantee matters here
+      }
+
+      expect(logger.group).toHaveBeenCalled();
+      expect(logger.groupEnd).toHaveBeenCalled();
     });
   });
 
