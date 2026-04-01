@@ -11,11 +11,12 @@ export { BrowserNotificationSchedulerService } from './browser-notification-sche
 export { NetworkService } from './network.service';
 export { IndexedDBConnectionService } from './indexeddb-connection.service';
 export { IndexedDBStorageService } from './offline-storage.service';
+export { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
 export { GoogleCalendarService, GoogleCalendarSettings, GoogleCalendarItem } from './google-calendar.service';
 export { GoogleApiLoaderService } from './google-api-loader.service';
 export { GoogleCalendarAuthService } from './google-calendar-auth.service';
 export { GoogleApiErrorService, GoogleApiErrorDetails } from './google-api-error.service';
-export { BackupService, BackupData } from './backup.service';
+export { BackupService, BackupData, ImportResult } from './backup.service';
 export { GlobalErrorHandler } from './global-error-handler.service';
 export { ThemeService } from './theme.service';
 export { LoggerService, SILENT_LOGGING, SILENT_LOGGER_PROVIDER } from './logger.service';
