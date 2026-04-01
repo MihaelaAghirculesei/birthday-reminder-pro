@@ -189,6 +189,32 @@ describe('CloudSyncService', () => {
       await expectAsync(service.checkForMigration('user-123')).toBeResolved();
       expect(loggerMock.error).toHaveBeenCalledWith('[CloudSync] Migration check failed:', jasmine.any(Error));
     });
+
+    it('should dispatch syncFailure when migration check throws', async () => {
+      firestoreServiceMock.getBirthdays.and.returnValue(
+        throwError(() => new Error('Network error'))
+      );
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      await service.checkForMigration('user-123');
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        SyncActions.syncFailure({ error: 'Network error' })
+      );
+    });
+
+    it('should dispatch syncFailure with fallback message for non-Error throws', async () => {
+      firestoreServiceMock.getBirthdays.and.returnValue(
+        throwError(() => 'plain string error')
+      );
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      await service.checkForMigration('user-123');
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        SyncActions.syncFailure({ error: 'Migration check failed' })
+      );
+    });
   });
 
   describe('mergeCloudWithLocal', () => {
@@ -366,6 +392,22 @@ describe('CloudSyncService', () => {
       await service.migrateLocalToCloud();
 
       expect(photoStorageMock.migrateBase64).not.toHaveBeenCalled();
+    });
+
+    it('should migrate base64 rememberPhoto to Storage before upload', async () => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      const base64Photo = 'data:image/jpeg;base64,/9j/abc';
+      const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/remember.jpg?alt=media';
+      const b = makeBirthday({ id: 'b-remember', rememberPhoto: base64Photo, needsMigration: true });
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
+      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+
+      await service.migrateLocalToCloud();
+
+      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      expect(uploaded[0].rememberPhoto).toBe(storageUrl);
+      expect(uploaded[0].needsMigration).toBeFalse();
     });
 });
 });

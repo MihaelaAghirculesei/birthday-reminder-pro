@@ -86,6 +86,9 @@ export class CloudSyncService {
       }
     } catch (error) {
       this.logger.error('[CloudSync] Migration check failed:', error);
+      this.store.dispatch(SyncActions.syncFailure({
+        error: error instanceof Error ? error.message : 'Migration check failed'
+      }));
     }
   }
 
