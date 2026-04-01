@@ -12,6 +12,7 @@ import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birth
 import * as SyncActions from '../store/sync/sync.actions';
 
 const MAX_RETRY_COUNT = 3;
+const BATCH_SIZE = 100;
 
 /**
  * Processes the offline pending-changes queue: queuing, causal-order enforcement,
@@ -76,33 +77,42 @@ export class SyncQueueProcessorService {
       // Tracks entity keys (entityType:entityId) whose causal chain has a failed op.
       // Subsequent ops for the same entity are held back for the next sync round.
       const failedEntityKeys = new Set<string>();
+      const total = sorted.length;
 
-      for (const change of sorted) {
-        const entityKey = `${change.entityType}:${change.entityId}`;
+      for (let batchStart = 0; batchStart < total; batchStart += BATCH_SIZE) {
+        const batch = sorted.slice(batchStart, batchStart + BATCH_SIZE);
 
-        if (failedEntityKeys.has(entityKey)) {
-          // A prior op for this entity failed — skip to preserve causal order.
-          this.logger.warn('[SyncQueueProcessor] Skipping change blocked by prior entity failure:', change.id);
-          continue;
+        for (const change of batch) {
+          const entityKey = `${change.entityType}:${change.entityId}`;
+
+          if (failedEntityKeys.has(entityKey)) {
+            // A prior op for this entity failed — skip to preserve causal order.
+            this.logger.warn('[SyncQueueProcessor] Skipping change blocked by prior entity failure:', change.id);
+            continue;
+          }
+
+          if (change.retryCount >= MAX_RETRY_COUNT) {
+            this.logger.warn('[SyncQueueProcessor] Max retries reached for change:', change.id);
+            // Block subsequent ops for this entity: if the delete is permanently stuck,
+            // attempting the create would leave the remote store in an inconsistent state.
+            failedEntityKeys.add(entityKey);
+            continue;
+          }
+
+          try {
+            await this.processChange(userId, change);
+            await this.pendingChanges.removeChange(change.id);
+            syncedCount++;
+          } catch (error) {
+            this.logger.error('[SyncQueueProcessor] Failed to process change:', error);
+            await this.pendingChanges.markRetry(change.id);
+            failedEntityKeys.add(entityKey);
+          }
         }
 
-        if (change.retryCount >= MAX_RETRY_COUNT) {
-          this.logger.warn('[SyncQueueProcessor] Max retries reached for change:', change.id);
-          // Block subsequent ops for this entity: if the delete is permanently stuck,
-          // attempting the create would leave the remote store in an inconsistent state.
-          failedEntityKeys.add(entityKey);
-          continue;
-        }
-
-        try {
-          await this.processChange(userId, change);
-          await this.pendingChanges.removeChange(change.id);
-          syncedCount++;
-        } catch (error) {
-          this.logger.error('[SyncQueueProcessor] Failed to process change:', error);
-          await this.pendingChanges.markRetry(change.id);
-          failedEntityKeys.add(entityKey);
-        }
+        const completed = batchStart + batch.length;
+        this.store.dispatch(SyncActions.batchSyncProgress({ completed, total }));
+        this.updatePendingCount();
       }
 
       return syncedCount;

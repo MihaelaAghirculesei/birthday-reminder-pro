@@ -318,6 +318,38 @@ describe('SyncQueueProcessorService', () => {
     });
   });
 
+  describe('processPendingChanges — invalid data', () => {
+    beforeEach(() => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+    });
+
+    it('should skip Firestore write and log when birthday data is invalid (safeParseBirthday fails)', async () => {
+      const change = makePendingChange({
+        id: 'c-invalid', entityId: 'b-bad', changeType: 'create', data: null
+      });
+      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+
+      await service.processPendingChanges();
+
+      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalled();
+    });
+
+    it('should skip Firestore write and log when category data is invalid (safeParseCategory fails)', async () => {
+      const change = makePendingChange({
+        id: 'c-cat-bad', entityType: 'category', entityId: 'cat-bad',
+        changeType: 'create', data: null
+      });
+      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+
+      await service.processPendingChanges();
+
+      expect(firestoreServiceMock.saveCategory).not.toHaveBeenCalled();
+      expect(loggerMock.error).toHaveBeenCalled();
+    });
+  });
+
   describe('processPendingChanges — category changes', () => {
     beforeEach(() => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
@@ -349,6 +381,90 @@ describe('SyncQueueProcessorService', () => {
       await service.processPendingChanges();
 
       expect(firestoreServiceMock.deleteCategory).toHaveBeenCalledWith('user-123', 'cat-1');
+    });
+
+  });
+
+  describe('processPendingChanges — batching', () => {
+    beforeEach(() => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+    });
+
+    it('should split 150 changes into two batches and dispatch progress for each', async () => {
+      const changes = Array.from({ length: 150 }, (_, i) => {
+        const birthday = makeBirthday({ id: `b-${i}` });
+        return makePendingChange({ id: `c-${i}`, entityId: `b-${i}`, changeType: 'create', data: birthday });
+      });
+      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      const result = await service.processPendingChanges();
+
+      expect(result).toBe(150);
+      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(150);
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.batchSyncProgress({ completed: 100, total: 150 }));
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.batchSyncProgress({ completed: 150, total: 150 }));
+    });
+
+    it('should dispatch exactly one progress event for a queue under BATCH_SIZE', async () => {
+      const change = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create' });
+      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      await service.processPendingChanges();
+
+      const progressCalls = dispatchSpy.calls.all()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter(call => (call.args[0] as unknown as any).type === '[Sync] Batch Sync Progress');
+      expect(progressCalls.length).toBe(1);
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.batchSyncProgress({ completed: 1, total: 1 }));
+    });
+
+    it('should call updatePendingCount once per batch', async () => {
+      const changes = Array.from({ length: 220 }, (_, i) =>
+        makePendingChange({ id: `c-${i}`, entityId: `b-${i}`, changeType: 'delete', data: null })
+      );
+      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
+      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      await service.processPendingChanges();
+
+      // 220 changes → 3 batches (100+100+20), so 3 updatePendingCount dispatches
+      const pendingCountCalls = dispatchSpy.calls.all()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter(call => (call.args[0] as unknown as any).type === '[Sync] Update Pending Count');
+      expect(pendingCountCalls.length).toBe(3);
+    });
+
+    it('should respect causal order across batch boundaries', async () => {
+      // delete at seq 0 (batch 1), create at seq 100 (batch 2) for same entity
+      const deleteChange = makePendingChange({
+        id: 'del-cross', entityId: 'b-cross', changeType: 'delete', data: null, sequenceNumber: 0
+      });
+      const createChange = makePendingChange({
+        id: 'cre-cross', entityId: 'b-cross', changeType: 'create',
+        data: makeBirthday({ id: 'b-cross' }), sequenceNumber: 100
+      });
+      // fill batch 1 with 99 unrelated changes so the create lands in batch 2
+      const fillers = Array.from({ length: 99 }, (_, i) =>
+        makePendingChange({ id: `filler-${i}`, entityId: `bf-${i}`, changeType: 'delete', data: null, sequenceNumber: i + 1 })
+      );
+      const allChanges = [deleteChange, ...fillers, createChange];
+      pendingChangesMock.getChangesForEntity.and.returnValue(allChanges);
+      firestoreServiceMock.deleteBirthday.and.callFake((uid: string, id: string) => {
+        if (id === 'b-cross') return throwError(() => new Error('Network'));
+        return of(undefined);
+      });
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+
+      await service.processPendingChanges();
+
+      expect(pendingChangesMock.markRetry).toHaveBeenCalledWith('del-cross');
+      expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
     });
   });
 
