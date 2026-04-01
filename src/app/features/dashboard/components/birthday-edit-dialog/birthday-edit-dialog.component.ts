@@ -1,6 +1,6 @@
 import { Component, Inject, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -37,6 +37,7 @@ export interface BirthdayEditDialogResult {
     imports: [
         CommonModule,
         FormsModule,
+        ReactiveFormsModule,
         MatDialogModule,
         MatButtonModule,
         MatIconModule,
@@ -66,10 +67,13 @@ export class BirthdayEditDialogComponent {
     category: string;
     photo: string | null;
     rememberPhoto: string | null;
-    email: string;
-    phone: string;
-    telegramUsername: string;
   };
+
+  readonly contactForm: FormGroup<{
+    email: FormControl<string>;
+    phone: FormControl<string>;
+    telegramUsername: FormControl<string>;
+  }>;
 
   /** Pending File for the profile photo — uploaded on save. */
   private photoFile: File | null = null;
@@ -88,11 +92,27 @@ export class BirthdayEditDialogComponent {
       category: data.birthday.category || '',
       photo: data.birthday.photo || null,
       rememberPhoto: data.birthday.rememberPhoto || null,
-      email: data.birthday.email || '',
-      phone: data.birthday.phone || '',
-      telegramUsername: data.birthday.telegramUsername || '',
     };
+
+    this.contactForm = new FormGroup({
+      email: new FormControl(data.birthday.email || '', {
+        nonNullable: true,
+        validators: [Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)],
+      }),
+      phone: new FormControl(data.birthday.phone || '', {
+        nonNullable: true,
+        validators: [Validators.pattern(/^\+?[\d\s\-()]*$/)],
+      }),
+      telegramUsername: new FormControl(data.birthday.telegramUsername || '', {
+        nonNullable: true,
+        validators: [Validators.pattern(/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/)],
+      }),
+    });
+
     this.contactWarning = !this.hasAnyContact();
+    this.contactForm.valueChanges.subscribe(() => {
+      this.contactWarning = !this.hasAnyContact();
+    });
   }
 
   @HostListener('window:keydown.escape')
@@ -132,28 +152,25 @@ export class BirthdayEditDialogComponent {
     this.hasUnsavedMessages = hasUnsaved;
   }
 
-  private phonePattern = /^\+?[\d\s\-()]*$/;
-  private emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  private telegramPattern = /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/;
-
   hasAnyContact(): boolean {
-    return !!(this.editingData.email.trim() || this.editingData.phone.trim() || this.editingData.telegramUsername.trim());
+    const { email, phone, telegramUsername } = this.contactForm.getRawValue();
+    return !!(email.trim() || phone.trim() || telegramUsername.trim());
   }
 
   isEmailValid(): boolean {
-    return !this.editingData.email.trim() || this.emailPattern.test(this.editingData.email);
+    return this.contactForm.get('email')!.valid;
   }
 
   isPhoneValid(): boolean {
-    return !this.editingData.phone.trim() || this.phonePattern.test(this.editingData.phone);
+    return this.contactForm.get('phone')!.valid;
   }
 
   isTelegramValid(): boolean {
-    return !this.editingData.telegramUsername.trim() || this.telegramPattern.test(this.editingData.telegramUsername);
+    return this.contactForm.get('telegramUsername')!.valid;
   }
 
   isContactValid(): boolean {
-    return this.isEmailValid() && this.isPhoneValid() && this.isTelegramValid();
+    return this.contactForm.valid;
   }
 
   onContactChange(): void {
@@ -165,7 +182,7 @@ export class BirthdayEditDialogComponent {
   }
 
   async onSave(): Promise<void> {
-    if (!this.isContactValid() || this.isSaving) return;
+    if (!this.contactForm.valid || this.isSaving) return;
 
     this.isSaving = true;
 
@@ -187,9 +204,15 @@ export class BirthdayEditDialogComponent {
         this.rememberPhotoFile = null;
       }
 
+      const contactValues = this.contactForm.getRawValue();
       const result: BirthdayEditDialogResult = {
         birthday: this.data.birthday,
-        editedData: { ...this.editingData },
+        editedData: {
+          ...this.editingData,
+          email: contactValues.email,
+          phone: contactValues.phone,
+          telegramUsername: contactValues.telegramUsername,
+        },
       };
       this.dialogRef.close(result);
     } finally {
