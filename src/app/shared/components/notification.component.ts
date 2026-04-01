@@ -16,11 +16,8 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
         <div
           [class]="'notification notification-' + notification.type"
           [@slideIn]
-          (click)="close(notification.id)"
-          (keydown.enter)="close(notification.id)"
-          (keydown.space)="close(notification.id)"
-          tabindex="0"
-          role="button"
+          role="status"
+          aria-live="polite"
           data-testid="notification">
           <mat-icon class="notification-icon">{{ getIcon(notification.type) }}</mat-icon>
           <span class="notification-message">{{ notification.message }}</span>
@@ -53,18 +50,12 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
       padding: 16px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      cursor: pointer;
       transition: all 0.3s ease;
       width: 400px;
       max-width: 90vw;
     }
 
-    .notification:hover {
-      transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-
-    .notification-success {
+.notification-success {
       background: var(--status-success-bg);
       border-left: 4px solid var(--status-success-border);
       color: var(--status-success-text);
