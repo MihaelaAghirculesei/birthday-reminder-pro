@@ -13,11 +13,13 @@ import { NotificationService } from '../../core/services/notification.service';
     <div class="photo-upload-container">
       <div class="photo-preview"
         [class.has-photo]="currentPhoto"
+        [class.upload-disabled]="disabled"
         (click)="triggerFileInput()"
         (keydown.enter)="triggerFileInput()"
         (keydown.space)="$event.preventDefault(); triggerFileInput()"
-        tabindex="0"
+        [attr.tabindex]="disabled ? -1 : 0"
         role="button"
+        [attr.aria-disabled]="disabled || null"
         [attr.aria-label]="(currentPhoto ? 'PHOTO_UPLOAD.ARIA_CHANGE_PHOTO' : 'PHOTO_UPLOAD.ARIA_ADD_PHOTO') | translate">
     
         @if (currentPhoto) {
@@ -81,6 +83,12 @@ import { NotificationService } from '../../core/services/notification.service';
         border-color: var(--primary);
         transform: scale(1.02);
         box-shadow: var(--shadow);
+      }
+
+      &.upload-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
       }
 
       &.has-photo {
@@ -263,6 +271,7 @@ import { NotificationService } from '../../core/services/notification.service';
 })
 export class PhotoUploadComponent {
   @Input() currentPhoto: string | null = null;
+  @Input() disabled = false;
   /** Emits the raw File as soon as it passes validation (before FileReader completes). */
   @Output() fileSelected = new EventEmitter<File>();
   /** Emits the base64 data URL after FileReader completes (used for local preview). */
@@ -275,6 +284,7 @@ export class PhotoUploadComponent {
   private readonly translate = inject(TranslateService);
 
   triggerFileInput() {
+    if (this.disabled) return;
     this.fileInputRef?.nativeElement.click();
   }
 
@@ -315,6 +325,7 @@ export class PhotoUploadComponent {
 
   removePhoto(event: Event) {
     event.stopPropagation();
+    if (this.disabled) return;
     this.photoRemoved.emit();
   }
 }

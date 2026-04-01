@@ -321,6 +321,78 @@ describe('PhotoUploadComponent', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // disabled input
+  // ---------------------------------------------------------------------------
+
+  describe('disabled input', () => {
+    it('should not trigger file input when disabled', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      const fileInput = fixture.nativeElement.querySelector('input[type="file"]');
+      spyOn(fileInput, 'click');
+
+      component.triggerFileInput();
+
+      expect(fileInput.click).not.toHaveBeenCalled();
+    });
+
+    it('should trigger file input when not disabled', () => {
+      fixture.componentRef.setInput('disabled', false);
+      fixture.detectChanges();
+
+      const fileInput = fixture.nativeElement.querySelector('input[type="file"]');
+      spyOn(fileInput, 'click');
+
+      component.triggerFileInput();
+
+      expect(fileInput.click).toHaveBeenCalled();
+    });
+
+    it('should not emit photoRemoved when disabled', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+      spyOn(component.photoRemoved, 'emit');
+
+      component.removePhoto(new Event('click'));
+
+      expect(component.photoRemoved.emit).not.toHaveBeenCalled();
+    });
+
+    it('should apply upload-disabled class when disabled is true', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
+      expect(preview.classList).toContain('upload-disabled');
+    });
+
+    it('should not apply upload-disabled class when disabled is false', () => {
+      fixture.componentRef.setInput('disabled', false);
+      fixture.detectChanges();
+
+      const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
+      expect(preview.classList).not.toContain('upload-disabled');
+    });
+
+    it('should set aria-disabled when disabled is true', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
+      expect(preview.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('should set tabindex to -1 when disabled', () => {
+      fixture.componentRef.setInput('disabled', true);
+      fixture.detectChanges();
+
+      const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
+      expect(preview.getAttribute('tabindex')).toBe('-1');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Input / Output bindings
   // ---------------------------------------------------------------------------
 
