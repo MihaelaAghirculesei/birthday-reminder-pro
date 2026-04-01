@@ -43,6 +43,11 @@ export const selectHasPendingChanges = createSelector(
   (count) => count > 0
 );
 
+export const selectBatchSyncProgress = createSelector(
+  selectSyncStatusOrDefault,
+  (status) => status.batchProgress
+);
+
 export const selectSyncSummary = createSelector(
   selectSyncStatusOrDefault,
   (status) => ({

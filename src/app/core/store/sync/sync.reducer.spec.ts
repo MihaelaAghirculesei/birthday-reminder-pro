@@ -116,6 +116,30 @@ describe('Sync Reducer', () => {
       const state = syncReducer(stateWithPending, action);
       expect(state.pendingChanges).toBe(0);
     });
+
+    it('should reset batchProgress to null on completion', () => {
+      const syncing: SyncStatus = { ...initialSyncStatus, state: 'syncing', batchProgress: { completed: 100, total: 150 } };
+      const action = SyncActions.pushChangesSuccess({ syncedCount: 150 });
+      const state = syncReducer(syncing, action);
+      expect(state.batchProgress).toBeNull();
+    });
+  });
+
+  describe('batchSyncProgress', () => {
+    it('should update batchProgress with completed and total', () => {
+      const action = SyncActions.batchSyncProgress({ completed: 100, total: 250 });
+      const state = syncReducer({ ...initialSyncStatus, state: 'syncing' }, action);
+      expect(state.batchProgress).toEqual({ completed: 100, total: 250 });
+    });
+
+    it('should overwrite previous batchProgress on subsequent batches', () => {
+      const first = syncReducer(
+        { ...initialSyncStatus, state: 'syncing' },
+        SyncActions.batchSyncProgress({ completed: 100, total: 250 })
+      );
+      const second = syncReducer(first, SyncActions.batchSyncProgress({ completed: 200, total: 250 }));
+      expect(second.batchProgress).toEqual({ completed: 200, total: 250 });
+    });
   });
 
   describe('pushChangesFailure', () => {

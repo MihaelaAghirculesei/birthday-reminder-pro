@@ -50,7 +50,13 @@ export const syncReducer = createReducer(
     ...state,
     state: 'idle',
     pendingChanges: Math.max(0, state.pendingChanges - syncedCount),
-    lastSyncAt: Date.now()
+    lastSyncAt: Date.now(),
+    batchProgress: null
+  })),
+
+  on(SyncActions.batchSyncProgress, (state, { completed, total }): SyncStatus => ({
+    ...state,
+    batchProgress: { completed, total }
   })),
 
   on(SyncActions.pushChangesFailure, (state, { error }): SyncStatus => ({

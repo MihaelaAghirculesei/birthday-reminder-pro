@@ -85,5 +85,11 @@ export const migrationFailure = createAction(
   props<{ error: string }>()
 );
 
+// Batch Sync Progress
+export const batchSyncProgress = createAction(
+  '[Sync] Batch Sync Progress',
+  props<{ completed: number; total: number }>()
+);
+
 // Clear Error
 export const clearSyncError = createAction('[Sync] Clear Error');

@@ -7,7 +7,8 @@ describe('Sync Selectors', () => {
     lastSyncAt: 1700000000000,
     pendingChanges: 0,
     error: null,
-    isOnline: true
+    isOnline: true,
+    batchProgress: null
   };
 
   const syncingStatus: SyncStatus = {
@@ -15,7 +16,8 @@ describe('Sync Selectors', () => {
     lastSyncAt: null,
     pendingChanges: 3,
     error: null,
-    isOnline: true
+    isOnline: true,
+    batchProgress: { completed: 50, total: 200 }
   };
 
   const errorStatus: SyncStatus = {
@@ -23,7 +25,8 @@ describe('Sync Selectors', () => {
     lastSyncAt: 1700000000000,
     pendingChanges: 2,
     error: 'Network error',
-    isOnline: true
+    isOnline: true,
+    batchProgress: null
   };
 
   const offlineStatus: SyncStatus = {
@@ -31,7 +34,8 @@ describe('Sync Selectors', () => {
     lastSyncAt: 1700000000000,
     pendingChanges: 1,
     error: null,
-    isOnline: false
+    isOnline: false,
+    batchProgress: null
   };
 
   it('selectSyncState should return the sync state', () => {
@@ -88,5 +92,10 @@ describe('Sync Selectors', () => {
   it('selectSyncSummary should detect error', () => {
     const summary = SyncSelectors.selectSyncSummary.projector(errorStatus);
     expect(summary.hasError).toBeTrue();
+  });
+
+  it('selectBatchSyncProgress should return batchProgress when syncing in batches', () => {
+    expect(SyncSelectors.selectBatchSyncProgress.projector(syncingStatus)).toEqual({ completed: 50, total: 200 });
+    expect(SyncSelectors.selectBatchSyncProgress.projector(idleStatus)).toBeNull();
   });
 });
