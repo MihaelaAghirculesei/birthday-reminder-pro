@@ -6,6 +6,10 @@ export function parseLocalDate(dateStr: string): Date {
   return new Date(y, m - 1, d);
 }
 
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
 /** Normalizes any date-like value to YYYY-MM-DD */
 export function toDateString(value: string | Date): string {
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -29,11 +33,15 @@ export function getNextBirthdayDate(birthDate: string): Date {
   today.setHours(0, 0, 0, 0);
   const currentYear = today.getFullYear();
   const bd = parseLocalDate(birthDate);
-  const nextBirthday = new Date(currentYear, bd.getMonth(), bd.getDate());
+  const isLeapDayBirth = bd.getMonth() === 1 && bd.getDate() === 29;
+  const effectiveDay = (year: number) => isLeapDayBirth && !isLeapYear(year) ? 28 : bd.getDate();
+
+  const nextBirthday = new Date(currentYear, bd.getMonth(), effectiveDay(currentYear));
   nextBirthday.setHours(0, 0, 0, 0);
 
   if (nextBirthday < today) {
-    nextBirthday.setFullYear(currentYear + 1);
+    const nextYear = currentYear + 1;
+    nextBirthday.setFullYear(nextYear, bd.getMonth(), effectiveDay(nextYear));
   }
 
   return nextBirthday;

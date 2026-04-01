@@ -63,6 +63,45 @@ describe('Date Utils', () => {
       expect(result.getDate()).toBe(29);
     });
 
+    it('should use Feb 28 for Feb 29 birthday in a non-leap year (before Feb 28)', () => {
+      // 2025 is not a leap year; today is Jan 1 2025
+      const mockToday = new Date(2025, 0, 1, 12, 30, 0);
+      jasmine.clock().mockDate(mockToday);
+
+      const birthDate = '2000-02-29';
+      const result = getNextBirthdayDate(birthDate);
+
+      expect(result.getFullYear()).toBe(2025);
+      expect(result.getMonth()).toBe(1);
+      expect(result.getDate()).toBe(28);
+    });
+
+    it('should advance to next year using Feb 29 when Feb 28 has passed and next year is a leap year', () => {
+      // Today is Mar 1 2027 (non-leap); 2028 is a leap year
+      const mockToday = new Date(2027, 2, 1, 12, 30, 0);
+      jasmine.clock().mockDate(mockToday);
+
+      const birthDate = '2000-02-29';
+      const result = getNextBirthdayDate(birthDate);
+
+      expect(result.getFullYear()).toBe(2028);
+      expect(result.getMonth()).toBe(1);
+      expect(result.getDate()).toBe(29);
+    });
+
+    it('should advance to next year using Feb 28 when Feb 28 has passed and next year is also non-leap', () => {
+      // Today is Mar 1 2025 (non-leap); 2026 is also non-leap
+      const mockToday = new Date(2025, 2, 1, 12, 30, 0);
+      jasmine.clock().mockDate(mockToday);
+
+      const birthDate = '2000-02-29';
+      const result = getNextBirthdayDate(birthDate);
+
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(1);
+      expect(result.getDate()).toBe(28);
+    });
+
     it('should handle end of year transition', () => {
       const mockToday = new Date(2024, 11, 31, 23, 59, 0);
       jasmine.clock().mockDate(mockToday);
