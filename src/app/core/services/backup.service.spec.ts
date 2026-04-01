@@ -30,10 +30,11 @@ describe('BackupService', () => {
 
       const result = await service.importFromFile(file);
 
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('John');
-      expect(typeof result[0].birthDate).toBe('string');
-      expect(result[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(result.valid.length).toBe(1);
+      expect(result.invalid.length).toBe(0);
+      expect(result.valid[0].name).toBe('John');
+      expect(typeof result.valid[0].birthDate).toBe('string');
+      expect(result.valid[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
     it('should throw error for invalid JSON', async () => {
@@ -48,7 +49,7 @@ describe('BackupService', () => {
       await expectAsync(service.importFromFile(file)).toBeRejectedWithError(/Invalid backup format: exportDate/);
     });
 
-    it('should throw error for invalid date', async () => {
+    it('should return invalid entry for invalid date instead of throwing', async () => {
       const backup = {
         version: 1,
         exportDate: '2025-12-09T00:00:00.000Z',
@@ -58,7 +59,31 @@ describe('BackupService', () => {
       };
       const file = new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
 
-      await expectAsync(service.importFromFile(file)).toBeRejectedWithError('Invalid date for John');
+      const result = await service.importFromFile(file);
+
+      expect(result.valid.length).toBe(0);
+      expect(result.invalid.length).toBe(1);
+      expect(result.invalid[0].name).toBe('John');
+      expect(result.invalid[0].error).toContain('Invalid date');
+    });
+
+    it('should import valid entries and collect invalid ones (partial import)', async () => {
+      const backup = {
+        version: 1,
+        exportDate: '2025-12-09T00:00:00.000Z',
+        birthdays: [
+          { id: '1', name: 'John', birthDate: '1990-05-15', category: 'friends' },
+          { id: '2', name: 'Bad Date', birthDate: 'not-a-date', category: 'friends' }
+        ]
+      };
+      const file = new File([JSON.stringify(backup)], 'backup.json', { type: 'application/json' });
+
+      const result = await service.importFromFile(file);
+
+      expect(result.valid.length).toBe(1);
+      expect(result.valid[0].name).toBe('John');
+      expect(result.invalid.length).toBe(1);
+      expect(result.invalid[0].name).toBe('Bad Date');
     });
 
     it('should generate new id if missing', async () => {
@@ -73,7 +98,7 @@ describe('BackupService', () => {
 
       const result = await service.importFromFile(file);
 
-      expect(result[0].id).toBeTruthy();
+      expect(result.valid[0].id).toBeTruthy();
     });
   });
 
@@ -84,10 +109,11 @@ describe('BackupService', () => {
 
       const result = await service.importFromCSV(file);
 
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('John');
-      expect(result[0].category).toBe('friends');
-      expect(result[0].notes).toBe('Test note');
+      expect(result.valid.length).toBe(1);
+      expect(result.invalid.length).toBe(0);
+      expect(result.valid[0].name).toBe('John');
+      expect(result.valid[0].category).toBe('friends');
+      expect(result.valid[0].notes).toBe('Test note');
     });
 
     it('should handle CSV with quoted values', async () => {
@@ -96,8 +122,8 @@ describe('BackupService', () => {
 
       const result = await service.importFromCSV(file);
 
-      expect(result[0].name).toBe('Smith, John');
-      expect(result[0].notes).toBe('Note, with comma');
+      expect(result.valid[0].name).toBe('Smith, John');
+      expect(result.valid[0].notes).toBe('Note, with comma');
     });
 
     it('should parse different date formats', async () => {
@@ -106,24 +132,33 @@ describe('BackupService', () => {
 
       const result = await service.importFromCSV(file);
 
-      expect(result.length).toBe(2);
-      expect(typeof result[0].birthDate).toBe('string');
-      expect(typeof result[1].birthDate).toBe('string');
+      expect(result.valid.length).toBe(2);
+      expect(typeof result.valid[0].birthDate).toBe('string');
+      expect(typeof result.valid[1].birthDate).toBe('string');
     });
 
-    it('should skip rows with invalid data', async () => {
+    it('should collect invalid rows instead of silently skipping', async () => {
       const csv = 'Name,Birth Date,Category\nJohn,1990-05-15,friends\n,invalid,test\nJane,1990-06-20,family';
       const file = new File([csv], 'backup.csv', { type: 'text/csv' });
 
       const result = await service.importFromCSV(file);
 
-      expect(result.length).toBe(2);
+      expect(result.valid.length).toBe(2);
+      expect(result.invalid.length).toBe(1);
     });
 
     it('should throw error for empty CSV', async () => {
       const file = new File(['Name,Birth Date\n'], 'backup.csv', { type: 'text/csv' });
 
       await expectAsync(service.importFromCSV(file)).toBeRejectedWithError('CSV file is empty or has no data rows');
+    });
+
+    it('should throw error when CSV exceeds 10,000 rows', async () => {
+      const dataRows = Array.from({ length: 10_000 }, (_, i) => `Person${i},1990-05-15,friends`).join('\n');
+      const csv = `Name,Birth Date,Category\n${dataRows}`;
+      const file = new File([csv], 'large.csv', { type: 'text/csv' });
+
+      await expectAsync(service.importFromCSV(file)).toBeRejectedWithError('CSV file exceeds the maximum limit of 10,000 rows');
     });
   });
 
@@ -134,19 +169,20 @@ describe('BackupService', () => {
 
       const result = await service.importFromVCard(file);
 
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('John Smith');
-      expect(typeof result[0].birthDate).toBe('string');
-      expect(result[0].category).toBe('friends');
+      expect(result.valid.length).toBe(1);
+      expect(result.invalid.length).toBe(0);
+      expect(result.valid[0].name).toBe('John Smith');
+      expect(typeof result.valid[0].birthDate).toBe('string');
+      expect(result.valid[0].category).toBe('friends');
     });
 
-    it('should skip vCards without birthday', async () => {
+    it('should collect vCards without birthday into invalid', async () => {
       const vcard = 'BEGIN:VCARD\nFN:John Smith\nEND:VCARD';
       const file = new File([vcard], 'contacts.vcf', { type: 'text/vcard' });
 
       const result = await service.importFromVCard(file);
 
-      expect(result.length).toBe(0);
+      expect(result.valid.length).toBe(0);
     });
 
     it('should handle vCard with BDAY property syntax', async () => {
@@ -155,8 +191,8 @@ describe('BackupService', () => {
 
       const result = await service.importFromVCard(file);
 
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('Jane Doe');
+      expect(result.valid.length).toBe(1);
+      expect(result.valid[0].name).toBe('Jane Doe');
     });
 
     it('should parse multiple vCards', async () => {
@@ -165,16 +201,18 @@ describe('BackupService', () => {
 
       const result = await service.importFromVCard(file);
 
-      expect(result.length).toBe(2);
+      expect(result.valid.length).toBe(2);
     });
 
-    it('should skip vCards with invalid birthdates', async () => {
+    it('should collect vCards with invalid birthdates into invalid', async () => {
       const vcard = 'BEGIN:VCARD\nFN:Invalid\nBDAY:not-a-date\nEND:VCARD';
       const file = new File([vcard], 'contacts.vcf', { type: 'text/vcard' });
 
       const result = await service.importFromVCard(file);
 
-      expect(result.length).toBe(0);
+      expect(result.valid.length).toBe(0);
+      expect(result.invalid.length).toBe(1);
+      expect(result.invalid[0].name).toBe('Invalid');
     });
   });
 
@@ -235,11 +273,14 @@ describe('BackupService', () => {
   });
 
   describe('importFromCSV edge cases', () => {
-    it('should throw error when no valid birthdays after parsing', async () => {
+    it('should return all as invalid when no valid birthdays exist', async () => {
       const csv = 'Name,Birth Date\n,invalid-date';
       const file = new File([csv], 'test.csv', { type: 'text/csv' });
 
-      await expectAsync(service.importFromCSV(file)).toBeRejectedWithError('No valid birthdays found in CSV');
+      const result = await service.importFromCSV(file);
+
+      expect(result.valid.length).toBe(0);
+      expect(result.invalid.length).toBeGreaterThan(0);
     });
 
     it('should handle CSV with empty category fields', async () => {
@@ -248,17 +289,19 @@ describe('BackupService', () => {
 
       const result = await service.importFromCSV(file);
 
-      expect(result[0].category).toBeUndefined();
+      expect(result.valid[0].category).toBeUndefined();
     });
 
-    it('should handle invalid date strings', async () => {
+    it('should collect invalid date rows and return valid ones', async () => {
       const csv = 'Name,Birth Date,Category\nJohn,not-a-date,friends\nJane,1990-05-15,family';
       const file = new File([csv], 'test.csv', { type: 'text/csv' });
 
       const result = await service.importFromCSV(file);
 
-      expect(result.length).toBe(1);
-      expect(result[0].name).toBe('Jane');
+      expect(result.valid.length).toBe(1);
+      expect(result.valid[0].name).toBe('Jane');
+      expect(result.invalid.length).toBe(1);
+      expect(result.invalid[0].name).toBe('John');
     });
   });
 });

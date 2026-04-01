@@ -12,6 +12,11 @@ export interface BackupData {
   birthdays: Birthday[];
 }
 
+export interface ImportResult {
+  valid: Birthday[];
+  invalid: { name: string; error: string }[];
+}
+
 const BackupBirthdaySchema = BirthdaySchema.extend({
   id: z.string().optional(),
   // Accept any string here; toDateString() normalises ISO datetimes → YYYY-MM-DD after parse
@@ -62,7 +67,7 @@ export class BackupService {
     this.downloadFile(blob, `birthday-backup-${this.getDateString()}.csv`);
   }
 
-  async importFromFile(file: File): Promise<Birthday[]> {
+  async importFromFile(file: File): Promise<ImportResult> {
     const text = await file.text();
 
     let parsedData: unknown;
@@ -85,21 +90,28 @@ export class BackupService {
       throw new Error('Invalid backup file format');
     }
 
-    return validatedData.birthdays.map(b => {
+    const valid: Birthday[] = [];
+    const invalid: { name: string; error: string }[] = [];
+
+    for (const b of validatedData.birthdays) {
       const birthDate = toDateString(b.birthDate);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-        throw new Error(`Invalid date for ${b.name}`);
+        invalid.push({ name: b.name, error: `Invalid date for ${b.name}` });
+        continue;
       }
       const assembled = { ...b, birthDate, id: b.id || crypto.randomUUID() };
       const result = safeParseBirthday(assembled);
       if (!result.success) {
-        throw new Error(`Invalid birthday data for ${b.name}: ${result.error.issues[0]?.message}`);
+        invalid.push({ name: b.name, error: result.error.issues[0]?.message ?? 'Invalid data' });
+      } else {
+        valid.push(result.data);
       }
-      return result.data;
-    });
+    }
+
+    return { valid, invalid };
   }
 
-  async importFromCSV(file: File): Promise<Birthday[]> {
+  async importFromCSV(file: File): Promise<ImportResult> {
     const text = await file.text();
     const lines = text.split('\n').filter(line => line.trim());
 
@@ -107,16 +119,27 @@ export class BackupService {
       throw new Error('CSV file is empty or has no data rows');
     }
 
-    const birthdays: Birthday[] = [];
+    if (lines.length > 10_000) {
+      throw new Error('CSV file exceeds the maximum limit of 10,000 rows');
+    }
+
+    const valid: Birthday[] = [];
+    const invalid: { name: string; error: string }[] = [];
 
     for (let i = 1; i < lines.length; i++) {
       const values = this.parseCSVLine(lines[i]);
-      if (values.length < 2) continue;
+      if (values.length < 2) {
+        invalid.push({ name: `Row ${i}`, error: 'Insufficient columns' });
+        continue;
+      }
 
       const [name, dateStr, category, notes, zodiacSign] = values;
       const birthDate = this.parseDate(dateStr);
 
-      if (!name || !birthDate) continue;
+      if (!name || !birthDate) {
+        invalid.push({ name: name?.trim() || `Row ${i}`, error: !name ? 'Missing name' : 'Invalid date' });
+        continue;
+      }
 
       const candidate = sanitizeBirthdayData({
         id: crypto.randomUUID(),
@@ -129,22 +152,20 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        birthdays.push(result.data);
+        valid.push(result.data);
       } else {
+        invalid.push({ name: name.trim(), error: result.error.issues[0]?.message ?? 'Invalid data' });
         this.logger.warn(`[Import] Skipping invalid CSV row ${i}:`, result.error.issues);
       }
     }
 
-    if (birthdays.length === 0) {
-      throw new Error('No valid birthdays found in CSV');
-    }
-
-    return birthdays;
+    return { valid, invalid };
   }
 
-  async importFromVCard(file: File): Promise<Birthday[]> {
+  async importFromVCard(file: File): Promise<ImportResult> {
     const text = await file.text();
-    const birthdays: Birthday[] = [];
+    const valid: Birthday[] = [];
+    const invalid: { name: string; error: string }[] = [];
 
     const entries = text.split('BEGIN:VCARD')
       .filter(v => v.includes('FN:') && v.includes('BDAY'));
@@ -154,7 +175,10 @@ export class BackupService {
       const bday = v.match(/BDAY[;:](.+)/)?.[1].split(':').pop()?.trim();
       const birthDate = bday ? this.parseDate(bday) : null;
 
-      if (!name || !birthDate) continue;
+      if (!name || !birthDate) {
+        invalid.push({ name: name ?? 'Unknown', error: !birthDate ? 'Invalid or missing birth date' : 'Missing name' });
+        continue;
+      }
 
       const candidate = sanitizeBirthdayData({
         id: crypto.randomUUID(),
@@ -165,13 +189,14 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        birthdays.push(result.data);
+        valid.push(result.data);
       } else {
+        invalid.push({ name, error: result.error.issues[0]?.message ?? 'Invalid data' });
         this.logger.warn('[Import] Skipping invalid vCard entry:', name, result.error.issues);
       }
     }
 
-    return birthdays;
+    return { valid, invalid };
   }
 
   private parseCSVLine(line: string): string[] {
