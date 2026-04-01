@@ -136,7 +136,7 @@ describe('GoogleCalendarService', () => {
   });
 
   it('should update settings and save to localStorage', () => {
-    const newSettings = { enabled: true, calendarId: 'custom', syncMode: 'two-way' as const, reminderMinutes: 60 };
+    const newSettings = { enabled: true, calendarId: 'custom', reminderMinutes: 60 };
     service.updateSettings(newSettings);
     expect(localStorage.setItem).toHaveBeenCalledWith('googleCalendarSettings', JSON.stringify(newSettings));
   });
@@ -315,7 +315,7 @@ describe('GoogleCalendarService', () => {
       loader.isGisLoaded = true;
       auth.initTokenClient('test-client-id', 'test-scopes');
       (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
-      service.updateSettings({ enabled: true, calendarId: 'primary', syncMode: 'one-way', reminderMinutes: 1440 });
+      service.updateSettings({ enabled: true, calendarId: 'primary', reminderMinutes: 1440 });
 
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
@@ -367,7 +367,7 @@ describe('GoogleCalendarService', () => {
     });
 
     it('should throw error when syncing birthday while not enabled', async () => {
-      service.updateSettings({ enabled: false, calendarId: 'primary', syncMode: 'one-way', reminderMinutes: 1440 });
+      service.updateSettings({ enabled: false, calendarId: 'primary', reminderMinutes: 1440 });
       const birthday = {
         id: '1',
         name: 'John Doe',
@@ -412,7 +412,7 @@ describe('GoogleCalendarService', () => {
     });
 
     it('should not delete birthday when not enabled', async () => {
-      service.updateSettings({ enabled: false, calendarId: 'primary', syncMode: 'one-way', reminderMinutes: 1440 });
+      service.updateSettings({ enabled: false, calendarId: 'primary', reminderMinutes: 1440 });
       await service.deleteBirthdayFromCalendar('event789');
       expect(window.gapi?.client.calendar.events.delete).not.toHaveBeenCalled();
     });

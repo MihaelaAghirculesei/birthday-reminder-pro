@@ -19,7 +19,6 @@ declare const gapi: Gapi;
 export interface GoogleCalendarSettings {
   enabled: boolean;
   calendarId: string;
-  syncMode: 'one-way' | 'two-way';
   reminderMinutes: number;
 }
 
@@ -65,7 +64,6 @@ export class GoogleCalendarService {
   private readonly settingsSubject = new BehaviorSubject<GoogleCalendarSettings>({
     enabled: false,
     calendarId: 'primary',
-    syncMode: 'one-way',
     reminderMinutes: 1440
   });
 

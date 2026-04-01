@@ -12,7 +12,6 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
 interface GoogleCalendarSettings {
   enabled: boolean;
   calendarId: string;
-  syncMode: string;
   reminderMinutes: number;
 }
 
@@ -45,7 +44,6 @@ describe('GoogleCalendarSyncComponent', () => {
   const mockSettings = {
     enabled: false,
     calendarId: 'primary',
-    syncMode: 'one-way',
     reminderMinutes: 1440
   };
 
@@ -113,7 +111,6 @@ describe('GoogleCalendarSyncComponent', () => {
       expect(component.settingsForm.value).toEqual({
         enabled: false,
         calendarId: 'primary',
-        syncMode: 'one-way',
         reminderMinutes: 1440
       });
     });
@@ -138,7 +135,6 @@ describe('GoogleCalendarSyncComponent', () => {
       const newSettings = {
         enabled: true,
         calendarId: 'calendar1',
-        syncMode: 'two-way',
         reminderMinutes: 2880
       };
 

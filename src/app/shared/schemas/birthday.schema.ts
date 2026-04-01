@@ -89,7 +89,6 @@ export function safeParseScheduledMessage(data: unknown) {
 export const GoogleCalendarSettingsSchema = z.object({
   enabled: z.boolean(),
   calendarId: z.string(),
-  syncMode: z.enum(['one-way', 'two-way']),
   reminderMinutes: z.number()
 });
 

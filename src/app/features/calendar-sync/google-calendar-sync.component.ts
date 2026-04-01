@@ -84,15 +84,6 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
                     <mat-icon matSuffix>calendar_today</mat-icon>
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>{{ 'GOOGLE_CALENDAR_SYNC.SYNC_MODE_LABEL' | translate }}</mat-label>
-                    <mat-select formControlName="syncMode">
-                      <mat-option value="one-way">{{ 'GOOGLE_CALENDAR_SYNC.SYNC_ONE_WAY' | translate }}</mat-option>
-                      <mat-option value="two-way">{{ 'GOOGLE_CALENDAR_SYNC.SYNC_TWO_WAY' | translate }}</mat-option>
-                    </mat-select>
-                    <mat-hint>{{ 'GOOGLE_CALENDAR_SYNC.SYNC_MODE_HINT' | translate }}</mat-hint>
-                    <mat-icon matSuffix>sync</mat-icon>
-                  </mat-form-field>
-                  <mat-form-field appearance="outline" class="full-width">
                     <mat-label>{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_TIME_LABEL' | translate }}</mat-label>
                     <mat-select formControlName="reminderMinutes">
                       <mat-option [value]="60">{{ 'GOOGLE_CALENDAR_SYNC.REMINDER_1H' | translate }}</mat-option>
@@ -400,7 +391,6 @@ export class GoogleCalendarSyncComponent implements OnInit {
     this.settingsForm = this.fb.group({
       enabled: [false],
       calendarId: ['primary'],
-      syncMode: ['one-way'],
       reminderMinutes: [1440]
     });
   }
