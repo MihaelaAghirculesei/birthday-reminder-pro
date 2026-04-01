@@ -82,6 +82,23 @@ describe('PhotoStorageService', () => {
   // ─── uploadPhoto ──────────────────────────────────────────────────────────
 
   describe('uploadPhoto', () => {
+    it('rejects immediately when file exceeds 7 MB', async () => {
+      const { service } = setup();
+      const bigFile = new File(['x'], 'big.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(bigFile, 'size', { value: 7 * 1024 * 1024 + 1 });
+
+      await expectAsync(service.uploadPhoto(bigFile, 'uid', 'photo'))
+        .toBeRejectedWithError(/7 MB/);
+    });
+
+    it('accepts a file exactly at the 7 MB boundary', async () => {
+      const { service } = setup(); // no Firebase → base64 fallback
+      const boundaryFile = new File(['x'], 'ok.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(boundaryFile, 'size', { value: 7 * 1024 * 1024 });
+
+      await expectAsync(service.uploadPhoto(boundaryFile, 'uid', 'photo')).toBeResolved();
+    });
+
     it('falls back to base64 on server platform (SSR)', async () => {
       const { service } = setup({ platform: 'server' });
       const result = await service.uploadPhoto(makeFile(), 'uid', 'photo');

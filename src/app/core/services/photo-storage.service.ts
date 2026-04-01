@@ -34,17 +34,36 @@ export class PhotoStorageService {
 
   // ─── Upload ───────────────────────────────────────────────────────────────
 
+  private static readonly MAX_FILE_BYTES = 7 * 1024 * 1024; // matches Zod schema limit
+
+  /**
+   * Validates a file before upload. Throws immediately if the file exceeds
+   * the maximum allowed size, providing instant client-side feedback
+   * without starting any network operation.
+   */
+  private validatePhoto(file: File): void {
+    if (file.size > PhotoStorageService.MAX_FILE_BYTES) {
+      throw new Error(
+        `Photo exceeds maximum allowed size of 7 MB (file: ${file.size} bytes)`
+      );
+    }
+  }
+
   /**
    * Uploads a photo to Firebase Storage and returns the CDN download URL.
    * Falls back to a base64 data URL when running on the server (SSR),
    * when Firebase is not configured, or when the upload fails.
    * Shows a warning notification when falling back due to an upload error.
+   * Throws synchronously for invalid files (e.g. size > 7 MB) before any
+   * network operation is attempted.
    */
   async uploadPhoto(
     file: File,
     userId: string,
     type: 'photo' | 'rememberPhoto'
   ): Promise<string> {
+    this.validatePhoto(file);
+
     if (this.isServer || !checkFirebaseOptions(this.firebaseOptions)) {
       return this.fileToBase64(file);
     }
