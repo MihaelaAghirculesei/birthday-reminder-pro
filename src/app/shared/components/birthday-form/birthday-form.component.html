@@ -9,6 +9,7 @@
     <mat-label>{{ 'BIRTHDAY_FORM.NAME_LABEL' | translate }}</mat-label>
     <input matInput formControlName="name" [placeholder]="'BIRTHDAY_FORM.NAME_PLACEHOLDER' | translate" data-testid="birthday-name-input" maxlength="50">
     <mat-icon matSuffix>person</mat-icon>
+    <mat-hint align="end">{{ birthdayForm.get('name')?.value?.length || 0 }} / 50</mat-hint>
     @if (birthdayForm.get('name')?.hasError('minlength')) {
       <mat-error>{{ 'BIRTHDAY_FORM.NAME_ERROR_MIN' | translate }}</mat-error>
     }
@@ -50,6 +51,12 @@
     <input matInput type="number" formControlName="reminderDays" min="1" max="365" data-testid="reminder-days-input">
     <mat-hint>{{ 'BIRTHDAY_FORM.REMINDER_DAYS_HINT' | translate }}</mat-hint>
     <mat-icon matSuffix>notifications</mat-icon>
+    @if (birthdayForm.get('reminderDays')?.hasError('min')) {
+      <mat-error>{{ 'BIRTHDAY_FORM.REMINDER_DAYS_ERROR_MIN' | translate }}</mat-error>
+    }
+    @if (birthdayForm.get('reminderDays')?.hasError('max')) {
+      <mat-error>{{ 'BIRTHDAY_FORM.REMINDER_DAYS_ERROR_MAX' | translate }}</mat-error>
+    }
   </mat-form-field>
   <div class="form-actions">
     <button
