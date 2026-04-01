@@ -54,7 +54,9 @@ export const it = {
     NOTES_LABEL: 'Note (opzionale)',
     NOTES_PLACEHOLDER: 'ex. Regalo: libro di cucina',
     REMINDER_DAYS_LABEL: 'Giorni di Promemoria',
-    REMINDER_DAYS_HINT: 'Quanti giorni prima vuoi essere avvisato?',
+    REMINDER_DAYS_HINT: 'Quanti giorni prima? (1–365)',
+    REMINDER_DAYS_ERROR_MIN: 'Minimo 1 giorno',
+    REMINDER_DAYS_ERROR_MAX: 'Massimo 365 giorni',
     ADD_BUTTON: 'Aggiungi Compleanno'
   },
   BIRTHDAY_LIST: {
@@ -365,10 +367,6 @@ export const it = {
     ENABLE_AUTO_SYNC: 'Abilita sincronizzazione automatica',
     TARGET_CALENDAR_LABEL: 'Calendario di Destinazione',
     PRIMARY_CALENDAR: 'Calendario Principale',
-    SYNC_MODE_LABEL: 'Modalità di Sincronizzazione',
-    SYNC_ONE_WAY: 'Unidirezionale (App → Calendario)',
-    SYNC_TWO_WAY: 'Bidirezionale',
-    SYNC_MODE_HINT: 'Unidirezionale: sincronizza solo dall\'app al calendario. Bidirezionale: sincronizza le modifiche in entrambe le direzioni.',
     REMINDER_TIME_LABEL: 'Promemoria',
     REMINDER_1H: '1 ora prima',
     REMINDER_6H: '6 ore prima',

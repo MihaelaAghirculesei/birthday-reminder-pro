@@ -40,7 +40,8 @@ export const en = {
     INVALID_JSON: 'Invalid backup file',
     INVALID_CSV: 'Invalid CSV file',
     INVALID_VCARD: 'Invalid vCard file',
-    IMPORTED: 'Imported {{count}} birthdays'
+    IMPORTED: 'Imported {{count}} birthdays',
+    IMPORTED_WITH_SKIPPED: 'Imported {{count}} birthdays ({{skipped}} skipped)'
   },
   BIRTHDAY_FORM: {
     NAME_LABEL: 'Name',
@@ -54,7 +55,9 @@ export const en = {
     NOTES_LABEL: 'Notes (optional)',
     NOTES_PLACEHOLDER: 'e.g. Gift: cooking book',
     REMINDER_DAYS_LABEL: 'Reminder Days',
-    REMINDER_DAYS_HINT: 'How many days before do you want to be reminded?',
+    REMINDER_DAYS_HINT: 'How many days before? (1–365)',
+    REMINDER_DAYS_ERROR_MIN: 'Minimum 1 day',
+    REMINDER_DAYS_ERROR_MAX: 'Maximum 365 days',
     ADD_BUTTON: 'Add Birthday'
   },
   BIRTHDAY_LIST: {
@@ -365,10 +368,6 @@ export const en = {
     ENABLE_AUTO_SYNC: 'Enable automatic sync',
     TARGET_CALENDAR_LABEL: 'Target Calendar',
     PRIMARY_CALENDAR: 'Primary Calendar',
-    SYNC_MODE_LABEL: 'Sync Mode',
-    SYNC_ONE_WAY: 'One-way (App → Calendar)',
-    SYNC_TWO_WAY: 'Two-way (Bidirectional)',
-    SYNC_MODE_HINT: 'One-way: Only sync from app to calendar. Two-way: Sync changes in both directions.',
     REMINDER_TIME_LABEL: 'Reminder Time',
     REMINDER_1H: '1 hour before',
     REMINDER_6H: '6 hours before',
