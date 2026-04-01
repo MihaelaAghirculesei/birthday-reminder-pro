@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday } from '../../../../../shared';
-import { BackupService, NotificationService, LoggerService } from '../../../../../core';
+import { BackupService, NotificationService, LoggerService, ImportResult } from '../../../../../core';
 
 @Component({
     selector: 'app-birthday-import-export',
@@ -50,16 +50,22 @@ export class BirthdayImportExportComponent {
   onImportCSV(event: Event): Promise<void> { return this.handleImport(event, f => this.backupService.importFromCSV(f), ' from CSV', 'Invalid CSV file'); }
   onImportVCard(event: Event): Promise<void> { return this.handleImport(event, f => this.backupService.importFromVCard(f), ' from vCard', 'Invalid vCard file'); }
 
-  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, suffix: string, errorMsg: string): Promise<void> {
+  private async handleImport(event: Event, importer: (f: File) => Promise<ImportResult>, suffix: string, errorMsg: string): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
 
     this.isImporting.set(true);
     try {
-      const birthdays = await importer(file);
-      this.birthdaysImported.emit(birthdays);
-      this.notificationService.show(`Imported ${birthdays.length} birthdays${suffix}`, 'success');
+      const { valid, invalid } = await importer(file);
+      this.birthdaysImported.emit(valid);
+      if (valid.length === 0) {
+        this.notificationService.show(errorMsg, 'error');
+      } else if (invalid.length > 0) {
+        this.notificationService.show(`Imported ${valid.length} birthdays${suffix} (${invalid.length} skipped)`, 'warning');
+      } else {
+        this.notificationService.show(`Imported ${valid.length} birthdays${suffix}`, 'success');
+      }
     } catch (error) {
       this.logger.error('Import failed:', error);
       this.notificationService.show(errorMsg, 'error');

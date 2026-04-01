@@ -127,7 +127,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should import birthdays from JSON and emit event', async () => {
-      backupServiceSpy.importFromFile.and.returnValue(Promise.resolve(mockBirthdays));
+      backupServiceSpy.importFromFile.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
       spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportBackup(mockEvent as unknown as Event);
@@ -143,7 +143,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should import birthdays from CSV and emit event', async () => {
-      backupServiceSpy.importFromCSV.and.returnValue(Promise.resolve(mockBirthdays));
+      backupServiceSpy.importFromCSV.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
       spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportCSV(mockEvent as unknown as Event);
@@ -159,7 +159,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should import birthdays from vCard and emit event', async () => {
-      backupServiceSpy.importFromVCard.and.returnValue(Promise.resolve(mockBirthdays));
+      backupServiceSpy.importFromVCard.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
       spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportVCard(mockEvent as unknown as Event);
@@ -174,9 +174,37 @@ describe('BirthdayImportExportComponent', () => {
       expect(mockInput.value).toBe('');
     });
 
+    it('should show warning and emit valid birthdays when some are skipped', async () => {
+      const validBirthdays = [mockBirthdays[0]];
+      backupServiceSpy.importFromFile.and.returnValue(
+        Promise.resolve({ valid: validBirthdays, invalid: [{ name: 'Bad', error: 'Invalid date' }] })
+      );
+      spyOn(component.birthdaysImported, 'emit');
+
+      await component.onImportBackup(mockEvent as unknown as Event);
+
+      expect(component.birthdaysImported.emit).toHaveBeenCalledWith(validBirthdays);
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
+        'Imported 1 birthdays (1 skipped)',
+        'warning'
+      );
+    });
+
+    it('should show error and emit empty array when all birthdays are invalid', async () => {
+      backupServiceSpy.importFromFile.and.returnValue(
+        Promise.resolve({ valid: [], invalid: [{ name: 'Bad', error: 'Invalid date' }] })
+      );
+      spyOn(component.birthdaysImported, 'emit');
+
+      await component.onImportBackup(mockEvent as unknown as Event);
+
+      expect(component.birthdaysImported.emit).toHaveBeenCalledWith([]);
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Invalid backup file', 'error');
+    });
+
     it('should set isImporting to true during JSON import', async () => {
       backupServiceSpy.importFromFile.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve(mockBirthdays), 100))
+        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
       );
 
       const importPromise = component.onImportBackup(mockEvent as unknown as Event);
@@ -188,7 +216,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should set isImporting to true during CSV import', async () => {
       backupServiceSpy.importFromCSV.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve(mockBirthdays), 100))
+        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
       );
 
       const importPromise = component.onImportCSV(mockEvent as unknown as Event);
@@ -200,7 +228,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should set isImporting to true during vCard import', async () => {
       backupServiceSpy.importFromVCard.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve(mockBirthdays), 100))
+        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
       );
 
       const importPromise = component.onImportVCard(mockEvent as unknown as Event);

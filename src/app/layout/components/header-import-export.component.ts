@@ -6,7 +6,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../core';
-import { BackupService } from '../../core/services/backup.service';
+import { BackupService, ImportResult } from '../../core/services/backup.service';
 import { Birthday } from '../../shared/models';
 import { AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
@@ -82,18 +82,24 @@ export class HeaderImportExportComponent {
     this.notificationService.show(this.translate.instant(successKey), 'success');
   }
 
-  private async handleImport(event: Event, importer: (f: File) => Promise<Birthday[]>, errorKey: string): Promise<void> {
+  private async handleImport(event: Event, importer: (f: File) => Promise<ImportResult>, errorKey: string): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     try {
-      const birthdays = await importer(file);
-      for (const birthday of birthdays) {
-        this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
+      const { valid, invalid } = await importer(file);
+      if (valid.length === 0) {
+        this.notificationService.show(this.translate.instant(errorKey), 'error');
+      } else {
+        for (const birthday of valid) {
+          this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
+        }
+        const msgKey = invalid.length > 0 ? 'IMPORT_EXPORT.IMPORTED_WITH_SKIPPED' : 'IMPORT_EXPORT.IMPORTED';
+        const severity = invalid.length > 0 ? 'warning' : 'success';
+        this.notificationService.show(
+          this.translate.instant(msgKey, { count: valid.length, skipped: invalid.length }),
+          severity
+        );
       }
-      this.notificationService.show(
-        this.translate.instant('IMPORT_EXPORT.IMPORTED', { count: birthdays.length }),
-        'success'
-      );
     } catch {
       this.notificationService.show(this.translate.instant(errorKey), 'error');
     }
