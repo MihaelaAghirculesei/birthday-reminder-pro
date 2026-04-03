@@ -53,11 +53,12 @@ describe('Backup Flow Integration', () => {
       const file = new File([exportedContent], 'backup.json', { type: 'application/json' });
       const imported = await backupService.importFromFile(file);
 
-      expect(imported.length).toBe(2);
-      expect(imported[0].name).toBe('Alice Johnson');
-      expect(typeof imported[0].birthDate).toBe('string');
-      expect(imported[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(imported[1].name).toBe('Bob Smith');
+      expect(imported.valid.length).toBe(2);
+      expect(imported.invalid.length).toBe(0);
+      expect(imported.valid[0].name).toBe('Alice Johnson');
+      expect(typeof imported.valid[0].birthDate).toBe('string');
+      expect(imported.valid[0].birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(imported.valid[1].name).toBe('Bob Smith');
     });
 
     it('should reject invalid JSON structure', async () => {
@@ -112,10 +113,10 @@ Bob Smith,1985-12-25,friends,Birthday on Christmas,Capricorn`;
       const file = new File([csvContent], 'birthdays.csv', { type: 'text/csv' });
       const imported = await backupService.importFromCSV(file);
 
-      expect(imported.length).toBe(2);
-      expect(imported[0].name).toBe('Alice Johnson');
-      expect(imported[0].category).toBe('family');
-      expect(imported[1].name).toBe('Bob Smith');
+      expect(imported.valid.length).toBe(2);
+      expect(imported.valid[0].name).toBe('Alice Johnson');
+      expect(imported.valid[0].category).toBe('family');
+      expect(imported.valid[1].name).toBe('Bob Smith');
     });
 
     it('should handle CSV with quoted fields', async () => {
@@ -125,8 +126,8 @@ Bob Smith,1985-12-25,friends,Birthday on Christmas,Capricorn`;
       const file = new File([csvContent], 'quoted.csv', { type: 'text/csv' });
       const imported = await backupService.importFromCSV(file);
 
-      expect(imported[0].name).toBe('Smith, John');
-      expect(imported[0].notes).toBe('Note with, comma');
+      expect(imported.valid[0].name).toBe('Smith, John');
+      expect(imported.valid[0].notes).toBe('Note with, comma');
     });
 
     it('should reject empty CSV', async () => {
@@ -153,9 +154,9 @@ END:VCARD`;
       const file = new File([vcardContent], 'contacts.vcf', { type: 'text/vcard' });
       const imported = await backupService.importFromVCard(file);
 
-      expect(imported.length).toBe(2);
-      expect(imported[0].name).toBe('Alice Johnson');
-      expect(imported[1].name).toBe('Bob Smith');
+      expect(imported.valid.length).toBe(2);
+      expect(imported.valid[0].name).toBe('Alice Johnson');
+      expect(imported.valid[1].name).toBe('Bob Smith');
     });
 
     it('should skip VCard entries without birthday', async () => {
@@ -170,8 +171,8 @@ END:VCARD`;
       const file = new File([vcardContent], 'contacts.vcf', { type: 'text/vcard' });
       const imported = await backupService.importFromVCard(file);
 
-      expect(imported.length).toBe(1);
-      expect(imported[0].name).toBe('Has Birthday');
+      expect(imported.valid.length).toBe(1);
+      expect(imported.valid[0].name).toBe('Has Birthday');
     });
   });
 });

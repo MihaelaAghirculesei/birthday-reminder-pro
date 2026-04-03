@@ -133,7 +133,7 @@ jobs:
           jq -r '
             .total |
             "Statements: \(.statements.pct)%  (min 90%)",
-            "Branches:   \(.branches.pct)%  (min 83%)",
+            "Branches:   \(.branches.pct)%  (min 84%)",
             "Functions:  \(.functions.pct)%  (min 90%)",
             "Lines:      \(.lines.pct)%  (min 91%)"
           ' "$SUMMARY"
@@ -141,7 +141,7 @@ jobs:
           BELOW=$(jq -r '
             .total |
             (if .statements.pct < 90 then "statements \(.statements.pct)% < 90%" else empty end),
-            (if .branches.pct   < 83 then "branches \(.branches.pct)% < 83%"     else empty end),
+            (if .branches.pct   < 84 then "branches \(.branches.pct)% < 84%"     else empty end),
             (if .functions.pct  < 90 then "functions \(.functions.pct)% < 90%"   else empty end),
             (if .lines.pct      < 91 then "lines \(.lines.pct)% < 91%"           else empty end)
           ' "$SUMMARY")
