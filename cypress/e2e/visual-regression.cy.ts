@@ -114,7 +114,7 @@ describe('Visual Regression — Add birthday form', () => {
   it('form · validation errors visible', () => {
     // Trigger required-field validation by submitting without filling fields
     cy.expandBirthdayForm();
-    cy.get('[data-testid="save-birthday-button"]').click({ force: true });
+    cy.get('#add-birthday-form .submit-button').click({ force: true });
     // Wait for Angular to render error messages
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(300);

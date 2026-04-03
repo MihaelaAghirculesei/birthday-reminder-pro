@@ -63,6 +63,9 @@ describe('Accessibility — dashboard with data', () => {
     cy.clearLocalStorage();
     cy.clearCookies();
     cy.clearIndexedDB();
+    // Must be called before cy.visit() — stubs IntersectionObserver so
+    // Angular's @defer(on viewport) fires immediately in headless mode.
+    cy.mockDeferViewport();
     cy.visit('/');
     cy.waitForAngular();
     cy.seedVisualTestData();
@@ -78,35 +81,12 @@ describe('Accessibility — dashboard with data', () => {
     checkA11yStrict();
   });
 
-  it('birthday chart: visual bars have aria-hidden, wrapper has accessible label', () => {
-    // The chart uses Angular @defer(on viewport).
-    // In headless Cypress the IntersectionObserver may not fire for programmatic
-    // scrolls — so we try to trigger it, then conditionally check the DOM.
-    cy.get('.chart-placeholder', { timeout: 10000 })
-      .scrollIntoView()
-      .should('be.visible');
-    // Give the IntersectionObserver and Angular defer time to react
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(2000);
-
-    cy.get('body').then(($body) => {
-      const chart = $body.find('app-birthday-chart');
-      if (chart.length === 0) {
-        // Chart did not render in headless mode (IntersectionObserver limitation).
-        // Verify instead that the placeholder is accessible.
-        cy.get('.chart-placeholder').should('exist');
-        cy.log('NOTE: app-birthday-chart not rendered in headless mode — ARIA bar check skipped. Verify manually.');
-        return;
-      }
-
-      // Chart rendered: check that visual bars are aria-hidden
-      const bars = $body.find('app-birthday-chart svg rect, app-birthday-chart .bar');
-      if (bars.length > 0) {
-        bars.each((_, el) => {
-          expect(el.getAttribute('aria-hidden')).to.equal('true');
-        });
-      }
-    });
+  it('birthday chart: visual container is aria-hidden, figure has accessible label', () => {
+    cy.get('app-birthday-chart', { timeout: 8000 }).should('exist');
+    cy.get('app-birthday-chart .chart-container')
+      .should('have.attr', 'aria-hidden', 'true');
+    cy.get('app-birthday-chart figure.chart-figure')
+      .should('have.attr', 'aria-label');
   });
 });
 
