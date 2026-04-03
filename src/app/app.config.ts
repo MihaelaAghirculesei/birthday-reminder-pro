@@ -1,4 +1,5 @@
-import { ApplicationConfig, isDevMode, ErrorHandler, APP_INITIALIZER, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, isDevMode, ErrorHandler, APP_INITIALIZER, importProvidersFrom, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { provideRouter, withPreloading } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
@@ -11,7 +12,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
 import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
-import { provideServiceWorker } from '@angular/service-worker';
+import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
 import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
 import { categoryReducer } from './core/store/category/category.reducer';
@@ -42,6 +43,29 @@ function initializeApp(
     } catch (error) {
       logger.error('[App] Initialization error (app will continue in offline mode):', error);
     }
+  };
+}
+
+export function initSwErrorLogging(
+  swUpdate: SwUpdate,
+  logger: LoggerService,
+  platformId: object,
+  devMode: boolean = isDevMode()
+): () => void {
+  return () => {
+    // Log unrecoverable SW state at runtime (broken cache, version mismatch, etc.)
+    swUpdate.unrecoverable.subscribe(({ reason }) => {
+      logger.error('[SW] Unrecoverable state — reload required:', reason);
+    });
+
+    if (!isPlatformBrowser(platformId) || !navigator.serviceWorker || devMode) return;
+
+    // Detect registration failures: navigator.serviceWorker.register() is idempotent —
+    // the browser returns the existing registration if already registered, so calling
+    // it here alongside Angular's deferred registration is safe.
+    navigator.serviceWorker.register('ngsw-worker.js').catch((error: unknown) => {
+      logger.error('[SW] Registration failed:', error);
+    });
   };
 }
 
@@ -84,6 +108,12 @@ export const appConfig: ApplicationConfig = {
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
-    })
+    }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initSwErrorLogging,
+      deps: [SwUpdate, LoggerService, PLATFORM_ID],
+      multi: true
+    }
   ]
 };
