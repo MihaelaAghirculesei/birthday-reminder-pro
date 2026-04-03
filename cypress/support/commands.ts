@@ -47,6 +47,19 @@ declare namespace Cypress {
      * Screenshots are saved to cypress/screenshots/ (gitignored).
      */
     visualSnapshot(name: string): Chainable<void>;
+
+    /**
+     * Patches window.IntersectionObserver BEFORE the page loads so that Angular
+     * `@defer(on viewport)` blocks render immediately in headless/CI mode.
+     *
+     * MUST be called before cy.visit(). The stub fires isIntersecting:true
+     * synchronously for every observed element, bypassing the real layout engine.
+     *
+     * Use only when the test needs to assert on fully-rendered deferred content
+     * (e.g. app-birthday-chart). Do NOT use in tests that verify the deferred /
+     * lazy-rendering behaviour itself.
+     */
+    mockDeferViewport(): Chainable<void>;
   }
 }
 
@@ -258,6 +271,25 @@ Cypress.Commands.add('disableAnimations', () => {
     ].join('\n');
     doc.head.appendChild(style);
   });
+});
+
+/**
+ * No-op stub kept for backward compatibility.
+ *
+ * IntersectionObserver is now stubbed globally in cypress/support/e2e.ts via
+ * Cypress.on('window:before:load', …), which fires for EVERY page load
+ * (cy.visit, cy.reload, nested reloads inside custom commands) in every test.
+ *
+ * The previous cy.on() approach placed here was scoped to the test chain and
+ * did not reliably re-fire for cy.reload() called from within a nested custom
+ * command (seedVisualTestData), leaving the chart placeholder visible in
+ * headless mode. Moving the stub to Cypress.on() in e2e.ts fixed this.
+ *
+ * Tests that call cy.mockDeferViewport() do not need to be changed — the
+ * global stub is already active before cy.visit() or cy.reload() runs.
+ */
+Cypress.Commands.add('mockDeferViewport', () => {
+  // Global IO stub is active via Cypress.on() in e2e.ts — nothing to do here.
 });
 
 Cypress.Commands.add('visualSnapshot', (name: string) => {
