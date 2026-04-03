@@ -80,7 +80,15 @@ export function app(): express.Express {
         );
 
         const firebaseConfigured = checkFirebaseOptions(environment.firebase);
-        res.setHeader('Content-Security-Policy', [
+
+        // In non-production (staging/dev) use Report-Only mode so GIS violations
+        // are surfaced in the browser console and network tab before enforcing in prod.
+        // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy-Report-Only
+        const cspHeader = environment.production
+          ? 'Content-Security-Policy'
+          : 'Content-Security-Policy-Report-Only';
+
+        const cspDirectives = [
           `default-src 'self'`,
           `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://accounts.google.com https://*.gstatic.com`,
           `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
@@ -99,11 +107,14 @@ export function app(): express.Express {
             `https://lh3.googleusercontent.com`,
             ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
           ].join(' '),
-          `frame-src 'self' https://accounts.google.com${firebaseConfigured ? ` https://${environment.firebase.authDomain}` : ''}`,
+          // https://www.google.com is required for GIS One Tap / FedCM iframe
+          `frame-src 'self' https://accounts.google.com https://www.google.com${firebaseConfigured ? ` https://${environment.firebase.authDomain}` : ''}`,
           `object-src 'none'`,
           `base-uri 'self'`,
           `form-action 'self' https://accounts.google.com`,
-        ].join('; '));
+        ].join('; ');
+
+        res.setHeader(cspHeader, cspDirectives);
 
         res.send(html);
       })
