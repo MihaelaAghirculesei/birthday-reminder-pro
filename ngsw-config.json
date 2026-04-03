@@ -24,12 +24,6 @@
           "/assets/**",
           "/media/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
-      },
-      "cacheConfig": {
-        "maxSize": 100,
-        "maxAge": "7d",
-        "timeout": "10s",
-        "strategy": "performance"
       }
     },
     {
@@ -41,11 +35,6 @@
           "https://fonts.googleapis.com/**",
           "https://fonts.gstatic.com/**"
         ]
-      },
-      "cacheConfig": {
-        "maxSize": 30,
-        "maxAge": "365d",
-        "strategy": "performance"
       }
     }
   ],
