@@ -417,6 +417,68 @@ describe('MessageSchedulerComponent', () => {
     });
   });
 
+  describe('markAsSent', () => {
+    it('should dispatch updateMessageInBirthday with lastSentDate and sentCount=1 when never sent', () => {
+      component.birthday = mockBirthday;
+      spyOn(store, 'dispatch');
+
+      component.markAsSent(mockMessage);
+
+      expect(store.dispatch).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: '[Birthday] Update Message In Birthday',
+          birthdayId: mockBirthday.id,
+          messageId: mockMessage.id,
+          updates: jasmine.objectContaining({ sentCount: 1 })
+        })
+      );
+    });
+
+    it('should increment sentCount when message was already sent', () => {
+      component.birthday = mockBirthday;
+      spyOn(store, 'dispatch');
+      const alreadySent: ScheduledMessage = { ...mockMessage, sentCount: 3, lastSentDate: new Date() };
+
+      component.markAsSent(alreadySent);
+
+      expect(store.dispatch).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          updates: jasmine.objectContaining({ sentCount: 4 })
+        })
+      );
+    });
+
+    it('should set lastSentDate to a Date instance', () => {
+      component.birthday = mockBirthday;
+      spyOn(store, 'dispatch');
+
+      component.markAsSent(mockMessage);
+
+      const call = (store.dispatch as jasmine.Spy).calls.mostRecent().args[0] as { updates: Partial<ScheduledMessage> };
+      expect(call.updates.lastSentDate).toBeInstanceOf(Date);
+    });
+
+    it('should show success notification', () => {
+      component.birthday = mockBirthday;
+
+      component.markAsSent(mockMessage);
+
+      expect(notificationServiceMock.show).toHaveBeenCalledWith(
+        jasmine.any(String), 'success'
+      );
+    });
+
+    it('should not dispatch when birthday is null', () => {
+      component.birthday = null;
+      spyOn(store, 'dispatch');
+
+      component.markAsSent(mockMessage);
+
+      expect(store.dispatch).not.toHaveBeenCalled();
+      expect(notificationServiceMock.show).not.toHaveBeenCalled();
+    });
+  });
+
   describe('hasAnyContact', () => {
     it('should return false when birthday is null', () => {
       component.birthday = null;
