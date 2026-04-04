@@ -152,6 +152,15 @@
                       {{ message.priority }}
                     </span>
                     <span class="time-badge">{{ message.scheduledTime }}</span>
+                    @if (message.formattedLastSentDate) {
+                      <span
+                        class="sent-badge"
+                        [matTooltip]="('MESSAGE_SCHEDULER.SENT_TOOLTIP' | translate) + ' ' + message.formattedLastSentDate"
+                        >
+                        <mat-icon>check_circle</mat-icon>
+                        {{ 'MESSAGE_SCHEDULER.SENT_BADGE' | translate }}
+                      </span>
+                    }
                     <mat-icon
                       class="status-icon"
                       [class.active]="message.active"
@@ -206,10 +215,19 @@
                     [title]="('MESSAGE_SCHEDULER.SEND_VIA' | translate: {label: link.label})"
                     [attr.aria-label]="('MESSAGE_SCHEDULER.SEND_VIA' | translate: {label: link.label})"
                     [style.color]="link.color"
+                    (click)="markAsSent(message)"
                     >
                     <mat-icon>{{ link.icon }}</mat-icon>
                   </a>
                 }
+                <button
+                  mat-icon-button
+                  (click)="markAsSent(message)"
+                  [title]="(message.lastSentDate ? 'MESSAGE_SCHEDULER.RESEND_BTN' : 'MESSAGE_SCHEDULER.MARK_SENT_BTN') | translate"
+                  [attr.aria-label]="((message.lastSentDate ? 'MESSAGE_SCHEDULER.RESEND_BTN' : 'MESSAGE_SCHEDULER.MARK_SENT_BTN') | translate) + ': ' + message.title"
+                  >
+                  <mat-icon>{{ message.lastSentDate ? 'replay' : 'mark_email_read' }}</mat-icon>
+                </button>
                 <button
                   mat-icon-button
                   (click)="deleteMessage(message)"

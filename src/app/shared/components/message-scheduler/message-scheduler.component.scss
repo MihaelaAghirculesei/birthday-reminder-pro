@@ -221,6 +221,24 @@
             font-weight: bold;
           }
 
+          .sent-badge {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success-color);
+
+            mat-icon {
+              font-size: 13px;
+              width: 13px;
+              height: 13px;
+            }
+          }
+
           .status-icon {
             font-size: 20px;
             color: var(--scheduler-muted);

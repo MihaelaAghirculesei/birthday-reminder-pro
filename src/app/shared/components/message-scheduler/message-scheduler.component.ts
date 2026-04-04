@@ -210,6 +210,19 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     }
   }
 
+  markAsSent(message: ScheduledMessage): void {
+    if (!this.birthday) return;
+    this.store.dispatch(BirthdayActions.updateMessageInBirthday({
+      birthdayId: this.birthday.id,
+      messageId: message.id,
+      updates: {
+        lastSentDate: new Date(),
+        sentCount: (message.sentCount ?? 0) + 1
+      }
+    }));
+    this.notificationService.show(this.translate.instant('MESSAGE_SCHEDULER.MESSAGE_SENT'), 'success');
+  }
+
   deleteMessage(message: ScheduledMessage): void {
     if (!this.birthday) return;
 
