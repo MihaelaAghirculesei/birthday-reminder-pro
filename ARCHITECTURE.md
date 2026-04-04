@@ -19,6 +19,7 @@
 10. [SSR Considerations](#10-ssr-considerations)
 11. [Bootstrap Sequence](#11-bootstrap-sequence)
 12. [Key Design Decisions (ADRs)](#12-key-design-decisions-adrs)
+13. [Error Flow](#13-error-flow)
 
 ---
 
@@ -459,3 +460,119 @@ Cypress tests must call `cy.waitForAngular()` after `cy.visit('/')` to wait for 
 **Decision**: Angular 19 standalone components throughout; `inject()` for DI in constructors.
 **Why**: Simpler mental model, tree-shakeable, no module boilerplate.
 **Trade-off**: Some testing patterns differ (no `TestBed` module imports needed, but `inject()` requires Angular DI context).
+
+---
+
+## 13. Error Flow
+
+All errors follow a single canonical path: **Service → Effect → Action → Reducer → Notification**.
+No service or component handles errors in isolation; they surface through the store so the UI always reflects the real state.
+
+### Standard error pipeline
+
+```
+Service throws / Observable errors
+  │
+  ▼
+Effect (catchError)
+  ├─► logs via LoggerService
+  └─► dispatches *Failure action   e.g. addBirthdayFailure({ error: err.message })
+        │
+        ▼
+      Reducer
+        ├─► sets state.error = action.error
+        ├─► sets state.loading = false
+        └─► (if optimistic update) restores entity from state.optimisticBackup
+              │
+              ▼
+            Selector
+              └─► selectBirthdayError / selectSyncError / selectAuthError
+                    │
+                    ▼
+                  Component or UI Effect
+                    └─► shows snack-bar / toast notification to user
+```
+
+### Concrete example — `addBirthday` failure
+
+```typescript
+// birthday-crud.effects.ts
+addBirthday$ = createEffect(() =>
+  this.actions$.pipe(
+    ofType(BirthdayActions.addBirthday),
+    switchMap(({ birthday }) =>
+      this.birthdayService.create(birthday).pipe(
+        switchMap(enriched =>
+          this.offlineStorage.save('birthdays', enriched).pipe(
+            map(() => BirthdayActions.addBirthdaySuccess({ birthday: enriched }))
+          )
+        ),
+        catchError(err => {
+          this.logger.error('addBirthday failed', err);
+          return of(BirthdayActions.addBirthdayFailure({ error: err.message }));
+        })
+      )
+    )
+  )
+);
+
+// birthday.reducer.ts
+on(BirthdayActions.addBirthdayFailure, (state, { error }) => ({
+  ...state,
+  loading: false,
+  error,
+})),
+
+// dashboard.component.ts  (or a dedicated UI effect)
+this.store.select(selectBirthdayError).pipe(
+  filter(Boolean)
+).subscribe(msg => this.snackBar.open(msg, 'OK', { duration: 4000 }));
+```
+
+### Optimistic-update rollback
+
+For **update** and **delete**, the effect saves a snapshot to `optimisticBackup` before writing:
+
+```
+Effect dispatches updateBirthdayOptimistic({ id, changes, backup })
+  └─► Reducer: applies changes + stores backup[id] = original entity
+
+  ── async write to IndexedDB ──
+
+  SUCCESS → dispatch updateBirthdaySuccess → reducer clears backup[id]
+  FAILURE → dispatch updateBirthdayFailure → reducer restores entity from backup[id]
+```
+
+### Sync errors
+
+Sync errors (Firestore write failures, network losses) follow the same pattern through `SyncEffects`:
+
+```
+SyncQueueProcessorService.processPendingChanges() rejects
+  └─► SyncEffects catches → dispatch syncActions.syncError({ error })
+        └─► syncReducer: state.state = 'error', state.error = message
+              └─► selectSyncError → UI shows sync-status banner
+                    └─► change is kept in pending-changes queue → retried on next online event
+```
+
+### Unhandled errors
+
+`GlobalErrorHandler` (registered in `app.config.ts`) is a safety net for errors that escape the NgRx pipeline (e.g. template expression errors, uncaught promise rejections):
+
+```
+GlobalErrorHandler.handleError(err)
+  ├─► LoggerService.error(err)         structured log
+  ├─► ErrorReportingService.save(err)  persists to IndexedDB 'errorReports' store
+  └─► dispatch uiActions.showNotification({ message, severity: 'error' })
+```
+
+### Error ownership at a glance
+
+| Layer | Owns | Does NOT own |
+|---|---|---|
+| **Service** | Throws meaningful typed errors | Catches or displays — delegates up |
+| **Effect** | `catchError` → `*Failure` action | Silent swallowing |
+| **Reducer** | Sets `error` / restores backup | Side effects (logging, UI) |
+| **Selector** | Exposes `error` slice to templates | Triggering side effects |
+| **Component / UI Effect** | Reads error selector → shows notification | Retry logic |
+| **GlobalErrorHandler** | Last-resort catch-all | Normal happy-path errors |

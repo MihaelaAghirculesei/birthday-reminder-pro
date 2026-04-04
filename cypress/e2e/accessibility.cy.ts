@@ -102,7 +102,10 @@ describe('Accessibility — form validation errors', () => {
 
   it('no critical/serious violations when validation errors are shown', () => {
     cy.expandBirthdayForm();
-    cy.get('[data-testid="save-birthday-button"]').click({ force: true });
+    // Touch the birth-date field then blur it to trigger the required mat-error.
+    // Clicking the disabled submit button does NOT fire ngSubmit, so fields are
+    // never marked touched and mat-error never appears that way.
+    cy.get('[data-testid="birthday-date-input"]').focus().blur();
     cy.get('mat-error').should('be.visible');
     checkA11yStrict();
   });
