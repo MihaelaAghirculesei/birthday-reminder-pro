@@ -103,8 +103,7 @@ describe('Accessibility — form validation errors', () => {
   it('no critical/serious violations when validation errors are shown', () => {
     cy.expandBirthdayForm();
     cy.get('[data-testid="save-birthday-button"]').click({ force: true });
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(300);
+    cy.get('mat-error').should('be.visible');
     checkA11yStrict();
   });
 });

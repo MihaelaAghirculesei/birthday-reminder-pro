@@ -18,6 +18,7 @@ export default defineConfig({
       });
     },
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
+    excludeSpecPattern: 'cypress/e2e/visual-regression.cy.ts',
     supportFile: 'cypress/support/e2e.ts',
   },
   component: {
