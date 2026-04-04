@@ -169,7 +169,12 @@ export const it = {
     MESSAGE_CREATED: 'Messaggio pianificato creato!',
     MESSAGE_DELETED: 'Messaggio eliminato',
     DELETE_TITLE: 'Elimina Messaggio?',
-    DELETE_CONFIRM: 'Sei sicuro di voler eliminare "{{title}}"?'
+    DELETE_CONFIRM: 'Sei sicuro di voler eliminare "{{title}}"?',
+    SENT_BADGE: '✓ Inviato',
+    SENT_TOOLTIP: 'Ultimo invio:',
+    MARK_SENT_BTN: 'Segna come Inviato',
+    RESEND_BTN: 'Reinvia',
+    MESSAGE_SENT: 'Messaggio segnato come inviato!'
   },
   SCHEDULED_MESSAGES: {
     TITLE: 'Messaggi Pianificati',

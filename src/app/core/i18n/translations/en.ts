@@ -170,7 +170,12 @@ export const en = {
     MESSAGE_CREATED: 'Scheduled message created!',
     MESSAGE_DELETED: 'Message deleted',
     DELETE_TITLE: 'Delete Message?',
-    DELETE_CONFIRM: 'Are you sure you want to delete "{{title}}"?'
+    DELETE_CONFIRM: 'Are you sure you want to delete "{{title}}"?',
+    SENT_BADGE: '✓ Sent',
+    SENT_TOOLTIP: 'Last sent:',
+    MARK_SENT_BTN: 'Mark as Sent',
+    RESEND_BTN: 'Resend',
+    MESSAGE_SENT: 'Message marked as sent!'
   },
   SCHEDULED_MESSAGES: {
     TITLE: 'Scheduled Messages',
