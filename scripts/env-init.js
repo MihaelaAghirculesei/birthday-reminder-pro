@@ -2,10 +2,13 @@
  * Environment file initializer.
  *
  * Priority:
- *  1. If FIREBASE_API_KEY env var is set (CI/CD), generate environment files
- *     from process.env — credentials come from GitHub Secrets, never from disk.
- *  2. Otherwise, copy from the *.example.ts templates (local dev fallback).
- *     Devs then fill in their own credentials in the generated files.
+ *  1. CI/CD: FIREBASE_API_KEY is set in process.env (GitHub Secrets) →
+ *     generate environment files from process.env directly.
+ *  2. Local dev: .env.local exists in the project root →
+ *     parse it, merge into process.env, then generate environment files.
+ *  3. Fallback: copy *.example.ts templates so the app runs in demo/offline mode.
+ *     Devs should create .env.local (from .env.local.example) and re-run
+ *     `npm run env:init` — do NOT hardcode credentials in environment.ts.
  *
  * Note: Firebase web SDK credentials are NOT secrets — they are necessarily
  * embedded in the client bundle by design. Real security comes from:
@@ -18,11 +21,60 @@
 const fs   = require('fs');
 const path = require('path');
 
-const ENV_DIR = path.resolve(__dirname, '..', 'src', 'environments');
+const ROOT    = path.resolve(__dirname, '..');
+const ENV_DIR = path.join(ROOT, 'src', 'environments');
 
-// ─── CI: generate from environment variables ─────────────────────────────────
+// ─── .env.local parser (no external dependencies) ────────────────────────────
 
-const REQUIRED_CI_VARS = [
+/**
+ * Parse a .env-style file into a plain object.
+ * Supports: KEY=value, KEY="value", KEY='value', blank lines, # comments.
+ * Does NOT expand variable references — simple key=value only.
+ */
+function parseDotEnv(filePath) {
+  const vars = {};
+  const content = fs.readFileSync(filePath, 'utf8');
+
+  for (const raw of content.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+
+    const eqIdx = line.indexOf('=');
+    if (eqIdx === -1) continue;
+
+    const key = line.slice(0, eqIdx).trim();
+    let   val = line.slice(eqIdx + 1).trim();
+
+    // Strip surrounding quotes (single or double)
+    if ((val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+
+    if (key) vars[key] = val;
+  }
+
+  return vars;
+}
+
+/**
+ * Load .env.local (if present) into process.env without overwriting
+ * values that were already set by the shell / CI environment.
+ */
+function loadDotEnvLocal() {
+  const localFile = path.join(ROOT, '.env.local');
+  if (!fs.existsSync(localFile)) return false;
+
+  const vars = parseDotEnv(localFile);
+  for (const [k, v] of Object.entries(vars)) {
+    if (!process.env[k]) process.env[k] = v;
+  }
+  return true;
+}
+
+// ─── Environment file generator ───────────────────────────────────────────────
+
+const REQUIRED_VARS = [
   'FIREBASE_API_KEY',
   'FIREBASE_AUTH_DOMAIN',
   'FIREBASE_PROJECT_ID',
@@ -31,8 +83,8 @@ const REQUIRED_CI_VARS = [
   'FIREBASE_APP_ID',
 ];
 
-function hasAllCiVars() {
-  return REQUIRED_CI_VARS.every((v) => process.env[v]);
+function hasAllVars() {
+  return REQUIRED_VARS.every((v) => process.env[v]);
 }
 
 function buildEnvironmentContent(isProduction) {
@@ -60,17 +112,17 @@ function buildEnvironmentContent(isProduction) {
   ].join('\n');
 }
 
-function generateFromEnvVars() {
+function generateFromVars(source) {
   const devPath  = path.join(ENV_DIR, 'environment.ts');
   const prodPath = path.join(ENV_DIR, 'environment.prod.ts');
 
   fs.writeFileSync(devPath,  buildEnvironmentContent(false));
   fs.writeFileSync(prodPath, buildEnvironmentContent(true));
 
-  console.log('Generated environment.ts and environment.prod.ts from CI secrets.');
+  console.log(`Generated environment.ts and environment.prod.ts from ${source}.`);
 }
 
-// ─── Local dev: copy from example templates ───────────────────────────────────
+// ─── Fallback: copy placeholder templates ────────────────────────────────────
 
 const TEMPLATES = [
   { example: 'environment.example.ts',      target: 'environment.ts' },
@@ -92,21 +144,37 @@ function copyFromExamples() {
     }
 
     fs.copyFileSync(examplePath, targetPath);
-    console.log(`Created ${target} from ${example}`);
+    console.log(`Created ${target} from ${example} (placeholder values).`);
     created++;
   }
 
   if (created > 0) {
     console.log(
-      `Initialized ${created} environment file(s). Fill in your credentials (files are gitignored).`
+      'App will run in offline/demo mode.\n' +
+      'To enable Firebase: copy .env.local.example → .env.local, fill in your\n' +
+      'credentials, then re-run: npm run env:init'
     );
   }
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
-if (hasAllCiVars()) {
-  generateFromEnvVars();
+// 1. Try CI environment variables first (already in process.env)
+if (hasAllVars()) {
+  generateFromVars('CI environment variables');
 } else {
-  copyFromExamples();
+  // 2. Try loading .env.local for local dev
+  const loaded = loadDotEnvLocal();
+  if (loaded && hasAllVars()) {
+    generateFromVars('.env.local');
+  } else {
+    // 3. Fall back to placeholder templates
+    if (loaded) {
+      console.warn(
+        'Warning: .env.local found but missing required Firebase variables.\n' +
+        `Required: ${REQUIRED_VARS.join(', ')}`
+      );
+    }
+    copyFromExamples();
+  }
 }
