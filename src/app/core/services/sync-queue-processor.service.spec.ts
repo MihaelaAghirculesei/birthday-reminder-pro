@@ -468,6 +468,57 @@ describe('SyncQueueProcessorService', () => {
     });
   });
 
+  describe('processPendingChanges — sort fallback to timestamp', () => {
+    beforeEach(() => {
+      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+    });
+
+    it('should fall back to timestamp when sequenceNumber is undefined (legacy record)', async () => {
+      // Simulate two legacy IDB records that predate the sequenceNumber field.
+      const older = {
+        ...makePendingChange({ id: 'leg-1', entityId: 'b-leg-1', changeType: 'create' }),
+        sequenceNumber: undefined as unknown as number,
+        timestamp: 1000
+      } as PendingChange;
+      const newer = {
+        ...makePendingChange({ id: 'leg-2', entityId: 'b-leg-2', changeType: 'create' }),
+        sequenceNumber: undefined as unknown as number,
+        timestamp: 2000
+      } as PendingChange;
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([newer, older]);
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+
+      const result = await service.processPendingChanges();
+
+      // Both changes must be processed regardless of input order.
+      expect(result).toBe(2);
+      expect(pendingChangesMock.removeChange).toHaveBeenCalledWith('leg-1');
+      expect(pendingChangesMock.removeChange).toHaveBeenCalledWith('leg-2');
+    });
+
+    it('should process a mix of legacy (no sequenceNumber) and modern records correctly', async () => {
+      const legacyChange = {
+        ...makePendingChange({ id: 'leg-mix', entityId: 'b-mix-legacy', changeType: 'delete', data: null }),
+        sequenceNumber: undefined as unknown as number,
+        timestamp: 500
+      } as PendingChange;
+      const modernChange = makePendingChange({
+        id: 'mod-mix', entityId: 'b-mix-modern', changeType: 'create',
+        data: makeBirthday({ id: 'b-mix-modern' }), sequenceNumber: 1
+      });
+
+      pendingChangesMock.getChangesForEntity.and.returnValue([modernChange, legacyChange]);
+      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
+
+      const result = await service.processPendingChanges();
+
+      expect(result).toBe(2);
+    });
+  });
+
   describe('processPendingChanges — concurrency guard', () => {
     beforeEach(() => {
       Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
