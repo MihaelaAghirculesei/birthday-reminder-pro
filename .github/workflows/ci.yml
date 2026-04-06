@@ -132,18 +132,18 @@ jobs:
 
           jq -r '
             .total |
-            "Statements: \(.statements.pct)%  (min 90%)",
-            "Branches:   \(.branches.pct)%  (min 84%)",
-            "Functions:  \(.functions.pct)%  (min 90%)",
-            "Lines:      \(.lines.pct)%  (min 91%)"
+            "Statements: \(.statements.pct)%  (min 91%)",
+            "Branches:   \(.branches.pct)%  (min 85%)",
+            "Functions:  \(.functions.pct)%  (min 91%)",
+            "Lines:      \(.lines.pct)%  (min 92%)"
           ' "$SUMMARY"
 
           BELOW=$(jq -r '
             .total |
-            (if .statements.pct < 90 then "statements \(.statements.pct)% < 90%" else empty end),
-            (if .branches.pct   < 84 then "branches \(.branches.pct)% < 84%"     else empty end),
-            (if .functions.pct  < 90 then "functions \(.functions.pct)% < 90%"   else empty end),
-            (if .lines.pct      < 91 then "lines \(.lines.pct)% < 91%"           else empty end)
+            (if .statements.pct < 91 then "statements \(.statements.pct)% < 91%" else empty end),
+            (if .branches.pct   < 85 then "branches \(.branches.pct)% < 85%"     else empty end),
+            (if .functions.pct  < 91 then "functions \(.functions.pct)% < 91%"   else empty end),
+            (if .lines.pct      < 92 then "lines \(.lines.pct)% < 92%"           else empty end)
           ' "$SUMMARY")
 
           if [ -n "$BELOW" ]; then
@@ -173,6 +173,9 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
+
+      - name: Initialize environment files
+        run: npm run env:init
 
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
