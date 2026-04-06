@@ -1,6 +1,7 @@
 import { Injectable, PLATFORM_ID, DestroyRef, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { LoggerService } from './logger.service';
+import { IdbMigrationError, IdbUnavailableError } from '../errors/app-errors';
 
 // ---------------------------------------------------------------------------
 // Migration types
@@ -98,7 +99,7 @@ export class IndexedDBConnectionService {
 
   async getDB(): Promise<IDBDatabase> {
     if (!isPlatformBrowser(this.platformId)) {
-      throw new Error('IndexedDB is not available on the server');
+      throw new IdbUnavailableError();
     }
 
     if (this.dbInstance) {
@@ -189,7 +190,7 @@ export class IndexedDBConnectionService {
             const msg = `[IndexedDB] No migration defined for v${fromVersion} → v${fromVersion + 1}`;
             this.logger.error(msg);
             transaction.abort();
-            reject(new Error(msg));
+            reject(new IdbMigrationError(msg));
             return;
           }
 
