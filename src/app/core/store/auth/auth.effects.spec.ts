@@ -57,6 +57,15 @@ describe('AuthEffects', () => {
     effects = TestBed.inject(AuthEffects);
   });
 
+  describe('syncAuthState$', () => {
+    it('should dispatch authStateChanged with the user emitted by user$', (done) => {
+      effects.syncAuthState$.subscribe(action => {
+        expect(action).toEqual(AuthActions.authStateChanged({ user: null }));
+        done();
+      });
+    });
+  });
+
   describe('signInWithGoogle$', () => {
     it('should not dispatch any action (dispatch: false)', (done) => {
       actions$ = of(AuthActions.signInWithGoogle());
@@ -188,6 +197,44 @@ describe('AuthEffects', () => {
       });
 
       expect(orphanCleanupMock.cleanupOrphans).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('AuthEffects - syncAuthState$ error recovery', () => {
+  let errorEffects: AuthEffects;
+  let errorLoggerMock: jasmine.SpyObj<LoggerService>;
+
+  beforeEach(() => {
+    errorLoggerMock = jasmine.createSpyObj('LoggerService', ['warn', 'info', 'error']);
+
+    const errorAuthServiceMock = jasmine.createSpyObj(
+      'FirebaseAuthService',
+      ['signInWithGoogle', 'signOut', 'initAuthListener'],
+      { user$: throwError(() => new Error('Firebase connection error')) }
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthEffects,
+        provideMockActions(() => new Observable<Action>()),
+        provideMockStore(),
+        { provide: FirebaseAuthService, useValue: errorAuthServiceMock },
+        { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
+        { provide: OrphanPhotoCleanupService, useValue: { cleanupOrphans: () => Promise.resolve() } },
+        { provide: LoggerService, useValue: errorLoggerMock },
+        provideTranslateTesting()
+      ]
+    });
+
+    errorEffects = TestBed.inject(AuthEffects);
+  });
+
+  it('should dispatch authStateChanged({ user: null }) and log when user$ errors', (done) => {
+    errorEffects.syncAuthState$.subscribe(action => {
+      expect(action).toEqual(AuthActions.authStateChanged({ user: null }));
+      expect(errorLoggerMock.error).toHaveBeenCalled();
+      done();
     });
   });
 });
