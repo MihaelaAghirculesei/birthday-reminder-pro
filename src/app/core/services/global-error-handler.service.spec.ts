@@ -4,6 +4,7 @@ import { NotificationService } from './notification.service';
 import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
 import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { IdbError, IdbMigrationError, IdbUnavailableError } from '../errors/app-errors';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
@@ -58,8 +59,8 @@ describe('GlobalErrorHandler', () => {
       );
     });
 
-    it('should categorize error with IndexedDB in message as IndexedDB error', () => {
-      const error = new Error('IndexedDB transaction failed');
+    it('should categorize IdbError instance as IndexedDB error', () => {
+      const error = new IdbError('transaction failed');
 
       errorHandler.handleError(error);
 
@@ -344,9 +345,21 @@ describe('GlobalErrorHandler', () => {
     });
   });
 
-  describe('IndexedDB errors – IDB abbreviation', () => {
-    it('should categorize error with "IDB" in message as IndexedDB error', () => {
-      const error = new Error('IDB transaction aborted');
+  describe('IndexedDB errors – custom subclasses', () => {
+    it('should categorize IdbUnavailableError as IndexedDB error', () => {
+      const error = new IdbUnavailableError();
+
+      errorHandler.handleError(error);
+
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
+        'Failed to save data locally. Please check storage permissions.',
+        'error',
+        7000
+      );
+    });
+
+    it('should categorize IdbMigrationError as IndexedDB error', () => {
+      const error = new IdbMigrationError('[IndexedDB] No migration defined for v3 → v4');
 
       errorHandler.handleError(error);
 

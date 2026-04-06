@@ -2,6 +2,7 @@ import { ErrorHandler, Injectable, Injector } from '@angular/core';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
 import { ERROR_REPORTER, ErrorReporter } from './error-reporting.service';
+import { IdbError } from '../errors/app-errors';
 
 interface ErrorContext {
   type: 'IndexedDB' | 'NgRx' | 'GoogleAPI' | 'Network' | 'Unknown';
@@ -84,11 +85,11 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 
   private isIndexedDBError(error: unknown): boolean {
+    // Custom error classes thrown by application code (most reliable check).
+    if (error instanceof IdbError) return true;
+    // Native browser DOMExceptions — cannot be subclassed, detected by name.
     if (!this.isErrorLike(error)) return false;
-    return error.name === 'QuotaExceededError' ||
-           error.name === 'InvalidStateError' ||
-           (typeof error.message === 'string' &&
-            (error.message.includes('IndexedDB') || error.message.includes('IDB')));
+    return error.name === 'QuotaExceededError' || error.name === 'InvalidStateError';
   }
 
   private isGoogleAPIError(error: unknown): error is GoogleAPIError {
