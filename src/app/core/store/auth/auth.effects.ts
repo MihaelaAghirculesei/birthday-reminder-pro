@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
-import { map, exhaustMap, catchError, tap, filter } from 'rxjs/operators';
+import { catchError, exhaustMap, filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -21,7 +21,11 @@ export class AuthEffects {
   /** Bridge Firebase auth state (including session restoration on reload) to the NgRx store. */
   syncAuthState$ = createEffect(() =>
     this.authService.user$.pipe(
-      map(user => AuthActions.authStateChanged({ user }))
+      map(user => AuthActions.authStateChanged({ user })),
+      catchError((err) => {
+        this.logger.error('[AuthEffects] Auth state observer error — treating as signed-out:', err);
+        return of(AuthActions.authStateChanged({ user: null }));
+      })
     )
   );
 
