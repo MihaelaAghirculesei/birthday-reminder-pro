@@ -11,7 +11,8 @@ import { provideEffects } from '@ngrx/effects';
 import { provideNativeDateAdapter } from '@angular/material/core';
 
 import { routes } from './app.routes';
-import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService } from './core';
+import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService, ERROR_REPORTING_ENDPOINT } from './core';
+import { environment } from '../environments/environment';
 import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
 import { birthdayReducer } from './core/store/birthday/birthday.reducer';
 import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
@@ -93,6 +94,9 @@ export const appConfig: ApplicationConfig = {
     ThemeService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: ERROR_REPORTER, useExisting: ErrorReportingService },
+    ...(environment.errorReportingEndpoint
+      ? [{ provide: ERROR_REPORTING_ENDPOINT, useValue: environment.errorReportingEndpoint }]
+      : []),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,

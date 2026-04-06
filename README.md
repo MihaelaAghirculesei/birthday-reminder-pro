@@ -13,6 +13,7 @@ A birthday management application built with Angular 19. Never forget a birthday
 ## Table of Contents
 
 - [About](#about)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
@@ -35,6 +36,20 @@ The app manages birthdays with features like:
 - Sends notifications on web and Android
 - Exports/imports data in multiple formats
 - Organizes contacts by categories
+
+---
+
+## Screenshots
+
+| Dashboard | Birthday Form | Dark Mode |
+|-----------|--------------|-----------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Birthday Form](docs/screenshots/birthday-form.png) | ![Dark Mode](docs/screenshots/dark-mode.png) |
+
+| Category Filter | Stats & Chart | Sync Status |
+|----------------|--------------|-------------|
+| ![Category Filter](docs/screenshots/category-filter.png) | ![Stats and Chart](docs/screenshots/stats-chart.png) | ![Sync Status](docs/screenshots/sync-status.png) |
+
+> **Note for contributors / reviewers:** Screenshots are taken at `1280×800` with the app running locally (`npm start`). To regenerate them, run the app, use the test data generator (gear icon → "Load Test Data"), and capture the views above. Save as `.png` in `docs/screenshots/`.
 
 ---
 
@@ -263,8 +278,18 @@ src/app/
 
 5. **Configure Firebase** (Optional — for cloud sync and photo storage)
 
-   Copy `src/app/firebase.config.ts` and fill in your Firebase project credentials.
-   The app detects placeholder values and disables cloud sync automatically.
+   Edit `src/app/firebase.config.ts` and replace the placeholder values with your Firebase project credentials:
+   ```typescript
+   const firebaseConfig = {
+     apiKey: "YOUR_API_KEY",
+     authDomain: "YOUR_PROJECT.firebaseapp.com",
+     projectId: "YOUR_PROJECT_ID",
+     storageBucket: "YOUR_PROJECT.appspot.com",
+     messagingSenderId: "YOUR_SENDER_ID",
+     appId: "YOUR_APP_ID"
+   };
+   ```
+   > **Tip**: If you leave the placeholder values, the app auto-detects them and runs in offline-only mode — no Firebase account needed to run the app locally.
 
 ### Development Server
 
