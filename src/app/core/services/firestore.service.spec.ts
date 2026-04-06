@@ -368,8 +368,14 @@ describe('FirestoreService', () => {
     let service: FirestoreService;
     let loggerMock: jasmine.SpyObj<LoggerService>;
 
-    interface DelayableService { delayMs: (ms: number) => Promise<void> }
-    interface InspectableService { isRetryable: (e: unknown) => boolean }
+    interface DelayableService {
+      delayMs: (ms: number) => Promise<void>;
+      jitterMs: () => number;
+    }
+    interface InspectableService {
+      isRetryable: (e: unknown) => boolean;
+      isRateLimited: (e: unknown) => boolean;
+    }
 
     beforeEach(() => {
       loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
@@ -385,6 +391,7 @@ describe('FirestoreService', () => {
       service = TestBed.inject(FirestoreService);
       // Replace delay with a no-op so retry tests complete without real waits
       spyOn(service as unknown as DelayableService, 'delayMs').and.returnValue(Promise.resolve());
+      spyOn(service as unknown as DelayableService, 'jitterMs').and.returnValue(0);
 
       spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
         {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
@@ -515,6 +522,122 @@ describe('FirestoreService', () => {
       service.deleteCategory('user-123', 'c-retry').subscribe({
         complete: () => {
           expect(callCount).toBe(2);
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    // ── isRateLimited ─────────────────────────────────────────────────────────
+    describe('isRateLimited', () => {
+      it('returns true for "resource-exhausted"', () => {
+        const err = Object.assign(new Error(), { code: 'resource-exhausted' });
+        expect((service as unknown as InspectableService).isRateLimited(err)).toBeTrue();
+      });
+
+      it('returns true for namespaced "firestore/resource-exhausted"', () => {
+        const err = Object.assign(new Error(), { code: 'firestore/resource-exhausted' });
+        expect((service as unknown as InspectableService).isRateLimited(err)).toBeTrue();
+      });
+
+      it('returns false for other retryable codes', () => {
+        const fn = (service as unknown as InspectableService).isRateLimited.bind(service);
+        expect(fn(Object.assign(new Error(), { code: 'unavailable' }))).toBeFalse();
+        expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBeFalse();
+      });
+
+      it('returns false for errors without a code', () => {
+        const fn = (service as unknown as InspectableService).isRateLimited.bind(service);
+        expect(fn(new Error('plain'))).toBeFalse();
+        expect(fn(null)).toBeFalse();
+        expect(fn('string')).toBeFalse();
+      });
+    });
+
+    // ── rate-limit backoff ────────────────────────────────────────────────────
+    it('isRetryable returns true for "resource-exhausted"', () => {
+      const err = Object.assign(new Error(), { code: 'resource-exhausted' });
+      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+    });
+
+    it('saveBirthday retries on resource-exhausted and uses longer base delay (1000 ms)', (done) => {
+      const rateLimitError = Object.assign(new Error('Quota exceeded'), { code: 'resource-exhausted' });
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() =>
+          ++callCount === 1 ? Promise.reject(rateLimitError) : Promise.resolve()
+        )
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const delaySpy = (service as unknown as DelayableService).delayMs as jasmine.Spy;
+
+      const birthday = { id: 'b-ratelimit', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        complete: () => {
+          expect(callCount).toBe(2);
+          // jitterMs is spied to return 0, so delay = 1000 * 2^0 + 0 = 1000
+          expect(delaySpy).toHaveBeenCalledWith(1000);
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('saveBirthday exhausts retries on resource-exhausted and rethrows', (done) => {
+      const rateLimitError = Object.assign(new Error('Quota exceeded'), { code: 'resource-exhausted' });
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() => { callCount++; return Promise.reject(rateLimitError); })
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const birthday = { id: 'b-ratelimit-exhaust', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        error: (err) => {
+          expect(err).toBe(rateLimitError);
+          expect(callCount).toBe(4); // 1 initial + 3 retries
+          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', rateLimitError);
+          done();
+        }
+      });
+    });
+
+    it('withRetry uses BASE_DELAY_MS for transient errors (not rate-limit)', (done) => {
+      const transientError = Object.assign(new Error('Unavailable'), { code: 'unavailable' });
+      let callCount = 0;
+      const mockBatch = {
+        set: jasmine.createSpy(),
+        commit: jasmine.createSpy().and.callFake(() =>
+          ++callCount === 1 ? Promise.reject(transientError) : Promise.resolve()
+        )
+      };
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const delaySpy = (service as unknown as DelayableService).delayMs as jasmine.Spy;
+
+      const birthday = { id: 'b-transient', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        complete: () => {
+          // jitterMs spied to 0: delay = 500 * 2^0 + 0 = 500
+          expect(delaySpy).toHaveBeenCalledWith(500);
           done();
         },
         error: done.fail
