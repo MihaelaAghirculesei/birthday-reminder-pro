@@ -181,7 +181,7 @@ const VISUAL_SEED_BIRTHDAYS: VisualSeedBirthday[] = [
     name: 'Carol Williams',
     birthDate: '1992-06-15',
     category: 'colleagues',
-    email: 'carol@company.com',
+    email: 'test@example.com',
     reminderDays: 14,
     syncStatus: 'local-only',
     updatedAt: VISUAL_FIXED_TIMESTAMP,

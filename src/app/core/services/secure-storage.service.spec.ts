@@ -57,7 +57,7 @@ describe('SecureStorageService', () => {
 
     it('should store and retrieve complex nested data', async () => {
       const complexData = {
-        user: { name: 'Jane', email: 'jane@test.com' },
+        user: { name: 'Max Mustermann', email: 'test@example.com' },
         tokens: { access: 'abc123', refresh: 'xyz789' },
         settings: { theme: 'dark', notifications: true }
       };

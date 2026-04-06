@@ -99,7 +99,7 @@ describe('AuthButtonComponent', () => {
   // --- signIn() branches ---
 
   it('should dispatch signInWithGoogle and signInSuccess on successful sign-in', async () => {
-    const fakeUser: AuthUser = { uid: '123', displayName: 'Jane', email: 'j@test.com', photoURL: null };
+    const fakeUser: AuthUser = { uid: '123', displayName: 'Jane Doe', email: 'test@example.com', photoURL: null };
     authServiceMock.performGoogleSignInDirect.and.returnValue(Promise.resolve(fakeUser));
     const dispatchSpy = spyOn(store, 'dispatch');
 
