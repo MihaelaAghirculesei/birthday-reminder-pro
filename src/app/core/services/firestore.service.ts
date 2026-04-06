@@ -9,10 +9,17 @@ import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birth
 import { toDateString, parseLocalDate } from '../../shared/utils/date.utils';
 
 /** Firebase error codes that indicate transient failures safe to retry. */
-const RETRYABLE_CODES = new Set(['unavailable', 'deadline-exceeded', 'internal']);
+const RETRYABLE_CODES = new Set(['unavailable', 'deadline-exceeded', 'internal', 'resource-exhausted']);
+
+/** Code returned by Firebase when the write quota / rate-limit is exceeded. */
+const RATE_LIMIT_CODE = 'resource-exhausted';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 500;
+/** Longer base delay for rate-limit errors: quota windows are typically 1 s. */
+const RATE_LIMIT_BASE_DELAY_MS = 1000;
+/** Random jitter ceiling added to each delay to avoid thundering-herd retries. */
+const MAX_JITTER_MS = 200;
 
 export interface FirestoreDocument {
   id: string;
@@ -50,6 +57,12 @@ export class FirestoreService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // Exposed for testing — production uses Math.random.
+  /** @internal */
+  protected jitterMs(): number {
+    return Math.floor(Math.random() * MAX_JITTER_MS);
+  }
+
   private isRetryable(error: unknown): boolean {
     if (error != null && typeof error === 'object' && 'code' in error) {
       const code = String((error as { code: unknown }).code);
@@ -60,9 +73,21 @@ export class FirestoreService {
     return false;
   }
 
+  private isRateLimited(error: unknown): boolean {
+    if (error != null && typeof error === 'object' && 'code' in error) {
+      const code = String((error as { code: unknown }).code);
+      const bare = code.includes('/') ? code.split('/').pop()! : code;
+      return bare === RATE_LIMIT_CODE;
+    }
+    return false;
+  }
+
   /**
    * Runs `fn`, retrying up to MAX_RETRIES times with exponential backoff when
-   * the error is a transient Firestore error (unavailable, deadline-exceeded, internal).
+   * the error is a transient Firestore error (unavailable, deadline-exceeded,
+   * internal) or a rate-limit error (resource-exhausted).
+   * Rate-limit errors use a longer base delay + random jitter to avoid
+   * thundering-herd bursts after quota recovery.
    * Non-retryable errors are propagated immediately.
    */
   private async withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
@@ -71,7 +96,8 @@ export class FirestoreService {
         return await fn();
       } catch (error) {
         if (attempt < MAX_RETRIES && this.isRetryable(error)) {
-          const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+          const base = this.isRateLimited(error) ? RATE_LIMIT_BASE_DELAY_MS : BASE_DELAY_MS;
+          const delay = base * Math.pow(2, attempt) + this.jitterMs();
           this.logger.warn(
             `[Firestore] ${label} attempt ${attempt + 1} failed (retryable), retrying in ${delay}ms`,
             error
