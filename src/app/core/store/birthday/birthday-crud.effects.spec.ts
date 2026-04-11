@@ -172,7 +172,7 @@ describe('BirthdayCrudEffects', () => {
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
       effects.addBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.addBirthdayFailure({ error: 'Add failed' }));
+        expect(action).toEqual(BirthdayActions.addBirthdayFailure({ error: 'Add failed', birthday: newBirthday as Birthday }));
         done();
       });
     });
@@ -212,7 +212,7 @@ describe('BirthdayCrudEffects', () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
 
       effects.updateBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', id: '1' }));
+        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', id: '1', birthday: mockBirthday }));
         done();
       });
     });

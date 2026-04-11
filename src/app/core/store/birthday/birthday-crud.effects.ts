@@ -59,7 +59,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
             : of(undefined)
           ),
           map(() => BirthdayActions.addBirthdaySuccess({ birthday: newBirthday })),
-          catchError(error => of(BirthdayActions.addBirthdayFailure({ error: error.message })))
+          catchError(error => of(BirthdayActions.addBirthdayFailure({ error: error.message, birthday })))
         );
       })
     )
@@ -78,7 +78,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
             : of(undefined)
           ),
           map(() => BirthdayActions.updateBirthdaySuccess({ birthday: normalizedBirthday })),
-          catchError(error => of(BirthdayActions.updateBirthdayFailure({ error: error.message, id: normalizedBirthday.id })))
+          catchError(error => of(BirthdayActions.updateBirthdayFailure({ error: error.message, id: normalizedBirthday.id, birthday })))
         );
       })
     )
