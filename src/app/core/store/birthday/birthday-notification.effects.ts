@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
 import * as BirthdayActions from './birthday.actions';
 import { NotificationService } from '../../services/notification.service';
 
@@ -9,6 +10,7 @@ import { NotificationService } from '../../services/notification.service';
 export class BirthdayNotificationEffects {
 
   private readonly actions$ = inject(Actions);
+  private readonly store = inject(Store);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
 
@@ -48,6 +50,63 @@ export class BirthdayNotificationEffects {
           this.notificationService.show(
             this.translate.instant('NOTIFICATIONS.BIRTHDAY_DELETED'),
             'success'
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  addBirthdayFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.addBirthdayFailure),
+        tap(({ error, birthday }) => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_ADD_BIRTHDAY', { error }),
+            'error',
+            undefined,
+            birthday ? {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.addBirthday({ birthday }))
+            } : undefined
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  updateBirthdayFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.updateBirthdayFailure),
+        tap(({ error, birthday }) => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_UPDATE_BIRTHDAY', { error }),
+            'error',
+            undefined,
+            birthday ? {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.updateBirthday({ birthday }))
+            } : undefined
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  deleteBirthdayFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.deleteBirthdayFailure),
+        tap(({ error, id }) => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_DELETE_BIRTHDAY', { error }),
+            'error',
+            undefined,
+            id ? {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.deleteBirthday({ id }))
+            } : undefined
           );
         })
       ),
