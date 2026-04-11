@@ -8,6 +8,7 @@ import { SyncCoordinatorService } from '../../services/sync-coordinator.service'
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
 import { LoggerService } from '../../services/logger.service';
+import { TranslateService } from '@ngx-translate/core';
 import { BirthdayMergeService } from '../../services/birthday-merge.service';
 import { Birthday } from '../../../shared/models/birthday.model';
 import * as SyncActions from './sync.actions';
@@ -23,6 +24,7 @@ export class SyncEffects {
   private readonly notificationService = inject(NotificationService);
   private readonly logger = inject(LoggerService);
   private readonly mergeService = inject(BirthdayMergeService);
+  private readonly translate = inject(TranslateService);
 
   migrateLocalToCloud$ = createEffect(() =>
     this.actions$.pipe(
@@ -60,8 +62,13 @@ export class SyncEffects {
         ofType(SyncActions.migrationFailure),
         tap(({ error }) => {
           this.notificationService.show(
-            `Sync failed: ${error}`,
-            'error'
+            this.translate.instant('NOTIFICATIONS.FAILED_MIGRATION', { error }),
+            'error',
+            undefined,
+            {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(SyncActions.migrateLocalToCloud())
+            }
           );
         })
       ),
@@ -113,6 +120,15 @@ export class SyncEffects {
         ofType(SyncActions.syncFailure, SyncActions.pushChangesFailure),
         tap(({ error }) => {
           this.logger.error('[SyncEffects] Sync failed:', error);
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_SYNC', { error }),
+            'error',
+            undefined,
+            {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(SyncActions.pushPendingChanges())
+            }
+          );
         })
       ),
     { dispatch: false }

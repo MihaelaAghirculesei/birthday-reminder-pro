@@ -5,6 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Action } from '@ngrx/store';
 import { SyncEffects } from './sync.effects';
 import * as SyncActions from './sync.actions';
+import * as BirthdayActions from '../birthday/birthday.actions';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import * as AuthSelectors from '../auth/auth.selectors';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
@@ -113,13 +114,15 @@ describe('SyncEffects', () => {
   });
 
   describe('migrationFailure$', () => {
-    it('should show error notification', (done) => {
+    it('should show error notification with retry action', (done) => {
       actions$ = of(SyncActions.migrationFailure({ error: 'Network error' }));
 
       effects.migrationFailure$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith(
-          'Sync failed: Network error',
-          'error'
+          'Cloud migration failed: Network error',
+          'error',
+          undefined,
+          jasmine.objectContaining({ label: 'Retry' })
         );
         done();
       });
@@ -165,6 +168,81 @@ describe('SyncEffects', () => {
 
       effects.cloudBirthdaysUpdated$.subscribe((action) => {
         expect(action).toEqual(SyncActions.syncFailure({ error: 'DB error' }));
+        done();
+      });
+    });
+
+    it('should dispatch loadBirthdays after saving merged result', (done) => {
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
+      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
+      const dispatchSpy = spyOn(store, 'dispatch');
+
+      actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [] }));
+
+      effects.cloudBirthdaysUpdated$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.loadBirthdays());
+        done();
+      });
+    });
+
+    it('should preserve local pending item when cloud update arrives for the same birthday', (done) => {
+      // Device A is offline and edits b-1 (pending). Device B edits b-1 on Firestore.
+      // When A comes online and the real-time listener fires, the pending local version
+      // must NOT be overwritten — cloud-wins strategy preserves pending items.
+      const pendingLocal: Birthday = {
+        id: 'b-1', name: 'Local Edit', birthDate: '1990-01-01', zodiacSign: 'Capricorn',
+        syncStatus: 'pending', updatedAt: 5000
+      } as Birthday;
+      const cloudUpdate: Birthday = {
+        id: 'b-1', name: 'Cloud Edit', birthDate: '1990-01-01', zodiacSign: 'Capricorn',
+        syncStatus: 'synced', updatedAt: 3000
+      } as Birthday;
+
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([pendingLocal]));
+      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
+      // Simulate what cloud-wins really returns for a pending local item
+      mergeServiceMock.merge.and.returnValue({ merged: [pendingLocal], toUpload: [] });
+
+      actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [cloudUpdate] }));
+
+      effects.cloudBirthdaysUpdated$.subscribe(() => {
+        const saved = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0] as Birthday[];
+        expect(saved[0].name).toBe('Local Edit');
+        expect(saved[0].syncStatus).toBe('pending');
+        done();
+      });
+    });
+
+    it('should overwrite synced local with cloud version when cloud update arrives', (done) => {
+      // Device A has a synced birthday. Device B edits it on Firestore.
+      // cloud-wins replaces the synced local version with whatever cloud sent —
+      // note: timestamps are NOT compared in this path (asymmetry vs login path).
+      const syncedLocal: Birthday = {
+        id: 'b-1', name: 'Old Synced', birthDate: '1990-01-01', zodiacSign: 'Capricorn',
+        syncStatus: 'synced', updatedAt: 9000
+      } as Birthday;
+      const cloudUpdate: Birthday = {
+        id: 'b-1', name: 'Cloud New Version', birthDate: '1990-01-01', zodiacSign: 'Capricorn',
+        syncStatus: 'synced', updatedAt: 1000
+      } as Birthday;
+
+      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([syncedLocal]));
+      offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
+      // cloud-wins: synced local → cloud version wins regardless of timestamps
+      mergeServiceMock.merge.and.returnValue({
+        merged: [{ ...cloudUpdate, syncStatus: 'synced' as const }],
+        toUpload: []
+      });
+
+      actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [cloudUpdate] }));
+
+      effects.cloudBirthdaysUpdated$.subscribe(() => {
+        const saved = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0] as Birthday[];
+        expect(saved[0].name).toBe('Cloud New Version');
+        // Timestamps are NOT the tiebreaker here — syncStatus is (by design).
+        // The local version had updatedAt=9000 but cloud (updatedAt=1000) still wins.
+        expect(saved[0].updatedAt).toBe(1000);
         done();
       });
     });
