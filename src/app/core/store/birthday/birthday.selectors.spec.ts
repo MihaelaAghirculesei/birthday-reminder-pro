@@ -37,7 +37,9 @@ describe('Birthday Selectors', () => {
       '3': mockBirthdays[2]
     },
     filters: { ...initialBirthdayFilters },
-    loading: false,
+    saving: false,
+    deleting: false,
+    syncing: false,
     error: null,
     optimisticBackup: {}
   };
@@ -173,14 +175,24 @@ describe('Birthday Selectors', () => {
       expect(fromSelectors.selectBirthdayLoading(state)).toBe(false);
     });
 
-    it('should return true when loading', () => {
-      const loadingState = { birthdays: { ...mockState, loading: true } };
+    it('should return true when saving', () => {
+      const loadingState = { birthdays: { ...mockState, saving: true } };
       expect(fromSelectors.selectBirthdayLoading(loadingState)).toBe(true);
     });
 
-    it('projector returns the loading field', () => {
-      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState, loading: true })).toBe(true);
-      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState, loading: false })).toBe(false);
+    it('should return true when deleting', () => {
+      const loadingState = { birthdays: { ...mockState, deleting: true } };
+      expect(fromSelectors.selectBirthdayLoading(loadingState)).toBe(true);
+    });
+
+    it('should return true when syncing', () => {
+      const loadingState = { birthdays: { ...mockState, syncing: true } };
+      expect(fromSelectors.selectBirthdayLoading(loadingState)).toBe(true);
+    });
+
+    it('projector returns true when saving', () => {
+      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState, saving: true })).toBe(true);
+      expect(fromSelectors.selectBirthdayLoading.projector({ ...mockState })).toBe(false);
     });
   });
 
@@ -209,7 +221,7 @@ describe('Birthday Selectors', () => {
     });
 
     it('should reflect loading state', () => {
-      const loadingState = { birthdays: { ...mockState, loading: true } };
+      const loadingState = { birthdays: { ...mockState, saving: true } };
       const vm = fromSelectors.selectDashboardViewModel(loadingState);
       expect(vm.isLoading).toBe(true);
     });

@@ -1,4 +1,4 @@
-import { createReducer, on } from '@ngrx/store';
+﻿import { createReducer, on } from '@ngrx/store';
 import { createEntityAdapter, EntityAdapter } from '@ngrx/entity';
 import { Birthday } from '../../../shared/models/birthday.model';
 import { BirthdayState, initialBirthdayFilters } from './birthday.state';
@@ -34,7 +34,9 @@ export const birthdayAdapter: EntityAdapter<Birthday> = createEntityAdapter<Birt
 
 export const initialBirthdayState: BirthdayState = birthdayAdapter.getInitialState({
   filters: initialBirthdayFilters,
-  loading: false,
+  saving: false,
+  deleting: false,
+  syncing: false,
   error: null,
   optimisticBackup: {}
 });
@@ -44,41 +46,41 @@ export const birthdayReducer = createReducer(
 
   on(BirthdayActions.loadBirthdays, (state) => ({
     ...state,
-    loading: true,
+    syncing: true,
     error: null
   })),
 
   on(BirthdayActions.loadBirthdaysSuccess, (state, { birthdays }) =>
     birthdayAdapter.setAll(birthdays, {
       ...state,
-      loading: false,
+      syncing: false,
       error: null
     })
   ),
 
   on(BirthdayActions.loadBirthdaysFailure, (state, { error }) => ({
     ...state,
-    loading: false,
+    syncing: false,
     error
   })),
 
   on(BirthdayActions.addBirthday, (state) => ({
     ...state,
-    loading: true,
+    saving: true,
     error: null
   })),
 
   on(BirthdayActions.addBirthdaySuccess, (state, { birthday }) =>
     birthdayAdapter.addOne(birthday, {
       ...state,
-      loading: false,
+      saving: false,
       error: null
     })
   ),
 
   on(BirthdayActions.addBirthdayFailure, (state, { error }) => ({
     ...state,
-    loading: false,
+    saving: false,
     error
   })),
 
@@ -89,7 +91,7 @@ export const birthdayReducer = createReducer(
       { id: birthday.id, changes: birthday },
       {
         ...state,
-        loading: false,
+        saving: true,
         error: null,
         optimisticBackup: previous
           ? addToBackup(state.optimisticBackup, birthday.id, previous)
@@ -104,7 +106,7 @@ export const birthdayReducer = createReducer(
     const { [birthday.id]: _removed, ...remainingBackup } = state.optimisticBackup;
     return {
       ...state,
-      loading: false,
+      saving: false,
       error: null,
       optimisticBackup: remainingBackup
     };
@@ -117,14 +119,14 @@ export const birthdayReducer = createReducer(
       const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
       return birthdayAdapter.updateOne(
         { id, changes: backup },
-        { ...state, loading: false, error, optimisticBackup: remainingBackup }
+        { ...state, saving: false, error, optimisticBackup: remainingBackup }
       );
     }
     // id present but no backup: eviction or race — entity may be inconsistent
     const missingBackup = id != null && !(id in state.optimisticBackup);
     return {
       ...state,
-      loading: false,
+      saving: false,
       error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
     };
   }),
@@ -135,7 +137,7 @@ export const birthdayReducer = createReducer(
     const entity = state.entities[id];
     return birthdayAdapter.removeOne(id, {
       ...state,
-      loading: false,
+      deleting: true,
       error: null,
       optimisticBackup: entity
         ? addToBackup(state.optimisticBackup, id, entity)
@@ -148,7 +150,7 @@ export const birthdayReducer = createReducer(
       const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
     return {
       ...state,
-      loading: false,
+      deleting: false,
       error: null,
       optimisticBackup: remainingBackup
     };
@@ -161,7 +163,7 @@ export const birthdayReducer = createReducer(
       const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
       return birthdayAdapter.addOne(backup, {
         ...state,
-        loading: false,
+        deleting: false,
         error,
         optimisticBackup: remainingBackup
       });
@@ -170,7 +172,7 @@ export const birthdayReducer = createReducer(
     const missingBackup = id != null && !(id in state.optimisticBackup);
     return {
       ...state,
-      loading: false,
+      deleting: false,
       error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
     };
   }),
@@ -193,21 +195,21 @@ export const birthdayReducer = createReducer(
 
   on(BirthdayActions.clearAllBirthdays, (state) => ({
     ...state,
-    loading: true,
+    syncing: true,
     error: null
   })),
 
   on(BirthdayActions.clearAllBirthdaysSuccess, (state) =>
     birthdayAdapter.removeAll({
       ...state,
-      loading: false,
+      syncing: false,
       error: null
     })
   ),
 
   on(BirthdayActions.clearAllBirthdaysFailure, (state, { error }) => ({
     ...state,
-    loading: false,
+    syncing: false,
     error
   })),
 
@@ -264,41 +266,41 @@ export const birthdayReducer = createReducer(
 
   on(BirthdayActions.importBirthdays, (state) => ({
     ...state,
-    loading: true,
+    saving: true,
     error: null
   })),
 
   on(BirthdayActions.importBirthdaysSuccess, (state, { birthdays }) =>
     birthdayAdapter.addMany(birthdays, {
       ...state,
-      loading: false,
+      saving: false,
       error: null
     })
   ),
 
   on(BirthdayActions.importBirthdaysFailure, (state, { error }) => ({
     ...state,
-    loading: false,
+    saving: false,
     error
   })),
 
   on(BirthdayActions.loadTestData, (state) => ({
     ...state,
-    loading: true,
+    syncing: true,
     error: null
   })),
 
   on(BirthdayActions.loadTestDataSuccess, (state, { birthdays }) =>
     birthdayAdapter.setAll(birthdays, {
       ...state,
-      loading: false,
+      syncing: false,
       error: null
     })
   ),
 
   on(BirthdayActions.loadTestDataFailure, (state, { error }) => ({
     ...state,
-    loading: false,
+    syncing: false,
     error
   })),
 

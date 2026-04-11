@@ -14,11 +14,11 @@ describe('Birthday Reducer', () => {
   });
 
   describe('Load Actions', () => {
-    it('should set loading on loadBirthdays', () => {
+    it('should set syncing on loadBirthdays', () => {
       const action = BirthdayActions.loadBirthdays();
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(true);
+      expect(state.syncing).toBe(true);
       expect(state.error).toBeNull();
     });
 
@@ -29,7 +29,7 @@ describe('Birthday Reducer', () => {
 
       expect(state.entities['1']).toEqual(mockBirthday);
       expect(state.ids).toEqual(['1']);
-      expect(state.loading).toBe(false);
+      expect(state.syncing).toBe(false);
     });
 
     it('should set error on loadBirthdaysFailure', () => {
@@ -38,7 +38,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.syncing).toBe(false);
     });
   });
 
@@ -48,7 +48,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.entities['1']).toEqual(mockBirthday);
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
   });
 
@@ -145,7 +145,7 @@ describe('Birthday Reducer', () => {
       expect(state.entities['1']?.name).toBe('Jane Doe');
       // But error warns the user
       expect(state.error).toBe('Le modifiche potrebbero non essere state salvate');
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
   });
 
@@ -210,7 +210,7 @@ describe('Birthday Reducer', () => {
       expect(state.entities['1']).toBeUndefined();
       // But error warns the user
       expect(state.error).toBe('Le modifiche potrebbero non essere state salvate');
-      expect(state.loading).toBe(false);
+      expect(state.deleting).toBe(false);
     });
 
   });
@@ -330,7 +330,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
 
     it('should handle updateBirthdayFailure', () => {
@@ -339,7 +339,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
 
     it('should handle deleteBirthdayFailure', () => {
@@ -348,7 +348,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.deleting).toBe(false);
     });
 
     it('should handle clearAllBirthdaysFailure', () => {
@@ -357,20 +357,20 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.syncing).toBe(false);
     });
   });
 
   describe('Loading Actions', () => {
-    it('should set loading on addBirthday', () => {
+    it('should set saving on addBirthday', () => {
       const action = BirthdayActions.addBirthday({ birthday: mockBirthday });
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(true);
+      expect(state.saving).toBe(true);
       expect(state.error).toBeNull();
     });
 
-    it('should optimistically apply update on updateBirthday (no loading)', () => {
+    it('should optimistically apply update on updateBirthday and set saving', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
@@ -378,27 +378,27 @@ describe('Birthday Reducer', () => {
       const updated = { ...mockBirthday, name: 'Updated Name' };
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
 
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(true);
       expect(state.entities['1']?.name).toBe('Updated Name');
       expect(state.optimisticBackup['1']).toEqual(mockBirthday);
     });
 
-    it('should optimistically remove on deleteBirthday (no loading)', () => {
+    it('should optimistically remove on deleteBirthday and set deleting', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
 
-      expect(state.loading).toBe(false);
+      expect(state.deleting).toBe(true);
       expect(state.entities['1']).toBeUndefined();
     });
 
-    it('should set loading on clearAllBirthdays', () => {
+    it('should set syncing on clearAllBirthdays', () => {
       const action = BirthdayActions.clearAllBirthdays();
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(true);
+      expect(state.syncing).toBe(true);
       expect(state.error).toBeNull();
     });
   });
@@ -507,11 +507,11 @@ describe('Birthday Reducer', () => {
   });
 
   describe('Import Actions', () => {
-    it('should set loading on importBirthdays', () => {
+    it('should set saving on importBirthdays', () => {
       const action = BirthdayActions.importBirthdays({ birthdays: [mockBirthday] });
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(true);
+      expect(state.saving).toBe(true);
       expect(state.error).toBeNull();
     });
 
@@ -520,7 +520,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.entities['1']).toEqual(mockBirthday);
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
 
     it('should set error on importBirthdaysFailure', () => {
@@ -528,7 +528,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe('Import failed');
-      expect(state.loading).toBe(false);
+      expect(state.saving).toBe(false);
     });
   });
 
@@ -546,11 +546,11 @@ describe('Birthday Reducer', () => {
   });
 
   describe('Test Data Actions', () => {
-    it('should set loading on loadTestData', () => {
+    it('should set syncing on loadTestData', () => {
       const action = BirthdayActions.loadTestData();
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(true);
+      expect(state.syncing).toBe(true);
       expect(state.error).toBeNull();
     });
 
@@ -558,7 +558,7 @@ describe('Birthday Reducer', () => {
       const action = BirthdayActions.loadTestDataSuccess({ birthdays: [mockBirthday] });
       const state = birthdayReducer(initialBirthdayState, action);
 
-      expect(state.loading).toBe(false);
+      expect(state.syncing).toBe(false);
       expect(state.error).toBeNull();
     });
 
@@ -568,7 +568,7 @@ describe('Birthday Reducer', () => {
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
-      expect(state.loading).toBe(false);
+      expect(state.syncing).toBe(false);
     });
   });
 });

@@ -1,9 +1,11 @@
-import { EntityState } from '@ngrx/entity';
+﻿import { EntityState } from '@ngrx/entity';
 import { Birthday } from '../../../shared/models/birthday.model';
 
 export interface BirthdayState extends EntityState<Birthday> {
   filters: BirthdayFilters;
-  loading: boolean;
+  saving: boolean;
+  deleting: boolean;
+  syncing: boolean;
   error: string | null;
   optimisticBackup: Record<string, Birthday>;
 }

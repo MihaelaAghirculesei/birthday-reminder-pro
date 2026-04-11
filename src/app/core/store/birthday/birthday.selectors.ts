@@ -95,7 +95,7 @@ export const selectOptimisticBackup = createSelector(
 
 export const selectBirthdayLoading = createSelector(
   selectBirthdayState,
-  (state) => state.loading
+  (state) => state.saving || state.deleting || state.syncing
 );
 
 export const selectBirthdayError = createSelector(
