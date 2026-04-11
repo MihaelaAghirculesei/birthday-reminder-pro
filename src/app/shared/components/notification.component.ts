@@ -21,6 +21,11 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
           data-testid="notification">
           <mat-icon class="notification-icon">{{ getIcon(notification.type) }}</mat-icon>
           <span class="notification-message">{{ notification.message }}</span>
+          @if (notification.action) {
+            <button mat-button class="action-btn" (click)="handleAction(notification)" [attr.data-testid]="'notification-action'">
+              {{ notification.action.label }}
+            </button>
+          }
           <button mat-icon-button class="close-btn" (click)="close(notification.id)" aria-label="Close notification" data-testid="close-notification">
             <mat-icon>close</mat-icon>
           </button>
@@ -90,6 +95,24 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
       font-weight: 500;
     }
 
+    .action-btn {
+      min-width: unset !important;
+      padding: 0 8px !important;
+      height: 28px !important;
+      line-height: 28px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: inherit !important;
+      opacity: 0.9;
+      flex-shrink: 0;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
     .close-btn {
       width: 32px !important;
       height: 32px !important;
@@ -131,6 +154,11 @@ export class NotificationComponent {
       case 'info': return 'info';
       default: return 'info';
     }
+  }
+
+  handleAction(notification: NotificationMessage): void {
+    notification.action!.callback();
+    this.notificationService.remove(notification.id);
   }
 
   close(id: string): void {

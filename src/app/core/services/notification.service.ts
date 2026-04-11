@@ -2,11 +2,17 @@ import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { IdGeneratorService } from './id-generator.service';
 
+export interface NotificationAction {
+  label: string;
+  callback: () => void;
+}
+
 export interface NotificationMessage {
   id: string;
   message: string;
   type: 'success' | 'error' | 'warning' | 'info';
   duration?: number;
+  action?: NotificationAction;
 }
 
 @Injectable({
@@ -25,13 +31,14 @@ export class NotificationService {
     info: 0
   };
 
-  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration?: number): void {
+  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration?: number, action?: NotificationAction): void {
     const effectiveDuration = duration ?? this.defaultDurations[type] ?? 0;
     const notification: NotificationMessage = {
       id: this.idGenerator.generateId(),
       message,
       type,
-      duration: effectiveDuration
+      duration: effectiveDuration,
+      ...(action && { action })
     };
 
     const currentNotifications = this.notifications$.value;

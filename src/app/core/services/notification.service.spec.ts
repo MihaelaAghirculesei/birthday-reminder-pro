@@ -78,4 +78,28 @@ describe('NotificationService', () => {
 
     expect(notifications.length).toBe(1);
   }));
+
+  it('should store action when provided', (done) => {
+    const action = { label: 'Retry', callback: jasmine.createSpy('callback') };
+
+    service.notifications.subscribe(notifications => {
+      if (notifications.length) {
+        expect(notifications[0].action).toEqual(jasmine.objectContaining({ label: 'Retry' }));
+        done();
+      }
+    });
+
+    service.show('test', 'error', undefined, action);
+  });
+
+  it('should not include action field when not provided', (done) => {
+    service.notifications.subscribe(notifications => {
+      if (notifications.length) {
+        expect(notifications[0].action).toBeUndefined();
+        done();
+      }
+    });
+
+    service.show('test', 'error');
+  });
 });

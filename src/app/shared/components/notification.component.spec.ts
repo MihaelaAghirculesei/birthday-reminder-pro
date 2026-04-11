@@ -109,6 +109,23 @@ describe('NotificationComponent', () => {
     });
   });
 
+  describe('handleAction', () => {
+    it('should invoke action callback and remove notification', () => {
+      const callbackSpy = jasmine.createSpy('callback');
+      const notification: NotificationMessage = {
+        id: 'action-id',
+        message: 'Test',
+        type: 'error',
+        action: { label: 'Retry', callback: callbackSpy }
+      };
+
+      component.handleAction(notification);
+
+      expect(callbackSpy).toHaveBeenCalled();
+      expect(mockNotificationService.remove).toHaveBeenCalledWith('action-id');
+    });
+  });
+
   describe('notifications$ observable', () => {
     it('should be defined', () => {
       expect(component.notifications$).toBeDefined();
