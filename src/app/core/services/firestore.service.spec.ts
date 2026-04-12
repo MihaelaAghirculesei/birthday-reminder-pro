@@ -615,6 +615,37 @@ describe('FirestoreService', () => {
       });
     });
 
+    it('saveBirthday stores birthDate as YYYY-MM-DD string — no Timestamp to avoid timezone shift', (done) => {
+      // Regression guard: birthDate must be stored as a plain string so that
+      // reading it back in a different timezone cannot shift the date by ±1 day.
+      // batch.set is called twice: once for the birthday, once for the rate-limit
+      // sentinel — so we inspect the first call's arguments.
+      const setSpy = jasmine.createSpy('batch.set');
+      const successBatch = {
+        set: setSpy,
+        commit: jasmine.createSpy('batch.commit').and.resolveTo(undefined)
+      };
+      const timestampFromDateSpy = jasmine.createSpy('Timestamp.fromDate');
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue(successBatch),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: { fromDate: timestampFromDateSpy },
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const birthday = { id: 'b-tz', name: 'Test', birthDate: '1990-05-15', syncStatus: 'local-only' } as Birthday;
+      service.saveBirthday('user-123', birthday).subscribe({
+        complete: () => {
+          // First call is the birthday document; second is the rate-limit sentinel
+          const birthdayData = setSpy.calls.first().args[1] as Record<string, unknown>;
+          expect(birthdayData['birthDate']).toBe('1990-05-15');
+          expect(timestampFromDateSpy).not.toHaveBeenCalled();
+          done();
+        },
+        error: done.fail
+      });
+    });
+
     it('withRetry uses BASE_DELAY_MS for transient errors (not rate-limit)', (done) => {
       const transientError = Object.assign(new Error('Unavailable'), { code: 'unavailable' });
       let callCount = 0;

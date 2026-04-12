@@ -6,7 +6,7 @@ import { firebaseGetters, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../f
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
 import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
-import { toDateString, parseLocalDate } from '../../shared/utils/date.utils';
+import { toDateString } from '../../shared/utils/date.utils';
 
 /** Firebase error codes that indicate transient failures safe to retry. */
 const RETRYABLE_CODES = new Set(['unavailable', 'deadline-exceeded', 'internal', 'resource-exhausted']);
@@ -204,7 +204,7 @@ export class FirestoreService {
         const batch = fs.writeBatch(db);
         batch.set(
           fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
-          this.mapBirthdayToFirestore(birthday, userId, fs),
+          this.mapBirthdayToFirestore(birthday, userId),
           { merge: true }
         );
         this.addRateLimitToBatch(batch, userId, fs, db);
@@ -261,7 +261,7 @@ export class FirestoreService {
         for (const birthday of birthdays) {
           batch.set(
             fs.doc(db, this.getUserPath(userId), 'birthdays', birthday.id),
-            this.mapBirthdayToFirestore(birthday, userId, fs),
+            this.mapBirthdayToFirestore(birthday, userId),
             { merge: true }
           );
         }
@@ -453,14 +453,17 @@ export class FirestoreService {
 
   private mapBirthdayToFirestore(
     birthday: Birthday,
-    userId: string,
-    fs: typeof import('firebase/firestore')
+    userId: string
   ): Record<string, unknown> {
     const { syncStatus: _removed, scheduledMessages: _msgs, ...rest } = birthday;
 
     const data: Record<string, unknown> = {
       ...rest,
-      birthDate: fs.Timestamp.fromDate(parseLocalDate(birthday.birthDate)),
+      // Store birthDate as a plain 'YYYY-MM-DD' string (no Timestamp) to avoid
+      // timezone-shift bugs: a Timestamp encodes local midnight as UTC, so reading
+      // it back in a different timezone can shift the date by ±1 day.
+      // The read path handles both strings and legacy Timestamps for backward compat.
+      birthDate: birthday.birthDate,
       ownerId: userId,
       updatedAt: Date.now()
     };
