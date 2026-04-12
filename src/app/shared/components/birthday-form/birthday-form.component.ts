@@ -17,8 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { PhotoUploadComponent } from '../photo-upload.component';
 import { DEFAULT_CATEGORY, BirthdayCategory } from '../../constants';
 import { Birthday } from '../../models';
-import { getZodiacSign } from '../../utils';
-import { toDateString } from '../../utils/date.utils';
+import { getZodiacSign, parseLocalDate, toDateString } from '../../utils';
 import { BirthdaySchema, sanitizeBirthdayData } from '../../schemas/birthday.schema';
 import { LoggerService } from '../../../core';
 import { PhotoStorageService } from '../../../core/services/photo-storage.service';
@@ -137,7 +136,13 @@ export class BirthdayFormComponent {
   private pastDateValidator(control: AbstractControl): ValidationErrors | null {
     if (!control.value) return null;
 
-    const selectedDate = new Date(control.value);
+    const value = control.value;
+    // Use parseLocalDate for YYYY-MM-DD strings: `new Date('YYYY-MM-DD')` is treated
+    // as UTC midnight by the spec, causing off-by-one errors in UTC-negative zones.
+    const selectedDate =
+      value instanceof Date
+        ? new Date(value.getFullYear(), value.getMonth(), value.getDate())
+        : parseLocalDate(String(value));
     const today = new Date();
     today.setHours(23, 59, 59, 999);
 
