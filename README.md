@@ -432,7 +432,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Author
 
 **Mihaela Melania Aghirculesei**
-- Portfolio: [mihaela-melania-aghirculesei.de](https://mihaela-melania-aghirculesei.de/)
+- Portfolio: [aghirculesei.pages.dev](https://aghirculesei.pages.dev/)
 - GitHub: [@MihaelaAghirculesei](https://github.com/MihaelaAghirculesei)
 - LinkedIn: [mihaela-aghirculesei](https://www.linkedin.com/in/mihaela-aghirculesei/)
 
