@@ -18,7 +18,9 @@ function makeState(
     ids: birthdays.map(b => b.id),
     entities: Object.fromEntries(birthdays.map(b => [b.id, b])),
     filters: { ...initialBirthdayFilters, ...filters },
-    loading: false,
+    saving: false,
+    deleting: false,
+    syncing: false,
     error: null,
     optimisticBackup: {}
   };
