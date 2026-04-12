@@ -235,7 +235,13 @@ export const it = {
     FAILED_ADD_MESSAGE: 'Impossibile aggiungere il messaggio: {{error}}',
     FAILED_UPDATE_MESSAGE: 'Impossibile aggiornare il messaggio: {{error}}',
     FAILED_DELETE_MESSAGE: 'Impossibile eliminare il messaggio: {{error}}',
-    NO_UNCATEGORIZED: 'Non ci sono compleanni senza categoria da riassegnare.'
+    NO_UNCATEGORIZED: 'Non ci sono compleanni senza categoria da riassegnare.',
+    FAILED_ADD_BIRTHDAY: 'Impossibile salvare il compleanno: {{error}}',
+    FAILED_UPDATE_BIRTHDAY: 'Impossibile aggiornare il compleanno: {{error}}',
+    FAILED_DELETE_BIRTHDAY: 'Impossibile eliminare il compleanno: {{error}}',
+    FAILED_SYNC: 'Sincronizzazione fallita: {{error}}',
+    FAILED_MIGRATION: 'Migrazione cloud fallita: {{error}}',
+    RETRY: 'Riprova'
   },
   CONFIRM: {
     CLEAR_ALL_TITLE: 'Cancellare Tutti i Dati?',

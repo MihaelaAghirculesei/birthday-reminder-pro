@@ -236,7 +236,13 @@ export const en = {
     FAILED_ADD_MESSAGE: 'Failed to add message: {{error}}',
     FAILED_UPDATE_MESSAGE: 'Failed to update message: {{error}}',
     FAILED_DELETE_MESSAGE: 'Failed to delete message: {{error}}',
-    NO_UNCATEGORIZED: 'There are no uncategorized birthdays to reassign.'
+    NO_UNCATEGORIZED: 'There are no uncategorized birthdays to reassign.',
+    FAILED_ADD_BIRTHDAY: 'Failed to save birthday: {{error}}',
+    FAILED_UPDATE_BIRTHDAY: 'Failed to update birthday: {{error}}',
+    FAILED_DELETE_BIRTHDAY: 'Failed to delete birthday: {{error}}',
+    FAILED_SYNC: 'Sync failed: {{error}}',
+    FAILED_MIGRATION: 'Cloud migration failed: {{error}}',
+    RETRY: 'Retry'
   },
   CONFIRM: {
     CLEAR_ALL_TITLE: 'Clear All Data?',
