@@ -41,8 +41,12 @@ export class BirthdayMergeService {
         const winner = this.resolveConflict(localItem, cloudItem);
         merged.push(winner);
 
-        if (winner === localItem && (localItem.updatedAt || 0) > (cloudItem.updatedAt || 0)) {
-          toUpload.push(localItem);
+        // Upload if local is strictly newer (cloud is stale), OR if fields were merged
+        // from both sides (cloud needs the combined data — e.g. local category + cloud notes).
+        const localIsNewer = (localItem.updatedAt || 0) > (cloudItem.updatedAt || 0);
+        const isMergedObject = winner !== localItem && winner !== cloudItem;
+        if ((winner === localItem && localIsNewer) || isMergedObject) {
+          toUpload.push(winner);
         }
       }
     }

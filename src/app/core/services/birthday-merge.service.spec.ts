@@ -259,6 +259,67 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(local, cloud, { strategy: 'latest-wins' });
       expect(result.merged[0].updatedAt).toBe(1800);
     });
+
+    it('near-simultaneous: merged result goes to toUpload so cloud receives the combined data', () => {
+      // Device A (local) added a category 800ms before Device B (cloud) added a note
+      const local = [makeBirthday({ id: 'b-1', notes: '', category: 'friends', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-1', notes: 'Birthday party', category: '', updatedAt: 1800 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      // Both fields preserved in the merged result
+      expect(result.merged[0].category).toBe('friends');
+      expect(result.merged[0].notes).toBe('Birthday party');
+      // Merged result must be uploaded so cloud gains the 'friends' category
+      expect(result.toUpload.length).toBe(1);
+      expect(result.toUpload[0].category).toBe('friends');
+      expect(result.toUpload[0].notes).toBe('Birthday party');
+    });
+
+    it('near-simultaneous: toUpload contains the merged object with syncStatus synced, not raw local', () => {
+      const local = [makeBirthday({ id: 'b-1', category: 'family', syncStatus: 'pending', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-1', category: '', syncStatus: 'synced', updatedAt: 1900 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.toUpload.length).toBe(1);
+      // Uploaded item is the merged object: syncStatus synced, max updatedAt, merged category
+      expect(result.toUpload[0].syncStatus).toBe('synced');
+      expect(result.toUpload[0].updatedAt).toBe(1900);
+      expect(result.toUpload[0].category).toBe('family');
+    });
+
+    it('near-simultaneous: two devices edit the same field — newer value wins and result is uploaded to cloud', () => {
+      const local = [makeBirthday({ id: 'b-1', name: 'Old Name', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-1', name: 'New Name', updatedAt: 1500 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged[0].name).toBe('New Name');
+      // Uploaded because it is a merged object that cloud should confirm
+      expect(result.toUpload.length).toBe(1);
+    });
+
+    it('strictly newer cloud (>1s diff): cloud version wins entirely, no upload needed', () => {
+      const local = [makeBirthday({ id: 'b-1', name: 'Local', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-1', name: 'Cloud', updatedAt: 5000 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged[0].name).toBe('Cloud');
+      // Cloud already has this version — no upload needed
+      expect(result.toUpload.length).toBe(0);
+    });
+
+    it('equal timestamps: cloud wins by convention, no upload needed', () => {
+      const local = [makeBirthday({ id: 'b-1', name: 'Local', updatedAt: 2000 })];
+      const cloud = [makeBirthday({ id: 'b-1', name: 'Cloud', updatedAt: 2000 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged[0].name).toBe('Cloud');
+      expect(result.toUpload.length).toBe(0);
+    });
   });
 
   describe('deduplication (deduplicateByNameAndDate)', () => {
