@@ -11,8 +11,11 @@ export class NetworkService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly HEALTH_CHECK_URL = '/favicon.ico';
-  private readonly HEALTH_CHECK_INTERVAL_MS = 30_000;
+  // ?ngsw-bypass tells Angular's Service Worker to skip cache and hit the network directly.
+  // Without this, NGSW serves /favicon.ico from its prefetch cache even when offline,
+  // making health checks always return true and defeating the purpose.
+  private readonly HEALTH_CHECK_URL = '/favicon.ico?ngsw-bypass';
+  private readonly HEALTH_CHECK_INTERVAL_MS = 10_000;
 
   private onlineSubject = new BehaviorSubject<boolean>(true);
   public online$ = this.onlineSubject.asObservable();
@@ -34,6 +37,15 @@ export class NetworkService {
         takeUntilDestroyed(this.destroyRef)
       ).subscribe((isOnline: boolean) => {
         this.onlineSubject.next(isOnline);
+        // Browser 'online' event can fire before connectivity is actually usable
+        // (e.g. mobile radio waking up). Verify immediately with a real network probe.
+        if (isOnline) {
+          this.performHealthCheck().then(isReachable => {
+            if (this.onlineSubject.value !== isReachable) {
+              this.onlineSubject.next(isReachable);
+            }
+          });
+        }
       });
     }
   }

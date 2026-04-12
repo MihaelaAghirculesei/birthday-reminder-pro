@@ -144,7 +144,7 @@ describe('NetworkService', () => {
       service = TestBed.inject(NetworkService);
       const result = await (service as TestableService).performHealthCheck();
       expect(result).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledWith('/favicon.ico', jasmine.objectContaining({
+      expect(fetchSpy).toHaveBeenCalledWith('/favicon.ico?ngsw-bypass', jasmine.objectContaining({
         method: 'HEAD',
         cache: 'no-store'
       }));
