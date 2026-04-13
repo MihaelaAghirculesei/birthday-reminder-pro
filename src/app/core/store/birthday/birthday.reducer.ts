@@ -1,30 +1,25 @@
 ﻿import { createReducer, on } from '@ngrx/store';
 import { createEntityAdapter, EntityAdapter } from '@ngrx/entity';
 import { Birthday } from '../../../shared/models/birthday.model';
-import { BirthdayState, initialBirthdayFilters } from './birthday.state';
+import { BirthdayState, initialBirthdayFilters, OptimisticBackupEntry } from './birthday.state';
 import * as BirthdayActions from './birthday.actions';
 
 export const MAX_OPTIMISTIC_BACKUP_SIZE = 50;
 
 /**
- * Adds an entry to the optimistic backup dictionary with two safety guards:
- * - Does NOT overwrite an existing backup for the same id (preserves the true
- *   pre-optimistic state across repeated updates on the same entity).
- * - Evicts the oldest entry when the dictionary reaches MAX_OPTIMISTIC_BACKUP_SIZE,
- *   bounding memory growth even if many operations fail in sequence.
+ * Appends a new entry to the versioned backup log.
+ *
+ * Unlike the old dict-based addToBackup, every call produces a new entry —
+ * even for the same entityId — so concurrent in-flight operations each own
+ * an independent snapshot.  The log is bounded to MAX_OPTIMISTIC_BACKUP_SIZE
+ * entries; when the cap is reached the oldest entry is evicted.
  */
-function addToBackup(
-  backup: Record<string, Birthday>,
-  id: string,
-  entity: Birthday
-): Record<string, Birthday> {
-  if (id in backup) return backup;
-  const keys = Object.keys(backup);
-  if (keys.length >= MAX_OPTIMISTIC_BACKUP_SIZE) {
-    const { [keys[0]]: _evicted, ...trimmed } = backup as Record<string, Birthday>;
-    return { ...trimmed, [id]: entity };
-  }
-  return { ...backup, [id]: entity };
+function pushToBackup(
+  backup: OptimisticBackupEntry[],
+  entry: OptimisticBackupEntry
+): OptimisticBackupEntry[] {
+  const next = [...backup, entry];
+  return next.length > MAX_OPTIMISTIC_BACKUP_SIZE ? next.slice(1) : next;
 }
 
 export const birthdayAdapter: EntityAdapter<Birthday> = createEntityAdapter<Birthday>({
@@ -38,7 +33,7 @@ export const initialBirthdayState: BirthdayState = birthdayAdapter.getInitialSta
   deleting: false,
   syncing: false,
   error: null,
-  optimisticBackup: {}
+  optimisticBackup: []
 });
 
 export const birthdayReducer = createReducer(
@@ -84,55 +79,61 @@ export const birthdayReducer = createReducer(
     error
   })),
 
-  // Optimistic update: apply changes immediately, backup previous version
-  on(BirthdayActions.updateBirthday, (state, { birthday }) => {
+  // Optimistic update: apply changes immediately, push per-operation snapshot
+  on(BirthdayActions.updateBirthday, (state, { birthday, operationId }) => {
     const previous = state.entities[birthday.id];
-    const newState = birthdayAdapter.updateOne(
+    return birthdayAdapter.updateOne(
       { id: birthday.id, changes: birthday },
       {
         ...state,
         saving: true,
         error: null,
         optimisticBackup: previous
-          ? addToBackup(state.optimisticBackup, birthday.id, previous)
+          ? pushToBackup(state.optimisticBackup, { operationId, entityId: birthday.id, snapshot: previous })
           : state.optimisticBackup
       }
     );
-    return newState;
   }),
 
-  // Optimistic success: clear backup
-  on(BirthdayActions.updateBirthdaySuccess, (state, { birthday }) => {
-    const { [birthday.id]: _removed, ...remainingBackup } = state.optimisticBackup;
-    return {
-      ...state,
-      saving: false,
-      error: null,
-      optimisticBackup: remainingBackup
-    };
-  }),
+  // Optimistic success: remove the entry for this specific operation
+  on(BirthdayActions.updateBirthdaySuccess, (state, { operationId }) => ({
+    ...state,
+    saving: false,
+    error: null,
+    optimisticBackup: state.optimisticBackup.filter(e => e.operationId !== operationId)
+  })),
 
-  // Optimistic rollback: restore previous version on failure
-  on(BirthdayActions.updateBirthdayFailure, (state, { error, id }) => {
-    if (id && state.optimisticBackup[id]) {
-      const backup = state.optimisticBackup[id];
-      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
-      return birthdayAdapter.updateOne(
-        { id, changes: backup },
-        { ...state, saving: false, error, optimisticBackup: remainingBackup }
-      );
+  // Optimistic rollback: restore the snapshot captured for this exact operation
+  on(BirthdayActions.updateBirthdayFailure, (state, { error, operationId, id }) => {
+    const entry = state.optimisticBackup.find(e => e.operationId === operationId);
+    if (!entry) {
+      // No backup found — distinguish two cases:
+      //   • id provided and entity still in store → backup was evicted while the entity
+      //     is in an unknown optimistic state; warn the user.
+      //   • any other case (no id, entity not found) → plain failure, propagate error.
+      const entityIsDirty = id != null && id in state.entities;
+      return {
+        ...state,
+        saving: false,
+        error: entityIsDirty ? 'Le modifiche potrebbero non essere state salvate' : error
+      };
     }
-    // id present but no backup: eviction or race — entity may be inconsistent
-    const missingBackup = id != null && !(id in state.optimisticBackup);
-    return {
-      ...state,
-      saving: false,
-      error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
-    };
+    return birthdayAdapter.updateOne(
+      { id: entry.entityId, changes: entry.snapshot },
+      {
+        ...state,
+        saving: false,
+        error,
+        optimisticBackup: state.optimisticBackup.filter(e => e.operationId !== operationId)
+      }
+    );
   }),
 
 
-  // Optimistic delete: remove immediately, backup for potential rollback
+  // Optimistic delete: remove immediately, backup for potential rollback.
+  // Delete operations are never concurrent on the same entity (the entity
+  // disappears from the UI after the first optimistic remove), so using the
+  // entityId as the operationId is safe and avoids adding a new action prop.
   on(BirthdayActions.deleteBirthday, (state, { id }) => {
     const entity = state.entities[id];
     return birthdayAdapter.removeOne(id, {
@@ -140,41 +141,38 @@ export const birthdayReducer = createReducer(
       deleting: true,
       error: null,
       optimisticBackup: entity
-        ? addToBackup(state.optimisticBackup, id, entity)
+        ? pushToBackup(state.optimisticBackup, { operationId: id, entityId: id, snapshot: entity })
         : state.optimisticBackup
     });
   }),
 
-  // Optimistic delete success: clear backup
-  on(BirthdayActions.deleteBirthdaySuccess, (state, { id }) => {
-      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
-    return {
-      ...state,
-      deleting: false,
-      error: null,
-      optimisticBackup: remainingBackup
-    };
-  }),
+  // Optimistic delete success: remove the backup entry for this entity
+  on(BirthdayActions.deleteBirthdaySuccess, (state, { id }) => ({
+    ...state,
+    deleting: false,
+    error: null,
+    optimisticBackup: state.optimisticBackup.filter(e => e.operationId !== id)
+  })),
 
-  // Optimistic delete rollback: restore entity on failure
+  // Optimistic delete rollback: restore entity from its backup snapshot
   on(BirthdayActions.deleteBirthdayFailure, (state, { error, id }) => {
-    if (id && state.optimisticBackup[id]) {
-      const backup = state.optimisticBackup[id];
-      const { [id]: _removed, ...remainingBackup } = state.optimisticBackup;
-      return birthdayAdapter.addOne(backup, {
+    if (!id) {
+      return { ...state, deleting: false, error };
+    }
+    const entry = state.optimisticBackup.find(e => e.operationId === id);
+    if (!entry) {
+      return {
         ...state,
         deleting: false,
-        error,
-        optimisticBackup: remainingBackup
-      });
+        error: 'Le modifiche potrebbero non essere state salvate'
+      };
     }
-    // id present but no backup: eviction or race — entity may be permanently gone
-    const missingBackup = id != null && !(id in state.optimisticBackup);
-    return {
+    return birthdayAdapter.addOne(entry.snapshot, {
       ...state,
       deleting: false,
-      error: missingBackup ? 'Le modifiche potrebbero non essere state salvate' : error
-    };
+      error,
+      optimisticBackup: state.optimisticBackup.filter(e => e.operationId !== id)
+    });
   }),
 
   on(BirthdayActions.setSearchTerm, (state, { searchTerm }) => ({
