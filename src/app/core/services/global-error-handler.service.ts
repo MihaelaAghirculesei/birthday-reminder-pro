@@ -98,22 +98,18 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 
   private hasGoogleResultError(error: unknown): error is GoogleResultAPIError {
-    if (typeof error !== 'object' || error === null) return false;
-    const e = error as Record<string, unknown>;
-    return typeof e['result'] === 'object' &&
-           e['result'] !== null &&
-           'error' in e['result'] &&
-           typeof (e['result'] as Record<string, unknown>)['error'] === 'object' &&
-           (e['result'] as Record<string, unknown>)['error'] !== null &&
-           'code' in ((e['result'] as Record<string, unknown>)['error'] as object) &&
-           typeof ((e['result'] as Record<string, unknown>)['error'] as Record<string, unknown>)['code'] === 'number';
+    if (!this.isObject(error)) return false;
+    const result = error['result'];
+    if (!this.isObject(result)) return false;
+    const resultError = result['error'];
+    return this.isObject(resultError) && typeof resultError['code'] === 'number';
   }
 
   private hasGoogleMessage(error: unknown): error is GoogleMessageAPIError {
-    if (typeof error !== 'object' || error === null) return false;
-    const e = error as Record<string, unknown>;
-    return typeof e['message'] === 'string' &&
-           (e['message'].includes('gapi') || (e['message'] as string).includes('Google'));
+    if (!this.isObject(error)) return false;
+    const { message } = error;
+    return typeof message === 'string' &&
+           (message.includes('gapi') || message.includes('Google'));
   }
 
   private getGoogleAPIErrorMessage(error: GoogleAPIError): string {
