@@ -71,13 +71,22 @@ describe('Chart — @defer(on viewport) rendering', () => {
   });
 
   it('sr-only <figcaption> id matches the aria-describedby on <figure>', () => {
-    cy.get('app-birthday-chart figure.chart-figure').then(($fig) => {
-      const descId = $fig.attr('aria-describedby') as string;
-      cy.get(`app-birthday-chart figcaption#${descId}.sr-only`)
-        .should('exist')
-        .invoke('text')
-        .should('have.length.greaterThan', 0);
-    });
+    // Use .should(callback) instead of .should('have.attr', name):
+    // the callback form always yields the jQuery element as subject, avoiding
+    // Cypress 15's internal cy.invoke('attr') retry path that fails when the
+    // deferred block is still attaching to the DOM (non-jQuery subject).
+    cy.get('app-birthday-chart figure.chart-figure')
+      .should(($fig) => {
+        expect($fig.attr('aria-describedby'), 'figure[aria-describedby]')
+          .to.be.a('string').and.not.empty;
+      })
+      .then(($fig) => {
+        const descId = $fig.attr('aria-describedby')!;
+        cy.get(`app-birthday-chart figcaption#${descId}.sr-only`)
+          .should('exist')
+          .invoke('text')
+          .should('have.length.greaterThan', 0);
+      });
   });
 
   it('visual .chart-container carries aria-hidden="true"', () => {
