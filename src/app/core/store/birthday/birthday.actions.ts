@@ -32,17 +32,17 @@ export const addBirthdayFailure = createAction(
 
 export const updateBirthday = createAction(
   '[Birthday] Update Birthday',
-  props<{ birthday: Birthday }>()
+  props<{ birthday: Birthday; operationId: string }>()
 );
 
 export const updateBirthdaySuccess = createAction(
   '[Birthday] Update Birthday Success',
-  props<{ birthday: Birthday }>()
+  props<{ birthday: Birthday; operationId: string }>()
 );
 
 export const updateBirthdayFailure = createAction(
   '[Birthday] Update Birthday Failure',
-  props<{ error: string; id?: string; birthday?: Birthday }>()
+  props<{ error: string; operationId: string; id?: string; birthday?: Birthday }>()
 );
 
 export const deleteBirthday = createAction(
