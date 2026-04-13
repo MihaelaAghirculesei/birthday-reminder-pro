@@ -85,7 +85,7 @@ export class BirthdayCalendarSyncEffects {
       ofType(BirthdayActions.deleteBirthday),
       withLatestFrom(this.store.select(selectBirthdayState)),
       mergeMap(([{ id }, state]) => {
-        const calendarEventId = state.optimisticBackup[id]?.googleCalendarEventId;
+        const calendarEventId = state.optimisticBackup.find(e => e.entityId === id)?.snapshot.googleCalendarEventId;
         if (!calendarEventId) return EMPTY;
 
         return from(this.calendarIntegration.deleteFromCalendar(calendarEventId)).pipe(

@@ -86,7 +86,7 @@ export class BirthdayNotificationEffects {
             undefined,
             birthday ? {
               label: this.translate.instant('NOTIFICATIONS.RETRY'),
-              callback: () => this.store.dispatch(BirthdayActions.updateBirthday({ birthday }))
+              callback: () => this.store.dispatch(BirthdayActions.updateBirthday({ birthday, operationId: crypto.randomUUID() }))
             } : undefined
           );
         })

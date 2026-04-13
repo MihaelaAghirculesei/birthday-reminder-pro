@@ -69,7 +69,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
     this.actions$.pipe(
       ofType(BirthdayActions.updateBirthday),
       withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
-      mergeMap(([{ birthday }, userId]) => {
+      mergeMap(([{ birthday, operationId }, userId]) => {
         const normalizedBirthday = this.birthdayService.prepareBirthdayForUpdate(birthday, userId);
 
         return from(this.offlineStorage.updateBirthday(normalizedBirthday)).pipe(
@@ -77,8 +77,8 @@ export class BirthdayCrudEffects implements OnInitEffects {
             ? from(this.syncCoordinator.queueChange('birthday', normalizedBirthday.id, 'update', normalizedBirthday))
             : of(undefined)
           ),
-          map(() => BirthdayActions.updateBirthdaySuccess({ birthday: normalizedBirthday })),
-          catchError(error => of(BirthdayActions.updateBirthdayFailure({ error: error.message, id: normalizedBirthday.id, birthday })))
+          map(() => BirthdayActions.updateBirthdaySuccess({ birthday: normalizedBirthday, operationId })),
+          catchError(error => of(BirthdayActions.updateBirthdayFailure({ error: error.message, operationId, id: normalizedBirthday.id, birthday })))
         );
       })
     )
@@ -94,36 +94,40 @@ export class BirthdayCrudEffects implements OnInitEffects {
       mergeMap(([{ id }, userId, optimisticBackup]) => {
         // The reducer removes the entity optimistically before this effect runs,
         // but saves a backup so we can still access photo URLs for cleanup.
-        const birthday = optimisticBackup[id];
+        const birthday = optimisticBackup.find(e => e.entityId === id)?.snapshot;
 
         if (!birthday) {
           return of(BirthdayActions.deleteBirthdayFailure({ error: 'Birthday not found', id }));
         }
 
-        // Fire-and-forget Storage cleanup: we don't want a Storage error to
-        // block the local delete. Errors are logged inside deletePhotoByUrl().
-        const photoCleanup = Promise.all([
-          birthday.photo ? this.photoStorage.deletePhotoByUrl(birthday.photo) : Promise.resolve(),
-          birthday.rememberPhoto ? this.photoStorage.deletePhotoByUrl(birthday.rememberPhoto) : Promise.resolve(),
-        ]);
+        // Storage cleanup: we don't want a Storage error to block the local
+        // delete. catchError swallows failures so orphaned URLs are picked up
+        // later by OrphanPhotoCleanupService.
+        const photoCleanup$ = forkJoin([
+          birthday.photo
+            ? from(this.photoStorage.deletePhotoByUrl(birthday.photo))
+            : of(undefined),
+          birthday.rememberPhoto
+            ? from(this.photoStorage.deletePhotoByUrl(birthday.rememberPhoto))
+            : of(undefined),
+        ]).pipe(
+          catchError(err => {
+            this.logger.warn(
+              '[BirthdayCrudEffects] Photo storage cleanup failed for birthday',
+              id,
+              '— URLs may be orphaned in Storage:',
+              err
+            );
+            return of([undefined, undefined]);
+          })
+        );
 
         return of(undefined).pipe(
           tap(() => this.pushNotificationService.cancelAllNotificationsForBirthday(id)),
-          // Wait for Storage cleanup but don't let its failure propagate.
-          // URLs that fail to delete become candidates for OrphanPhotoCleanupService.
-          switchMap(() => from(
-            photoCleanup.catch(err =>
-              this.logger.warn(
-                '[BirthdayCrudEffects] Photo storage cleanup failed for birthday',
-                id,
-                '— URLs may be orphaned in Storage:',
-                err
-              )
-            )
-          )),
+          switchMap(() => photoCleanup$),
           switchMap(() => from(this.offlineStorage.deleteBirthday(id))),
           switchMap(() => userId
-            ? from(this.syncCoordinator.queueChange('birthday', id, 'delete', { id }))
+            ? from(this.syncCoordinator.queueChange('birthday', id, 'delete'))
             : of(undefined)
           ),
           map(() => BirthdayActions.deleteBirthdaySuccess({ id })),
