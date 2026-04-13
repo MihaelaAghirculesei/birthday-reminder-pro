@@ -3,16 +3,24 @@ import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
+import { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 
 export type ChangeType = 'create' | 'update' | 'delete';
 export type EntityType = 'birthday' | 'category';
+
+/**
+ * Discriminated union for data carried by a PendingChange.
+ * create/update ops carry the full validated entity; delete ops carry null
+ * (the entity id is already stored in PendingChange.entityId).
+ */
+export type SyncPayloadData = ValidatedBirthday | ValidatedCategory | null;
 
 export interface PendingChange {
   id: string;
   entityType: EntityType;
   entityId: string;
   changeType: ChangeType;
-  data: unknown;
+  data: SyncPayloadData;
   timestamp: number;
   retryCount: number;
   /**
@@ -63,7 +71,7 @@ export class PendingChangesService {
     entityType: EntityType,
     entityId: string,
     changeType: ChangeType,
-    data: unknown
+    data: SyncPayloadData
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
