@@ -37,7 +37,7 @@ describe('BirthdayCrudEffects', () => {
       filters: { searchTerm: '', selectedCategory: null },
       loading: false,
       error: null,
-      optimisticBackup: {}
+      optimisticBackup: []
     },
     auth: {
       user: null,
@@ -194,12 +194,13 @@ describe('BirthdayCrudEffects', () => {
 
   describe('updateBirthday$', () => {
     it('should update birthday successfully', (done) => {
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
       effects.updateBirthday$.subscribe(action => {
         expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
         const successAction = action as ReturnType<typeof BirthdayActions.updateBirthdaySuccess>;
         expect(successAction.birthday.category).toBe('family');
+        expect(successAction.operationId).toBe('op-1');
         expect(offlineStorageMock.updateBirthday).toHaveBeenCalled();
         done();
       });
@@ -209,10 +210,10 @@ describe('BirthdayCrudEffects', () => {
       const error = new Error('Update failed');
       offlineStorageMock.updateBirthday.and.returnValue(Promise.reject(error));
 
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
       effects.updateBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', id: '1', birthday: mockBirthday }));
+        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-1', id: '1', birthday: mockBirthday }));
         done();
       });
     });
@@ -221,7 +222,7 @@ describe('BirthdayCrudEffects', () => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
       store.refreshState();
 
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
       effects.updateBirthday$.subscribe(action => {
         expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
@@ -233,7 +234,7 @@ describe('BirthdayCrudEffects', () => {
 
   describe('deleteBirthday$', () => {
     it('should delete birthday successfully and cancel notifications', (done) => {
-      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
@@ -246,7 +247,7 @@ describe('BirthdayCrudEffects', () => {
     });
 
     it('should dispatch deleteBirthdayFailure when birthday is not in optimistic backup', (done) => {
-      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, {});
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, []);
       store.refreshState();
       actions$ = of(BirthdayActions.deleteBirthday({ id: 'missing-id' }));
 
@@ -258,7 +259,7 @@ describe('BirthdayCrudEffects', () => {
     });
 
     it('should handle delete birthday failure', (done) => {
-      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
       const error = new Error('Delete failed');
       offlineStorageMock.deleteBirthday.and.returnValue(Promise.reject(error));
@@ -273,14 +274,14 @@ describe('BirthdayCrudEffects', () => {
 
     it('should queue sync change when user is authenticated', (done) => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
-      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': mockBirthday });
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
-        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete', { id: '1' });
+        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete');
         done();
       });
     });
@@ -290,7 +291,7 @@ describe('BirthdayCrudEffects', () => {
         id: '1',
         photo: 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media',
       });
-      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, { '1': birthdayWithPhoto });
+      store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: birthdayWithPhoto }]);
       store.refreshState();
       photoStorageMock.deletePhotoByUrl.and.rejectWith(new Error('Storage error'));
 

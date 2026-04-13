@@ -41,7 +41,7 @@ describe('Birthday Selectors', () => {
     deleting: false,
     syncing: false,
     error: null,
-    optimisticBackup: {}
+    optimisticBackup: []
   };
 
   const state = {

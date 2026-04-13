@@ -166,7 +166,8 @@ describe('SyncCoordinatorService', () => {
     it('queueChange delegates to queueProcessor', async () => {
       const birthday = { id: 'b-1' } as Birthday;
       await service.queueChange('birthday', 'b-1', 'create', birthday);
-      expect(queueProcessorMock.queueChange).toHaveBeenCalledWith('birthday', 'b-1', 'create', birthday);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((queueProcessorMock.queueChange as any)).toHaveBeenCalledWith('birthday', 'b-1', 'create', birthday);
     });
 
     it('processPendingChanges delegates to queueProcessor', async () => {

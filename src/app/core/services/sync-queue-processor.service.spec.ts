@@ -118,11 +118,25 @@ describe('SyncQueueProcessorService', () => {
   });
 
   describe('queueChange', () => {
-    it('should add change to pending changes', async () => {
-      await service.queueChange('birthday', 'b-1', 'create', { name: 'Test' });
+    it('should validate and add a valid birthday change', async () => {
+      const birthday = makeBirthday();
+      await service.queueChange('birthday', 'b-1', 'create', birthday);
       expect(pendingChangesMock.addChange).toHaveBeenCalledWith(
-        'birthday', 'b-1', 'create', { name: 'Test' }
+        'birthday', 'b-1', 'create', jasmine.objectContaining({ id: 'b-1', name: 'Mario Rossi' })
       );
+    });
+
+    it('should throw and not enqueue when birthday data is invalid', async () => {
+      // Missing required fields — must be rejected at the queue boundary, not during sync.
+      await expectAsync(
+        service.queueChange('birthday', 'b-bad', 'create', { name: 'Incomplete' } as never)
+      ).toBeRejectedWithError(/Refusing to enqueue invalid birthday/);
+      expect(pendingChangesMock.addChange).not.toHaveBeenCalled();
+    });
+
+    it('should enqueue delete without data', async () => {
+      await service.queueChange('birthday', 'b-1', 'delete');
+      expect(pendingChangesMock.addChange).toHaveBeenCalledWith('birthday', 'b-1', 'delete', null);
     });
 
     it('should dispatch pushPendingChanges when online and authenticated', async () => {

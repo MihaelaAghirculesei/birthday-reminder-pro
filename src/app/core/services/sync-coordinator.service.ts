@@ -4,6 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Store } from '@ngrx/store';
 
 import { PendingChangesService } from './pending-changes.service';
+import { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
 import { CloudSyncService } from './cloud-sync.service';
@@ -71,13 +72,25 @@ export class SyncCoordinatorService {
     return this.cloudSync.migrateLocalToCloud();
   }
 
+  /**
+   * Enqueues a sync operation. Validation runs inside SyncQueueProcessorService:
+   * invalid data throws immediately rather than failing silently during Firestore sync.
+   * Callers pass their domain Birthday/Category objects — these are structurally
+   * compatible with ValidatedBirthday/ValidatedCategory and Zod normalises them on entry.
+   */
   queueChange(
     entityType: 'birthday' | 'category',
     entityId: string,
     changeType: 'create' | 'update' | 'delete',
-    data: unknown
+    data?: ValidatedBirthday | ValidatedCategory | null
   ): Promise<void> {
-    return this.queueProcessor.queueChange(entityType, entityId, changeType, data);
+    if (changeType === 'delete') {
+      return this.queueProcessor.queueChange(entityType as 'birthday', entityId, 'delete');
+    }
+    if (entityType === 'birthday') {
+      return this.queueProcessor.queueChange('birthday', entityId, changeType, data as ValidatedBirthday);
+    }
+    return this.queueProcessor.queueChange('category', entityId, changeType, data as ValidatedCategory);
   }
 
   processPendingChanges(): Promise<number> {

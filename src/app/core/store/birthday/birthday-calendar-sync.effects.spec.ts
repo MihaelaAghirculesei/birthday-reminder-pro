@@ -38,7 +38,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       filters: { searchTerm: '', selectedCategory: null },
       loading: false,
       error: null,
-      optimisticBackup: {}
+      optimisticBackup: []
     }
   };
 
@@ -139,7 +139,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
   describe('updateInCalendar$', () => {
     it('should call updateInCalendar when updateBirthday is dispatched', (done) => {
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       effects.updateInCalendar$.subscribe();
 
@@ -150,7 +150,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should not emit on success', (done) => {
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       let emitted = false;
       effects.updateInCalendar$.subscribe(() => { emitted = true; });
@@ -164,7 +164,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     it('should dispatch calendarSyncFailed when updateInCalendar fails', (done) => {
       calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(new Error('Calendar error')));
 
-      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent }));
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       effects.updateInCalendar$.subscribe({
         next: action => {
@@ -181,7 +181,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       store.setState({
         birthdays: {
           ...initialState.birthdays,
-          optimisticBackup: { 'b1': birthdayWithEvent }
+          optimisticBackup: [{ operationId: 'b1', entityId: 'b1', snapshot: birthdayWithEvent }]
         }
       });
 
@@ -199,7 +199,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       store.setState({
         birthdays: {
           ...initialState.birthdays,
-          optimisticBackup: { 'b1': mockBirthday }
+          optimisticBackup: [{ operationId: 'b1', entityId: 'b1', snapshot: mockBirthday }]
         }
       });
 
@@ -233,7 +233,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       store.setState({
         birthdays: {
           ...initialState.birthdays,
-          optimisticBackup: { 'b1': birthdayWithEvent }
+          optimisticBackup: [{ operationId: 'b1', entityId: 'b1', snapshot: birthdayWithEvent }]
         }
       });
 

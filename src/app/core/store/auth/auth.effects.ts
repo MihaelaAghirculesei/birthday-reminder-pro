@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { of } from 'rxjs';
-import { catchError, exhaustMap, filter, map, tap } from 'rxjs/operators';
+import { EMPTY, from, of } from 'rxjs';
+import { catchError, exhaustMap, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -110,18 +110,21 @@ export class AuthEffects {
   /**
    * Triggers the orphan-photo cleanup job whenever auth state settles with a
    * signed-in user. Throttled internally to at most once per 24 h.
-   * Fire-and-forget: errors are logged but never propagated.
+   * Errors are logged and swallowed via catchError so the outer stream survives.
    */
   scheduleOrphanCleanup$ = createEffect(
     () =>
       this.actions$.pipe(
         ofType(AuthActions.authStateChanged),
         filter(({ user }) => user !== null),
-        tap(({ user }) => {
-          this.orphanCleanup.cleanupOrphans(user!.uid).catch(err =>
-            this.logger.warn('[AuthEffects] Orphan photo cleanup error:', err)
-          );
-        })
+        switchMap(({ user }) =>
+          from(this.orphanCleanup.cleanupOrphans(user!.uid)).pipe(
+            catchError(err => {
+              this.logger.warn('[AuthEffects] Orphan photo cleanup error:', err);
+              return EMPTY;
+            })
+          )
+        )
       ),
     { dispatch: false }
   );

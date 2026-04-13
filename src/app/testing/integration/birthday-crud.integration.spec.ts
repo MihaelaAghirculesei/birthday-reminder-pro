@@ -131,7 +131,7 @@ describe('Birthday CRUD Integration', () => {
       name: 'Updated Name',
       notes: 'Updated notes'
     };
-    store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday }));
+    store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday, operationId: crypto.randomUUID() }));
     tick(100);
 
     expect(storedBirthdays[0].name).toBe('Updated Name');
