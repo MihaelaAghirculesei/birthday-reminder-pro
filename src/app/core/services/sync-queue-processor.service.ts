@@ -4,10 +4,10 @@ import { firstValueFrom } from 'rxjs';
 
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
-import { PendingChangesService, PendingChange } from './pending-changes.service';
+import { PendingChangesService, PendingChange, EntityType, ChangeType, SyncPayloadData } from './pending-changes.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
-import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
+import { safeParseBirthday, safeParseCategory, ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 
 import * as SyncActions from '../store/sync/sync.actions';
 
@@ -38,13 +38,35 @@ export class SyncQueueProcessorService {
     this.store.dispatch(SyncActions.updatePendingCount({ count }));
   }
 
+  queueChange(entityType: 'birthday', entityId: string, changeType: 'create' | 'update', data: ValidatedBirthday): Promise<void>;
+  queueChange(entityType: 'birthday', entityId: string, changeType: 'delete', data?: null): Promise<void>;
+  queueChange(entityType: 'category', entityId: string, changeType: 'create' | 'update', data: ValidatedCategory): Promise<void>;
+  queueChange(entityType: 'category', entityId: string, changeType: 'delete', data?: null): Promise<void>;
   async queueChange(
-    entityType: 'birthday' | 'category',
+    entityType: EntityType,
     entityId: string,
-    changeType: 'create' | 'update' | 'delete',
-    data: unknown
+    changeType: ChangeType,
+    data?: ValidatedBirthday | ValidatedCategory | null
   ): Promise<void> {
-    await this.pendingChanges.addChange(entityType, entityId, changeType, data);
+    // Validate at the queue boundary — fail fast rather than silently storing
+    // corrupt data that would only surface as a Firestore error during sync.
+    let payload: SyncPayloadData = null;
+
+    if (changeType !== 'delete') {
+      const result = entityType === 'birthday'
+        ? safeParseBirthday(data)
+        : safeParseCategory(data);
+
+      if (!result.success) {
+        const msg = `[SyncQueueProcessor] Refusing to enqueue invalid ${entityType} (${changeType}): ${JSON.stringify(result.error.issues)}`;
+        this.logger.error(msg);
+        throw new Error(msg);
+      }
+      // Use the Zod-parsed output: coercions applied, unknown keys stripped.
+      payload = result.data;
+    }
+
+    await this.pendingChanges.addChange(entityType, entityId, changeType, payload);
 
     if (this.networkService.isOnline && this.authService.isAuthenticated) {
       this.store.dispatch(SyncActions.pushPendingChanges());
