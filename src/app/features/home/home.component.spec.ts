@@ -22,7 +22,7 @@ const MOCK_BIRTHDAY: Birthday = {
 };
 
 const INITIAL_STATE = {
-  birthdays: { ids: [], entities: {}, filters: { searchTerm: '', selectedCategory: null }, loading: false, error: null, optimisticBackup: {} },
+  birthdays: { ids: [], entities: {}, filters: { searchTerm: '', selectedCategory: null }, loading: false, error: null, optimisticBackup: [] },
   auth: { user: null, loading: false, error: null, initialized: true },
   categories: { ids: [], entities: {}, loaded: false, loading: false, error: null },
   sync: { status: 'idle', lastSyncedAt: null, error: null },

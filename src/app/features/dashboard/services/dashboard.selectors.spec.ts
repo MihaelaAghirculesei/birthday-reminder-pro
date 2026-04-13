@@ -22,7 +22,7 @@ function makeState(
     deleting: false,
     syncing: false,
     error: null,
-    optimisticBackup: {}
+    optimisticBackup: []
   };
 
   const categoryState: CategoryState = categoryAdapter.setAll(categories, {

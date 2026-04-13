@@ -53,53 +53,55 @@ describe('Birthday Reducer', () => {
   });
 
   describe('Update Actions (Optimistic)', () => {
-    it('should optimistically apply update immediately', () => {
+    it('should optimistically apply update immediately and push backup entry', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
 
       const updated = { ...mockBirthday, name: 'Jane Doe' };
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
 
       expect(state.entities['1']?.name).toBe('Jane Doe');
-      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+      const entry = state.optimisticBackup.find(e => e.operationId === 'op-1');
+      expect(entry?.snapshot).toEqual(mockBirthday);
+      expect(entry?.entityId).toBe('1');
     });
 
-    it('should clear backup on updateBirthdaySuccess', () => {
+    it('should remove only the matching entry on updateBirthdaySuccess', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
       const updated = { ...mockBirthday, name: 'Jane Doe' };
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
-      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: updated }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: updated, operationId: 'op-1' }));
 
       expect(state.entities['1']?.name).toBe('Jane Doe');
-      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-1')).toBeUndefined();
     });
 
-    it('should rollback on updateBirthdayFailure', () => {
+    it('should rollback on updateBirthdayFailure using operationId', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
       const updated = { ...mockBirthday, name: 'Jane Doe' };
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
       expect(state.entities['1']?.name).toBe('Jane Doe');
 
-      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', id: '1' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', operationId: 'op-1', id: '1' }));
       expect(state.entities['1']?.name).toBe('John Doe');
-      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-1')).toBeUndefined();
     });
 
     it('should not create backup when entity does not exist', () => {
       const state = birthdayReducer(
         initialBirthdayState,
-        BirthdayActions.updateBirthday({ birthday: mockBirthday })
+        BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' })
       );
 
-      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup.length).toBe(0);
     });
 
     it('should isolate backups across concurrent updates and clear only the confirmed one', () => {
@@ -107,45 +109,47 @@ describe('Birthday Reducer', () => {
       let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.addBirthdaySuccess({ birthday: b2 }));
 
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane' } }));
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...b2, name: 'Robert' } }));
-      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: { ...mockBirthday, name: 'Jane' } }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane' }, operationId: 'op-1' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...b2, name: 'Robert' }, operationId: 'op-2' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: { ...mockBirthday, name: 'Jane' }, operationId: 'op-1' }));
 
-      expect(state.optimisticBackup['1']).toBeUndefined();
-      expect(state.optimisticBackup['2']).toEqual(b2);
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-1')).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-2')?.snapshot).toEqual(b2);
     });
 
-    it('should not rollback when failure carries no id', () => {
+    it('should warn user when operationId has no matching backup (eviction)', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' } }));
-      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Network error' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' }, operationId: 'op-1' }));
+      // Simulate eviction by manually clearing the log
+      state = { ...state, optimisticBackup: [] };
+
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', operationId: 'op-1', id: '1' }));
 
       expect(state.entities['1']?.name).toBe('Jane Doe');
-      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
-      expect(state.error).toBe('Network error');
-    });
-
-    it('should warn user when failure carries id but backup is missing (race/eviction)', () => {
-      // Simulate evicted backup: entity is in optimistic state but no backup exists
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
-      // Apply optimistic update so entity is in a "dirty" state
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' } }));
-      // Manually clear the backup to simulate eviction/race
-      state = { ...state, optimisticBackup: {} };
-
-      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', id: '1' }));
-
-      // Entity stays inconsistent (no backup to restore from)
-      expect(state.entities['1']?.name).toBe('Jane Doe');
-      // But error warns the user
       expect(state.error).toBe('Le modifiche potrebbero non essere state salvate');
       expect(state.saving).toBe(false);
+    });
+
+    it('should fix scenario B: update1 succeeds, update2 fails — rolls back to server-confirmed state', () => {
+      // Scenario B: the critical race condition that the old dict-based backup could not handle.
+      // op1: A → B  (succeeds)  → server has B
+      // op2: B → C  (fails)     → must roll back to B, not A
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })); // A
+
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'B' }, operationId: 'op-1' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'C' }, operationId: 'op-2' }));
+
+      // op1 succeeds: remove its backup entry — op2 backup (snapshot B) must still be there
+      state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: { ...mockBirthday, name: 'B' }, operationId: 'op-1' }));
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-2')?.snapshot.name).toBe('B');
+
+      // op2 fails: roll back to B (the state the server confirmed, not A)
+      state = birthdayReducer(state, BirthdayActions.updateBirthdayFailure({ error: 'Failed', operationId: 'op-2', id: '1' }));
+      expect(state.entities['1']?.name).toBe('B');
+      expect(state.optimisticBackup.length).toBe(0);
     });
   });
 
@@ -161,7 +165,7 @@ describe('Birthday Reducer', () => {
 
       expect(state.entities['1']).toBeUndefined();
       expect(state.ids.length).toBe(0);
-      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+      expect(state.optimisticBackup.find(e => e.operationId === '1')?.snapshot).toEqual(mockBirthday);
     });
 
     it('should clear backup on deleteBirthdaySuccess', () => {
@@ -172,7 +176,7 @@ describe('Birthday Reducer', () => {
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
 
-      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.operationId === '1')).toBeUndefined();
     });
 
     it('should rollback on deleteBirthdayFailure', () => {
@@ -185,13 +189,13 @@ describe('Birthday Reducer', () => {
 
       state = birthdayReducer(state, BirthdayActions.deleteBirthdayFailure({ error: 'Failed', id: '1' }));
       expect(state.entities['1']).toEqual(mockBirthday);
-      expect(state.optimisticBackup['1']).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.operationId === '1')).toBeUndefined();
     });
 
     it('should not create backup when deleting a non-existent entity', () => {
       const state = birthdayReducer(initialBirthdayState, BirthdayActions.deleteBirthday({ id: 'ghost' }));
 
-      expect(state.optimisticBackup['ghost']).toBeUndefined();
+      expect(state.optimisticBackup.find(e => e.entityId === 'ghost')).toBeUndefined();
     });
 
     it('should warn user when delete failure carries id but backup is missing (race/eviction)', () => {
@@ -202,7 +206,7 @@ describe('Birthday Reducer', () => {
       );
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
       // Manually clear backup to simulate eviction/race
-      state = { ...state, optimisticBackup: {} };
+      state = { ...state, optimisticBackup: [] };
 
       state = birthdayReducer(state, BirthdayActions.deleteBirthdayFailure({ error: 'Failed', id: '1' }));
 
@@ -231,11 +235,11 @@ describe('Birthday Reducer', () => {
       }
 
       // Optimistically update all — none succeed (no success/failure dispatched)
-      for (const entity of entities) {
-        state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...entity, name: 'Updated' } }));
+      for (const [i, entity] of entities.entries()) {
+        state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...entity, name: 'Updated' }, operationId: `op-${i}` }));
       }
 
-      expect(Object.keys(state.optimisticBackup).length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
+      expect(state.optimisticBackup.length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
     });
 
     it('should not exceed MAX_OPTIMISTIC_BACKUP_SIZE entries on repeated failures (delete)', () => {
@@ -255,24 +259,27 @@ describe('Birthday Reducer', () => {
         state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: entity.id }));
       }
 
-      expect(Object.keys(state.optimisticBackup).length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
+      expect(state.optimisticBackup.length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
     });
 
-    it('should preserve original value when the same entity is updated twice without resolution', () => {
+    it('should store separate entries for concurrent updates on the same entity', () => {
       let state = birthdayReducer(
         initialBirthdayState,
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
 
-      // First optimistic update: backup = original (John Doe)
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' } }));
-      // Second optimistic update on same entity: backup must NOT be overwritten
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jim Doe' } }));
+      // Two in-flight updates on the same entity each get their own snapshot
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' }, operationId: 'op-1' }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jim Doe' }, operationId: 'op-2' }));
 
       // Entity reflects latest optimistic change
       expect(state.entities['1']?.name).toBe('Jim Doe');
-      // Backup still holds the original pre-optimistic value
-      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+      // Two independent backup entries exist
+      expect(state.optimisticBackup.length).toBe(2);
+      // op-1 snapshot is the true original
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-1')?.snapshot).toEqual(mockBirthday);
+      // op-2 snapshot is the state after the first optimistic update
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-2')?.snapshot.name).toBe('Jane Doe');
     });
 
     it('should evict the oldest entry when cap is reached', () => {
@@ -296,11 +303,11 @@ describe('Birthday Reducer', () => {
       state = birthdayReducer(state, BirthdayActions.addBirthdaySuccess({ birthday: extra }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: 'extra' }));
 
-      expect(Object.keys(state.optimisticBackup).length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
-      // Oldest entry (e0) was evicted
-      expect(state.optimisticBackup['e0']).toBeUndefined();
+      expect(state.optimisticBackup.length).toBe(MAX_OPTIMISTIC_BACKUP_SIZE);
+      // Oldest entry (e0, operationId = 'e0') was evicted
+      expect(state.optimisticBackup.find(e => e.operationId === 'e0')).toBeUndefined();
       // Newest entry is present
-      expect(state.optimisticBackup['extra']).toBeDefined();
+      expect(state.optimisticBackup.find(e => e.operationId === 'extra')).toBeDefined();
     });
   });
 
@@ -335,7 +342,8 @@ describe('Birthday Reducer', () => {
 
     it('should handle updateBirthdayFailure', () => {
       const error = 'Update failed';
-      const action = BirthdayActions.updateBirthdayFailure({ error });
+      // No entity in store + no id → no eviction warning, original error is preserved
+      const action = BirthdayActions.updateBirthdayFailure({ error, operationId: 'op-x' });
       const state = birthdayReducer(initialBirthdayState, action);
 
       expect(state.error).toBe(error);
@@ -376,11 +384,11 @@ describe('Birthday Reducer', () => {
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
       const updated = { ...mockBirthday, name: 'Updated Name' };
-      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated }));
+      state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
 
       expect(state.saving).toBe(true);
       expect(state.entities['1']?.name).toBe('Updated Name');
-      expect(state.optimisticBackup['1']).toEqual(mockBirthday);
+      expect(state.optimisticBackup.find(e => e.operationId === 'op-1')?.snapshot).toEqual(mockBirthday);
     });
 
     it('should optimistically remove on deleteBirthday and set deleting', () => {

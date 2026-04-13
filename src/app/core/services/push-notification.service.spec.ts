@@ -41,7 +41,7 @@ describe('PushNotificationService', () => {
       filters: { searchTerm: '', selectedCategory: null },
       loading: false,
       error: null,
-      optimisticBackup: {}
+      optimisticBackup: []
     }
   };
 

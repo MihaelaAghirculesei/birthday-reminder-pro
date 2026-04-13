@@ -47,7 +47,7 @@ describe('BirthdayNotificationEffects', () => {
 
   describe('updateBirthdaySuccess$', () => {
     it('should show success notification', (done) => {
-      actions$ = of(BirthdayActions.updateBirthdaySuccess({ birthday: mockBirthday }));
+      actions$ = of(BirthdayActions.updateBirthdaySuccess({ birthday: mockBirthday, operationId: 'op-x' }));
 
       effects.updateBirthdaySuccess$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith('John Doe updated successfully!', 'success');
@@ -113,7 +113,7 @@ describe('BirthdayNotificationEffects', () => {
 
   describe('updateBirthdayFailure$', () => {
     it('should show error notification without retry when no birthday', (done) => {
-      actions$ = of(BirthdayActions.updateBirthdayFailure({ error: 'Update failed' }));
+      actions$ = of(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-x' }));
 
       effects.updateBirthdayFailure$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith(
@@ -127,7 +127,7 @@ describe('BirthdayNotificationEffects', () => {
     });
 
     it('should show error notification with retry action when birthday is provided', (done) => {
-      actions$ = of(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', birthday: mockBirthday }));
+      actions$ = of(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-x', birthday: mockBirthday }));
 
       effects.updateBirthdayFailure$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith(

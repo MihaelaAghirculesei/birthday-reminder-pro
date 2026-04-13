@@ -1,7 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { PendingChangesService } from './pending-changes.service';
+import { PendingChangesService, SyncPayloadData } from './pending-changes.service';
 import { LoggerService } from './logger.service';
 import { provideTranslateTesting } from '../../testing/translate-testing';
+
+// Helpers to cast lightweight test fixtures to SyncPayloadData without
+// constructing full ValidatedBirthday/ValidatedCategory objects.
+function bd(data: Record<string, unknown>): SyncPayloadData {
+  return data as unknown as SyncPayloadData;
+}
 
 describe('PendingChangesService', () => {
   let service: PendingChangesService;
@@ -49,19 +55,19 @@ describe('PendingChangesService', () => {
   });
 
   it('should add a pending change', async () => {
-    await service.addChange('birthday', 'b-1', 'create', { name: 'Test' });
+    await service.addChange('birthday', 'b-1', 'create', bd({ name: 'Test' }));
     expect(service.pendingCount).toBe(1);
     expect(service.hasPendingChanges).toBeTrue();
   });
 
   it('should deduplicate changes by entityType+entityId', async () => {
-    await service.addChange('birthday', 'b-1', 'create', { name: 'Test' });
-    await service.addChange('birthday', 'b-1', 'update', { name: 'Updated' });
+    await service.addChange('birthday', 'b-1', 'create', bd({ name: 'Test' }));
+    await service.addChange('birthday', 'b-1', 'update', bd({ name: 'Updated' }));
     expect(service.pendingCount).toBe(1);
   });
 
   it('should cancel create+delete for same entity', async () => {
-    await service.addChange('birthday', 'b-1', 'create', { name: 'Test' });
+    await service.addChange('birthday', 'b-1', 'create', bd({ name: 'Test' }));
     expect(service.pendingCount).toBe(1);
     await service.addChange('birthday', 'b-1', 'delete', null);
     expect(service.pendingCount).toBe(0);
@@ -73,7 +79,7 @@ describe('PendingChangesService', () => {
     // would lose the delete and risk a stale retry wiping the freshly created entity.
     await service.addChange('birthday', 'b-seq', 'delete', null);
     expect(service.pendingCount).toBe(1);
-    await service.addChange('birthday', 'b-seq', 'create', { name: 'Recreated' });
+    await service.addChange('birthday', 'b-seq', 'create', bd({ name: 'Recreated' }));
     expect(service.pendingCount).toBe(2);
 
     const ops = service.getChangesForEntity('birthday').filter(c => c.entityId === 'b-seq');
@@ -86,8 +92,8 @@ describe('PendingChangesService', () => {
 
   it('should absorb update into the pending create in a delete→create→update sequence', async () => {
     await service.addChange('birthday', 'b-dcu', 'delete', null);
-    await service.addChange('birthday', 'b-dcu', 'create', { name: 'v1' });
-    await service.addChange('birthday', 'b-dcu', 'update', { name: 'v2' });
+    await service.addChange('birthday', 'b-dcu', 'create', bd({ name: 'v1' }));
+    await service.addChange('birthday', 'b-dcu', 'update', bd({ name: 'v2' }));
 
     // Still 2 ops: [delete, create(v2)] — the update is merged into the create
     const ops = service.getChangesForEntity('birthday').filter(c => c.entityId === 'b-dcu');
@@ -100,7 +106,7 @@ describe('PendingChangesService', () => {
 
   it('should collapse delete→create→delete to a single delete', async () => {
     await service.addChange('birthday', 'b-dcd', 'delete', null);
-    await service.addChange('birthday', 'b-dcd', 'create', { name: 'Temp' });
+    await service.addChange('birthday', 'b-dcd', 'create', bd({ name: 'Temp' }));
     expect(service.pendingCount).toBe(2);
     await service.addChange('birthday', 'b-dcd', 'delete', null);
 
@@ -110,9 +116,9 @@ describe('PendingChangesService', () => {
   });
 
   it('should assign sequenceNumbers in strictly increasing order', async () => {
-    await service.addChange('birthday', 'b-s1', 'create', {});
-    await service.addChange('birthday', 'b-s2', 'create', {});
-    await service.addChange('birthday', 'b-s3', 'create', {});
+    await service.addChange('birthday', 'b-s1', 'create', bd({}));
+    await service.addChange('birthday', 'b-s2', 'create', bd({}));
+    await service.addChange('birthday', 'b-s3', 'create', bd({}));
 
     const all = service.getChangesForEntity('birthday').filter(
       c => ['b-s1', 'b-s2', 'b-s3'].includes(c.entityId)
@@ -126,13 +132,13 @@ describe('PendingChangesService', () => {
   });
 
   it('should track multiple entities separately', async () => {
-    await service.addChange('birthday', 'b-1', 'create', { name: 'Test 1' });
-    await service.addChange('birthday', 'b-2', 'create', { name: 'Test 2' });
+    await service.addChange('birthday', 'b-1', 'create', bd({ name: 'Test 1' }));
+    await service.addChange('birthday', 'b-2', 'create', bd({ name: 'Test 2' }));
     expect(service.pendingCount).toBe(2);
   });
 
   it('should remove a specific change', async () => {
-    await service.addChange('birthday', 'b-remove', 'create', { name: 'ToRemove' });
+    await service.addChange('birthday', 'b-remove', 'create', bd({ name: 'ToRemove' }));
     const changes = service.getChangesForEntity('birthday');
     const targetChange = changes.find(c => c.entityId === 'b-remove');
     expect(targetChange).toBeTruthy();
@@ -143,7 +149,7 @@ describe('PendingChangesService', () => {
   });
 
   it('should increment retry count with markRetry', async () => {
-    await service.addChange('birthday', 'b-retry', 'create', { name: 'Retry' });
+    await service.addChange('birthday', 'b-retry', 'create', bd({ name: 'Retry' }));
     const changes = service.getChangesForEntity('birthday');
     const targetChange = changes.find(c => c.entityId === 'b-retry');
     expect(targetChange!.retryCount).toBe(0);
@@ -155,8 +161,8 @@ describe('PendingChangesService', () => {
   });
 
   it('should clear all changes', async () => {
-    await service.addChange('birthday', 'b-clear1', 'create', { name: 'Clear 1' });
-    await service.addChange('category', 'c-clear1', 'create', { name: 'Cat 1' });
+    await service.addChange('birthday', 'b-clear1', 'create', bd({ name: 'Clear 1' }));
+    await service.addChange('category', 'c-clear1', 'create', bd({ name: 'Cat 1' }));
     expect(service.pendingCount).toBeGreaterThanOrEqual(2);
 
     await service.clearAll();
@@ -166,8 +172,8 @@ describe('PendingChangesService', () => {
 
   it('should filter changes by entity type', async () => {
     await service.clearAll();
-    await service.addChange('birthday', 'b-filter', 'create', { name: 'Birth' });
-    await service.addChange('category', 'c-filter', 'create', { name: 'Cat' });
+    await service.addChange('birthday', 'b-filter', 'create', bd({ name: 'Birth' }));
+    await service.addChange('category', 'c-filter', 'create', bd({ name: 'Cat' }));
 
     const birthdayChanges = service.getChangesForEntity('birthday');
     const categoryChanges = service.getChangesForEntity('category');
@@ -187,7 +193,7 @@ describe('PendingChangesService', () => {
       }
     });
 
-    service.addChange('birthday', 'b-emit', 'create', { name: 'Emit' });
+    service.addChange('birthday', 'b-emit', 'create', bd({ name: 'Emit' }));
   });
 
   it('changes$ should be an observable', () => {

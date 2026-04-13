@@ -10,6 +10,7 @@ import { IndexedDBStorageService } from '../../services/offline-storage.service'
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { selectBirthdayById } from './birthday.selectors';
 
 describe('BirthdayMessageEffects', () => {
   let actions$: Observable<Action>;
@@ -39,7 +40,6 @@ describe('BirthdayMessageEffects', () => {
 
   beforeEach(() => {
     offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays',
       'updateBirthday',
       'saveScheduledMessage',
       'getScheduledMessagesByBirthday',
@@ -52,11 +52,11 @@ describe('BirthdayMessageEffects', () => {
     ]);
     syncCoordinatorMock = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange']);
 
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
     offlineStorageMock.saveScheduledMessage.and.returnValue(Promise.resolve());
     offlineStorageMock.getScheduledMessagesByBirthday.and.returnValue(Promise.resolve([]));
     offlineStorageMock.updateScheduledMessage.and.returnValue(Promise.resolve());
     offlineStorageMock.deleteScheduledMessage.and.returnValue(Promise.resolve());
+    offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
     syncCoordinatorMock.queueChange.and.returnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
@@ -73,6 +73,11 @@ describe('BirthdayMessageEffects', () => {
 
     effects = TestBed.inject(BirthdayMessageEffects);
     store = TestBed.inject(MockStore);
+
+    // Birthday is read from the store, not from IndexedDB — override the selector
+    // so the memoized selector instance matches what the effect will call
+    store.overrideSelector(selectBirthdayById('1'), mockBirthday);
+    store.refreshState();
   });
 
   afterEach(() => {
@@ -92,9 +97,6 @@ describe('BirthdayMessageEffects', () => {
         messageType: 'text' as const,
         createdDate: new Date()
       };
-      offlineStorageMock.saveScheduledMessage.and.returnValue(Promise.resolve());
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([mockBirthday]));
-      offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
 
       actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
 
