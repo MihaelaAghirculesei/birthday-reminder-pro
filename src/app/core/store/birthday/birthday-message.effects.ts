@@ -9,6 +9,7 @@ import { PushNotificationService } from '../../services/push-notification.servic
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import { Birthday, updateSyncMetadata } from '../../../shared/models/birthday.model';
 import * as AuthSelectors from '../auth/auth.selectors';
+import { selectBirthdayById } from './birthday.selectors';
 
 @Injectable()
 export class BirthdayMessageEffects {
@@ -25,25 +26,23 @@ export class BirthdayMessageEffects {
       withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
       mergeMap(([{ birthdayId, message }, userId]) =>
         from(this.offlineStorage.saveScheduledMessage(message)).pipe(
-          switchMap(() => from(this.offlineStorage.getBirthdays())),
-          switchMap(birthdays => {
-            const birthday = birthdays.find(b => b.id === birthdayId);
-            if (birthday) {
-              const syncMeta = updateSyncMetadata(birthday, userId);
-              const updatedBirthday: Birthday = {
-                ...birthday,
-                ...syncMeta,
-                scheduledMessages: [...(birthday.scheduledMessages || []), message]
-              };
-              this.pushNotificationService.scheduleNotification(birthday, message);
+          withLatestFrom(this.store.select(selectBirthdayById(birthdayId))),
+          switchMap(([, birthday]) => {
+            if (!birthday) return of(undefined);
 
-              if (userId) {
-                this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
-              }
+            const syncMeta = updateSyncMetadata(birthday, userId);
+            const updatedBirthday: Birthday = {
+              ...birthday,
+              ...syncMeta,
+              scheduledMessages: [...(birthday.scheduledMessages || []), message]
+            };
+            this.pushNotificationService.scheduleNotification(birthday, message);
 
-              return from(this.offlineStorage.updateBirthday(updatedBirthday));
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
             }
-            return of(undefined);
+
+            return from(this.offlineStorage.updateBirthday(updatedBirthday));
           }),
           map(() => BirthdayActions.addMessageToBirthdaySuccess({ birthdayId, message })),
           catchError(error => of(BirthdayActions.addMessageToBirthdayFailure({ error: error.message || 'Failed to add message' })))
@@ -65,32 +64,30 @@ export class BirthdayMessageEffects {
             }
             return of(undefined);
           }),
-          switchMap(() => from(this.offlineStorage.getBirthdays())),
-          switchMap(birthdays => {
-            const birthday = birthdays.find(b => b.id === birthdayId);
-            if (birthday?.scheduledMessages) {
-              const syncMeta = updateSyncMetadata(birthday, userId);
-              const updatedMessages = birthday.scheduledMessages.map(msg =>
-                msg.id === messageId ? { ...msg, ...updates } : msg
-              );
-              const updatedBirthday: Birthday = {
-                ...birthday,
-                ...syncMeta,
-                scheduledMessages: updatedMessages
-              };
+          withLatestFrom(this.store.select(selectBirthdayById(birthdayId))),
+          switchMap(([, birthday]) => {
+            if (!birthday?.scheduledMessages) return of(undefined);
 
-              const updatedMsg = updatedMessages.find(m => m.id === messageId);
-              if (updatedMsg) {
-                this.pushNotificationService.scheduleNotification(birthday, updatedMsg);
-              }
+            const syncMeta = updateSyncMetadata(birthday, userId);
+            const updatedMessages = birthday.scheduledMessages.map(msg =>
+              msg.id === messageId ? { ...msg, ...updates } : msg
+            );
+            const updatedBirthday: Birthday = {
+              ...birthday,
+              ...syncMeta,
+              scheduledMessages: updatedMessages
+            };
 
-              if (userId) {
-                this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
-              }
-
-              return from(this.offlineStorage.updateBirthday(updatedBirthday));
+            const updatedMsg = updatedMessages.find(m => m.id === messageId);
+            if (updatedMsg) {
+              this.pushNotificationService.scheduleNotification(birthday, updatedMsg);
             }
-            return of(undefined);
+
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
+            }
+
+            return from(this.offlineStorage.updateBirthday(updatedBirthday));
           }),
           map(() => BirthdayActions.updateMessageInBirthdaySuccess({ birthdayId, messageId, updates })),
           catchError(error => of(BirthdayActions.updateMessageInBirthdayFailure({ error: error.message || 'Failed to update message' })))
@@ -106,25 +103,22 @@ export class BirthdayMessageEffects {
       mergeMap(([{ birthdayId, messageId }, userId]) =>
         from(this.offlineStorage.deleteScheduledMessage(messageId)).pipe(
           tap(() => this.pushNotificationService.cancelNotification(birthdayId, messageId)),
-          switchMap(() => from(this.offlineStorage.getBirthdays())),
-          switchMap(birthdays => {
-            const birthday = birthdays.find(b => b.id === birthdayId);
-            if (birthday?.scheduledMessages) {
-              const syncMeta = updateSyncMetadata(birthday, userId);
-              const updatedMessages = birthday.scheduledMessages.filter(msg => msg.id !== messageId);
-              const updatedBirthday: Birthday = {
-                ...birthday,
-                ...syncMeta,
-                scheduledMessages: updatedMessages
-              };
+          withLatestFrom(this.store.select(selectBirthdayById(birthdayId))),
+          switchMap(([, birthday]) => {
+            if (!birthday?.scheduledMessages) return of(undefined);
 
-              if (userId) {
-                this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
-              }
+            const syncMeta = updateSyncMetadata(birthday, userId);
+            const updatedBirthday: Birthday = {
+              ...birthday,
+              ...syncMeta,
+              scheduledMessages: birthday.scheduledMessages.filter(msg => msg.id !== messageId)
+            };
 
-              return from(this.offlineStorage.updateBirthday(updatedBirthday));
+            if (userId) {
+              this.syncCoordinator.queueChange('birthday', birthdayId, 'update', updatedBirthday);
             }
-            return of(undefined);
+
+            return from(this.offlineStorage.updateBirthday(updatedBirthday));
           }),
           map(() => BirthdayActions.deleteMessageFromBirthdaySuccess({ birthdayId, messageId })),
           catchError(error => of(BirthdayActions.deleteMessageFromBirthdayFailure({ error: error.message || 'Failed to delete message' })))
