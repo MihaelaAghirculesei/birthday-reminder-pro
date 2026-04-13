@@ -1,7 +1,7 @@
 import { Injectable, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
@@ -32,30 +32,33 @@ export class CloudSyncService {
   private readonly photoStorage = inject(PhotoStorageService);
   private readonly destroyRef = inject(DestroyRef);
 
-  private subscriptions: Subscription[] = [];
+  // Signals logout teardown independently of service lifetime
+  private readonly listenersDestroy$ = new Subject<void>();
   private hasActiveListeners = false;
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.teardownListeners());
+    this.destroyRef.onDestroy(() => this.listenersDestroy$.complete());
   }
 
   setupListeners(userId: string): void {
+    // Tear down any listeners from a previous session before setting up new ones
+    this.listenersDestroy$.next();
+
     this.firestoreService.subscribeToBirthdays(userId);
     this.firestoreService.subscribeToCategories(userId);
 
-    const birthdaysSub = this.firestoreService.birthdays$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.firestoreService.birthdays$
+      .pipe(takeUntilDestroyed(this.destroyRef), takeUntil(this.listenersDestroy$))
       .subscribe((birthdays) => {
         this.store.dispatch(SyncActions.cloudBirthdaysUpdated({ birthdays }));
       });
 
-    const categoriesSub = this.firestoreService.categories$
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.firestoreService.categories$
+      .pipe(takeUntilDestroyed(this.destroyRef), takeUntil(this.listenersDestroy$))
       .subscribe((categories) => {
         this.store.dispatch(SyncActions.cloudCategoriesUpdated({ categories }));
       });
 
-    this.subscriptions.push(birthdaysSub, categoriesSub);
     this.hasActiveListeners = true;
     this.logger.info('[CloudSync] Listeners setup for user:', userId);
   }
@@ -64,8 +67,7 @@ export class CloudSyncService {
     if (!this.hasActiveListeners) return;
 
     this.firestoreService.unsubscribeAll();
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.subscriptions = [];
+    this.listenersDestroy$.next();
     this.hasActiveListeners = false;
     this.logger.info('[CloudSync] Listeners torn down');
   }
