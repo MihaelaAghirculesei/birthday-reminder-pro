@@ -207,7 +207,7 @@ export class CategoryManagerService {
         ...birthday,
         category: newCategoryId
       };
-      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday }));
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday, operationId: crypto.randomUUID() }));
     });
   }
 

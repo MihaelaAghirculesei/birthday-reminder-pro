@@ -140,7 +140,7 @@ export class MessageScheduleDialogComponent implements OnInit {
         phone: result.editedData.phone.trim() || undefined,
         telegramUsername: result.editedData.telegramUsername.trim() || undefined
       };
-      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updated }));
+      this.store.dispatch(BirthdayActions.updateBirthday({ birthday: updated, operationId: crypto.randomUUID() }));
     });
   }
 
