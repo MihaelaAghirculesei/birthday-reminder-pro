@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { EMPTY, from, of } from 'rxjs';
-import { catchError, exhaustMap, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, exhaustMap, filter, map, switchMap, take, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -17,6 +17,25 @@ export class AuthEffects {
   private readonly translate = inject(TranslateService);
   private readonly orphanCleanup = inject(OrphanPhotoCleanupService);
   private readonly logger = inject(LoggerService);
+
+  /**
+   * Dispatches authInitialized once when the Firebase auth service signals that
+   * the initial auth check is done (loading$ → false).
+   *
+   * Anonymous fast-path: loading$ becomes false immediately inside APP_INITIALIZER
+   * (no Firebase SDK loaded). Returning users: becomes false after onAuthStateChanged
+   * fires and user$ has already emitted the restored session.
+   *
+   * The auth guard blocks on selectAuthInitialized so this is the gate that lets it
+   * proceed without an infinite wait.
+   */
+  initializeAuth$ = createEffect(() =>
+    this.authService.loading$.pipe(
+      filter(loading => !loading),
+      take(1),
+      map(() => AuthActions.authInitialized())
+    )
+  );
 
   /** Bridge Firebase auth state (including session restoration on reload) to the NgRx store. */
   syncAuthState$ = createEffect(() =>

@@ -30,7 +30,7 @@ describe('AuthEffects', () => {
     authServiceMock = jasmine.createSpyObj(
       'FirebaseAuthService',
       ['signInWithGoogle', 'signOut', 'initAuthListener'],
-      { user$: of(null) }
+      { user$: of(null), loading$: of(false) }
     );
     notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
     orphanCleanupMock = jasmine.createSpyObj('OrphanPhotoCleanupService', ['cleanupOrphans']);
@@ -211,7 +211,7 @@ describe('AuthEffects - syncAuthState$ error recovery', () => {
     const errorAuthServiceMock = jasmine.createSpyObj(
       'FirebaseAuthService',
       ['signInWithGoogle', 'signOut', 'initAuthListener'],
-      { user$: throwError(() => new Error('Firebase connection error')) }
+      { user$: throwError(() => new Error('Firebase connection error')), loading$: of(false) }
     );
 
     TestBed.configureTestingModule({
