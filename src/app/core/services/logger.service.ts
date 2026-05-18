@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, isDevMode, Inject, Optional } from '@angular/core';
+import { Injectable, InjectionToken, isDevMode, inject } from '@angular/core';
 
 /**
  * Token to disable logging in tests
@@ -13,11 +13,7 @@ export const SILENT_LOGGING = new InjectionToken<boolean>('SILENT_LOGGING');
   providedIn: 'root'
 })
 export class LoggerService {
-  private readonly isSilent: boolean;
-
-  constructor(@Optional() @Inject(SILENT_LOGGING) silentLogging: boolean | null) {
-    this.isSilent = silentLogging ?? false;
-  }
+  private readonly isSilent = inject(SILENT_LOGGING, { optional: true }) ?? false;
 
   private isDebugEnabled(): boolean {
     return isDevMode() && !this.isSilent;
