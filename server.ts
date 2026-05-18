@@ -128,11 +128,12 @@ function run(): void {
   const port = process.env['PORT'] || 4000;
 
   const server = app();
-  server.listen(port, () => {});
+  server.listen(port, () => {
+    console.log(`Node SSR server listening on http://localhost:${port}`);
+  });
 }
 
-// Guard: only start the standalone HTTP server when executed directly.
-// When imported by a Cloud Function, run() must NOT be called.
+// Guard: only start the HTTP server when executed as a CLI script, not when imported as a module.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   run();
 }
