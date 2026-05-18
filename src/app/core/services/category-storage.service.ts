@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BirthdayCategory } from '../../shared';
 import { LoggerService } from './logger.service';
@@ -7,14 +7,12 @@ import { LoggerService } from './logger.service';
   providedIn: 'root'
 })
 export class CategoryStorageService {
+  private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
+
   private readonly CUSTOM_CATEGORIES_KEY = 'customCategories';
   private readonly MODIFIED_CATEGORIES_KEY = 'modifiedCategories';
   private readonly DELETED_IDS_KEY = 'deletedCategoryIds';
-
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private logger: LoggerService
-  ) {}
 
   getCustomCategories(): BirthdayCategory[] {
     if (!isPlatformBrowser(this.platformId)) {
