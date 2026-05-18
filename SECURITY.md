@@ -61,6 +61,18 @@ src/environments/environment.example.ts  # ✅ Committed (template only)
 - Update dependencies promptly when security patches are available
 - Review dependency licenses before adding new packages
 
+**`package.json` overrides (security patches):**
+
+These transitive-dependency pins exist solely to patch known vulnerabilities in
+packages that were not yet updated by their direct dependents. Remove an entry
+only after confirming that all dependents have upgraded past the pinned version.
+
+| Package | Pinned to | Vulnerability | Advisory |
+|---------|-----------|---------------|----------|
+| `tar` | `≥ 7.5.11` | Path-traversal / arbitrary-file-write in tar entry extraction | [GHSA-x565-32qp-m3vf](https://github.com/advisories/GHSA-x565-32qp-m3vf) |
+| `serialize-javascript` | `≥ 7.0.4` | ReDoS in serialisation regex (CVE-2024-11831) | [GHSA-76p7-773f-r4q5](https://github.com/advisories/GHSA-76p7-773f-r4q5) |
+| `file-type` | `≥ 21.3.3` | ReDoS via crafted binary input (CVE-2024-4067) | [GHSA-mwqq-9qge-5fj3](https://github.com/advisories/GHSA-mwqq-9qge-5fj3) |
+
 **Latest Audit** (2025-12-20):
 - **Status**: 42 vulnerabilities (4 low, 7 moderate, 31 high)
 - **Action Taken**: Applied `npm audit fix` (9 packages updated)
@@ -190,9 +202,10 @@ Before deploying to production:
 
 ## Security Updates
 
-This document is reviewed and updated regularly. Last review: 2026-01-11
+This document is reviewed and updated regularly. Last review: 2026-05-12
 
 **Recent Updates:**
+- 2026-05-12: Documented package.json security overrides (tar, serialize-javascript, file-type) in dedicated table
 - 2026-01-11: Implemented CSP headers, security headers, input sanitization utilities, npm audit automation in CI/CD
 - 2025-12-20: Security audit completed, 9 packages updated, 42 vulnerabilities documented
 - 2025-12-16: Initial security policy created
