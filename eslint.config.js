@@ -11,9 +11,20 @@ module.exports = defineConfig([
       "coverage/**",
       "dist/**",
       "node_modules/**",
-      "functions/**",
       "cypress/**",
     ],
+  },
+  {
+    files: ["server.ts", "cypress.config.ts"],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.recommended,
+      tseslint.configs.stylistic,
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
+    },
   },
   {
     files: ["**/*.ts"],
@@ -42,7 +53,7 @@ module.exports = defineConfig([
           style: "kebab-case",
         },
       ],
-      "@angular-eslint/prefer-inject": "off",
+      "@angular-eslint/prefer-inject": "error",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }],
     },
