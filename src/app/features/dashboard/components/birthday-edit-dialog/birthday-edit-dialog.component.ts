@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -53,6 +53,9 @@ export interface BirthdayEditDialogResult {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayEditDialogComponent {
+  dialogRef = inject<MatDialogRef<BirthdayEditDialogComponent>>(MatDialogRef);
+  data = inject<BirthdayEditDialogData>(MAT_DIALOG_DATA);
+
   private readonly photoStorage = inject(PhotoStorageService);
   private readonly authService = inject(FirebaseAuthService);
 
@@ -80,10 +83,9 @@ export class BirthdayEditDialogComponent {
   /** Pending File for the remember photo — uploaded on save. */
   private rememberPhotoFile: File | null = null;
 
-  constructor(
-    public dialogRef: MatDialogRef<BirthdayEditDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: BirthdayEditDialogData
-  ) {
+  constructor() {
+    const data = this.data;
+
     this.editedBirthday = { ...data.birthday };
     this.editingData = {
       name: data.birthday.name,
