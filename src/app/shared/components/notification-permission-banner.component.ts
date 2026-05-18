@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
@@ -158,6 +158,9 @@ import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
   `]
 })
 export class NotificationPermissionBannerComponent implements OnInit {
+  private permissionService = inject(NotificationPermissionService);
+  private platformId = inject(PLATFORM_ID);
+
   private readonly destroyRef = inject(DestroyRef);
   private readonly secureStorage = inject(SecureStorageService);
 
@@ -166,11 +169,6 @@ export class NotificationPermissionBannerComponent implements OnInit {
   shouldShow = signal(false);
   isRequesting = signal(false);
   private dismissed = false;
-
-  constructor(
-    private permissionService: NotificationPermissionService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {}
 
   async ngOnInit(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
