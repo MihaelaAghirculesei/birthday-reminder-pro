@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID, effect, Signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, effect, Signal, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
@@ -10,15 +10,16 @@ import * as UIActions from '../store/ui/ui.actions';
   providedIn: 'root'
 })
 export class ThemeService {
+  private store = inject<Store<AppState>>(Store);
+  private platformId = inject(PLATFORM_ID);
+
   private readonly STORAGE_KEY = 'birthday-app-dark-mode';
   private transitionTimer: ReturnType<typeof setTimeout> | null = null;
+  private isFirstApply = true;
 
   darkMode: Signal<boolean> = toSignal(this.store.select(selectDarkMode), { initialValue: false });
 
-  constructor(
-    private store: Store<AppState>,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
+  constructor() {
     this.initializeTheme();
 
     effect(() => {
@@ -46,14 +47,19 @@ export class ThemeService {
       clearTimeout(this.transitionTimer);
     }
 
-    document.body.classList.add('theme-transitioning');
-
     if (isDark) {
       document.body.classList.add('dark-theme');
     } else {
       document.body.classList.remove('dark-theme');
     }
 
+    // Skip transition animation on initial load — only animate user-triggered toggles.
+    if (this.isFirstApply) {
+      this.isFirstApply = false;
+      return;
+    }
+
+    document.body.classList.add('theme-transitioning');
     this.transitionTimer = setTimeout(() => {
       document.body.classList.remove('theme-transitioning');
       this.transitionTimer = null;

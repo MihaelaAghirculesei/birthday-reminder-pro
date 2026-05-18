@@ -66,9 +66,21 @@ describe('ThemeService', () => {
       );
     });
 
-    it('should apply dark theme class to body when enabled', fakeAsync(() => {
+    it('should apply dark theme class on initial load without transition', fakeAsync(() => {
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(true);
+      tick();
+
+      expect(document.body.classList.contains('dark-theme')).toBe(true);
+      // No transition on the very first apply (initial page load)
+      expect(document.body.classList.contains('theme-transitioning')).toBe(false);
+    }));
+
+    it('should add transition on user-triggered toggle after initial load', fakeAsync(() => {
+      service = TestBed.inject(ThemeService);
+      tick(); // flush initial apply (first apply, isFirstApply set to false)
+
+      darkModeSubject.next(true); // second apply — simulates user toggle
       tick();
 
       expect(document.body.classList.contains('dark-theme')).toBe(true);
@@ -109,6 +121,7 @@ describe('ThemeService', () => {
 
     it('should cancel the previous timer when theme changes rapidly', fakeAsync(() => {
       service = TestBed.inject(ThemeService);
+      tick(); // flush initial apply so isFirstApply is false
 
       // Toggle theme 3 times in rapid succession (within 600 ms window)
       darkModeSubject.next(true);
