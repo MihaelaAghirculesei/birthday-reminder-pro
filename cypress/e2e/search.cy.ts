@@ -67,10 +67,16 @@ describe('Search Functionality', () => {
 
   it('should show no results message for non-existent search', () => {
     cy.get('[data-testid="search-input"]')
-      .should('exist')
+      .should('be.visible')
       .type('NonExistent', { force: true });
 
-    cy.contains('No birthdays found').should('be.visible');
+    // Wait for NgRx pipeline (dispatch → selector → filteredBirthdays → ngOnChanges)
+    // before asserting on the no-results state.
+    cy.get('app-birthday-item', { timeout: 10000 }).should('not.exist');
+
+    cy.get('[data-testid="no-results-message"]', { timeout: 10000 })
+      .should('be.visible')
+      .and('contain.text', 'No birthdays found');
   });
 
   it('should be case insensitive', () => {

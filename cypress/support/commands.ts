@@ -97,44 +97,41 @@ Cypress.Commands.add('clearIndexedDB', () => {
 });
 
 Cypress.Commands.add('waitForAngular', () => {
-  cy.get('.app-header', { timeout: 10000 }).should('be.visible');
-  // Wait for Angular SSR hydration to complete
-  // The SSR pre-renders HTML but event handlers aren't attached until hydration finishes
-  // Check that Angular Material components are fully initialized (use add-birthday button as universal hydration marker)
-  cy.get('[data-testid="add-birthday-button"]', { timeout: 10000 }).should('exist');
-  // Allow time for Angular to attach all event handlers after DOM is ready
-  // eslint-disable-next-line cypress/no-unnecessary-waiting
-  cy.wait(1000);
+  cy.get('.app-header', { timeout: 15000 }).should('be.visible');
+  cy.get('[data-testid="add-birthday-button"]', { timeout: 15000 }).should('exist');
+  // Use Angular's testability API to wait for zone stability (which includes SSR
+  // hydration completion). whenStable() fires immediately if already stable, so
+  // this resolves in ~0–200 ms instead of always burning a fixed 1 s.
+  cy.window().then((win) => {
+    return new Cypress.Promise<void>((resolve) => {
+      type NgTestability = { whenStable(done: () => void): void };
+      const getAllTestabilities = (win as any).getAllAngularTestabilities as (() => NgTestability[]) | undefined;
+      if (!getAllTestabilities) {
+        // Testability API unavailable (e.g. production build): short fallback.
+        setTimeout(resolve, 300);
+        return;
+      }
+      const testabilities = getAllTestabilities();
+      if (!testabilities.length) {
+        setTimeout(resolve, 300);
+        return;
+      }
+      let remaining = testabilities.length;
+      testabilities.forEach((t) => t.whenStable(() => { if (--remaining === 0) resolve(); }));
+    });
+  });
 });
 
 Cypress.Commands.add('expandBirthdayForm', () => {
-  // Retry clicking until the form actually expands (SSR hydration safe)
-  const maxRetries = 5;
-
-  function attemptExpand(attempt: number): void {
-    cy.get('body').then(($body) => {
-      // Check the element is truly visible and not mid-animation
-      const $input = $body.find('[data-testid="birthday-name-input"]');
-      if ($input.length > 0 && $input.is(':visible') && $input.closest('[style]').css('height') !== '0px') {
-        return; // Form already expanded and stable
-      }
-
-      cy.get('[data-testid="add-birthday-button"]').click({ force: true });
-
-      if (attempt < maxRetries) {
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(500);
-        cy.get('body').then(($b) => {
-          if ($b.find('[data-testid="birthday-name-input"]:visible').length === 0) {
-            attemptExpand(attempt + 1);
-          }
-        });
-      }
-    });
-  }
-
-  attemptExpand(1);
-  cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
+  // waitForAngular() guarantees Angular is hydrated before this runs, so a single
+  // click is enough. The @expandCollapse animation takes 300 ms; Cypress retries
+  // should('be.visible') every ~50 ms and passes at ~300 ms — no explicit wait needed.
+  cy.get('body').then(($body) => {
+    if ($body.find('[data-testid="birthday-name-input"]:visible').length === 0) {
+      cy.get('[data-testid="add-birthday-button"]').click();
+    }
+  });
+  cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('be.visible');
 });
 
 // ---------------------------------------------------------------------------
