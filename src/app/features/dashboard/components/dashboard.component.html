@@ -2,7 +2,7 @@
   <div class="dashboard-section">
     <div class="dashboard-section-header">
       <div class="dashboard-section-title-wrapper">
-        <h3 class="dashboard-section-title">
+        <h2 class="dashboard-section-title">
           <div class="dashboard-title-icon-wrapper">
             <app-calendar-icon
               size="38"
@@ -11,7 +11,7 @@
             ></app-calendar-icon>
           </div>
           {{ 'DASHBOARD.TITLE' | translate }}
-        </h3>
+        </h2>
         <p class="dashboard-section-subtitle">
           {{ 'DASHBOARD.SUBTITLE' | translate }}
         </p>
@@ -82,7 +82,7 @@
           [totalBirthdays]="facade.totalBirthdays()"
         ></app-birthday-chart>
       } @placeholder {
-        <div class="chart-placeholder" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+        <div class="chart-placeholder" style="min-height: 350px; display: block">
           <mat-icon>bar_chart</mat-icon>
         </div>
       }

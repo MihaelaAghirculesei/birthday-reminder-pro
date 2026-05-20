@@ -59,7 +59,7 @@
     @include info-card-text;
 
     :host-context(body.dark-theme) & {
-      h3 { color: var(--text-primary); }
+      h2 { color: var(--text-primary); }
       p { color: var(--text-secondary); }
     }
   }
