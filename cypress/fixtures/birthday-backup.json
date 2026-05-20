@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "exportDate": "2026-01-01T12:00:00.000Z",
+  "birthdays": [
+    {
+      "id": "import-test-001",
+      "name": "Imported Birthday User",
+      "birthDate": "1990-06-15",
+      "category": "friends",
+      "reminderDays": 7
+    },
+    {
+      "id": "import-test-002",
+      "name": "Second Imported User",
+      "birthDate": "1985-12-03",
+      "category": "family",
+      "reminderDays": 14
+    }
+  ]
+}
