@@ -38,6 +38,8 @@ describe('Backup Flow Integration', () => {
 
       const mockAnchor = { href: '', download: '', click: jasmine.createSpy('click') };
       spyOn(document, 'createElement').and.returnValue(mockAnchor as unknown as HTMLAnchorElement);
+      spyOn(document.body, 'appendChild').and.stub();
+      spyOn(document.body, 'removeChild').and.stub();
 
       backupService.exportToJSON(mockBirthdays);
 
@@ -94,6 +96,8 @@ describe('Backup Flow Integration', () => {
 
       const mockAnchor = { href: '', download: '', click: jasmine.createSpy('click') };
       spyOn(document, 'createElement').and.returnValue(mockAnchor as unknown as HTMLAnchorElement);
+      spyOn(document.body, 'appendChild').and.stub();
+      spyOn(document.body, 'removeChild').and.stub();
 
       backupService.exportToCSV(mockBirthdays);
 
