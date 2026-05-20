@@ -1,11 +1,11 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { NetworkService } from '../../core';
 
 @Component({
     selector: 'app-network-status',
-    imports: [CommonModule, MatIconModule],
+    imports: [AsyncPipe, NgClass, MatIconModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="network-status" [ngClass]="{'offline': (networkService.online$ | async) === false}">

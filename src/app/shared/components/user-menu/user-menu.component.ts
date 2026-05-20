@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +15,6 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
   selector: 'app-user-menu',
   standalone: true,
   imports: [
-    CommonModule,
     MatMenuModule,
     MatButtonModule,
     MatIconModule,

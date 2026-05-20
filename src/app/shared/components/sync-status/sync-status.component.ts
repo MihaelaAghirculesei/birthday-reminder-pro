@@ -1,5 +1,4 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -13,7 +12,6 @@ import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/
   selector: 'app-sync-status',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatTooltipModule,
     MatProgressSpinnerModule
