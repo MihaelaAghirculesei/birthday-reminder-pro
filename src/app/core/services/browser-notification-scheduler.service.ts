@@ -63,17 +63,9 @@ export class BrowserNotificationSchedulerService {
       .subscribe(birthdays => { this.birthdaysCache = birthdays; });
   }
 
-  /** Request browser permission and wire up initial per-birthday timeouts. */
+  /** Wire up initial per-birthday timeouts. Call after user grants permission. */
   async init(): Promise<void> {
     if (!this.isBrowser) return;
-
-    if (
-      'Notification' in window &&
-      typeof Notification.requestPermission === 'function' &&
-      Notification.permission === 'default'
-    ) {
-      await Notification.requestPermission();
-    }
 
     this.store
       .select(selectAllBirthdays)
@@ -83,6 +75,11 @@ export class BrowserNotificationSchedulerService {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe(birthdays => this.scheduleBirthdayTimeouts(birthdays));
+  }
+
+  /** Call this from a user-initiated click to request browser notification permission. */
+  async requestPermissionOnUserAction(): Promise<boolean> {
+    return this.permissionService.requestPermission();
   }
 
   scheduleBirthdayTimeouts(birthdays: Birthday[]): void {
