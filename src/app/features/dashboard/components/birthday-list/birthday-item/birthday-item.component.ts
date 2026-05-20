@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,7 +13,6 @@ import { RememberPhotoComponent } from '../../remember-photo/remember-photo.comp
 @Component({
     selector: 'app-birthday-item',
     imports: [
-        CommonModule,
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,

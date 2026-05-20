@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy, HostListener, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,7 +34,6 @@ export interface BirthdayEditDialogResult {
 @Component({
     selector: 'app-birthday-edit-dialog',
     imports: [
-        CommonModule,
         FormsModule,
         ReactiveFormsModule,
         MatDialogModule,
