@@ -18,7 +18,6 @@ import { PhotoUploadComponent } from '../photo-upload.component';
 import { DEFAULT_CATEGORY, BirthdayCategory } from '../../constants';
 import { Birthday } from '../../models';
 import { getZodiacSign, parseLocalDate, toDateString } from '../../utils';
-import { BirthdaySchema, sanitizeBirthdayData } from '../../schemas/birthday.schema';
 import { LoggerService } from '../../../core';
 import { PhotoStorageService } from '../../../core/services/photo-storage.service';
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
@@ -88,6 +87,7 @@ export class BirthdayFormComponent {
         // Anonymous users: selectedPhoto already holds the base64 preview — use it as-is.
       }
 
+      const { BirthdaySchema, sanitizeBirthdayData } = await import('../../schemas/birthday.schema');
       const formData = sanitizeBirthdayData({
         ...this.birthdayForm.value,
         birthDate,
