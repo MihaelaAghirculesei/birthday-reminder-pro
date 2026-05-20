@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Store } from '@ngrx/store';
 
 import { PendingChangesService } from './pending-changes.service';
-import { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
+import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
 import { CloudSyncService } from './cloud-sync.service';

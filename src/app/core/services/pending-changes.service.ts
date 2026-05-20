@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
-import { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
+import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 
 export type ChangeType = 'create' | 'update' | 'delete';
 export type EntityType = 'birthday' | 'category';
