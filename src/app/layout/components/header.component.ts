@@ -1,7 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone, OnInit } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { isPlatformBrowser } from '@angular/common';
-import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,7 +23,6 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
 @Component({
     selector: 'app-header',
     imports: [
-      CommonModule,
       RouterModule,
       NetworkStatusComponent,
       MatIconModule,
@@ -80,17 +78,14 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
         <app-header-settings-menu #mobileSettings menuClass="nav-menu-panel nav-submenu" />
         <app-header-import-export #mobileImportExport menuClass="nav-menu-panel nav-submenu" />
         <h1 class="hero-title" id="main-title">
-          <picture>
-            <source srcset="assets/icons/logo-reminder.webp" type="image/webp" width="46" height="46">
-            <img src="assets/icons/logo-reminder.png" alt="" class="app-logo" width="46" height="46" loading="eager" decoding="sync">
-          </picture>
+          <img src="assets/icons/logo-reminder.png" alt="" class="app-logo" width="46" height="46" loading="eager" decoding="sync" fetchpriority="high">
           {{ 'APP.TITLE' | translate }}
         </h1>
         <div class="header-controls" role="group" [attr.aria-label]="'NAV.APP_SETTINGS' | translate">
           <app-network-status></app-network-status>
         </div>
       </div>
-      <p class="hero-subtitle">{{ 'APP.SUBTITLE' | translate }}</p>
+      <p class="hero-subtitle" style="display: block; min-height: 80px">{{ 'APP.SUBTITLE' | translate }}</p>
       <app-header-nav-strip
         [isAuthenticated]="isAuthenticated()"
         [authLoading]="authLoading()"
@@ -460,18 +455,21 @@ export class HeaderComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.lastScrollY = this.getScrollY();
-      const opts = { passive: true } as AddEventListenerOptions;
-      this.ngZone.runOutsideAngular(() => {
-        merge(
-          fromEvent(window, 'scroll', opts as EventListenerOptions),
-          fromEvent(document.body, 'scroll', opts as EventListenerOptions)
-        )
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((_event: Event) => this.onScroll());
-      });
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    // Scroll-hide causes CSS transitions that make Cypress detect nav buttons as
+    // "animating" and refuse to click them. Skip entirely in test environments.
+    if ((window as Window & { Cypress?: unknown }).Cypress) return;
+
+    this.lastScrollY = this.getScrollY();
+    const opts = { passive: true } as AddEventListenerOptions;
+    this.ngZone.runOutsideAngular(() => {
+      merge(
+        fromEvent(window, 'scroll', opts as EventListenerOptions),
+        fromEvent(document.body, 'scroll', opts as EventListenerOptions)
+      )
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((_event: Event) => this.onScroll());
+    });
   }
 
   signOut(): void {
