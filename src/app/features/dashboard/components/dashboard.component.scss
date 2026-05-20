@@ -1,5 +1,13 @@
 @use '../../../../styles/shared' as *;
 
+.chart-placeholder {
+  min-height: 400px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .dashboard-container {
   padding: 32px;
   max-width: var(--content-max-width);
