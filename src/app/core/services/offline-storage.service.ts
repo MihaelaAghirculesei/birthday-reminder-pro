@@ -2,7 +2,6 @@ import { Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Birthday, ScheduledMessage } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
-import { sanitizeBirthdayData, safeParseBirthday, safeParseScheduledMessage } from '../../shared/schemas/birthday.schema';
 import { LoggerService } from './logger.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
@@ -74,28 +73,25 @@ export class IndexedDBStorageService implements OfflineStorageService {
     return { ...record, _dataVersion: CURRENT_DATA_VERSION };
   }
 
-  /**
-   * Attempts to migrate a raw IDB record that failed Zod validation.
-   * Returns the rescued Birthday and its migrated raw form, or null if
-   * migration cannot produce a valid record.
-   */
   private tryMigrateBirthday(
-    raw: Record<string, unknown>
+    raw: Record<string, unknown>,
+    sanitize: (d: Record<string, unknown>) => Record<string, unknown>,
+    safeParse: (d: unknown) => { success: boolean; data?: Birthday; error?: { issues: unknown[] } }
   ): { birthday: Birthday; raw: Record<string, unknown> } | null {
     try {
       const migrated = this.dataMigration.migrateRawBirthday(raw);
-      const sanitized = sanitizeBirthdayData({
+      const sanitized = sanitize({
         ...migrated,
         birthDate: toDateString(migrated['birthDate'] as string)
       });
-      const result = safeParseBirthday(sanitized);
+      const result = safeParse(sanitized);
       if (result.success) {
-        return { birthday: result.data, raw: migrated };
+        return { birthday: result.data as Birthday, raw: migrated };
       }
       this.logger.warn(
         '[IndexedDB] Skipping invalid birthday (migration could not fix):',
         raw['id'],
-        result.error.issues
+        result.error?.issues
       );
       return null;
     } catch {
@@ -122,6 +118,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     try {
+      const { sanitizeBirthdayData, safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
       return await this.executeWithRetry(async () => {
         const db = await this.connection.getDB();
         return new Promise<Birthday[]>((resolve, reject) => {
@@ -141,9 +138,13 @@ export class IndexedDBStorageService implements OfflineStorageService {
               });
               const result = safeParseBirthday(sanitized);
               if (result.success) {
-                birthdays.push(result.data);
+                birthdays.push(result.data as Birthday);
               } else {
-                const rescued = this.tryMigrateBirthday(raw as Record<string, unknown>);
+                const rescued = this.tryMigrateBirthday(
+                  raw as Record<string, unknown>,
+                  sanitizeBirthdayData,
+                  safeParseBirthday
+                );
                 if (rescued) {
                   birthdays.push(rescued.birthday);
                   toMigrate.push(rescued.raw);
@@ -345,6 +346,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
     }
 
     try {
+      const { safeParseScheduledMessage } = await import('../../shared/schemas/birthday.schema');
       return await this.executeWithRetry(async () => {
         const db = await this.connection.getDB();
         return new Promise<ScheduledMessage[]>((resolve, reject) => {
@@ -359,7 +361,7 @@ export class IndexedDBStorageService implements OfflineStorageService {
             for (const raw of (request.result || [])) {
               const result = safeParseScheduledMessage(raw);
               if (result.success) {
-                messages.push(result.data);
+                messages.push(result.data as ScheduledMessage);
               } else {
                 this.logger.warn('[IndexedDB] Skipping invalid scheduled message:', raw.id, result.error.issues);
               }
