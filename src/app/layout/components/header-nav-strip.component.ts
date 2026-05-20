@@ -32,7 +32,7 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
         <mat-icon aria-hidden="true">schedule_send</mat-icon>
         <span>{{ 'NAV.MESSAGES' | translate }}</span>
       </a>
-      <button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item">
+      <button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item" data-testid="nav-settings-btn">
         <img src="assets/icons/settings-button.svg" [attr.alt]="'NAV.SETTINGS' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
         <span aria-hidden="true">{{ 'NAV.SETTINGS' | translate }}</span>
         <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>

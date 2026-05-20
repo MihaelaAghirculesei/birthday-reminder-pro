@@ -10,7 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     template: `
     <footer class="app-footer">
       <button class="footer-logo-btn" (click)="scrollToTop()" aria-label="Scroll to top">
-        <img src="assets/logo.png" alt="" class="footer-logo" />
+        <img src="assets/logo.png" alt="" class="footer-logo" width="100" height="100" loading="lazy" />
       </button>
 
       <div class="footer-center">
