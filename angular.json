@@ -74,7 +74,7 @@
                 "scripts": true,
                 "styles": {
                   "minify": true,
-                  "inlineCritical": true
+                  "inlineCritical": false
                 },
                 "fonts": {
                   "inline": true
@@ -135,7 +135,7 @@
             ],
             "scripts": [],
             "karmaConfig": "karma.conf.js",
-            "codeCoverage": false,
+            "codeCoverage": true,
             "codeCoverageExclude": [
               "src/app/firebase.config.ts",
               "src/app/core/services/firebase-auth.service.ts",
