@@ -3,6 +3,14 @@ export const en = {
     TITLE: 'Birthday Memories',
     SUBTITLE: "Never forget the special moments that matter most. Keep track of all your loved ones' birthdays with style."
   },
+  AUTH: {
+    SIGN_IN: 'Sign in',
+    SIGN_OUT: 'Sign out',
+    SIGNING_IN: 'Signing in...',
+    SIGNING_OUT: 'Signing out...',
+    USER: 'User',
+    USER_MENU: 'User menu'
+  },
   NAV: {
     OPEN_MENU: 'Open navigation menu',
     APP_SETTINGS: 'Application settings',
@@ -18,7 +26,8 @@ export const en = {
     ENABLE_NOTIFICATIONS: 'Enable Notifications',
     DISABLE_NOTIFICATIONS: 'Disable Notifications',
     LIGHT_THEME: 'Light Theme',
-    DARK_THEME: 'Dark Theme'
+    DARK_THEME: 'Dark Theme',
+    SIGN_IN_FOR_MESSAGES: 'Sign in with Google to send messages'
   },
   IMPORT_EXPORT: {
     TITLE: 'Backup & Restore',
@@ -75,7 +84,8 @@ export const en = {
     CLEAR_ALL_TITLE: 'Clear All Data',
     CLEAR_ALL_SUBTITLE: 'Remove all birthdays from the app',
     CLEARING: 'Clearing...',
-    CLEAR_ALL_BTN: 'Clear All'
+    CLEAR_ALL_BTN: 'Clear All',
+    ORPHANED_CATEGORY: 'Uncategorized'
   },
   BIRTHDAY_ITEM: {
     YEARS_OLD: '{{age}} years old',
@@ -88,6 +98,28 @@ export const en = {
     TODAY: 'Today!',
     TOMORROW: 'Tomorrow',
     DAYS_UNTIL: '{{days}} days'
+  },
+  EDIT_DIALOG: {
+    TITLE: 'Edit Birthday - {{name}}',
+    NAME_PLACEHOLDER: 'Enter name',
+    NOTES_LABEL: 'Notes',
+    NOTES_PLACEHOLDER: 'What they love, hobbies, gift ideas...',
+    CONTACT_SECTION_TITLE: 'Contact Info (for sending wishes)',
+    EMAIL_LABEL: 'Email',
+    EMAIL_PLACEHOLDER: 'email@example.com',
+    EMAIL_ERROR: 'Please enter a valid email address.',
+    PHONE_LABEL: 'Phone',
+    PHONE_PLACEHOLDER: '+1234567890',
+    PHONE_ERROR: 'Phone number can only contain digits, +, -, spaces and parentheses.',
+    TELEGRAM_LABEL: 'Telegram Username',
+    TELEGRAM_PLACEHOLDER: 'username',
+    TELEGRAM_ERROR: 'Username must start with a letter, be 5-32 characters: letters, digits and underscores.',
+    PROFILE_PHOTO: 'Profile Photo',
+    REMEMBER_PHOTO: 'Remember Photo',
+    REMEMBER_PHOTO_HINT: '(For social sharing/messages)',
+    CONTACT_WARNING: 'No contact info provided. Add Email, Phone, or Telegram to enable sending wishes.',
+    SAVE_BTN: 'Save Changes',
+    CANCEL: 'Cancel'
   },
   ZODIAC: {
     AQUARIUS: 'Aquarius',
@@ -175,7 +207,8 @@ export const en = {
     SENT_TOOLTIP: 'Last sent:',
     MARK_SENT_BTN: 'Mark as Sent',
     RESEND_BTN: 'Resend',
-    MESSAGE_SENT: 'Message marked as sent!'
+    MESSAGE_SENT: 'Message marked as sent!',
+    TEST_NOTIFICATION: '🧪 TEST - {{title}}: {{message}}'
   },
   SCHEDULED_MESSAGES: {
     TITLE: 'Scheduled Messages',
@@ -213,6 +246,9 @@ export const en = {
     CLICK_TO_CLOSE: 'Click to close form',
     CLICK_TO_ADD: 'Click to add new birthday'
   },
+  REMEMBER_PHOTO: {
+    TOOLTIP: 'Remember Photo — Click: Download | Double-click: Share'
+  },
   PHOTO_UPLOAD: {
     CHANGE_PHOTO: 'Change Photo',
     ADD_PHOTO: 'Add Remember Photo',
@@ -237,14 +273,20 @@ export const en = {
     FAILED_UPDATE_MESSAGE: 'Failed to update message: {{error}}',
     FAILED_DELETE_MESSAGE: 'Failed to delete message: {{error}}',
     NO_UNCATEGORIZED: 'There are no uncategorized birthdays to reassign.',
+    RETRY: 'Retry',
+    FAILED_LOAD_BIRTHDAYS: 'Failed to load birthdays',
     FAILED_ADD_BIRTHDAY: 'Failed to save birthday: {{error}}',
     FAILED_UPDATE_BIRTHDAY: 'Failed to update birthday: {{error}}',
     FAILED_DELETE_BIRTHDAY: 'Failed to delete birthday: {{error}}',
     FAILED_SYNC: 'Sync failed: {{error}}',
     FAILED_MIGRATION: 'Cloud migration failed: {{error}}',
-    RETRY: 'Retry'
+    FAILED_IMPORT: 'Failed to import birthdays',
+    FAILED_CLEAR: 'Failed to clear all birthdays',
+    FAILED_LOAD_TEST_DATA: 'Failed to load test data'
   },
   CONFIRM: {
+    CANCEL_BTN: 'Cancel',
+    CONFIRM_BTN: 'Confirm',
     CLEAR_ALL_TITLE: 'Clear All Data?',
     CLEAR_ALL_MESSAGE: 'This will permanently delete all birthdays and categories. This action cannot be undone.',
     CLEAR_ALL_BTN: 'Clear All',
@@ -292,6 +334,7 @@ export const en = {
     NAME_OTHER_LANG_HINT: 'Optional — how this category appears in the other language',
     NAME_ERROR_REQUIRED: 'Name is required',
     NAME_ERROR_MIN: 'Name must be at least 2 characters',
+    NAME_ERROR_MAX: 'Name must be at most 30 characters',
     CHOOSE_ICON: 'Choose Icon',
     SELECT_ICON_ARIA: 'Select {{icon}} icon',
     CHOOSE_COLOR: 'Choose Color',
@@ -352,7 +395,23 @@ export const en = {
     BAR_ARIA_ONE: '{{month}}: {{count}} birthday',
     BAR_ARIA_MANY: '{{month}}: {{count}} birthdays',
     TABLE_MONTH: 'Month',
-    TABLE_COUNT: 'Birthdays'
+    TABLE_COUNT: 'Birthdays',
+    MONTHS_SHORT: { JAN:'Jan', FEB:'Feb', MAR:'Mar', APR:'Apr', MAY:'May', JUN:'Jun', JUL:'Jul', AUG:'Aug', SEP:'Sep', OCT:'Oct', NOV:'Nov', DEC:'Dec' },
+    MONTHS_FULL: { JANUARY:'January', FEBRUARY:'February', MARCH:'March', APRIL:'April', MAY:'May', JUNE:'June', JULY:'July', AUGUST:'August', SEPTEMBER:'September', OCTOBER:'October', NOVEMBER:'November', DECEMBER:'December' }
+  },
+  NETWORK: {
+    ONLINE: 'Online',
+    OFFLINE: 'Offline'
+  },
+  SYNC_STATUS: {
+    SYNCING: 'Syncing...',
+    SYNC_ERROR: 'Sync error',
+    OFFLINE: 'Offline',
+    PENDING: '{{count}} pending',
+    SYNCED: 'Synced'
+  },
+  NOTIFICATION_BANNER: {
+    ARIA: 'Notification permission request'
   },
   FOOTER: {
     TAGLINE: 'Made with ❤️ to never forget special moments'

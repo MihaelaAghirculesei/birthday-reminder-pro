@@ -3,6 +3,14 @@ export const it = {
     TITLE: 'Ricorda i Compleanni',
     SUBTITLE: 'Non dimenticare mai i momenti speciali che contano di più. Tieni traccia dei compleanni di tutte le persone care con stile.'
   },
+  AUTH: {
+    SIGN_IN: 'Accedi',
+    SIGN_OUT: 'Esci',
+    SIGNING_IN: 'Accesso in corso...',
+    SIGNING_OUT: 'Uscita in corso...',
+    USER: 'Utente',
+    USER_MENU: 'Menu utente'
+  },
   NAV: {
     OPEN_MENU: 'Apri menu di navigazione',
     APP_SETTINGS: 'Impostazioni applicazione',
@@ -18,7 +26,8 @@ export const it = {
     ENABLE_NOTIFICATIONS: 'Abilita Notifiche',
     DISABLE_NOTIFICATIONS: 'Disabilita Notifiche',
     LIGHT_THEME: 'Tema Chiaro',
-    DARK_THEME: 'Tema Scuro'
+    DARK_THEME: 'Tema Scuro',
+    SIGN_IN_FOR_MESSAGES: 'Accedi con Google per inviare messaggi'
   },
   IMPORT_EXPORT: {
     TITLE: 'Backup & Ripristino',
@@ -40,7 +49,8 @@ export const it = {
     INVALID_JSON: 'File di backup non valido',
     INVALID_CSV: 'File CSV non valido',
     INVALID_VCARD: 'File vCard non valido',
-    IMPORTED: 'Importati {{count}} compleanni'
+    IMPORTED: 'Importati {{count}} compleanni',
+    IMPORTED_WITH_SKIPPED: 'Importati {{count}} compleanni ({{skipped}} ignorati)'
   },
   BIRTHDAY_FORM: {
     NAME_LABEL: 'Nome',
@@ -74,7 +84,8 @@ export const it = {
     CLEAR_ALL_TITLE: 'Cancella Tutti i Dati',
     CLEAR_ALL_SUBTITLE: 'Rimuovi tutti i compleanni dall\'app',
     CLEARING: 'Cancellazione...',
-    CLEAR_ALL_BTN: 'Cancella Tutto'
+    CLEAR_ALL_BTN: 'Cancella Tutto',
+    ORPHANED_CATEGORY: 'Senza categoria'
   },
   BIRTHDAY_ITEM: {
     YEARS_OLD: '{{age}} anni',
@@ -87,6 +98,28 @@ export const it = {
     TODAY: 'Oggi!',
     TOMORROW: 'Domani',
     DAYS_UNTIL: '{{days}} giorni'
+  },
+  EDIT_DIALOG: {
+    TITLE: 'Modifica Compleanno - {{name}}',
+    NAME_PLACEHOLDER: 'Inserisci il nome',
+    NOTES_LABEL: 'Note',
+    NOTES_PLACEHOLDER: 'Cosa ama, hobby, idee regalo...',
+    CONTACT_SECTION_TITLE: 'Info di Contatto (per inviare auguri)',
+    EMAIL_LABEL: 'Email',
+    EMAIL_PLACEHOLDER: 'email@example.com',
+    EMAIL_ERROR: 'Inserisci un indirizzo email valido.',
+    PHONE_LABEL: 'Telefono',
+    PHONE_PLACEHOLDER: '+1234567890',
+    PHONE_ERROR: 'Il numero può contenere solo cifre, +, -, spazi e parentesi.',
+    TELEGRAM_LABEL: 'Username Telegram',
+    TELEGRAM_PLACEHOLDER: 'username',
+    TELEGRAM_ERROR: 'Lo username deve iniziare con una lettera, 5-32 caratteri: lettere, cifre e trattini bassi.',
+    PROFILE_PHOTO: 'Foto Profilo',
+    REMEMBER_PHOTO: 'Foto Ricordo',
+    REMEMBER_PHOTO_HINT: '(Per condivisione social/messaggi)',
+    CONTACT_WARNING: 'Nessun contatto inserito. Aggiungi Email, Telefono o Telegram per abilitare l\'invio degli auguri.',
+    SAVE_BTN: 'Salva Modifiche',
+    CANCEL: 'Annulla'
   },
   ZODIAC: {
     AQUARIUS: 'Acquario',
@@ -174,7 +207,8 @@ export const it = {
     SENT_TOOLTIP: 'Ultimo invio:',
     MARK_SENT_BTN: 'Segna come Inviato',
     RESEND_BTN: 'Reinvia',
-    MESSAGE_SENT: 'Messaggio segnato come inviato!'
+    MESSAGE_SENT: 'Messaggio segnato come inviato!',
+    TEST_NOTIFICATION: '🧪 TEST - {{title}}: {{message}}'
   },
   SCHEDULED_MESSAGES: {
     TITLE: 'Messaggi Pianificati',
@@ -212,6 +246,9 @@ export const it = {
     CLICK_TO_CLOSE: 'Clicca per chiudere il modulo',
     CLICK_TO_ADD: 'Clicca per aggiungere un compleanno'
   },
+  REMEMBER_PHOTO: {
+    TOOLTIP: 'Foto Ricordo — Click: Scarica | Doppio click: Condividi'
+  },
   PHOTO_UPLOAD: {
     CHANGE_PHOTO: 'Cambia Foto',
     ADD_PHOTO: 'Aggiungi Foto Ricordo',
@@ -236,14 +273,20 @@ export const it = {
     FAILED_UPDATE_MESSAGE: 'Impossibile aggiornare il messaggio: {{error}}',
     FAILED_DELETE_MESSAGE: 'Impossibile eliminare il messaggio: {{error}}',
     NO_UNCATEGORIZED: 'Non ci sono compleanni senza categoria da riassegnare.',
+    RETRY: 'Riprova',
+    FAILED_LOAD_BIRTHDAYS: 'Impossibile caricare i compleanni',
     FAILED_ADD_BIRTHDAY: 'Impossibile salvare il compleanno: {{error}}',
     FAILED_UPDATE_BIRTHDAY: 'Impossibile aggiornare il compleanno: {{error}}',
     FAILED_DELETE_BIRTHDAY: 'Impossibile eliminare il compleanno: {{error}}',
     FAILED_SYNC: 'Sincronizzazione fallita: {{error}}',
     FAILED_MIGRATION: 'Migrazione cloud fallita: {{error}}',
-    RETRY: 'Riprova'
+    FAILED_IMPORT: 'Impossibile importare i compleanni',
+    FAILED_CLEAR: 'Impossibile cancellare tutti i compleanni',
+    FAILED_LOAD_TEST_DATA: 'Impossibile caricare i dati di test'
   },
   CONFIRM: {
+    CANCEL_BTN: 'Annulla',
+    CONFIRM_BTN: 'Conferma',
     CLEAR_ALL_TITLE: 'Cancellare Tutti i Dati?',
     CLEAR_ALL_MESSAGE: 'Questo eliminerà definitivamente tutti i compleanni e le categorie. Questa azione non può essere annullata.',
     CLEAR_ALL_BTN: 'Cancella Tutto',
@@ -291,6 +334,7 @@ export const it = {
     NAME_OTHER_LANG_HINT: 'Opzionale — come appare questa categoria nell\'altra lingua',
     NAME_ERROR_REQUIRED: 'Il nome è obbligatorio',
     NAME_ERROR_MIN: 'Il nome deve avere almeno 2 caratteri',
+    NAME_ERROR_MAX: 'Il nome non può superare 30 caratteri',
     CHOOSE_ICON: 'Scegli Icona',
     SELECT_ICON_ARIA: 'Seleziona icona {{icon}}',
     CHOOSE_COLOR: 'Scegli Colore',
@@ -351,7 +395,23 @@ export const it = {
     BAR_ARIA_ONE: '{{month}}: {{count}} compleanno',
     BAR_ARIA_MANY: '{{month}}: {{count}} compleanni',
     TABLE_MONTH: 'Mese',
-    TABLE_COUNT: 'Compleanni'
+    TABLE_COUNT: 'Compleanni',
+    MONTHS_SHORT: { JAN:'Gen', FEB:'Feb', MAR:'Mar', APR:'Apr', MAY:'Mag', JUN:'Giu', JUL:'Lug', AUG:'Ago', SEP:'Set', OCT:'Ott', NOV:'Nov', DEC:'Dic' },
+    MONTHS_FULL: { JANUARY:'Gennaio', FEBRUARY:'Febbraio', MARCH:'Marzo', APRIL:'Aprile', MAY:'Maggio', JUNE:'Giugno', JULY:'Luglio', AUGUST:'Agosto', SEPTEMBER:'Settembre', OCTOBER:'Ottobre', NOVEMBER:'Novembre', DECEMBER:'Dicembre' }
+  },
+  NETWORK: {
+    ONLINE: 'Online',
+    OFFLINE: 'Offline'
+  },
+  SYNC_STATUS: {
+    SYNCING: 'Sincronizzazione...',
+    SYNC_ERROR: 'Errore sincronizzazione',
+    OFFLINE: 'Offline',
+    PENDING: '{{count}} in attesa',
+    SYNCED: 'Sincronizzato'
+  },
+  NOTIFICATION_BANNER: {
+    ARIA: 'Richiesta permesso notifiche'
   },
   FOOTER: {
     TAGLINE: 'Fatto con ❤️ per non dimenticare mai i momenti speciali'
