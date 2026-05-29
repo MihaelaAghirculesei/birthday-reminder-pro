@@ -46,10 +46,15 @@ export class BirthdayNotificationEffects {
     () =>
       this.actions$.pipe(
         ofType(BirthdayActions.deleteBirthdaySuccess),
-        tap(() => {
+        tap(({ birthday }) => {
           this.notificationService.show(
             this.translate.instant('NOTIFICATIONS.BIRTHDAY_DELETED'),
-            'success'
+            'success',
+            5000,
+            {
+              label: this.translate.instant('BIRTHDAY_LIST.UNDO'),
+              callback: () => this.store.dispatch(BirthdayActions.addBirthday({ birthday }))
+            }
           );
         })
       ),
@@ -149,6 +154,63 @@ export class BirthdayNotificationEffects {
           this.notificationService.show(
             this.translate.instant('NOTIFICATIONS.FAILED_DELETE_MESSAGE', { error }),
             'error'
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  loadBirthdaysFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.loadBirthdaysFailure),
+        tap(() => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_LOAD_BIRTHDAYS'),
+            'error',
+            undefined,
+            {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.loadBirthdays())
+            }
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  clearAllBirthdaysFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.clearAllBirthdaysFailure),
+        tap(() => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_CLEAR'),
+            'error',
+            undefined,
+            {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.clearAllBirthdays())
+            }
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  loadTestDataFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BirthdayActions.loadTestDataFailure),
+        tap(() => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.FAILED_LOAD_TEST_DATA'),
+            'error',
+            undefined,
+            {
+              label: this.translate.instant('NOTIFICATIONS.RETRY'),
+              callback: () => this.store.dispatch(BirthdayActions.loadTestData())
+            }
           );
         })
       ),
