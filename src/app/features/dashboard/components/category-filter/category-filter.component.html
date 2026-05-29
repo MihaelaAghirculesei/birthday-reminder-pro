@@ -49,10 +49,7 @@
             </div>
             <div class="category-stat-info">
               <div class="category-stat-name" [matTooltip]="categoryStats.nameKey ? (categoryStats.nameKey | translate) : categoryStats.name">{{ categoryStats.nameKey ? (categoryStats.nameKey | translate) : categoryStats.name }}</div>
-              <div class="category-stat-count">
-                {{ categoryStats.count }}
-                {{ categoryStats.count === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate) }}
-              </div>
+              <div class="category-stat-count">{{ categoryStats.count }} {{ categoryStats.count === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate) }}</div>
             </div>
             <div class="category-actions">
               <button
