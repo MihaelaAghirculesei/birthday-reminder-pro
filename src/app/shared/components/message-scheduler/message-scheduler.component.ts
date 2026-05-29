@@ -204,7 +204,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     if (this.birthday) {
       const processedMessage = this.processMessage(message.message, this.birthday);
       this.notificationService.show(
-        `🧪 TEST - ${message.title}: ${processedMessage}`,
+        this.translate.instant('MESSAGE_SCHEDULER.TEST_NOTIFICATION', { title: message.title, message: processedMessage }),
         'info'
       );
     }
@@ -265,6 +265,11 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
     })));
   }
 
+  getProcessedMessage(message: ScheduledMessage): string {
+    if (!this.birthday) return message.message;
+    return this.processMessage(message.message, this.birthday);
+  }
+
   private processMessage(template: string, birthday: Birthday): string {
     return template
       .replace(/\{name\}/g, birthday.name)
@@ -274,7 +279,7 @@ export class MessageSchedulerComponent implements OnInit, OnChanges {
       .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
   }
 
-  private formatDate(date: Date): string {
+  formatDate(date: Date): string {
     return new Intl.DateTimeFormat(this.localeService.currentLocale(), {
       day: '2-digit',
       month: '2-digit',
