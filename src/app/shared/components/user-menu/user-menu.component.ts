@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
@@ -20,14 +21,15 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
     MatIconModule,
     MatDividerModule,
     NgOptimizedImage,
-    SyncStatusComponent
+    SyncStatusComponent,
+    TranslatePipe
   ],
   template: `
     <button
       mat-icon-button
       [matMenuTriggerFor]="userMenu"
       class="user-avatar-button"
-      aria-label="User menu"
+      [attr.aria-label]="'AUTH.USER_MENU' | translate"
     >
       @if (photoURL()) {
         <img
