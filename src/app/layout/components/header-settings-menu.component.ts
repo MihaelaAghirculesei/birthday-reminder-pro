@@ -23,6 +23,10 @@ import { NotificationPermissionService } from '../../core/services/notification-
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-menu #settingsMenu="matMenu" [class]="menuClass">
+      <a mat-menu-item routerLink="/calendar-sync" [attr.aria-label]="'NAV.CALENDAR_SYNC' | translate">
+        <mat-icon aria-hidden="true">calendar_month</mat-icon>
+        <span aria-hidden="true">{{ 'NAV.CALENDAR_SYNC' | translate }}</span>
+      </a>
       <button mat-menu-item (click)="openSenderSettings()" [attr.aria-label]="'NAV.MESSAGE_SIGNATURE' | translate">
         <mat-icon aria-hidden="true">badge</mat-icon>
         <span aria-hidden="true">{{ 'NAV.MESSAGE_SIGNATURE' | translate }}</span>

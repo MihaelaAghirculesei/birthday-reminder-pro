@@ -83,16 +83,15 @@ export class HeaderImportExportComponent {
   }
 
   private async handleImport(event: Event, importer: (f: File) => Promise<ImportResult>, errorKey: string): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
     try {
       const { valid, invalid } = await importer(file);
       if (valid.length === 0) {
         this.notificationService.show(this.translate.instant(errorKey), 'error');
       } else {
-        for (const birthday of valid) {
-          this.store.dispatch(BirthdayActions.addBirthday({ birthday }));
-        }
+        this.store.dispatch(BirthdayActions.importBirthdays({ birthdays: valid }));
         const msgKey = invalid.length > 0 ? 'IMPORT_EXPORT.IMPORTED_WITH_SKIPPED' : 'IMPORT_EXPORT.IMPORTED';
         const severity = invalid.length > 0 ? 'warning' : 'success';
         this.notificationService.show(
@@ -103,6 +102,6 @@ export class HeaderImportExportComponent {
     } catch {
       this.notificationService.show(this.translate.instant(errorKey), 'error');
     }
-    (event.target as HTMLInputElement).value = '';
+    input.value = '';
   }
 }
