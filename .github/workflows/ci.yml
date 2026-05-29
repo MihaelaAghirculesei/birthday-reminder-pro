@@ -182,9 +182,10 @@ jobs:
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
-          start: npm start
-          wait-on: 'http://localhost:4203'
-          wait-on-timeout: 120
+          start: npm run start:ci
+          wait-on: 'http://localhost:4300'
+          wait-on-timeout: 180
+          command: npm run e2e:headless:ci
           browser: chrome
           record: false
 
@@ -352,7 +353,7 @@ jobs:
           path: dist/birthday-reminder-pro
 
       - name: Run Lighthouse CI
-        run: npx lhci autorun
+        run: npx @lhci/cli autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
