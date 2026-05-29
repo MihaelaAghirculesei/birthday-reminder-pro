@@ -93,4 +93,47 @@ describe('Search Functionality', () => {
       .type('ALICE', { force: true });
     cy.contains('Alice Johnson').should('be.visible');
   });
+
+  it('should match second word (last name) prefix', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('John', { force: true });
+
+    // 'Johnson' starts with 'John' → Alice Johnson should match
+    cy.contains('Alice Johnson').should('exist');
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should NOT match mid-word substrings', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('mith', { force: true });
+
+    // 'smith' does not START with 'mith' — should not match Bob Smith
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should search by multi-character prefix', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('Car', { force: true });
+
+    cy.contains('Carlo Bruns').should('exist');
+    cy.contains('Alice Johnson').should('not.exist');
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should handle rapid successive searches', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('Al', { force: true });
+    cy.contains('Alice Johnson').should('exist');
+
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .clear({ force: true })
+      .type('Bo', { force: true });
+    cy.contains('Bob Smith').should('exist');
+    cy.contains('Alice Johnson').should('not.exist');
+  });
 });

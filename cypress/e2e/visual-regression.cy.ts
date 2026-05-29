@@ -112,12 +112,10 @@ describe('Visual Regression — Add birthday form', () => {
   });
 
   it('form · validation errors visible', () => {
-    // Trigger required-field validation by submitting without filling fields
     cy.expandBirthdayForm();
-    cy.get('#add-birthday-form .submit-button').click({ force: true });
-    // Wait for Angular to render error messages
-    // eslint-disable-next-line cypress/no-unnecessary-waiting
-    cy.wait(300);
+    // Touch the required date field without entering a value → triggers ErrorStateMatcher
+    cy.get('[data-testid="birthday-date-input"]').focus().blur();
+    cy.get('#add-birthday-form mat-error').should('be.visible');
     cy.visualSnapshot('Add form — validation errors · light');
   });
 });
@@ -158,8 +156,7 @@ describe('Visual Regression — Category filter', () => {
   });
 
   it('category filter · family active', () => {
-    // Click the Family category chip/button (use text since no testid on chips)
-    cy.contains('Family').scrollIntoView().click({ force: true });
+    cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').scrollIntoView().click({ force: true });
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(300);
     cy.visualSnapshot('Category filter — Family · light');
@@ -167,7 +164,7 @@ describe('Visual Regression — Category filter', () => {
 
   it('category filter · friends active · dark theme', () => {
     cy.enableDarkMode();
-    cy.contains('Friends').scrollIntoView().click({ force: true });
+    cy.get('[data-testid="category-filter-friends"]').find('.category-select-btn').scrollIntoView().click({ force: true });
     // eslint-disable-next-line cypress/no-unnecessary-waiting
     cy.wait(300);
     cy.visualSnapshot('Category filter — Friends · dark');
@@ -205,7 +202,30 @@ describe('Visual Regression — Edit birthday dialog', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 7 — Delete confirmation dialog
+// Suite 7 — Nav strip active states
+// ---------------------------------------------------------------------------
+
+describe('Visual Regression — Nav strip', () => {
+  beforeEach(() => {
+    visitFresh();
+  });
+
+  it('nav strip · default (Dashboard active) · light', () => {
+    cy.visualSnapshot('Nav strip — Dashboard active · light');
+  });
+
+  it('nav strip · Settings menu open · light', () => {
+    cy.disableAnimations();
+    cy.get('[data-testid="nav-settings-btn"]').click();
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(100);
+    cy.visualSnapshot('Nav strip — Settings menu open · light');
+    cy.get('body').click(0, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 8 — Delete confirmation dialog
 // ---------------------------------------------------------------------------
 
 describe('Visual Regression — Delete confirmation dialog', () => {

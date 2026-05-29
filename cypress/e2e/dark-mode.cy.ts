@@ -53,6 +53,28 @@ describe('Dark mode — toggle and persistence', () => {
   });
 });
 
+describe('Settings menu — navigation items', () => {
+  beforeEach(() => {
+    cy.clearLocalStorage();
+    cy.clearCookies();
+    cy.clearIndexedDB();
+    cy.visit('/');
+    cy.waitForAngular();
+    cy.disableAnimations();
+  });
+
+  it('Settings menu contains Calendar Sync link', () => {
+    cy.get('[data-testid="nav-settings-btn"]').click();
+    cy.contains('Calendar Sync').should('be.visible');
+  });
+
+  it('nav-strip Settings button gains nav-active class while menu is open', () => {
+    cy.get('[data-testid="nav-settings-btn"]').click();
+    cy.get('[data-testid="nav-settings-btn"]').should('have.class', 'nav-active');
+    cy.get('body').click(0, 0); // close menu
+  });
+});
+
 describe('Language switch', () => {
   beforeEach(() => {
     cy.clearLocalStorage();

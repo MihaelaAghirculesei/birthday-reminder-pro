@@ -49,6 +49,12 @@ declare namespace Cypress {
     visualSnapshot(name: string): Chainable<void>;
 
     /**
+     * Waits for the nav strip to become visible (desktop viewport only).
+     * Useful after viewport resizes or route changes.
+     */
+    waitForNavStrip(): Chainable<void>;
+
+    /**
      * Patches window.IntersectionObserver BEFORE the page loads so that Angular
      * `@defer(on viewport)` blocks render immediately in headless/CI mode.
      *
@@ -122,10 +128,14 @@ Cypress.Commands.add('waitForAngular', () => {
   });
 });
 
+Cypress.Commands.add('waitForNavStrip', () => {
+  cy.get('.nav-strip', { timeout: 5000 }).should('be.visible');
+});
+
 Cypress.Commands.add('expandBirthdayForm', () => {
-  // waitForAngular() guarantees Angular is hydrated before this runs, so a single
-  // click is enough. The @expandCollapse animation takes 300 ms; Cypress retries
-  // should('be.visible') every ~50 ms and passes at ~300 ms — no explicit wait needed.
+  // waitForAngular() guarantees Angular is hydrated before this runs.
+  // The translateY animation takes 200 ms enter / 150 ms leave; Cypress retries
+  // should('be.visible') every ~50 ms and passes quickly — no explicit wait needed.
   cy.get('body').then(($body) => {
     if ($body.find('[data-testid="birthday-name-input"]:visible').length === 0) {
       cy.get('[data-testid="add-birthday-button"]').click();
@@ -291,7 +301,6 @@ Cypress.Commands.add('mockDeferViewport', () => {
 
 Cypress.Commands.add('visualSnapshot', (name: string) => {
   cy.disableAnimations();
-  // Let the Angular zone drain and any pending micro-tasks settle
   // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.wait(200);
   cy.screenshot(name, { overwrite: true });

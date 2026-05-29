@@ -42,6 +42,17 @@ describe('Notifications', () => {
       .and('contain.text', 'Imported');
   });
 
+  it('network status shows Online by default', () => {
+    cy.get('app-network-status').should('contain.text', 'Online');
+  });
+
+  it('network status shows Offline after offline event', () => {
+    cy.window().then((win) => win.dispatchEvent(new Event('offline')));
+    cy.get('app-network-status', { timeout: 5000 }).should('contain.text', 'Offline');
+    // Restore online
+    cy.window().then((win) => win.dispatchEvent(new Event('online')));
+  });
+
   it('should close notification manually', () => {
     cy.get('[data-testid="show-demo-button"]').click();
     // Capture the close button before the 3s auto-dismiss fires

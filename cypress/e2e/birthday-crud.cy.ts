@@ -59,11 +59,26 @@ describe('Birthday CRUD Operations', () => {
     cy.contains('Test User').should('not.exist');
   });
 
-  it('should cancel birthday creation', () => {
+  it('should close add form when button clicked again', () => {
     cy.expandBirthdayForm();
-    cy.get('[data-testid="birthday-name-input"]').first().type('Cancelled User');
+    cy.get('[data-testid="birthday-name-input"]').should('be.visible');
     cy.get('[data-testid="add-birthday-button"]').click();
-    cy.get('[data-testid="birthday-name-input"]').first().should('not.be.visible');
-    cy.get('.dashboard-container').should('not.exist');
+    cy.get('[data-testid="birthday-name-input"]').should('not.exist');
+  });
+
+  it('should undo a deleted birthday', () => {
+    cy.expandBirthdayForm();
+    cy.get('[data-testid="birthday-name-input"]').type('Undo User');
+    cy.get('[data-testid="birthday-date-input"]').type('06/20/1995').blur();
+    cy.get('[data-testid="save-birthday-button"]').click();
+    cy.contains('Undo User', { timeout: 10000 }).should('be.visible');
+
+    cy.get('[data-testid="delete-birthday-button"]').first().click();
+    cy.get('.confirm-dialog', { timeout: 8000 }).should('be.visible');
+    cy.get('.confirm-dialog .confirm-btn').click();
+    cy.contains('Undo User').should('not.exist');
+
+    cy.contains('UNDO', { timeout: 5000 }).click();
+    cy.contains('Undo User', { timeout: 5000 }).should('be.visible');
   });
 });

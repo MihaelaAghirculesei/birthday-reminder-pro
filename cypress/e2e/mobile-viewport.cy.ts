@@ -16,6 +16,7 @@ describe('Mobile viewport — navigation', () => {
     cy.clearIndexedDB();
     cy.visit('/');
     cy.waitForAngular();
+    cy.disableAnimations();
   });
 
   it('nav strip is hidden; hamburger menu button is visible', () => {
