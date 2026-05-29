@@ -201,12 +201,17 @@ export class IndexedDBStorageService implements OfflineStorageService {
     return this.executeWithRetry(async () => {
       const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
+        let settled = false;
+        const rejectOnce = (err: DOMException | null) => {
+          if (settled) return;
+          settled = true;
+          reject(err ?? new Error('Transaction aborted'));
+        };
         const transaction = db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.add(this.withVersion(birthday));
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
+        transaction.objectStore(this.storeName).add(this.withVersion(birthday));
+        transaction.oncomplete = () => { settled = true; resolve(); };
+        transaction.onerror = () => rejectOnce(transaction.error);
+        transaction.onabort = () => rejectOnce(transaction.error);
       });
     }, 'addBirthday');
   }
@@ -240,12 +245,17 @@ export class IndexedDBStorageService implements OfflineStorageService {
     return this.executeWithRetry(async () => {
       const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
+        let settled = false;
+        const rejectOnce = (err: DOMException | null) => {
+          if (settled) return;
+          settled = true;
+          reject(err ?? new Error('Transaction aborted'));
+        };
         const transaction = db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.put(this.withVersion(birthday));
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
+        transaction.objectStore(this.storeName).put(this.withVersion(birthday));
+        transaction.oncomplete = () => { settled = true; resolve(); };
+        transaction.onerror = () => rejectOnce(transaction.error);
+        transaction.onabort = () => rejectOnce(transaction.error);
       });
     }, 'updateBirthday');
   }
@@ -258,12 +268,17 @@ export class IndexedDBStorageService implements OfflineStorageService {
     return this.executeWithRetry(async () => {
       const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
+        let settled = false;
+        const rejectOnce = (err: DOMException | null) => {
+          if (settled) return;
+          settled = true;
+          reject(err ?? new Error('Transaction aborted'));
+        };
         const transaction = db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.delete(id);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
+        transaction.objectStore(this.storeName).delete(id);
+        transaction.oncomplete = () => { settled = true; resolve(); };
+        transaction.onerror = () => rejectOnce(transaction.error);
+        transaction.onabort = () => rejectOnce(transaction.error);
       });
     }, 'deleteBirthday');
   }
@@ -277,11 +292,9 @@ export class IndexedDBStorageService implements OfflineStorageService {
       const db = await this.connection.getDB();
       return new Promise<void>((resolve, reject) => {
         const transaction = db.transaction([this.storeName], 'readwrite');
-        const store = transaction.objectStore(this.storeName);
-        const request = store.clear();
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve();
+        transaction.objectStore(this.storeName).clear();
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
       });
     }, 'clear');
   }
