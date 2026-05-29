@@ -80,7 +80,7 @@ jobs:
           echo "✅ Security thresholds passed"
 
       - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@v10
+        uses: dependency-check/Dependency-Check_Action@1.1.0
         with:
           project: 'birthday-reminder-pro'
           path: '.'
@@ -125,7 +125,7 @@ jobs:
         run: npm run env:init
 
       - name: Run unit tests with coverage
-        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadlessNoNoise --code-coverage
+        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
 
       - name: Check coverage thresholds
         run: |
