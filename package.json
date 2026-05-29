@@ -18,7 +18,7 @@
     "test:ci": "ng test --no-watch --code-coverage",
     "e2e": "cypress open",
     "e2e:headless": "cypress run --config excludeSpecPattern=cypress/e2e/visual-regression.cy.ts",
-    "prestart:ci": "fkill :4300 --force --silent",
+    "prestart:ci": "node scripts/kill-port.js 4300",
     "start:ci": "ng serve --port=4300",
     "e2e:headless:ci": "cypress run --config baseUrl=http://localhost:4300,excludeSpecPattern=cypress/e2e/visual-regression.cy.ts",
     "e2e:ci": "start-server-and-test start:ci http-get://localhost:4300 e2e:headless:ci",
@@ -41,8 +41,9 @@
     "ci:local": "npm run validate:ci && npm run ci:security && npm run ci:quality && npm run test:ci && npm run e2e:ci && npm run ci:build",
     "clean": "npx rimraf node_modules dist .angular",
     "clean:all": "npm cache clean --force && npx rimraf node_modules dist .angular",
+    "postinstall": "node scripts/check-install.js",
     "prepare": "husky",
-    "lighthouse:ci": "npx @lhci/cli autorun"
+    "lighthouse:ci": "node scripts/kill-port.js 4000 && npm run build && npx @lhci/cli autorun"
   },
   "private": true,
   "dependencies": {
@@ -94,7 +95,6 @@
     "cypress": "^15.8.2",
     "cypress-axe": "^1.7.0",
     "eslint": "^9.39.1",
-    "fkill-cli": "^9.0.0",
     "husky": "^9.1.7",
     "imagemin": "^9.0.1",
     "jasmine-core": "~5.1.0",
