@@ -1,6 +1,5 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +13,6 @@ import { RememberPhotoComponent } from '../../remember-photo/remember-photo.comp
 @Component({
     selector: 'app-birthday-item',
     imports: [
-        CommonModule,
         MatIconModule,
         MatButtonModule,
         MatTooltipModule,
@@ -32,6 +30,8 @@ import { RememberPhotoComponent } from '../../remember-photo/remember-photo.comp
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayItemComponent implements OnChanges {
+  private readonly translate = inject(TranslateService);
+
   @Input() birthday!: Birthday;
   @Input() daysUntilBirthday = 0;
   @Input() defaultCategory = '';
@@ -62,19 +62,19 @@ export class BirthdayItemComponent implements OnChanges {
     const days = this.daysUntilBirthday;
 
     if (days === 0) {
-      this.daysText = 'Today!';
+      this.daysText = this.translate.instant('BIRTHDAY_ITEM.TODAY');
       this.daysChipClass = 'red-alert';
     } else if (days === 1) {
-      this.daysText = 'Tomorrow';
+      this.daysText = this.translate.instant('BIRTHDAY_ITEM.TOMORROW');
       this.daysChipClass = 'red-alert';
     } else if (days <= 7) {
-      this.daysText = `${days} days`;
+      this.daysText = this.translate.instant('BIRTHDAY_ITEM.DAYS_UNTIL', { days });
       this.daysChipClass = 'red-alert';
     } else if (days <= 21) {
-      this.daysText = `${days} days`;
+      this.daysText = this.translate.instant('BIRTHDAY_ITEM.DAYS_UNTIL', { days });
       this.daysChipClass = 'orange-warning';
     } else {
-      this.daysText = `${days} days`;
+      this.daysText = this.translate.instant('BIRTHDAY_ITEM.DAYS_UNTIL', { days });
       this.daysChipClass = 'green-safe';
     }
   }

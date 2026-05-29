@@ -108,7 +108,7 @@ describe('HeaderImportExportComponent', () => {
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
-      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.addBirthday({ birthday: mockBirthday }));
+      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.importBirthdays({ birthdays: [mockBirthday] }));
       expect(mockNotificationService.show).toHaveBeenCalledWith('Imported 1 birthdays', 'success');
     });
 
@@ -121,7 +121,7 @@ describe('HeaderImportExportComponent', () => {
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
-      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.addBirthday({ birthday: mockBirthday }));
+      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.importBirthdays({ birthdays: [mockBirthday] }));
       expect(mockNotificationService.show).toHaveBeenCalledWith(
         'Imported 1 birthdays (1 skipped)',
         'warning'
@@ -167,7 +167,7 @@ describe('HeaderImportExportComponent', () => {
       await component.onImportCSV({ target: mockInput } as unknown as Event);
 
       expect(mockBackupService.importFromCSV).toHaveBeenCalledWith(mockFile);
-      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.addBirthday({ birthday: mockBirthday }));
+      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.importBirthdays({ birthdays: [mockBirthday] }));
     });
 
     it('should dispatch addBirthday and show success on vCard import', async () => {
@@ -180,7 +180,7 @@ describe('HeaderImportExportComponent', () => {
       await component.onImportVCard({ target: mockInput } as unknown as Event);
 
       expect(mockBackupService.importFromVCard).toHaveBeenCalledWith(mockFile);
-      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.addBirthday({ birthday: mockBirthday }));
+      expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.importBirthdays({ birthdays: [mockBirthday] }));
     });
   });
 });

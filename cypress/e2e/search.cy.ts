@@ -67,10 +67,16 @@ describe('Search Functionality', () => {
 
   it('should show no results message for non-existent search', () => {
     cy.get('[data-testid="search-input"]')
-      .should('exist')
+      .should('be.visible')
       .type('NonExistent', { force: true });
 
-    cy.contains('No birthdays found').should('be.visible');
+    // Wait for NgRx pipeline (dispatch → selector → filteredBirthdays → ngOnChanges)
+    // before asserting on the no-results state.
+    cy.get('app-birthday-item', { timeout: 10000 }).should('not.exist');
+
+    cy.get('[data-testid="no-results-message"]', { timeout: 10000 })
+      .should('be.visible')
+      .and('contain.text', 'No birthdays found');
   });
 
   it('should be case insensitive', () => {
@@ -86,5 +92,48 @@ describe('Search Functionality', () => {
       .should('exist')
       .type('ALICE', { force: true });
     cy.contains('Alice Johnson').should('be.visible');
+  });
+
+  it('should match second word (last name) prefix', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('John', { force: true });
+
+    // 'Johnson' starts with 'John' → Alice Johnson should match
+    cy.contains('Alice Johnson').should('exist');
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should NOT match mid-word substrings', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('mith', { force: true });
+
+    // 'smith' does not START with 'mith' — should not match Bob Smith
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should search by multi-character prefix', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('Car', { force: true });
+
+    cy.contains('Carlo Bruns').should('exist');
+    cy.contains('Alice Johnson').should('not.exist');
+    cy.contains('Bob Smith').should('not.exist');
+  });
+
+  it('should handle rapid successive searches', () => {
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .type('Al', { force: true });
+    cy.contains('Alice Johnson').should('exist');
+
+    cy.get('[data-testid="search-input"]')
+      .should('exist')
+      .clear({ force: true })
+      .type('Bo', { force: true });
+    cy.contains('Bob Smith').should('exist');
+    cy.contains('Alice Johnson').should('not.exist');
   });
 });

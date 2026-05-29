@@ -46,59 +46,6 @@
   flex: 1;
 }
 
-.add-birthday-card {
-  animation: fadeInUp 0.6s ease-out 0.4s both;
-  transition: $transition-smooth;
-  @include birthday-card-base;
-
-  &:hover {
-    transform: translateY(-8px);
-  }
-
-  .mat-mdc-card-header {
-    transition: all 0.3s ease;
-
-    .mat-mdc-card-title {
-      text-shadow: none;
-      transition: all 0.3s ease;
-    }
-
-    &.collapsible-header {
-      transition: $transition-smooth;
-
-      &:hover {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-
-        :host-context(body.dark-theme) & {
-          background: $dark-theme-gradient;
-        }
-      }
-
-      &:focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: -2px;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-
-        :host-context(body.dark-theme) & {
-          outline-color: rgba(255, 255, 255, 0.6);
-          background: $dark-theme-gradient;
-        }
-      }
-
-      .expand-icon {
-        transition: $transition-smooth;
-        backdrop-filter: blur(10px);
-        pointer-events: none;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: scale(1.1);
-        }
-      }
-    }
-  }
-}
-
 @include respond-to('tablet') {
   .content-container {
     padding: 24px 16px;
@@ -111,94 +58,11 @@
     padding: 16px 8px;
     gap: 16px;
   }
-
-  .add-birthday-card .mat-mdc-card-content {
-    padding: 24px;
-  }
 }
 
 @include respond-to('mobile-sm') {
   .content-container {
     padding: 8px 4px;
     gap: 12px;
-  }
-}
-
-.message-scheduler-section {
-  margin: 24px 0;
-  padding: 16px 0;
-  border-top: 1px solid var(--border-light);
-
-  @include respond-to('tablet') {
-    margin: 16px 0;
-    padding: 12px 0;
-  }
-}
-
-.test-data-section {
-  margin: 32px 0;
-  display: flex;
-  justify-content: center;
-}
-
-.test-data-card {
-  animation: fadeInUp 0.6s ease-out 0.3s both;
-  @include gradient-card(
-    linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%),
-    $dark-theme-gradient
-  );
-}
-
-.test-data-content {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  color: var(--text-inverse);
-
-  .test-icon {
-    @include glass-icon-circle;
-  }
-
-  .test-info {
-    @include info-card-text;
-  }
-
-  .add-test-btn {
-    @include white-action-button;
-  }
-}
-
-@include respond-to('tablet') {
-  .test-data-section {
-    margin: 24px 0;
-    padding: 0 8px;
-  }
-
-  .test-data-card .mat-mdc-card-content {
-    padding: 24px;
-  }
-
-  .test-data-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-
-    .test-icon {
-      min-width: 64px;
-      min-height: 64px;
-      font-size: 40px;
-      width: 40px;
-      height: 40px;
-      padding: 12px;
-    }
-
-    .test-info {
-      p { font-size: 0.9rem; }
-    }
-
-    .add-test-btn {
-      min-width: 160px;
-      height: 44px;
-    }
   }
 }

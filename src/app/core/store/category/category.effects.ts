@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
@@ -8,10 +8,9 @@ import { CategoryStorageService } from '../../services/category-storage.service'
 
 @Injectable()
 export class CategoryEffects {
-  constructor(
-    private actions$: Actions,
-    private categoryStorage: CategoryStorageService
-  ) {}
+  private actions$ = inject(Actions);
+  private categoryStorage = inject(CategoryStorageService);
+
 
   loadCategories$ = createEffect(() =>
     this.actions$.pipe(

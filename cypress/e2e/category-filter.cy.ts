@@ -63,4 +63,16 @@ describe('Category Filter', () => {
     cy.get('[data-testid="category-filter-family"]').should('contain', '1');
     cy.get('[data-testid="category-filter-friends"]').should('contain', '1');
   });
+
+  it('filter state persists after page reload', () => {
+    cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
+    cy.contains('Friend Person').should('not.exist');
+
+    cy.reload();
+    cy.waitForAngular();
+
+    cy.contains('Family Member').should('be.visible');
+    cy.contains('Friend Person').should('not.exist');
+  });
 });
+

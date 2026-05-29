@@ -1,16 +1,18 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NetworkService } from '../../core';
 
 @Component({
     selector: 'app-network-status',
-    imports: [CommonModule, MatIconModule],
+    imports: [NgClass, MatIconModule, TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-    <div class="network-status" [ngClass]="{'offline': (networkService.online$ | async) === false}">
-      <mat-icon>{{ (networkService.online$ | async) ? 'wifi' : 'wifi_off' }}</mat-icon>
-      <span>{{ (networkService.online$ | async) ? 'Online' : 'Offline' }}</span>
+    <div class="network-status" [ngClass]="{'offline': !isOnline()}">
+      <mat-icon>{{ isOnline() ? 'wifi' : 'wifi_off' }}</mat-icon>
+      <span>{{ (isOnline() ? 'NETWORK.ONLINE' : 'NETWORK.OFFLINE') | translate }}</span>
     </div>
   `,
     styles: [`
@@ -90,5 +92,6 @@ import { NetworkService } from '../../core';
   `]
 })
 export class NetworkStatusComponent {
-  readonly networkService = inject(NetworkService);
+  private readonly networkService = inject(NetworkService);
+  readonly isOnline = toSignal(this.networkService.online$, { initialValue: true });
 }

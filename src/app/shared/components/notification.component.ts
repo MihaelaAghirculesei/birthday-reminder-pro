@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { Observable } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,7 +8,7 @@ import { NotificationService, NotificationMessage } from '../../core/services/no
 
 @Component({
     selector: 'app-notification',
-    imports: [CommonModule, MatIconModule, MatButtonModule],
+    imports: [AsyncPipe, MatIconModule, MatButtonModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="notification-container">

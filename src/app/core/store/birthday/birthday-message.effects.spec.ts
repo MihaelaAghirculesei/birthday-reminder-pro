@@ -133,4 +133,68 @@ describe('BirthdayMessageEffects', () => {
       });
     });
   });
+
+  describe('updateMessageInBirthday$', () => {
+    const existingMessage = {
+      id: 'msg1',
+      birthdayId: '1',
+      title: 'Old Title',
+      message: 'Old message',
+      scheduledTime: '09:00',
+      priority: 'normal' as const,
+      active: true,
+      messageType: 'text' as const,
+      createdDate: new Date()
+    };
+
+    beforeEach(() => {
+      offlineStorageMock.getScheduledMessagesByBirthday.and.returnValue(Promise.resolve([existingMessage]));
+    });
+
+    it('should update message successfully', (done) => {
+      const updates = { title: 'New Title' };
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.updateMessageInBirthdaySuccess.type);
+        done();
+      });
+    });
+
+    it('should handle update message failure', (done) => {
+      const error = new Error('Update failed');
+      offlineStorageMock.getScheduledMessagesByBirthday.and.returnValue(Promise.reject(error));
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: {} }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.updateMessageInBirthdayFailure({ error: 'Update failed' }));
+        done();
+      });
+    });
+  });
+
+  describe('deleteMessageFromBirthday$', () => {
+    it('should delete message successfully', (done) => {
+      actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
+
+      effects.deleteMessageFromBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.deleteMessageFromBirthdaySuccess.type);
+        expect(offlineStorageMock.deleteScheduledMessage).toHaveBeenCalledWith('msg1');
+        done();
+      });
+    });
+
+    it('should handle delete message failure', (done) => {
+      const error = new Error('Delete failed');
+      offlineStorageMock.deleteScheduledMessage.and.returnValue(Promise.reject(error));
+
+      actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
+
+      effects.deleteMessageFromBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.deleteMessageFromBirthdayFailure({ error: 'Delete failed' }));
+        done();
+      });
+    });
+  });
 });

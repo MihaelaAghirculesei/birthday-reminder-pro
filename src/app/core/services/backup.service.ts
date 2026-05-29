@@ -2,9 +2,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Birthday } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
-import { z } from 'zod';
 import { LoggerService } from './logger.service';
-import { BirthdaySchema, sanitizeBirthdayData, safeParseBirthday } from '../../shared/schemas/birthday.schema';
 
 export interface BackupData {
   version: number;
@@ -17,17 +15,11 @@ export interface ImportResult {
   invalid: { name: string; error: string }[];
 }
 
-const BackupBirthdaySchema = BirthdaySchema.extend({
-  id: z.string().optional(),
-  // Accept any string here; toDateString() normalises ISO datetimes → YYYY-MM-DD after parse
-  birthDate: z.string()
-});
-
-const BackupSchema = z.object({
-  version: z.number(),
-  exportDate: z.string(),
-  birthdays: z.array(BackupBirthdaySchema)
-});
+interface ParsedBackup {
+  version: number;
+  exportDate: string;
+  birthdays: (Record<string, unknown> & { name: string; birthDate: string; id?: string })[];
+}
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +30,7 @@ export class BackupService {
   private readonly document = inject(DOCUMENT) as Document;
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
+
 
   exportToJSON(birthdays: Birthday[]): void {
     const backup: BackupData = {
@@ -78,9 +71,13 @@ export class BackupService {
       throw new Error('Invalid JSON file. Please select a valid backup file.');
     }
 
-    let validatedData: z.infer<typeof BackupSchema>;
+    const { z, BirthdaySchema, safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
+    const BackupBirthdaySchema = BirthdaySchema.extend({ id: z.string().optional(), birthDate: z.string() });
+    const BackupSchema = z.object({ version: z.number(), exportDate: z.string(), birthdays: z.array(BackupBirthdaySchema) });
+
+    let validatedData: ParsedBackup;
     try {
-      validatedData = BackupSchema.parse(parsedData);
+      validatedData = BackupSchema.parse(parsedData) as ParsedBackup;
     } catch (error) {
       this.logger.error('Backup validation failed:', error);
       if (error instanceof z.ZodError) {
@@ -104,7 +101,7 @@ export class BackupService {
       if (!result.success) {
         invalid.push({ name: b.name, error: result.error.issues[0]?.message ?? 'Invalid data' });
       } else {
-        valid.push(result.data);
+        valid.push(result.data as Birthday);
       }
     }
 
@@ -122,6 +119,8 @@ export class BackupService {
     if (lines.length > 10_000) {
       throw new Error('CSV file exceeds the maximum limit of 10,000 rows');
     }
+
+    const { sanitizeBirthdayData, safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
 
     const valid: Birthday[] = [];
     const invalid: { name: string; error: string }[] = [];
@@ -152,7 +151,7 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        valid.push(result.data);
+        valid.push(result.data as Birthday);
       } else {
         invalid.push({ name: name.trim(), error: result.error.issues[0]?.message ?? 'Invalid data' });
         this.logger.warn(`[Import] Skipping invalid CSV row ${i}:`, result.error.issues);
@@ -166,6 +165,8 @@ export class BackupService {
     const text = await file.text();
     const valid: Birthday[] = [];
     const invalid: { name: string; error: string }[] = [];
+
+    const { sanitizeBirthdayData, safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
 
     const entries = text.split('BEGIN:VCARD')
       .filter(v => v.includes('FN:') && v.includes('BDAY'));
@@ -189,7 +190,7 @@ export class BackupService {
 
       const result = safeParseBirthday(candidate);
       if (result.success) {
-        valid.push(result.data);
+        valid.push(result.data as Birthday);
       } else {
         invalid.push({ name, error: result.error.issues[0]?.message ?? 'Invalid data' });
         this.logger.warn('[Import] Skipping invalid vCard entry:', name, result.error.issues);
@@ -243,7 +244,11 @@ export class BackupService {
     const a = this.document.createElement('a');
     a.href = url;
     a.download = filename;
+    // Anchor must be in the document for Chromium to honour the download
+    // attribute and download instead of navigating to the blob URL.
+    this.document.body.appendChild(a);
     a.click();
+    this.document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }
 

@@ -1,10 +1,10 @@
 import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
 import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/time.constants';
@@ -13,33 +13,33 @@ import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/
   selector: 'app-sync-status',
   standalone: true,
   imports: [
-    CommonModule,
     MatIconModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    TranslatePipe
   ],
   template: `
     <div class="sync-status" [matTooltip]="tooltip()">
       @switch (syncSummary()?.state) {
         @case ('syncing') {
           <mat-spinner diameter="16" class="syncing"></mat-spinner>
-          <span class="status-text">Syncing...</span>
+          <span class="status-text">{{ 'SYNC_STATUS.SYNCING' | translate }}</span>
         }
         @case ('error') {
           <mat-icon class="error">sync_problem</mat-icon>
-          <span class="status-text error">Sync error</span>
+          <span class="status-text error">{{ 'SYNC_STATUS.SYNC_ERROR' | translate }}</span>
         }
         @case ('offline') {
           <mat-icon class="offline">cloud_off</mat-icon>
-          <span class="status-text offline">Offline</span>
+          <span class="status-text offline">{{ 'SYNC_STATUS.OFFLINE' | translate }}</span>
         }
         @default {
           @if (syncSummary()?.pendingCount && syncSummary()!.pendingCount! > 0) {
             <mat-icon class="pending">cloud_upload</mat-icon>
-            <span class="status-text pending">{{ syncSummary()?.pendingCount }} pending</span>
+            <span class="status-text pending">{{ 'SYNC_STATUS.PENDING' | translate: {count: syncSummary()?.pendingCount} }}</span>
           } @else {
             <mat-icon class="synced">cloud_done</mat-icon>
-            <span class="status-text synced">Synced</span>
+            <span class="status-text synced">{{ 'SYNC_STATUS.SYNCED' | translate }}</span>
           }
         }
       }
@@ -107,6 +107,7 @@ import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/
 })
 export class SyncStatusComponent {
   private readonly store = inject(Store);
+  private readonly translateService = inject(TranslateService);
 
   syncSummary = toSignal(
     this.store.select(SyncSelectors.selectSyncSummary),

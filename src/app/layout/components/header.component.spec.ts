@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { PLATFORM_ID, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 
 import { HeaderComponent } from './header.component';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -12,6 +12,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { BackupService } from '../../core/services/backup.service';
+import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 
 const INITIAL_STATE = {
@@ -39,7 +40,8 @@ function buildProviders(platformId: unknown = 'browser') {
     { provide: PLATFORM_ID, useValue: platformId },
     { provide: NotificationPermissionService, useValue: mockPermissionService() },
     { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
-    { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
+    { provide: MatDialog, useValue: { open: jasmine.createSpy(), afterOpened: EMPTY, afterAllClosed: EMPTY } },
+    { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: jasmine.createSpy().and.returnValue(Promise.resolve(null)) } },
     { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
     { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy() } },
     provideTranslateTesting()
@@ -71,6 +73,12 @@ describe('HeaderComponent', () => {
     spyOn(store, 'dispatch');
     component.signOut();
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signOut());
+  });
+
+  it('dispatches signInWithGoogle and closes menu on signInDirect', () => {
+    spyOn(store, 'dispatch');
+    component.signInDirect();
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInWithGoogle());
   });
 
   describe('scroll cleanup on destroy', () => {

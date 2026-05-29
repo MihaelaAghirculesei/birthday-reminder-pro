@@ -1,7 +1,8 @@
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface ConfirmDialogData {
   title: string;
@@ -14,7 +15,7 @@ export interface ConfirmDialogData {
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [MatDialogModule, MatButtonModule, MatIconModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="confirm-dialog">
@@ -31,11 +32,11 @@ export interface ConfirmDialogData {
 
       <div class="dialog-actions">
         <button mat-stroked-button class="cancel-btn" (click)="onCancel()">
-          {{ data.cancelText || 'Cancel' }}
+          {{ data.cancelText || ('CONFIRM.CANCEL_BTN' | translate) }}
         </button>
         <button mat-flat-button class="confirm-btn" [class.warn]="data.color === 'warn'" (click)="onConfirm()">
           <mat-icon>{{ data.icon || 'check' }}</mat-icon>
-          {{ data.confirmText || 'Confirm' }}
+          {{ data.confirmText || ('CONFIRM.CONFIRM_BTN' | translate) }}
         </button>
       </div>
     </div>
@@ -204,10 +205,9 @@ export interface ConfirmDialogData {
   `]
 })
 export class ConfirmDialogComponent {
-  constructor(
-    public dialogRef: MatDialogRef<ConfirmDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData
-  ) {}
+  dialogRef = inject<MatDialogRef<ConfirmDialogComponent>>(MatDialogRef);
+  data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+
 
   onCancel(): void {
     this.dialogRef.close(false);

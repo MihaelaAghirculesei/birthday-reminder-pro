@@ -94,12 +94,6 @@ export class PushNotificationService {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(birthdays => { this.birthdaysCache = birthdays; });
 
-    if ('Notification' in window &&
-        typeof Notification.requestPermission === 'function' &&
-        Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
-
     if (this.destroyed) return;
 
     // Schedule per-birthday timeouts once the store has its first batch of data.

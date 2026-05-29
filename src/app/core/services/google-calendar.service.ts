@@ -8,11 +8,6 @@ import { LoggerService } from './logger.service';
 import { GoogleApiErrorService } from './google-api-error.service';
 import { GoogleApiLoaderService } from './google-api-loader.service';
 import { GoogleCalendarAuthService } from './google-calendar-auth.service';
-import {
-  safeParseGoogleCalendarSettings,
-  safeParseCalendarItems,
-  safeParseEventResponse
-} from '../../shared/schemas/birthday.schema';
 
 declare const gapi: Gapi;
 
@@ -61,6 +56,8 @@ export class GoogleCalendarService {
   private readonly loader = inject(GoogleApiLoaderService);
   private readonly auth = inject(GoogleCalendarAuthService);
 
+  private readonly _schemas = import('../../shared/schemas/birthday.schema');
+
   private readonly settingsSubject = new BehaviorSubject<GoogleCalendarSettings>({
     enabled: false,
     calendarId: 'primary',
@@ -107,6 +104,7 @@ export class GoogleCalendarService {
     return this.executeWithRetry(async () => {
       const response = await gapi.client.calendar.calendarList.list();
       const items = response.result.items || [];
+      const { safeParseCalendarItems } = await this._schemas;
       const result = safeParseCalendarItems(items);
       if (!result.success) {
         this.logger.warn(
@@ -131,6 +129,7 @@ export class GoogleCalendarService {
         resource: event
       });
 
+      const { safeParseEventResponse } = await this._schemas;
       const result = safeParseEventResponse(response.result);
       if (!result.success) {
         throw new Error('Failed to create calendar event: invalid response from Google API');
@@ -204,11 +203,12 @@ export class GoogleCalendarService {
     return this.loader.isGapiLoaded && this.loader.isGisLoaded && this.auth.tokenClient !== null;
   }
 
-  private loadSettings(): void {
+  private async loadSettings(): Promise<void> {
     const stored = localStorage.getItem(STORAGE_KEY_SETTINGS);
     if (!stored) return;
     try {
       const parsed = JSON.parse(stored);
+      const { safeParseGoogleCalendarSettings } = await this._schemas;
       const result = safeParseGoogleCalendarSettings(parsed);
       if (result.success) {
         this.settingsSubject.next(result.data);

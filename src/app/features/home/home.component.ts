@@ -1,6 +1,5 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, NgZone, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,7 +19,6 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
 @Component({
     selector: 'app-home',
     imports: [
-        CommonModule,
         MatCardModule,
         MatIconModule,
         MatButtonModule,
@@ -34,12 +32,12 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
     animations: [
         trigger('expandCollapse', [
             transition(':enter', [
-                style({ opacity: 0, height: '0px', overflow: 'hidden' }),
-                animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, height: '*', overflow: 'hidden' })),
+                style({ opacity: 0, transform: 'translateY(-8px)' }),
+                animate('200ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' })),
             ]),
             transition(':leave', [
-                style({ opacity: 1, height: '*', overflow: 'hidden' }),
-                animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 0, height: '0px', overflow: 'hidden' })),
+                style({ opacity: 1, transform: 'translateY(0)' }),
+                animate('150ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 0, transform: 'translateY(-8px)' })),
             ]),
         ]),
     ]
@@ -51,6 +49,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly logger = inject(LoggerService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ngZone = inject(NgZone);
 
   birthdays: Signal<Birthday[]> = toSignal(this.store.select(BirthdaySelectors.selectAllBirthdays), { initialValue: [] });
   categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;

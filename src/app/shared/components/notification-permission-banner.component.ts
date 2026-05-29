@@ -1,16 +1,17 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { SecureStorageService } from '../../core/services/secure-storage.service';
 import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
 
 @Component({
     selector: 'app-notification-permission-banner',
-    imports: [MatCardModule, MatIconModule, MatButtonModule],
+    imports: [MatCardModule, MatIconModule, MatButtonModule, TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div aria-live="polite" aria-atomic="true">
@@ -18,7 +19,7 @@ import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
       <div class="notification-banner"
         data-testid="notification-banner"
         role="region"
-        aria-label="Notification permission request">
+        [attr.aria-label]="'NOTIFICATION_BANNER.ARIA' | translate">
         <mat-card class="permission-card">
           <mat-card-content>
             <div class="banner-content">
@@ -158,6 +159,9 @@ import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
   `]
 })
 export class NotificationPermissionBannerComponent implements OnInit {
+  private permissionService = inject(NotificationPermissionService);
+  private platformId = inject(PLATFORM_ID);
+
   private readonly destroyRef = inject(DestroyRef);
   private readonly secureStorage = inject(SecureStorageService);
 
@@ -166,11 +170,6 @@ export class NotificationPermissionBannerComponent implements OnInit {
   shouldShow = signal(false);
   isRequesting = signal(false);
   private dismissed = false;
-
-  constructor(
-    private permissionService: NotificationPermissionService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {}
 
   async ngOnInit(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {

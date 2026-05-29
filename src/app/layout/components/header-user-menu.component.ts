@@ -3,6 +3,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
 
 @Component({
@@ -12,6 +13,7 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    TranslatePipe,
     AuthButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,11 +28,11 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
           } @else {
             <mat-icon aria-hidden="true">account_circle</mat-icon>
           }
-          <span>{{ userDisplayName || 'User' }} · <small class="menu-user-email">{{ userEmail }}</small></span>
+          <span>{{ userDisplayName || ('AUTH.USER' | translate) }} · <small class="menu-user-email">{{ userEmail }}</small></span>
         </div>
         <button mat-menu-item (click)="signOutClicked.emit()">
           <mat-icon aria-hidden="true">logout</mat-icon>
-          <span>Sign out</span>
+          <span>{{ 'AUTH.SIGN_OUT' | translate }}</span>
         </button>
       } @else if (!authLoading) {
         <app-auth-button></app-auth-button>
@@ -44,11 +46,11 @@ import { AuthButtonComponent } from '../../shared/components/auth-button/auth-bu
           } @else {
             <mat-icon aria-hidden="true" class="nav-strip-user-icon">account_circle</mat-icon>
           }
-          <span class="nav-strip-user-name">{{ userDisplayName || 'User' }}</span>
+          <span class="nav-strip-user-name">{{ userDisplayName || ('AUTH.USER' | translate) }}</span>
         </div>
         <button mat-button (click)="signOutClicked.emit()" class="nav-strip-item nav-strip-signout">
           <mat-icon aria-hidden="true">logout</mat-icon>
-          <span>Sign out</span>
+          <span>{{ 'AUTH.SIGN_OUT' | translate }}</span>
         </button>
       } @else if (!authLoading) {
         <div class="nav-strip-spacer"></div>

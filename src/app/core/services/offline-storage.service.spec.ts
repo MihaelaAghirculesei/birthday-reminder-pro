@@ -124,6 +124,11 @@ describe('IndexedDBStorageService', () => {
       expect(birthdays.length).toBe(0);
     });
 
+    it('should reject when adding a birthday with a duplicate id', async () => {
+      await service.addBirthday(mockBirthday);
+      await expectAsync(service.addBirthday(mockBirthday)).toBeRejected();
+    });
+
     it('should preserve birthDate as YYYY-MM-DD string after retrieval', async () => {
       await service.addBirthday(mockBirthday);
       const birthdays = await service.getBirthdays();

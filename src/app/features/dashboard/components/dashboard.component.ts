@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, DestroyRef, NgZone, OnInit } from '@angular/core';
-import { CommonModule, DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { fromEvent } from 'rxjs';
@@ -19,7 +19,6 @@ import { BirthdayEditService, CategoryManagerService, DashboardFacadeService } f
 @Component({
   selector: 'app-dashboard',
   imports: [
-    CommonModule,
     TranslatePipe,
     MatButtonModule,
     MatIconModule,

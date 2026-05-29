@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -29,6 +29,10 @@ interface CategoryDialogData {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryDialogComponent {
+  private fb = inject(FormBuilder);
+  private dialogRef = inject<MatDialogRef<CategoryDialogComponent>>(MatDialogRef);
+  data = inject<CategoryDialogData>(MAT_DIALOG_DATA);
+
   private readonly localeService = inject(LocaleService);
 
   categoryForm: FormGroup;
@@ -64,11 +68,9 @@ export class CategoryDialogComponent {
     { name: 'Deep Orange', value: '#FF5722' }
   ];
 
-  constructor(
-    private fb: FormBuilder,
-    private dialogRef: MatDialogRef<CategoryDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: CategoryDialogData
-  ) {
+  constructor() {
+    const data = this.data;
+
     this.currentLang = this.localeService.currentLang;
     this.otherLang = this.currentLang === 'it' ? 'en' : 'it';
     this.currentLangLabel = this.currentLang === 'it' ? 'Italiano' : 'English';

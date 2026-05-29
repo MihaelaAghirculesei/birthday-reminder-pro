@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy, computed, Signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { take } from 'rxjs';
@@ -38,7 +37,6 @@ const PRIORITY_KEYS: Record<string, string> = {
 @Component({
     selector: 'app-scheduled-messages',
     imports: [
-        CommonModule,
         MatCardModule,
         MatIconModule,
         MatButtonModule,

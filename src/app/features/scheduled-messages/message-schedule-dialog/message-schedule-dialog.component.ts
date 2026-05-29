@@ -1,5 +1,4 @@
-import { Component, Inject, OnInit, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { LocaleDatePipe } from '../../../shared/pipes/locale-date.pipe';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -44,7 +43,6 @@ function buildContactInfo(b: Birthday): string {
 @Component({
     selector: 'app-message-schedule-dialog',
     imports: [
-        CommonModule,
         FormsModule,
         MatDialogModule,
         MatFormFieldModule,
@@ -62,6 +60,9 @@ function buildContactInfo(b: Birthday): string {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MessageScheduleDialogComponent implements OnInit {
+  private dialogRef = inject<MatDialogRef<MessageScheduleDialogComponent>>(MatDialogRef);
+  data = inject<MessageScheduleDialogData>(MAT_DIALOG_DATA);
+
   private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly dialog = inject(MatDialog);
@@ -87,11 +88,6 @@ export class MessageScheduleDialogComponent implements OnInit {
   noBirthdays: Signal<boolean> = computed(() => this.allBirthdays().length === 0);
   selectedBirthdayId = '';
   showBirthdaySelector = false;
-
-  constructor(
-    private dialogRef: MatDialogRef<MessageScheduleDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: MessageScheduleDialogData
-  ) {}
 
   ngOnInit(): void {
     if (this.data?.birthday) {

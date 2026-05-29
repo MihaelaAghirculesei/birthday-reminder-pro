@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BirthdayEditDialogComponent, BirthdayEditDialogData } from './birthday-edit-dialog.component';
 import { BirthdayCategory } from '../../../../shared';
 import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
@@ -32,13 +33,16 @@ describe('BirthdayEditDialogComponent', () => {
     categories: mockCategories
   };
 
-  /** Creates a component instance inside Angular's injection context. */
+  /** Creates a component instance with its own child injector supplying dialog tokens. */
   function make(data: BirthdayEditDialogData): BirthdayEditDialogComponent {
-    let comp!: BirthdayEditDialogComponent;
-    TestBed.runInInjectionContext(() => {
-      comp = new BirthdayEditDialogComponent(dialogRefSpy, data);
-    });
-    return comp;
+    const injector = createEnvironmentInjector(
+      [
+        { provide: MatDialogRef, useValue: dialogRefSpy },
+        { provide: MAT_DIALOG_DATA, useValue: data },
+      ],
+      TestBed.inject(EnvironmentInjector),
+    );
+    return runInInjectionContext(injector, () => new BirthdayEditDialogComponent());
   }
 
   beforeEach(() => {

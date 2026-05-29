@@ -5,7 +5,6 @@ import { BehaviorSubject, Observable, from, of } from 'rxjs';
 import { firebaseGetters, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { Birthday, Category } from '../../shared/models/birthday.model';
-import { safeParseBirthday, safeParseCategory } from '../../shared/schemas/birthday.schema';
 import { toDateString } from '../../shared/utils/date.utils';
 
 /** Firebase error codes that indicate transient failures safe to retry. */
@@ -39,6 +38,13 @@ export class FirestoreService {
 
   private get isFirebaseConfigured(): boolean {
     return checkFirebaseOptions(this.firebaseOptions);
+  }
+
+  // Schema module loaded on demand; guaranteed resolved before any Firestore
+  // snapshot arrives (auth + Firebase SDK load takes far longer than this import).
+  private _schemasPromise?: Promise<Awaited<typeof import('../../shared/schemas/birthday.schema')>>;
+  private loadSchemas() {
+    return this._schemasPromise ??= import('../../shared/schemas/birthday.schema');
   }
 
   // Unsubscribe is just () => void in Firebase — no runtime import needed
@@ -144,10 +150,11 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return [];
 
+    const schemas = await this.loadSchemas();
     try {
       return await this.withRetry(async () => {
         const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
-        return this.mapBirthdaysFromSnapshot(snapshot, fs);
+        return this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
       }, 'fetch birthdays');
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch birthdays:', error);
@@ -163,21 +170,24 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    this.birthdaysListener = fs.onSnapshot(
-      fs.collection(db, this.getUserPath(userId), 'birthdays'),
-      (snapshot) => {
-        this.ngZone.run(() => {
-          const birthdays = this.mapBirthdaysFromSnapshot(snapshot, fs);
-          this.birthdaysSubject.next(birthdays);
-          this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
-        });
-      },
-      (error) => {
-        this.ngZone.run(() => {
-          this.logger.error('[Firestore] Birthdays listener error:', error);
-        });
-      }
-    );
+    // Schema loads before the first snapshot can arrive (Firebase SDK + auth take longer)
+    this.loadSchemas().then(schemas => {
+      this.birthdaysListener = fs.onSnapshot(
+        fs.collection(db, this.getUserPath(userId), 'birthdays'),
+        (snapshot) => {
+          this.ngZone.run(() => {
+            const birthdays = this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
+            this.birthdaysSubject.next(birthdays);
+            this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
+          });
+        },
+        (error) => {
+          this.ngZone.run(() => {
+            this.logger.error('[Firestore] Birthdays listener error:', error);
+          });
+        }
+      );
+    });
   }
 
   unsubscribeFromBirthdays(): void {
@@ -287,10 +297,11 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return [];
 
+    const schemas = await this.loadSchemas();
     try {
       return await this.withRetry(async () => {
         const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'categories'));
-        return this.mapCategoriesFromSnapshot(snapshot);
+        return this.mapCategoriesFromSnapshot(snapshot, schemas);
       }, 'fetch categories');
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch categories:', error);
@@ -306,21 +317,23 @@ export class FirestoreService {
     const fs = firebaseGetters.getFirestoreModule();
     if (!db || !fs) return;
 
-    this.categoriesListener = fs.onSnapshot(
-      fs.collection(db, this.getUserPath(userId), 'categories'),
-      (snapshot) => {
-        this.ngZone.run(() => {
-          const categories = this.mapCategoriesFromSnapshot(snapshot);
-          this.categoriesSubject.next(categories);
-          this.logger.info('[Firestore] Categories updated:', categories.length);
-        });
-      },
-      (error) => {
-        this.ngZone.run(() => {
-          this.logger.error('[Firestore] Categories listener error:', error);
-        });
-      }
-    );
+    this.loadSchemas().then(schemas => {
+      this.categoriesListener = fs.onSnapshot(
+        fs.collection(db, this.getUserPath(userId), 'categories'),
+        (snapshot) => {
+          this.ngZone.run(() => {
+            const categories = this.mapCategoriesFromSnapshot(snapshot, schemas);
+            this.categoriesSubject.next(categories);
+            this.logger.info('[Firestore] Categories updated:', categories.length);
+          });
+        },
+        (error) => {
+          this.ngZone.run(() => {
+            this.logger.error('[Firestore] Categories listener error:', error);
+          });
+        }
+      );
+    });
   }
 
   unsubscribeFromCategories(): void {
@@ -404,7 +417,8 @@ export class FirestoreService {
 
   private mapBirthdaysFromSnapshot(
     snapshot: QuerySnapshot<DocumentData>,
-    fs: typeof import('firebase/firestore')
+    fs: typeof import('firebase/firestore'),
+    schemas: Awaited<typeof import('../../shared/schemas/birthday.schema')>
   ): Birthday[] {
     const birthdays: Birthday[] = [];
     for (const document of snapshot.docs) {
@@ -427,7 +441,7 @@ export class FirestoreService {
         syncStatus: 'synced' as const,
         ...(scheduledMessages !== undefined && { scheduledMessages })
       };
-      const result = safeParseBirthday(mapped);
+      const result = schemas.safeParseBirthday(mapped);
       if (result.success) {
         birthdays.push(result.data);
       } else {
@@ -437,11 +451,14 @@ export class FirestoreService {
     return birthdays;
   }
 
-  private mapCategoriesFromSnapshot(snapshot: QuerySnapshot<DocumentData>): Category[] {
+  private mapCategoriesFromSnapshot(
+    snapshot: QuerySnapshot<DocumentData>,
+    schemas: Awaited<typeof import('../../shared/schemas/birthday.schema')>
+  ): Category[] {
     const categories: Category[] = [];
     for (const document of snapshot.docs) {
       const data = document.data();
-      const result = safeParseCategory({ ...data, id: document.id, syncStatus: 'synced' });
+      const result = schemas.safeParseCategory({ ...data, id: document.id, syncStatus: 'synced' });
       if (result.success) {
         categories.push(result.data);
       } else {

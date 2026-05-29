@@ -1,11 +1,12 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '@ngx-translate/core';
 
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
@@ -15,20 +16,20 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
   selector: 'app-user-menu',
   standalone: true,
   imports: [
-    CommonModule,
     MatMenuModule,
     MatButtonModule,
     MatIconModule,
     MatDividerModule,
     NgOptimizedImage,
-    SyncStatusComponent
+    SyncStatusComponent,
+    TranslatePipe
   ],
   template: `
     <button
       mat-icon-button
       [matMenuTriggerFor]="userMenu"
       class="user-avatar-button"
-      aria-label="User menu"
+      [attr.aria-label]="'AUTH.USER_MENU' | translate"
     >
       @if (photoURL()) {
         <img

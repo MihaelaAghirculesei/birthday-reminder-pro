@@ -80,7 +80,7 @@ jobs:
           echo "✅ Security thresholds passed"
 
       - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@1.1.0
         with:
           project: 'birthday-reminder-pro'
           path: '.'
@@ -104,6 +104,7 @@ jobs:
     name: Unit Tests & Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    needs: [lint-and-typecheck]
 
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +125,7 @@ jobs:
         run: npm run env:init
 
       - name: Run unit tests with coverage
-        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadlessNoNoise --code-coverage
+        run: xvfb-run -a npm test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
 
       - name: Check coverage thresholds
         run: |
@@ -163,6 +164,7 @@ jobs:
     name: E2E Tests (Cypress)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    needs: [lint-and-typecheck]
 
     steps:
       - uses: actions/checkout@v4
@@ -180,9 +182,10 @@ jobs:
       - name: Run Cypress E2E tests
         uses: cypress-io/github-action@v6
         with:
-          start: npm start
-          wait-on: 'http://localhost:4203'
-          wait-on-timeout: 120
+          start: npm run start:ci
+          wait-on: 'http://localhost:4300'
+          wait-on-timeout: 180
+          command: npm run e2e:headless:ci
           browser: chrome
           record: false
 
@@ -349,12 +352,8 @@ jobs:
           name: production-build
           path: dist/birthday-reminder-pro
 
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.13.x
-
       - name: Run Lighthouse CI
-        run: lhci autorun
-        continue-on-error: true
+        run: npx @lhci/cli autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -417,91 +416,6 @@ jobs:
             } catch (error) {
               console.log('Could not create comment:', error.message);
             }
-
-  deploy:
-    name: Deploy to Firebase Hosting
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    needs: [lint-and-typecheck, security-audit, unit-tests, e2e-tests, build, bundle-size-check]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Check deploy prerequisites
-        id: check
-        run: |
-          if [ -z "$FIREBASE_SA" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "::warning::FIREBASE_SERVICE_ACCOUNT not configured — skipping deploy"
-          elif ! echo "$FIREBASE_SA" | jq . > /dev/null 2>&1; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not valid JSON — skipping deploy"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      - uses: actions/checkout@v4
-        if: steps.check.outputs.skip != 'true'
-
-      - name: Download build artifacts
-        if: steps.check.outputs.skip != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: dist/birthday-reminder-pro
-
-      - name: Deploy to Firebase Hosting
-        if: steps.check.outputs.skip != 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
-
-  deploy-preview:
-    name: Deploy Preview
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    continue-on-error: true
-    needs: [build]
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Check deploy prerequisites
-        id: check
-        run: |
-          if [ -z "$FIREBASE_SA" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "::warning::FIREBASE_SERVICE_ACCOUNT not configured — skipping preview deploy"
-          elif ! echo "$FIREBASE_SA" | jq . > /dev/null 2>&1; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not valid JSON — skipping preview deploy"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      - uses: actions/checkout@v4
-        if: steps.check.outputs.skip != 'true'
-
-      - name: Download build artifacts
-        if: steps.check.outputs.skip != 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: dist/birthday-reminder-pro
-
-      - name: Deploy preview to Firebase Hosting
-        if: steps.check.outputs.skip != 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
 
   status-check:
     name: All Checks Passed

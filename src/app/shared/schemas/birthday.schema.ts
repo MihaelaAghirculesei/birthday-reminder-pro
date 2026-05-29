@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export { z };
 
 export const SyncStatusSchema = z.enum(['synced', 'pending', 'conflict', 'local-only']);
 

@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
@@ -32,14 +32,14 @@ export interface CategoryReassignDialogData {
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CategoryReassignDialogComponent {
+  private dialogRef = inject<MatDialogRef<CategoryReassignDialogComponent>>(MatDialogRef);
+  data = inject<CategoryReassignDialogData>(MAT_DIALOG_DATA);
+
   availableCategories: BirthdayCategory[] = [];
   selectedCategoryId: string | null = null;
   isReassignOnly = false;
 
-  constructor(
-    private dialogRef: MatDialogRef<CategoryReassignDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: CategoryReassignDialogData
-  ) {
+  constructor() {
     this.isReassignOnly = this.data.mode === 'reassign-only';
 
     // Use categories passed from dialog data (from NgRx store)

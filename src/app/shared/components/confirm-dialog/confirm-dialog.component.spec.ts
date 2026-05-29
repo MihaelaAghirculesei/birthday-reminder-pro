@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
 
 describe('ConfirmDialogComponent', () => {
   let fixture: ComponentFixture<ConfirmDialogComponent>;
@@ -17,6 +18,7 @@ describe('ConfirmDialogComponent', () => {
       providers: [
         { provide: MatDialogRef, useValue: dialogRef },
         { provide: MAT_DIALOG_DATA, useValue: data },
+        provideTranslateTesting(),
       ],
     });
     fixture = TestBed.createComponent(ConfirmDialogComponent);

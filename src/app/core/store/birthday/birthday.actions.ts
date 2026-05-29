@@ -52,7 +52,7 @@ export const deleteBirthday = createAction(
 
 export const deleteBirthdaySuccess = createAction(
   '[Birthday] Delete Birthday Success',
-  props<{ id: string }>()
+  props<{ id: string; birthday: Birthday }>()
 );
 
 export const deleteBirthdayFailure = createAction(

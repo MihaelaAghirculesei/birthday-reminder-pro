@@ -145,7 +145,7 @@ The app manages birthdays with features like:
 - Google OAuth 2.0
 
 **Development**
-- Angular CLI 21.x
+- Angular CLI 19.x
 - Karma & Jasmine (unit tests)
 - Cypress 15 (E2E, visual regression, accessibility with cypress-axe)
 
@@ -208,7 +208,7 @@ src/app/
 
 - Node.js 20.x or higher
 - npm 10.x or higher
-- Angular CLI 21.x (`npm install -g @angular/cli`)
+- Angular CLI 19.x (`npm install -g @angular/cli@^19`)
 - Android Studio (optional, for Android build)
 
 ### Installation
@@ -334,14 +334,14 @@ The build artifacts will be stored in the `dist/` directory.
 
 ### Server-Side Rendering (SSR)
 
-Build and run with SSR:
+Build and run with SSR locally:
 
 ```bash
 ng build
 npm run serve:ssr:birthday-reminder-pro
 ```
 
-Note: SSR server runs on the built production files.
+For production on Cloudflare Pages, the pre-rendered static files are served directly — no Node.js server required.
 
 ---
 
@@ -361,8 +361,7 @@ birthday-reminder-app/
 │   └── layout/             # Header component
 ├── cypress/
 │   └── e2e/                # E2E, visual regression, accessibility tests
-├── android/                # Capacitor Android project
-└── functions/              # Firebase Cloud Functions
+└── android/                # Capacitor Android project
 ```
 
 ---

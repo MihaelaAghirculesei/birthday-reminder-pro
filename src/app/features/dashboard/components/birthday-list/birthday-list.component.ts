@@ -18,7 +18,6 @@ import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import type { BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
-import { sanitizeBirthdayData, safeParseBirthday } from '../../../../shared/schemas/birthday.schema';
 import { LoggerService } from '../../../../core/services/logger.service';
 import { AppState } from '../../../../core/store/app.state';
 import * as BirthdayActions from '../../../../core/store/birthday/birthday.actions';
@@ -83,6 +82,7 @@ export class BirthdayListComponent implements OnChanges {
   private readonly destroyRef = inject(DestroyRef);
   private readonly logger = inject(LoggerService);
   private readonly translate = inject(TranslateService);
+  private readonly _schemas = import('../../../../shared/schemas/birthday.schema');
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['birthdays']) {
@@ -169,7 +169,8 @@ export class BirthdayListComponent implements OnChanges {
           map(current => ({ result, current: current || result.birthday }))
         );
       })
-    ).subscribe(({ result, current }) => {
+    ).subscribe(async ({ result, current }) => {
+      const { sanitizeBirthdayData, safeParseBirthday } = await this._schemas;
       const raw = {
         ...current,
         name: result.editedData.name.trim() || result.birthday.name,

@@ -69,21 +69,6 @@ if (!fs.existsSync(firebasePath)) {
   const firebase = JSON.parse(fs.readFileSync(firebasePath, 'utf8'));
   pass('firebase.json exists');
 
-  if (firebase.hosting) {
-    const hostingPublic = firebase.hosting.public;
-    pass(`Hosting public dir: ${hostingPublic}`);
-
-    const angularPath = resolve('angular.json');
-    if (fs.existsSync(angularPath)) {
-      const angular = JSON.parse(fs.readFileSync(angularPath, 'utf8'));
-      const projectName = Object.keys(angular.projects)[0];
-      const outputPath = angular.projects[projectName]?.architect?.build?.options?.outputPath;
-      if (outputPath && !hostingPublic.includes(outputPath.toString().replace('/browser', ''))) {
-        warn(`Hosting public "${hostingPublic}" may not match Angular outputPath "${outputPath}"`);
-      }
-    }
-  }
-
   if (firebase.firestore?.rules) {
     const rulesPath = resolve(firebase.firestore.rules);
     if (fs.existsSync(rulesPath)) {

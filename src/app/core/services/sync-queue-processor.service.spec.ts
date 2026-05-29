@@ -563,13 +563,15 @@ describe('SyncQueueProcessorService', () => {
       const secondRun = service.processPendingChanges();
 
       await secondRun;
-
-      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
+      // Concurrency guard: second call returned early, so changes were only fetched once.
       expect(pendingChangesMock.getChangesForEntity).toHaveBeenCalledTimes(1);
 
       resolveFirst();
       await firstRun;
 
+      // saveBirthday called exactly once — checked here because processBirthdayChange
+      // contains an `await import(...)` that resolves after secondRun settles.
+      expect(firestoreServiceMock.saveBirthday).toHaveBeenCalledTimes(1);
       expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.pushPendingChanges());
     });
 

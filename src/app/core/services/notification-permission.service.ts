@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { LoggerService } from './logger.service';
@@ -9,13 +9,13 @@ export type NotificationPermissionStatus = 'default' | 'granted' | 'denied';
   providedIn: 'root'
 })
 export class NotificationPermissionService {
+  private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
+
   private permissionStatus$ = new BehaviorSubject<NotificationPermissionStatus>(this.getCurrentPermission());
   private notificationsEnabled$ = new BehaviorSubject<boolean>(this.readNotificationsEnabled());
 
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private logger: LoggerService
-  ) {
+  constructor() {
     if (isPlatformBrowser(this.platformId) && 'permissions' in navigator) {
       navigator.permissions.query({ name: 'notifications' as PermissionName })
         .then(permissionStatus => {

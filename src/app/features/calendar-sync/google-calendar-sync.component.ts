@@ -368,6 +368,10 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
   `]
 })
 export class GoogleCalendarSyncComponent implements OnInit {
+  private googleCalendarService = inject(GoogleCalendarService);
+  private fb = inject(FormBuilder);
+  private logger = inject(LoggerService);
+
   private readonly destroyRef = inject(DestroyRef);
 
   isSignedIn = signal(false);
@@ -383,11 +387,7 @@ export class GoogleCalendarSyncComponent implements OnInit {
     { initialValue: [] }
   );
 
-  constructor(
-    private googleCalendarService: GoogleCalendarService,
-    private fb: FormBuilder,
-    private logger: LoggerService
-  ) {
+  constructor() {
     this.settingsForm = this.fb.group({
       enabled: [false],
       calendarId: ['primary'],

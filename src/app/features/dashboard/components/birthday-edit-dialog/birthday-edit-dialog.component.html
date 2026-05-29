@@ -1,25 +1,29 @@
 <div class="dialog-container">
   <h2 mat-dialog-title>
     <mat-icon>edit</mat-icon>
-    Edit Birthday - {{ data.birthday.name }}
+    {{ 'EDIT_DIALOG.TITLE' | translate: {name: data.birthday.name} }}
   </h2>
 
   <mat-dialog-content class="dialog-content">
     <div class="edit-form">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Name</mat-label>
+      <mat-form-field appearance="outline" class="full-width"
+        [class.field-valid]="editingData.name.trim()"
+        [class.field-error]="!editingData.name.trim()">
+        <mat-label>{{ 'BIRTHDAY_FORM.NAME_LABEL' | translate }}</mat-label>
         <input
           matInput
           [(ngModel)]="editingData.name"
-          placeholder="Enter name"
+          [placeholder]="'EDIT_DIALOG.NAME_PLACEHOLDER' | translate"
           required
           data-testid="birthday-name-input"
           />
         <mat-icon matPrefix>person</mat-icon>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Birth Date</mat-label>
+      <mat-form-field appearance="outline" class="full-width"
+        [class.field-valid]="editingData.birthDate"
+        [class.field-error]="!editingData.birthDate">
+        <mat-label>{{ 'BIRTHDAY_FORM.BIRTH_DATE_LABEL' | translate }}</mat-label>
         <input
           matInput
           type="date"
@@ -29,19 +33,21 @@
         <mat-icon matPrefix>cake</mat-icon>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width notes-field">
-        <mat-label>Notes</mat-label>
+      <mat-form-field appearance="outline" class="full-width notes-field"
+        [class.field-valid]="editingData.notes.trim()">
+        <mat-label>{{ 'EDIT_DIALOG.NOTES_LABEL' | translate }}</mat-label>
         <textarea
           matInput
           [(ngModel)]="editingData.notes"
-          placeholder="What they love, hobbies, gift ideas..."
+          [placeholder]="'EDIT_DIALOG.NOTES_PLACEHOLDER' | translate"
           rows="2"
         ></textarea>
         <mat-icon matPrefix>note</mat-icon>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Category</mat-label>
+      <mat-form-field appearance="outline" class="full-width"
+        [class.field-valid]="editingData.category">
+        <mat-label>{{ 'BIRTHDAY_FORM.CATEGORY_LABEL' | translate }}</mat-label>
         <mat-select [(ngModel)]="editingData.category">
           @for (category of data.categories; track category.id) {
             <mat-option [value]="category.id">
@@ -55,47 +61,53 @@
       <div class="contact-section">
         <div class="contact-section-title">
           <mat-icon>contacts</mat-icon>
-          <span>Contact Info (for sending wishes)</span>
+          <span>{{ 'EDIT_DIALOG.CONTACT_SECTION_TITLE' | translate }}</span>
         </div>
         <div class="contact-fields" [formGroup]="contactForm">
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!contactForm.get('email')!.value.trim()">
-            <mat-label>Email</mat-label>
+          <mat-form-field appearance="outline" class="full-width"
+            [class.field-valid]="contactForm.get('email')!.value.trim() && contactForm.get('email')!.valid"
+            [class.field-error]="contactForm.get('email')!.value.trim() && !contactForm.get('email')!.valid">
+            <mat-label>{{ 'EDIT_DIALOG.EMAIL_LABEL' | translate }}</mat-label>
             <input
               matInput
               type="email"
               formControlName="email"
-              placeholder="email@example.com"
+              [placeholder]="'EDIT_DIALOG.EMAIL_PLACEHOLDER' | translate"
               />
             <mat-icon matPrefix>email</mat-icon>
             @if (contactForm.get('email')?.errors?.['pattern']) {
-              <mat-error>Please enter a valid email address.</mat-error>
+              <mat-error>{{ 'EDIT_DIALOG.EMAIL_ERROR' | translate }}</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!contactForm.get('phone')!.value.trim()">
-            <mat-label>Phone</mat-label>
+          <mat-form-field appearance="outline" class="full-width"
+            [class.field-valid]="contactForm.get('phone')!.value.trim() && contactForm.get('phone')!.valid"
+            [class.field-error]="contactForm.get('phone')!.value.trim() && !contactForm.get('phone')!.valid">
+            <mat-label>{{ 'EDIT_DIALOG.PHONE_LABEL' | translate }}</mat-label>
             <input
               matInput
               type="tel"
               formControlName="phone"
-              placeholder="+1234567890"
+              [placeholder]="'EDIT_DIALOG.PHONE_PLACEHOLDER' | translate"
               />
             <mat-icon matPrefix>phone</mat-icon>
             @if (contactForm.get('phone')?.errors?.['pattern']) {
-              <mat-error>Phone number can only contain digits, +, -, spaces and parentheses.</mat-error>
+              <mat-error>{{ 'EDIT_DIALOG.PHONE_ERROR' | translate }}</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="full-width" [class.contact-error]="!contactForm.get('telegramUsername')!.value.trim()">
-            <mat-label>Telegram Username</mat-label>
+          <mat-form-field appearance="outline" class="full-width"
+            [class.field-valid]="contactForm.get('telegramUsername')!.value.trim() && contactForm.get('telegramUsername')!.valid"
+            [class.field-error]="contactForm.get('telegramUsername')!.value.trim() && !contactForm.get('telegramUsername')!.valid">
+            <mat-label>{{ 'EDIT_DIALOG.TELEGRAM_LABEL' | translate }}</mat-label>
             <input
               matInput
               formControlName="telegramUsername"
-              placeholder="username"
+              [placeholder]="'EDIT_DIALOG.TELEGRAM_PLACEHOLDER' | translate"
               />
             <mat-icon matPrefix>send</mat-icon>
             @if (contactForm.get('telegramUsername')?.errors?.['pattern']) {
-              <mat-error>Username must start with a letter, be 5-32 characters: letters, digits and underscores.</mat-error>
+              <mat-error>{{ 'EDIT_DIALOG.TELEGRAM_ERROR' | translate }}</mat-error>
             }
           </mat-form-field>
         </div>
@@ -105,7 +117,7 @@
         <div class="photo-section">
           <div class="photo-section-title">
             <mat-icon>photo_camera</mat-icon>
-            <span>Profile Photo</span>
+            <span>{{ 'EDIT_DIALOG.PROFILE_PHOTO' | translate }}</span>
           </div>
           <app-photo-upload
             [currentPhoto]="editingData.photo"
@@ -120,8 +132,8 @@
           <div class="photo-section-title">
             <mat-icon>photo_library</mat-icon>
             <div class="title-text">
-              <span>Remember Photo</span>
-              <small>(For social sharing/messages)</small>
+              <span>{{ 'EDIT_DIALOG.REMEMBER_PHOTO' | translate }}</span>
+              <small>{{ 'EDIT_DIALOG.REMEMBER_PHOTO_HINT' | translate }}</small>
             </div>
           </div>
           <app-photo-upload
@@ -143,18 +155,18 @@
   @if (contactWarning) {
     <div class="contact-warning">
       <mat-icon>warning</mat-icon>
-      No contact info provided. Add Email, Phone, or Telegram to enable sending wishes.
+      {{ 'EDIT_DIALOG.CONTACT_WARNING' | translate }}
     </div>
   }
 
   <mat-dialog-actions align="end" class="dialog-actions">
     <button mat-button (click)="onCancel()" color="warn">
       <mat-icon>close</mat-icon>
-      Cancel
+      {{ 'EDIT_DIALOG.CANCEL' | translate }}
     </button>
     <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages || !isContactValid() || isSaving">
       <mat-icon>check</mat-icon>
-      Save Changes
+      {{ 'EDIT_DIALOG.SAVE_BTN' | translate }}
     </button>
   </mat-dialog-actions>
 </div>

@@ -23,6 +23,9 @@
       <input matInput formControlName="nameOtherLang" [placeholder]="'CATEGORY_DIALOG.NAME_OTHER_LANG_PLACEHOLDER' | translate">
       <mat-icon matSuffix>translate</mat-icon>
       <mat-hint>{{ 'CATEGORY_DIALOG.NAME_OTHER_LANG_HINT' | translate }}</mat-hint>
+      @if (categoryForm.get('nameOtherLang')?.hasError('maxlength')) {
+        <mat-error>{{ 'CATEGORY_DIALOG.NAME_ERROR_MAX' | translate }}</mat-error>
+      }
     </mat-form-field>
 
     <div class="icon-section">

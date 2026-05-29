@@ -57,11 +57,16 @@ describe('BirthdayNotificationEffects', () => {
   });
 
   describe('deleteBirthdaySuccess$', () => {
-    it('should show success notification', (done) => {
-      actions$ = of(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+    it('should show success notification with UNDO action', (done) => {
+      actions$ = of(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
 
       effects.deleteBirthdaySuccess$.subscribe(() => {
-        expect(notificationServiceMock.show).toHaveBeenCalledWith('Birthday deleted successfully!', 'success');
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Birthday deleted successfully!',
+          'success',
+          5000,
+          { label: 'UNDO', callback: jasmine.any(Function) }
+        );
         done();
       });
     });
@@ -139,6 +144,22 @@ describe('BirthdayNotificationEffects', () => {
         done();
       });
     });
+
+    it('should dispatch updateBirthday when retry callback is invoked', (done) => {
+      const dispatchSpy = spyOn(store, 'dispatch');
+      actions$ = of(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-x', birthday: mockBirthday }));
+
+      notificationServiceMock.show.and.callFake((_msg: string, _type: 'success' | 'error' | 'warning' | 'info', _dur: number | undefined, action: NotificationAction | undefined) => {
+        if (action?.callback) { action.callback(); }
+      });
+
+      effects.updateBirthdayFailure$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(
+          jasmine.objectContaining({ birthday: mockBirthday })
+        );
+        done();
+      });
+    });
   });
 
   describe('deleteBirthdayFailure$', () => {
@@ -166,6 +187,20 @@ describe('BirthdayNotificationEffects', () => {
           undefined,
           jasmine.objectContaining({ label: 'Retry' })
         );
+        done();
+      });
+    });
+
+    it('should dispatch deleteBirthday when retry callback is invoked', (done) => {
+      const dispatchSpy = spyOn(store, 'dispatch');
+      actions$ = of(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed', id: '1' }));
+
+      notificationServiceMock.show.and.callFake((_msg: string, _type: 'success' | 'error' | 'warning' | 'info', _dur: number | undefined, action: NotificationAction | undefined) => {
+        if (action?.callback) { action.callback(); }
+      });
+
+      effects.deleteBirthdayFailure$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.deleteBirthday({ id: '1' }));
         done();
       });
     });
@@ -199,6 +234,96 @@ describe('BirthdayNotificationEffects', () => {
 
       effects.deleteMessageFromBirthdayFailure$.subscribe(() => {
         expect(notificationServiceMock.show).toHaveBeenCalledWith('Failed to delete message: Failed', 'error');
+        done();
+      });
+    });
+  });
+
+  describe('loadBirthdaysFailure$', () => {
+    it('should show error notification with retry action', (done) => {
+      actions$ = of(BirthdayActions.loadBirthdaysFailure({ error: 'Load failed' }));
+
+      effects.loadBirthdaysFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Failed to load birthdays',
+          'error',
+          undefined,
+          jasmine.objectContaining({ label: 'Retry' })
+        );
+        done();
+      });
+    });
+
+    it('should dispatch loadBirthdays when retry callback is invoked', (done) => {
+      const dispatchSpy = spyOn(store, 'dispatch');
+      actions$ = of(BirthdayActions.loadBirthdaysFailure({ error: 'Load failed' }));
+
+      notificationServiceMock.show.and.callFake((_msg: string, _type: 'success' | 'error' | 'warning' | 'info', _dur: number | undefined, action: NotificationAction | undefined) => {
+        if (action?.callback) { action.callback(); }
+      });
+
+      effects.loadBirthdaysFailure$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.loadBirthdays());
+        done();
+      });
+    });
+  });
+
+  describe('clearAllBirthdaysFailure$', () => {
+    it('should show error notification with retry action', (done) => {
+      actions$ = of(BirthdayActions.clearAllBirthdaysFailure({ error: 'Clear failed' }));
+
+      effects.clearAllBirthdaysFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Failed to clear all birthdays',
+          'error',
+          undefined,
+          jasmine.objectContaining({ label: 'Retry' })
+        );
+        done();
+      });
+    });
+
+    it('should dispatch clearAllBirthdays when retry callback is invoked', (done) => {
+      const dispatchSpy = spyOn(store, 'dispatch');
+      actions$ = of(BirthdayActions.clearAllBirthdaysFailure({ error: 'Clear failed' }));
+
+      notificationServiceMock.show.and.callFake((_msg: string, _type: 'success' | 'error' | 'warning' | 'info', _dur: number | undefined, action: NotificationAction | undefined) => {
+        if (action?.callback) { action.callback(); }
+      });
+
+      effects.clearAllBirthdaysFailure$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.clearAllBirthdays());
+        done();
+      });
+    });
+  });
+
+  describe('loadTestDataFailure$', () => {
+    it('should show error notification with retry action', (done) => {
+      actions$ = of(BirthdayActions.loadTestDataFailure({ error: 'Test data failed' }));
+
+      effects.loadTestDataFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Failed to load test data',
+          'error',
+          undefined,
+          jasmine.objectContaining({ label: 'Retry' })
+        );
+        done();
+      });
+    });
+
+    it('should dispatch loadTestData when retry callback is invoked', (done) => {
+      const dispatchSpy = spyOn(store, 'dispatch');
+      actions$ = of(BirthdayActions.loadTestDataFailure({ error: 'Test data failed' }));
+
+      notificationServiceMock.show.and.callFake((_msg: string, _type: 'success' | 'error' | 'warning' | 'info', _dur: number | undefined, action: NotificationAction | undefined) => {
+        if (action?.callback) { action.callback(); }
+      });
+
+      effects.loadTestDataFailure$.subscribe(() => {
+        expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.loadTestData());
         done();
       });
     });

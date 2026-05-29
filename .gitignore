@@ -49,4 +49,6 @@ cypress/downloads
 localhost_*.report.html
 
 .firebase/
-/public
+
+# Claude Code internal directory
+/claude

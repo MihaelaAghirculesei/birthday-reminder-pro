@@ -1,12 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Birthday } from '../../models';
 
 @Component({
     selector: 'app-message-indicator',
-    imports: [CommonModule, MatTooltipModule, TranslatePipe],
+    imports: [MatTooltipModule, TranslatePipe],
     templateUrl: './message-indicator.component.html',
     styleUrls: ['./message-indicator.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush

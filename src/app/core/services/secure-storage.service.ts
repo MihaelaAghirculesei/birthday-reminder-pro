@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { LoggerService } from './logger.service';
 
@@ -16,16 +16,16 @@ const IV_LENGTH = 12;
   providedIn: 'root'
 })
 export class SecureStorageService {
+  private platformId = inject(PLATFORM_ID);
+  private logger = inject(LoggerService);
+
   private cryptoKey: CryptoKey | null = null;
   private initPromise: Promise<void> | null = null;
   private dbName = 'SecureStorageDB';
   private storeName = 'keys';
   private keyId = 'encryption-key';
 
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private logger: LoggerService
-  ) {
+  constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.initPromise = this.initialize();
     }

@@ -21,6 +21,9 @@ import { BackupService, NotificationService, LoggerService, ImportResult } from 
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BirthdayImportExportComponent {
+  private backupService = inject(BackupService);
+  private notificationService = inject(NotificationService);
+
   @Input() totalBirthdays = 0;
   @Input() allBirthdays: Signal<Birthday[]> | Birthday[] = [];
   @Output() birthdaysImported = new EventEmitter<Birthday[]>();
@@ -28,11 +31,6 @@ export class BirthdayImportExportComponent {
   isImporting = signal(false);
 
   private readonly logger = inject(LoggerService);
-
-  constructor(
-    private backupService: BackupService,
-    private notificationService: NotificationService
-  ) {}
 
   onExportJSON(): void {
     const birthdays = this.getBirthdays();

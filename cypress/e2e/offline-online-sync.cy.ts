@@ -174,4 +174,26 @@ describe('Offline → Online sync flow', () => {
     // And the UI must still show it
     cy.contains('Full Cycle User').should('be.visible');
   });
+
+  // ---------------------------------------------------------------------------
+  it('NetworkStatusComponent shows "Online" on initial load', () => {
+    cy.get('app-network-status').should('contain.text', 'Online');
+    cy.get('app-network-status .network-status').should('not.have.class', 'offline');
+  });
+
+  // ---------------------------------------------------------------------------
+  it('syncs birthday added while offline after reconnect — UI and IDB consistent', () => {
+    cy.window().then((win) => win.dispatchEvent(new Event('offline')));
+
+    cy.expandBirthdayForm();
+    cy.get('[data-testid="birthday-name-input"]').type('Sync After Reconnect');
+    cy.get('[data-testid="birthday-date-input"]').type('06/30/1994');
+    cy.get('[data-testid="save-birthday-button"]').click();
+    cy.contains('Sync After Reconnect').should('be.visible');
+
+    cy.window().then((win) => win.dispatchEvent(new Event('online')));
+    cy.get('app-network-status', { timeout: 8000 }).should('contain.text', 'Online');
+
+    cy.contains('Sync After Reconnect').should('be.visible');
+  });
 });

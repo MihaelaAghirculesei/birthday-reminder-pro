@@ -7,7 +7,7 @@ import { FirestoreService } from './firestore.service';
 import { PendingChangesService, PendingChange, EntityType, ChangeType, SyncPayloadData } from './pending-changes.service';
 import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
-import { safeParseBirthday, safeParseCategory, ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
+import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 
 import * as SyncActions from '../store/sync/sync.actions';
 
@@ -53,6 +53,7 @@ export class SyncQueueProcessorService {
     let payload: SyncPayloadData = null;
 
     if (changeType !== 'delete') {
+      const { safeParseBirthday, safeParseCategory } = await import('../../shared/schemas/birthday.schema');
       const result = entityType === 'birthday'
         ? safeParseBirthday(data)
         : safeParseCategory(data);
@@ -162,6 +163,7 @@ export class SyncQueueProcessorService {
     switch (change.changeType) {
       case 'create':
       case 'update': {
+        const { safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
         const result = safeParseBirthday(change.data);
         if (!result.success) {
           this.logger.error('[SyncQueueProcessor] Skipping invalid birthday pending change:', change.entityId, result.error.issues);
@@ -180,6 +182,7 @@ export class SyncQueueProcessorService {
     switch (change.changeType) {
       case 'create':
       case 'update': {
+        const { safeParseCategory } = await import('../../shared/schemas/birthday.schema');
         const result = safeParseCategory(change.data);
         if (!result.success) {
           this.logger.error('[SyncQueueProcessor] Skipping invalid category pending change:', change.entityId, result.error.issues);

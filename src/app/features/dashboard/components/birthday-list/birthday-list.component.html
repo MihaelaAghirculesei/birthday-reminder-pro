@@ -49,7 +49,7 @@
     }
 
     @if (birthdays.length === 0 && searchTerm) {
-      <div class="no-birthdays" role="status" aria-live="polite">
+      <div class="no-birthdays" role="status" aria-live="polite" data-testid="no-results-message">
         <mat-icon class="no-data-icon" aria-hidden="true">search_off</mat-icon>
         <p class="no-data-text">{{ 'BIRTHDAY_LIST.NO_RESULTS' | translate: {term: searchTerm} }}</p>
         <button mat-raised-button color="primary" (click)="onClearSearch()" [attr.aria-label]="'BIRTHDAY_LIST.CLEAR_SEARCH' | translate">
