@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
 import { LoggerService } from './logger.service';
 import { IndexedDBStorageService } from './offline-storage.service';
 import { FIREBASE_OPTIONS, checkFirebaseOptions, storageGetters } from '../../firebase.config';
@@ -69,7 +69,12 @@ export class OrphanPhotoCleanupService {
    * Individual delete failures are logged and counted but do not abort the run.
    * A `listAll` failure logs a warning and resolves without throwing.
    */
+  protected isDevEnvironment(): boolean {
+    return isDevMode();
+  }
+
   async cleanupOrphans(userId: string): Promise<void> {
+    if (this.isDevEnvironment()) return;
     if (!checkFirebaseOptions(this.firebaseOptions)) return;
     if (!this.isDue()) return;
 
