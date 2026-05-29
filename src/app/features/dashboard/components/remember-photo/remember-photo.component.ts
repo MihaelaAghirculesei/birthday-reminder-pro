@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
@@ -10,6 +10,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RememberPhotoComponent {
+  private readonly translate = inject(TranslateService);
+
   @Input() photoUrl: string | null | undefined = null;
   @Input() birthdayName = '';
 
@@ -17,7 +19,9 @@ export class RememberPhotoComponent {
   @Output() download = new EventEmitter<void>();
   @Output() copyToClipboard = new EventEmitter<void>();
 
-  readonly tooltipText = 'Remember Photo - Click: Download | Double-click: Share';
+  get tooltipText(): string {
+    return this.translate.instant('REMEMBER_PHOTO.TOOLTIP');
+  }
 
   onShare(): void {
     this.share.emit();
