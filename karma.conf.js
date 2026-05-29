@@ -13,7 +13,8 @@ module.exports = function (config) {
       jasmine: {
         random: false,
         seed: 42,
-        stopSpecOnExpectationFailure: false
+        stopSpecOnExpectationFailure: false,
+        timeoutInterval: 10000
       },
       clearContext: false
     },
@@ -40,9 +41,9 @@ module.exports = function (config) {
       }
     },
     reporters: ['progress', 'kjhtml', 'coverage'],
-    browsers: ['ChromeHeadlessNoNoise'],
+    browsers: ['ChromeHeadlessCI'],
     customLaunchers: {
-      ChromeHeadlessNoNoise: {
+      ChromeHeadlessCI: {
         base: 'ChromeHeadless',
         flags: [
           '--no-sandbox',
@@ -54,7 +55,10 @@ module.exports = function (config) {
           '--disable-translate',
           '--disable-sync',
           '--no-first-run',
-          '--disable-component-extensions-with-background-pages'
+          '--disable-component-extensions-with-background-pages',
+          // Fixed port so the CI pipeline can attach DevTools for debugging.
+          // Unit tests run sequentially in CI (see ci.yml), so no port conflict.
+          '--remote-debugging-port=9222'
         ]
       }
     },

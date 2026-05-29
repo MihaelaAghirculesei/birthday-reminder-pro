@@ -35,7 +35,9 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              "src/robots.txt",
+              "src/_headers"
             ],
             "styles": [
               "src/theme.scss",
@@ -133,7 +135,7 @@
             ],
             "scripts": [],
             "karmaConfig": "karma.conf.js",
-            "codeCoverage": true,
+            "codeCoverage": false,
             "codeCoverageExclude": [
               "src/app/firebase.config.ts",
               "src/app/core/services/firebase-auth.service.ts",
