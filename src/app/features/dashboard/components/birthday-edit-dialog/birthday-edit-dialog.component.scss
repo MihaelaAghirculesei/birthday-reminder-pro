@@ -158,6 +158,18 @@ h2[mat-dialog-title] {
   border-width: 2px !important;
 }
 
+.field-valid ::ng-deep .mdc-notched-outline__leading,
+.field-valid ::ng-deep .mdc-notched-outline__notch,
+.field-valid ::ng-deep .mdc-notched-outline__trailing {
+  border-color: var(--success, #4caf50) !important;
+}
+
+.field-error ::ng-deep .mdc-notched-outline__leading,
+.field-error ::ng-deep .mdc-notched-outline__notch,
+.field-error ::ng-deep .mdc-notched-outline__trailing {
+  border-color: var(--warning, #ff9800) !important;
+}
+
 .contact-warning {
   display: flex;
   align-items: center;
