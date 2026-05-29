@@ -1,9 +1,16 @@
-import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, ViewChild, signal, computed, inject, DestroyRef } from '@angular/core';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { Store } from '@ngrx/store';
+import * as AuthActions from '../../core/store/auth/auth.actions';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslatePipe } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { merge } from 'rxjs';
+import { filter, map, startWith } from 'rxjs/operators';
 
 import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 import { HeaderImportExportComponent } from './header-import-export.component';
@@ -17,6 +24,7 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    MatTooltipModule,
     HeaderSettingsMenuComponent,
     HeaderImportExportComponent,
     HeaderUserMenuComponent,
@@ -24,29 +32,71 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="nav-strip" role="navigation" aria-label="Main navigation">
-      <a mat-button routerLink="/" class="nav-strip-item">
+
+      <!-- Dashboard: active only when on '/' AND no menu is open -->
+      <a mat-button
+         routerLink="/"
+         class="nav-strip-item"
+         [class.nav-active]="isDashboardActive()">
         <mat-icon aria-hidden="true">home</mat-icon>
         <span>{{ 'NAV.DASHBOARD' | translate }}</span>
       </a>
-      <a mat-button routerLink="/scheduled-messages" class="nav-strip-item">
-        <mat-icon aria-hidden="true">schedule_send</mat-icon>
-        <span>{{ 'NAV.MESSAGES' | translate }}</span>
-      </a>
-      <button [matMenuTriggerFor]="stripSettings.settingsMenu" class="nav-strip-item" data-testid="nav-settings-btn">
+
+      <!-- Messages: navigable link when authenticated, plain button when not -->
+      @if (isAuthenticated) {
+        <a mat-button
+           routerLink="/scheduled-messages"
+           class="nav-strip-item"
+           [class.nav-active]="isMessagesActive()">
+          <mat-icon aria-hidden="true">schedule_send</mat-icon>
+          <span>{{ 'NAV.MESSAGES' | translate }}</span>
+        </a>
+      } @else {
+        <button mat-button
+                class="nav-strip-item nav-requires-auth"
+                [matTooltip]="'NAV.SIGN_IN_FOR_MESSAGES' | translate"
+                matTooltipPosition="below"
+                (click)="signInForMessages()">
+          <mat-icon aria-hidden="true">schedule_send</mat-icon>
+          <span>{{ 'NAV.MESSAGES' | translate }}</span>
+          <mat-icon aria-hidden="true" class="nav-lock-icon">lock</mat-icon>
+        </button>
+      }
+
+      <!-- Menu buttons: active while their menu is open or a dialog/overlay is open -->
+      <button #settingsTrigger="matMenuTrigger"
+              [matMenuTriggerFor]="stripSettings.settingsMenu"
+              [class.nav-active]="settingsTrigger.menuOpen || dialogOpen() || settingsOverlayOpen()"
+              (menuOpened)="menuOpen.set(true)"
+              (menuClosed)="menuOpen.set(false)"
+              class="nav-strip-item" data-testid="nav-settings-btn">
         <img src="assets/icons/settings-button.svg" [attr.alt]="'NAV.SETTINGS' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
         <span aria-hidden="true">{{ 'NAV.SETTINGS' | translate }}</span>
         <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
-      <button [matMenuTriggerFor]="stripImportExport.importMenu" class="nav-strip-item">
+
+      <button #importTrigger="matMenuTrigger"
+              [matMenuTriggerFor]="stripImportExport.importMenu"
+              [class.nav-active]="importTrigger.menuOpen"
+              (menuOpened)="menuOpen.set(true)"
+              (menuClosed)="menuOpen.set(false)"
+              class="nav-strip-item">
         <img src="assets/icons/import-button.svg" [attr.alt]="'NAV.IMPORT' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
         <span aria-hidden="true">{{ 'NAV.IMPORT' | translate }}</span>
         <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
-      <button [matMenuTriggerFor]="stripImportExport.exportMenu" class="nav-strip-item">
+
+      <button #exportTrigger="matMenuTrigger"
+              [matMenuTriggerFor]="stripImportExport.exportMenu"
+              [class.nav-active]="exportTrigger.menuOpen"
+              (menuOpened)="menuOpen.set(true)"
+              (menuClosed)="menuOpen.set(false)"
+              class="nav-strip-item">
         <img src="assets/icons/export-button.svg" [attr.alt]="'NAV.EXPORT' | translate" class="nav-strip-icon" width="20" height="20" loading="lazy" decoding="async"/>
         <span aria-hidden="true">{{ 'NAV.EXPORT' | translate }}</span>
         <mat-icon aria-hidden="true" class="nav-strip-arrow">arrow_drop_down</mat-icon>
       </button>
+
       <app-header-user-menu
         mode="desktop"
         [isAuthenticated]="isAuthenticated"
@@ -118,6 +168,12 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
         border-color: rgba(0, 0, 0, 0.15);
       }
 
+      &.nav-active {
+        background: rgba(0, 0, 0, 0.12);
+        border-color: rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+      }
+
       .mat-icon {
         font-size: 20px;
         width: 20px;
@@ -134,10 +190,27 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
           border-color: rgba(255, 255, 255, 0.25);
         }
 
+        &.nav-active {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+
         .mat-icon {
           color: rgba(255, 255, 255, 0.85);
         }
       }
+    }
+
+    .nav-requires-auth {
+      opacity: 0.65;
+    }
+
+    .nav-lock-icon {
+      font-size: 14px !important;
+      width: 14px !important;
+      height: 14px !important;
+      opacity: 0.6;
+      margin-left: 2px;
     }
 
     .nav-strip-arrow {
@@ -177,4 +250,41 @@ export class HeaderNavStripComponent {
   @Input() userEmail: string | null = null;
   @Input() userPhotoURL: string | null = null;
   @Output() signOutClicked = new EventEmitter<void>();
+
+  private readonly router = inject(Router);
+  private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+
+  menuOpen = signal(false);
+  readonly settingsOverlayOpen = computed(() => this.dialogOpen());
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(e => (e as NavigationEnd).urlAfterRedirects),
+      startWith(this.router.url)
+    ),
+    { initialValue: this.router.url }
+  );
+
+  dialogOpen = toSignal(
+    merge(
+      this.dialog.afterOpened.pipe(map(() => true)),
+      this.dialog.afterAllClosed.pipe(map(() => false))
+    ),
+    { initialValue: false }
+  );
+
+  isDashboardActive = computed(() =>
+    this.currentUrl() === '/' && !this.menuOpen() && !this.dialogOpen()
+  );
+
+  isMessagesActive = computed(() =>
+    this.currentUrl().startsWith('/scheduled-messages') && !this.menuOpen() && !this.dialogOpen()
+  );
+
+  signInForMessages(): void {
+    this.store.dispatch(AuthActions.signInWithGoogle());
+  }
 }
