@@ -130,7 +130,7 @@ export class BirthdayCrudEffects implements OnInitEffects {
             ? from(this.syncCoordinator.queueChange('birthday', id, 'delete'))
             : of(undefined)
           ),
-          map(() => BirthdayActions.deleteBirthdaySuccess({ id })),
+          map(() => BirthdayActions.deleteBirthdaySuccess({ id, birthday })),
           catchError(error => of(BirthdayActions.deleteBirthdayFailure({ error: error.message, id })))
         );
       })
