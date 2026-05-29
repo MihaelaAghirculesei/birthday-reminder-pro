@@ -1,5 +1,6 @@
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com https://identitytoolkit.googleapis.com https://firebaseinstallations.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://lh3.googleusercontent.com https://firebasestorage.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com https://i.pravatar.cc; frame-src 'self' https://accounts.google.com https://www.google.com https://birthday-app-2026.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin

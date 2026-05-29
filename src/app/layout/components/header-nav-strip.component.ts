@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 
+import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 import { HeaderImportExportComponent } from './header-import-export.component';
 import { HeaderUserMenuComponent } from './header-user-menu.component';
@@ -253,6 +254,7 @@ export class HeaderNavStripComponent {
 
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly authService = inject(FirebaseAuthService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -284,7 +286,14 @@ export class HeaderNavStripComponent {
     this.currentUrl().startsWith('/scheduled-messages') && !this.menuOpen() && !this.dialogOpen()
   );
 
-  signInForMessages(): void {
+  async signInForMessages(): Promise<void> {
     this.store.dispatch(AuthActions.signInWithGoogle());
+    try {
+      const user = await this.authService.performGoogleSignInDirect();
+      this.store.dispatch(AuthActions.signInSuccess({ user }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sign-in failed';
+      this.store.dispatch(AuthActions.signInFailure({ error: message }));
+    }
   }
 }

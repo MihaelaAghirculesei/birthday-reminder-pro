@@ -493,9 +493,16 @@ export class HeaderComponent implements OnInit {
     this.store.dispatch(AuthActions.signOut());
   }
 
-  signInDirect(): void {
-    this.store.dispatch(AuthActions.signInWithGoogle());
+  async signInDirect(): Promise<void> {
     this.navMenuTrigger?.closeMenu();
+    this.store.dispatch(AuthActions.signInWithGoogle());
+    try {
+      const user = await this.authService.performGoogleSignInDirect();
+      this.store.dispatch(AuthActions.signInSuccess({ user }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sign-in failed';
+      this.store.dispatch(AuthActions.signInFailure({ error: message }));
+    }
   }
 
   private getScrollY(): number {

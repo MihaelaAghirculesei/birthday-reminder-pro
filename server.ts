@@ -71,6 +71,7 @@ export function app(): express.Express {
   server.use(helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
   }));
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);

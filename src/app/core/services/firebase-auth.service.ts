@@ -165,7 +165,7 @@ export class FirebaseAuthService {
     }
 
     if (!this.isFirebaseConfigured) {
-      this.logger.warn('[FirebaseAuth] Firebase not configured, running in offline mode');
+      this.logger.info('[FirebaseAuth] Firebase not configured, running in offline mode');
       this.loadingSubject.next(false);
       return;
     }
