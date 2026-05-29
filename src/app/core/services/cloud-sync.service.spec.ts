@@ -19,7 +19,7 @@ describe('CloudSyncService', () => {
   let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
   let firestoreServiceMock: jasmine.SpyObj<FirestoreService>;
   let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
-  let networkServiceMock: Partial<NetworkService>;
+  let networkServiceMock: { isOnline: boolean };
   let loggerMock: jasmine.SpyObj<LoggerService>;
   let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
   let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
@@ -63,7 +63,7 @@ describe('CloudSyncService', () => {
     offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
       'getBirthdays', 'saveBirthdays'
     ]);
-    networkServiceMock = { isOnline: true } as Partial<NetworkService>;
+    networkServiceMock = { isOnline: true };
     loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
     mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
     mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
@@ -112,7 +112,7 @@ describe('CloudSyncService', () => {
     it('setupListeners should dispatch cloudBirthdaysUpdated when birthdays$ emits', () => {
       const dispatchSpy = spyOn(store, 'dispatch');
       const birthdays$ = new Subject<Birthday[]>();
-      Object.defineProperty(firestoreServiceMock, 'birthdays$', { get: () => birthdays$ });
+      Object.defineProperty(firestoreServiceMock, 'birthdays$', { get: () => birthdays$, configurable: true });
 
       service.setupListeners('user-123');
 
@@ -125,7 +125,7 @@ describe('CloudSyncService', () => {
     it('setupListeners should dispatch cloudCategoriesUpdated when categories$ emits', () => {
       const dispatchSpy = spyOn(store, 'dispatch');
       const categories$ = new Subject<unknown[]>();
-      Object.defineProperty(firestoreServiceMock, 'categories$', { get: () => categories$ });
+      Object.defineProperty(firestoreServiceMock, 'categories$', { get: () => categories$, configurable: true });
 
       service.setupListeners('user-123');
 
@@ -246,7 +246,7 @@ describe('CloudSyncService', () => {
     it('should upload toUpload items to cloud when online', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
       mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+      networkServiceMock.isOnline = true;
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -256,7 +256,7 @@ describe('CloudSyncService', () => {
     it('should not upload when offline', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
       mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
+      networkServiceMock.isOnline = false;
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -290,7 +290,7 @@ describe('CloudSyncService', () => {
       mergeServiceMock.merge.and.returnValue({ merged: [local], toUpload: [local] });
       photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
       photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
-      Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
+      networkServiceMock.isOnline = true;
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -301,6 +301,10 @@ describe('CloudSyncService', () => {
 });
 
   describe('migrateLocalToCloud', () => {
+    function setCurrentUser(user: AuthUser | null): void {
+      (Object.getOwnPropertyDescriptor(authServiceMock, 'currentUser')!.get as jasmine.Spy).and.returnValue(user);
+    }
+
     it('should throw when user is not authenticated', async () => {
       try {
         await service.migrateLocalToCloud();
@@ -311,7 +315,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should return 0 when no local data', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
 
       const count = await service.migrateLocalToCloud();
@@ -319,7 +323,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should upload local birthdays with sync metadata', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
 
       const count = await service.migrateLocalToCloud();
@@ -333,7 +337,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should update local storage with sync metadata after upload', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
 
       await service.migrateLocalToCloud();
@@ -343,7 +347,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should migrate multiple birthdays', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([
         makeBirthday({ id: 'b-1' }),
         makeBirthday({ id: 'b-2' }),
@@ -355,7 +359,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should preserve existing updatedAt during migration', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       const existingTimestamp = 1700000000000;
       offlineStorageMock.getBirthdays.and.returnValue(
         Promise.resolve([makeBirthday({ id: 'b-1', updatedAt: existingTimestamp })])
@@ -368,7 +372,7 @@ describe('CloudSyncService', () => {
     });
   
     it('should migrate base64 photos to Storage before upload', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       const base64Photo = 'data:image/jpeg;base64,/9j/abc';
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const b = makeBirthday({ id: 'b-photo', photo: base64Photo, needsMigration: true });
@@ -384,7 +388,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should skip photo migration for birthdays without base64 photos', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const b = makeBirthday({ id: 'b-cdn', photo: storageUrl });
       offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
@@ -395,7 +399,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should migrate base64 rememberPhoto to Storage before upload', async () => {
-      Object.defineProperty(authServiceMock, 'currentUser', { get: () => mockUser });
+      setCurrentUser(mockUser);
       const base64Photo = 'data:image/jpeg;base64,/9j/abc';
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/remember.jpg?alt=media';
       const b = makeBirthday({ id: 'b-remember', rememberPhoto: base64Photo, needsMigration: true });

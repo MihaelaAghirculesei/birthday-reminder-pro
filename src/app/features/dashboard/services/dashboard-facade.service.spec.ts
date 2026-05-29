@@ -120,14 +120,14 @@ describe('DashboardFacadeService', () => {
       expect(service.nextBirthdayText()).toBe('Today!');
     });
 
-    it('should compute nextBirthdayText as "Tomorrow!" when 1 day', () => {
+    it('should compute nextBirthdayText as "Tomorrow" when 1 day', () => {
       store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, [{ ...mockBirthdays[0], nextBirthday: new Date(), daysUntil: 1 }]);
       store.refreshState();
-      expect(service.nextBirthdayText()).toBe('Tomorrow!');
+      expect(service.nextBirthdayText()).toBe('Tomorrow');
     });
 
     it('should compute nextBirthdayText with days count', () => {
-      expect(service.nextBirthdayText()).toBe('In 10 days');
+      expect(service.nextBirthdayText()).toBe('10 days');
     });
 
     it('should return "N/A" for nextBirthdayText when no birthdays', () => {
@@ -326,6 +326,14 @@ describe('DashboardFacadeService', () => {
 
     it('should not undo if no last action', () => {
       spyOn(store, 'dispatch');
+      service.undoLastAction();
+      expect(store.dispatch).not.toHaveBeenCalled();
+    });
+
+    it('should not dispatch when the deleted birthday fails schema validation', () => {
+      spyOn(store, 'dispatch');
+      service.deleteBirthday({ id: 'x', name: 'X', birthDate: 'not-a-date' } as unknown as Birthday);
+      (store.dispatch as jasmine.Spy).calls.reset();
       service.undoLastAction();
       expect(store.dispatch).not.toHaveBeenCalled();
     });

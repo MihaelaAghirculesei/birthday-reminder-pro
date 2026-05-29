@@ -18,7 +18,8 @@ describe('CategoryDialogComponent', () => {
         FormBuilder,
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: data },
-        provideTranslateTesting()
+        provideTranslateTesting(),
+        { provide: LocaleService, useValue: { currentLang: 'en' } }
       ]
     });
 
@@ -348,8 +349,6 @@ describe('CategoryDialogComponent', () => {
   describe('Constructor - Italian locale', () => {
     it('should set currentLang to "it", otherLang to "en" when locale is Italian', () => {
       createComponent({ mode: 'add' });
-      const localeService = TestBed.inject(LocaleService);
-      localeService.setLanguage('it');
 
       // Re-create component after setting Italian locale
       TestBed.resetTestingModule();

@@ -133,6 +133,7 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('marks cleanup done and returns without deleting when the folder is empty', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
       const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
       stMock.ref.and.returnValue({});
       stMock.listAll.and.resolveTo({ items: [] });
@@ -149,6 +150,7 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('deletes Storage files not referenced by any birthday', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
 
       const orphanRef = { fullPath: 'users/uid/photos/orphan.jpg' };
       const usedRef = { fullPath: 'users/uid/photos/used.jpg' };
@@ -205,6 +207,7 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('logs a warning and continues when deleting an individual orphan fails', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
 
       const orphanRef = { fullPath: 'users/uid/photos/orphan.jpg' };
       const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
@@ -231,6 +234,7 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('logs a warning and does not throw when listAll rejects', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
 
       const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
       stMock.ref.and.returnValue({});
@@ -249,6 +253,7 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('logs a summary with counts after a mixed delete run', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
 
       const orphan1 = { fullPath: 'users/uid/photos/a.jpg' };
       const orphan2 = { fullPath: 'users/uid/photos/b.jpg' };

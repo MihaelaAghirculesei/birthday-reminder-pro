@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { TranslateService } from '@ngx-translate/core';
 import { BirthdayChartComponent } from './birthday-chart.component';
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { ChartDataItem } from '../../services';
@@ -28,6 +29,19 @@ describe('BirthdayChartComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('onLangChange', () => {
+    it('should rebuild chart items when the language changes', () => {
+      const translate = TestBed.inject(TranslateService);
+      component.chartData = mockChartData;
+      component.maxCount = 3;
+      component.ngOnChanges({ chartData: new SimpleChange([], mockChartData, true) });
+
+      translate.use('it');
+
+      expect(component.chartDataItems.length).toBe(mockChartData.length);
+    });
   });
 
   describe('ngOnChanges', () => {

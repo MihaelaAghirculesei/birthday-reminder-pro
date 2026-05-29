@@ -23,6 +23,7 @@ describe('CategoryManagerService', () => {
   let store: MockStore;
   let categoryFacadeSpy: jasmine.SpyObj<CategoryFacadeService>;
   let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+  let localeServiceMock: { currentLang: string; setLanguage: (lang: string) => void };
 
   const mockCategories: BirthdayCategory[] = [
     { id: 'friends', name: 'Friends', icon: 'group', color: '#4CAF50' },
@@ -47,6 +48,8 @@ describe('CategoryManagerService', () => {
       categories: jasmine.createSpy('categories').and.returnValue(mockCategories)
     });
 
+    localeServiceMock = { currentLang: 'en', setLanguage(lang: string) { this.currentLang = lang; } };
+
     TestBed.configureTestingModule({
       providers: [
         CategoryManagerService,
@@ -54,6 +57,7 @@ describe('CategoryManagerService', () => {
         { provide: MatDialog, useValue: dialogSpyObj },
         { provide: CategoryFacadeService, useValue: categoryFacadeSpyObj },
         { provide: NotificationService, useValue: notificationServiceSpyObj },
+        { provide: LocaleService, useValue: localeServiceMock },
         provideTranslateTesting()
       ]
     });
@@ -187,6 +191,37 @@ describe('CategoryManagerService', () => {
       expect(notificationServiceSpy.show).toHaveBeenCalledWith('There are no uncategorized birthdays to reassign.', 'info');
       expect(dialogSpy.open).not.toHaveBeenCalled();
     });
+
+    it('should open reassign dialog when orphaned birthdays exist', fakeAsync(() => {
+      const orphaned = createMockBirthday({ id: '99', name: 'Orphan', category: 'deleted-cat' });
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [orphaned]);
+      store.refreshState();
+
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of(null));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+
+      service.editCategory('__orphaned__');
+      flushMicrotasks();
+
+      expect(dialogSpy.open).toHaveBeenCalled();
+    }));
+
+    it('should reassign orphaned birthdays when user picks a new category', fakeAsync(() => {
+      const orphaned = createMockBirthday({ id: '99', name: 'Orphan', category: 'deleted-cat' });
+      store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [orphaned]);
+      store.refreshState();
+
+      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
+      mockDialogRef.afterClosed.and.returnValue(of({ action: 'reassign', newCategoryId: 'friends' }));
+      dialogSpy.open.and.returnValue(mockDialogRef);
+      spyOn(store, 'dispatch');
+
+      service.editCategory('__orphaned__');
+      flushMicrotasks();
+
+      expect(store.dispatch).toHaveBeenCalled();
+    }));
 
     it('should open edit dialog for existing category', fakeAsync(() => {
       const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);

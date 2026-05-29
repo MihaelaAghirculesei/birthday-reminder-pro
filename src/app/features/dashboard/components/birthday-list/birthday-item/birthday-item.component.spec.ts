@@ -95,7 +95,7 @@ describe('BirthdayItemComponent', () => {
       expect(component.daysChipClass).toBe('red-alert');
     });
 
-    it('should set "X days" for multiple days', () => {
+    it('should set days count text for multiple days', () => {
       component.daysUntilBirthday = 15;
       component.ngOnChanges({
         daysUntilBirthday: new SimpleChange(0, 15, false)
@@ -233,13 +233,11 @@ describe('BirthdayItemComponent', () => {
 
   describe('daysText and daysChipClass initialization', () => {
     it('should initialize with empty daysText', () => {
-      const newComponent = new BirthdayItemComponent();
-      expect(newComponent.daysText).toBe('');
+      expect(component.daysText).toBe('');
     });
 
     it('should initialize with green-safe daysChipClass', () => {
-      const newComponent = new BirthdayItemComponent();
-      expect(newComponent.daysChipClass).toBe('green-safe');
+      expect(component.daysChipClass).toBe('green-safe');
     });
   });
 });
