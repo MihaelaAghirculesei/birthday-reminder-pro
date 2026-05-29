@@ -1,6 +1,7 @@
 import { Injectable, Signal, WritableSignal, computed, signal, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
+import { TranslateService } from '@ngx-translate/core';
 import { Birthday, BirthdayCategory } from '../../../shared';
 import { safeParseBirthday } from '../../../shared/schemas/birthday.schema';
 import { CategoryFacadeService } from '../../../core';
@@ -11,11 +12,14 @@ import { AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 
+const CATEGORY_FILTER_KEY = '__category_filter';
+
 @Injectable()
 export class DashboardFacadeService {
   private readonly store = inject(Store<AppState>);
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly statsService = inject(BirthdayStatsService);
+  private readonly translate = inject(TranslateService);
 
   private readonly birthdays: Signal<Birthday[]> = toSignal(
     this.store.select(BirthdaySelectors.selectAllBirthdays),
@@ -42,6 +46,13 @@ export class DashboardFacadeService {
   readonly selectedCategory: Signal<string | null> = this.storeSelectedCategory;
   readonly searchTerm: Signal<string> = this.storeSearchTerm;
   readonly lastAction: Signal<{ type: string; data: Birthday | BirthdayCategory } | null> = this._lastAction.asReadonly();
+
+  constructor() {
+    const saved = localStorage.getItem(CATEGORY_FILTER_KEY);
+    if (saved) {
+      this.store.dispatch(BirthdayActions.setSelectedCategory({ category: saved }));
+    }
+  }
 
   readonly totalBirthdays: Signal<number> = computed(() =>
     this.birthdays().length
@@ -76,9 +87,9 @@ export class DashboardFacadeService {
     const next5 = this.next5Birthdays();
     if (next5.length === 0) return 'N/A';
     const days = next5[0].daysUntil;
-    if (days === 0) return 'Today!';
-    if (days === 1) return 'Tomorrow!';
-    return `In ${days} days`;
+    if (days === 0) return this.translate.instant('BIRTHDAY_ITEM.TODAY');
+    if (days === 1) return this.translate.instant('BIRTHDAY_ITEM.TOMORROW');
+    return this.translate.instant('BIRTHDAY_ITEM.DAYS_UNTIL', { days });
   });
 
   readonly chartData: Signal<ChartDataItem[]> = computed(() =>
@@ -112,9 +123,9 @@ export class DashboardFacadeService {
     if (orphanedCount > 0) {
       categoryStats.unshift({
         id: '__orphaned__',
-        name: 'Work',
-        nameKey: 'CATEGORIES.WORK',
-        icon: 'business_center',
+        name: this.translate.instant('BIRTHDAY_LIST.ORPHANED_CATEGORY'),
+        nameKey: 'BIRTHDAY_LIST.ORPHANED_CATEGORY',
+        icon: 'help_outline',
         color: '#FF9800',
         count: orphanedCount
       });
@@ -158,10 +169,16 @@ export class DashboardFacadeService {
     const current = this.storeSelectedCategory();
     const newValue = current === categoryId ? null : categoryId;
     this.store.dispatch(BirthdayActions.setSelectedCategory({ category: newValue }));
+    if (newValue) {
+      localStorage.setItem(CATEGORY_FILTER_KEY, newValue);
+    } else {
+      localStorage.removeItem(CATEGORY_FILTER_KEY);
+    }
   }
 
   clearCategoryFilter(): void {
     this.store.dispatch(BirthdayActions.setSelectedCategory({ category: null }));
+    localStorage.removeItem(CATEGORY_FILTER_KEY);
   }
 
   setSearchTerm(term: string): void {
