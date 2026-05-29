@@ -14,6 +14,7 @@ import { NetworkStatusComponent } from '../../shared/components/network-status.c
 import { AppState } from '../../core/store/app.state';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
+import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
 
 import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 import { HeaderImportExportComponent } from './header-import-export.component';
@@ -43,13 +44,22 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
           <mat-icon aria-hidden="true">menu</mat-icon>
         </button>
         <mat-menu #navMenu="matMenu" class="nav-menu-panel nav-menu-main" xPosition="after" yPosition="below" [overlapTrigger]="true">
-          <a mat-menu-item routerLink="/" [attr.aria-label]="'NAV.GO_DASHBOARD' | translate">
+          <a mat-menu-item routerLink="/" routerLinkActive="mobile-nav-active"
+             [routerLinkActiveOptions]="{exact: true}"
+             [attr.aria-label]="'NAV.GO_DASHBOARD' | translate">
             <mat-icon aria-hidden="true">home</mat-icon>
             <span>{{ 'NAV.DASHBOARD' | translate }}</span>
           </a>
-          <a mat-menu-item routerLink="/scheduled-messages" [attr.aria-label]="'NAV.GO_MESSAGES' | translate">
+          <a mat-menu-item
+             routerLink="/scheduled-messages"
+             routerLinkActive="mobile-nav-active"
+             [attr.aria-label]="'NAV.GO_MESSAGES' | translate"
+             (click)="!isAuthenticated() && signInDirect()">
             <mat-icon aria-hidden="true">schedule_send</mat-icon>
             <span>{{ 'NAV.MESSAGES' | translate }}</span>
+            @if (!isAuthenticated()) {
+              <mat-icon aria-hidden="true" style="font-size:14px;width:14px;height:14px;opacity:0.5;margin-left:4px">lock</mat-icon>
+            }
           </a>
           <mat-divider></mat-divider>
           <button mat-menu-item [matMenuTriggerFor]="mobileSettings.settingsMenu">
@@ -202,6 +212,7 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
 
       .mat-mdc-menu-item {
         color: white !important;
+        transition: background 0.2s ease;
 
         .mat-icon {
           color: rgba(255, 255, 255, 0.7) !important;
@@ -213,6 +224,11 @@ import { HeaderNavStripComponent } from './header-nav-strip.component';
 
         &:hover {
           background: rgba(255, 255, 255, 0.1);
+        }
+
+        &.mobile-nav-active {
+          background: rgba(255, 255, 255, 0.15) !important;
+          font-weight: 600;
         }
 
         &[disabled] {
@@ -423,6 +439,7 @@ export class HeaderComponent implements OnInit {
   private readonly ngZone = inject(NgZone);
   private readonly el = inject(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authService = inject(FirebaseAuthService);
 
   @ViewChild('navMenuTrigger') navMenuTrigger!: MatMenuTrigger;
 
@@ -474,6 +491,11 @@ export class HeaderComponent implements OnInit {
 
   signOut(): void {
     this.store.dispatch(AuthActions.signOut());
+  }
+
+  signInDirect(): void {
+    this.store.dispatch(AuthActions.signInWithGoogle());
+    this.navMenuTrigger?.closeMenu();
   }
 
   private getScrollY(): number {
