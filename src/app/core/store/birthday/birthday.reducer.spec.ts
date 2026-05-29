@@ -174,7 +174,7 @@ describe('Birthday Reducer', () => {
         BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
       );
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
-      state = birthdayReducer(state, BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+      state = birthdayReducer(state, BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
 
       expect(state.optimisticBackup.find(e => e.operationId === '1')).toBeUndefined();
     });

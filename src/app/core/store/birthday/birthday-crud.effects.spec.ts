@@ -239,7 +239,7 @@ describe('BirthdayCrudEffects', () => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
         expect(offlineStorageMock.deleteBirthday).toHaveBeenCalledWith('1');
         expect(pushNotificationMock.cancelAllNotificationsForBirthday).toHaveBeenCalledWith('1');
         done();
@@ -280,7 +280,7 @@ describe('BirthdayCrudEffects', () => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
         expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete');
         done();
       });
@@ -298,7 +298,7 @@ describe('BirthdayCrudEffects', () => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
       effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1' }));
+        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: birthdayWithPhoto }));
         expect(loggerMock.warn).toHaveBeenCalledWith(
           jasmine.stringContaining('[BirthdayCrudEffects]'),
           '1',
