@@ -12,7 +12,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { BackupService } from '../../core/services/backup.service';
-import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { FirebaseAuthService, AuthUser } from '../../core/services/firebase-auth.service';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 
 const INITIAL_STATE = {
@@ -79,6 +79,27 @@ describe('HeaderComponent', () => {
     spyOn(store, 'dispatch');
     component.signInDirect();
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInWithGoogle());
+  });
+
+  it('dispatches signInSuccess when performGoogleSignInDirect resolves', async () => {
+    const mockUser: AuthUser = { uid: 'u1', email: 'a@b.com', displayName: 'A', photoURL: null };
+    const authService = TestBed.inject(FirebaseAuthService);
+    (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.resolve(mockUser));
+    spyOn(store, 'dispatch');
+
+    await component.signInDirect();
+
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInSuccess({ user: mockUser }));
+  });
+
+  it('dispatches signInFailure when performGoogleSignInDirect rejects', async () => {
+    const authService = TestBed.inject(FirebaseAuthService);
+    (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.reject(new Error('popup closed')));
+    spyOn(store, 'dispatch');
+
+    await component.signInDirect();
+
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInFailure({ error: 'popup closed' }));
   });
 
   describe('scroll cleanup on destroy', () => {

@@ -18,6 +18,7 @@ import { NotificationPermissionService } from '../../core/services/notification-
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { BackupService } from '../../core/services/backup.service';
+import { FirebaseAuthService, AuthUser } from '../../core/services/firebase-auth.service';
 
 describe('HeaderNavStripComponent', () => {
   let component: HeaderNavStripComponent;
@@ -63,6 +64,7 @@ describe('HeaderNavStripComponent', () => {
         { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
         { provide: MatDialog, useValue: { open: jasmine.createSpy('open'), afterOpened: EMPTY, afterAllClosed: EMPTY } },
         { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
+        { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: jasmine.createSpy('performGoogleSignInDirect').and.returnValue(Promise.resolve(null)) } },
         { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } },
         provideTranslateTesting()
       ]
@@ -93,6 +95,27 @@ describe('HeaderNavStripComponent', () => {
       spyOn(store, 'dispatch');
       component.signInForMessages();
       expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInWithGoogle());
+    });
+
+    it('dispatches signInSuccess when performGoogleSignInDirect resolves', async () => {
+      const mockUser: AuthUser = { uid: 'u1', email: 'a@b.com', displayName: 'A', photoURL: null };
+      const authService = TestBed.inject(FirebaseAuthService);
+      (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.resolve(mockUser));
+      spyOn(store, 'dispatch');
+
+      await component.signInForMessages();
+
+      expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInSuccess({ user: mockUser }));
+    });
+
+    it('dispatches signInFailure when performGoogleSignInDirect rejects', async () => {
+      const authService = TestBed.inject(FirebaseAuthService);
+      (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.reject(new Error('popup closed')));
+      spyOn(store, 'dispatch');
+
+      await component.signInForMessages();
+
+      expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInFailure({ error: 'popup closed' }));
     });
   });
 
