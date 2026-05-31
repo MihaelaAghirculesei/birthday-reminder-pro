@@ -1,14 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 
-import { HeaderImportExportComponent } from './header-import-export.component';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { NotificationService } from '../../core/services/notification.service';
 import { BackupService } from '../../core/services/backup.service';
-import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { NotificationService } from '../../core/services/notification.service';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
+import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 import { createMockBirthday } from '../../testing/mock-data/birthday-mock.data';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { HeaderImportExportComponent } from './header-import-export.component';
 
 describe('HeaderImportExportComponent', () => {
   let component: HeaderImportExportComponent;

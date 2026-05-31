@@ -1,24 +1,24 @@
 import { Component } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
 import { PLATFORM_ID, signal } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 
 @Component({ selector: 'app-msg-stub', template: '', standalone: true })
 class MsgStubComponent {}
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject, EMPTY } from 'rxjs';
-import * as AuthActions from '../../core/store/auth/auth.actions';
 
-import { HeaderNavStripComponent } from './header-nav-strip.component';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { NotificationPermissionService } from '../../core/services/notification-permission.service';
-import { NotificationService } from '../../core/services/notification.service';
-import { ThemeService } from '../../core/services/theme.service';
 import { BackupService } from '../../core/services/backup.service';
-import { FirebaseAuthService, AuthUser } from '../../core/services/firebase-auth.service';
+import { type AuthUser,FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { NotificationPermissionService } from '../../core/services/notification-permission.service';
+import { ThemeService } from '../../core/services/theme.service';
+import * as AuthActions from '../../core/store/auth/auth.actions';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { HeaderNavStripComponent } from './header-nav-strip.component';
 
 describe('HeaderNavStripComponent', () => {
   let component: HeaderNavStripComponent;

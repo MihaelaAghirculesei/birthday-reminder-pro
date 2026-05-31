@@ -1,25 +1,26 @@
-import { Component, ChangeDetectionStrategy, inject, DestroyRef, ElementRef, ViewChild, PLATFORM_ID, NgZone, OnInit } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, NgZone, type OnInit,PLATFORM_ID, ViewChild } from '@angular/core';
+import { takeUntilDestroyed,toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { fromEvent, merge } from 'rxjs';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NetworkStatusComponent } from '../../shared/components/network-status.component';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule, type MatMenuTrigger } from '@angular/material/menu';
+import { RouterModule } from '@angular/router';
 
-import { AppState } from '../../core/store/app.state';
+import { Store } from '@ngrx/store';
+
+import { TranslatePipe } from '@ngx-translate/core';
+import { fromEvent, merge } from 'rxjs';
+
+import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { type AppState } from '../../core/store/app.state';
 import * as AuthActions from '../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../core/store/auth/auth.selectors';
-import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
-
-import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
+import { NetworkStatusComponent } from '../../shared/components/network-status.component';
 import { HeaderImportExportComponent } from './header-import-export.component';
-import { HeaderUserMenuComponent } from './header-user-menu.component';
 import { HeaderNavStripComponent } from './header-nav-strip.component';
+import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
+import { HeaderUserMenuComponent } from './header-user-menu.component';
 
 @Component({
     selector: 'app-header',

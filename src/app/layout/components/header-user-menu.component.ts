@@ -1,9 +1,11 @@
-import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, EventEmitter,Input, Output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+
 import { TranslatePipe } from '@ngx-translate/core';
+
 import { AuthButtonComponent } from '../../shared/components/auth-button/auth-button.component';
 
 @Component({

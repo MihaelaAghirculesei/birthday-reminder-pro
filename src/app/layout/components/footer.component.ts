@@ -1,5 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser, DOCUMENT } from '@angular/common';
+import { DOCUMENT,isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, PLATFORM_ID } from '@angular/core';
+
 import { TranslatePipe } from '@ngx-translate/core';
 
 

@@ -1,19 +1,19 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PLATFORM_ID, signal } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { PLATFORM_ID, signal } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject, EMPTY } from 'rxjs';
 
-import { HeaderComponent } from './header.component';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { NotificationPermissionService } from '../../core/services/notification-permission.service';
-import { NotificationService } from '../../core/services/notification.service';
-import { ThemeService } from '../../core/services/theme.service';
 import { BackupService } from '../../core/services/backup.service';
-import { FirebaseAuthService, AuthUser } from '../../core/services/firebase-auth.service';
+import { type AuthUser,FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { NotificationPermissionService } from '../../core/services/notification-permission.service';
+import { ThemeService } from '../../core/services/theme.service';
 import * as AuthActions from '../../core/store/auth/auth.actions';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { HeaderComponent } from './header.component';
 
 const INITIAL_STATE = {
   auth: { user: null, loading: false, error: null },

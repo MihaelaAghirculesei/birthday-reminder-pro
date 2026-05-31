@@ -1,15 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PLATFORM_ID, signal } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { PLATFORM_ID, signal } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 
-import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 
 describe('HeaderSettingsMenuComponent', () => {
   let component: HeaderSettingsMenuComponent;
