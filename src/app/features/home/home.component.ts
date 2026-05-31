@@ -1,20 +1,23 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectionStrategy, DestroyRef, NgZone, Signal, ViewChild, ViewContainerRef, ComponentRef, effect, inject, signal } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import { animate,style, transition, trigger } from '@angular/animations';
+import { type AfterViewInit, ChangeDetectionStrategy, Component, type ComponentRef, DestroyRef, effect, inject, NgZone, type OnInit, type Signal, signal,ViewChild, ViewContainerRef } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { BirthdayFormComponent } from '../../shared/components/birthday-form/birthday-form.component';
-import { BirthdayCategory } from '../../shared/constants';
-import { Birthday } from '../../shared/models';
-import { CategoryFacadeService, LoggerService } from '../../core';
+
 import { Store } from '@ngrx/store';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+
+import { TranslatePipe } from '@ngx-translate/core';
 import { timer } from 'rxjs';
-import { AppState } from '../../core/store/app.state';
+
+import { CategoryFacadeService, LoggerService } from '../../core';
+import { type AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { BirthdayFormComponent } from '../../shared/components/birthday-form/birthday-form.component';
+import { type BirthdayCategory } from '../../shared/constants';
+import { type Birthday } from '../../shared/models';
 
 @Component({
     selector: 'app-home',

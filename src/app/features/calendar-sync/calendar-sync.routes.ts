@@ -1,5 +1,7 @@
-import { Routes } from '@angular/router';
+import { type Routes } from '@angular/router';
+
 import { provideEffects } from '@ngrx/effects';
+
 import { BirthdayCalendarSyncEffects } from '../../core/store/birthday/birthday-calendar-sync.effects';
 
 export const calendarSyncRoutes: Routes = [

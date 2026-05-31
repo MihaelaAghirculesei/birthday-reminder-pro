@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import { signal } from '@angular/core';
+import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 
-import { HomeComponent } from './home.component';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { SILENT_LOGGER_PROVIDER } from '../../core/services/logger.service';
 import { CategoryFacadeService } from '../../core/services/category-facade.service';
-import { PhotoStorageService } from '../../core/services/photo-storage.service';
 import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { SILENT_LOGGER_PROVIDER } from '../../core/services/logger.service';
+import { PhotoStorageService } from '../../core/services/photo-storage.service';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
-import { Birthday } from '../../shared/models';
+import { type Birthday } from '../../shared/models';
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { HomeComponent } from './home.component';
 
 const MOCK_BIRTHDAY: Birthday = {
   id: '1',
