@@ -1,15 +1,15 @@
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
-import { PLATFORM_ID } from '@angular/core';
 import { of, throwError } from 'rxjs';
 
-import { SyncQueueProcessorService } from '../../core/services/sync-queue-processor.service';
-import { PendingChangesService, PendingChange } from '../../core/services/pending-changes.service';
 import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import { FirestoreService } from '../../core/services/firestore.service';
-import { NetworkService } from '../../core/services/network.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
-import { Birthday } from '../../shared/models/birthday.model';
+import { NetworkService } from '../../core/services/network.service';
+import { type PendingChange,PendingChangesService } from '../../core/services/pending-changes.service';
+import { SyncQueueProcessorService } from '../../core/services/sync-queue-processor.service';
+import { type Birthday } from '../../shared/models/birthday.model';
 
 // ---------------------------------------------------------------------------
 // Helpers

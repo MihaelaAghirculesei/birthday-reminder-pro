@@ -65,7 +65,12 @@ describe('Settings menu — navigation items', () => {
 
   it('Settings menu contains Calendar Sync link', () => {
     cy.get('[data-testid="nav-settings-btn"]').click();
-    cy.contains('Calendar Sync').should('be.visible');
+    // Wait for the mat-menu panel to be fully visible before probing its
+    // contents. The @matMenu animation sets opacity/transform as inline styles
+    // on .mat-mdc-menu-panel (a child of .cdk-overlay-pane); disableAnimations()
+    // now forces both to their final values, so this resolves immediately.
+    cy.get('.mat-mdc-menu-panel', { timeout: 5000 }).should('be.visible');
+    cy.get('.mat-mdc-menu-panel').contains('Calendar Sync').should('be.visible');
   });
 
   it('nav-strip Settings button gains nav-active class while menu is open', () => {

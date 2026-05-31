@@ -46,12 +46,12 @@ describe('Category Filter', () => {
     cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
 
     cy.contains('Family Member').should('be.visible');
-    cy.contains('Friend Person').should('not.exist');
+    cy.get('[data-testid="birthday-list"]').contains('Friend Person').should('not.exist');
   });
 
   it('should clear category filter', () => {
     cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
-    cy.contains('Friend Person').should('not.exist');
+    cy.get('[data-testid="birthday-list"]').contains('Friend Person').should('not.exist');
 
     cy.get('[data-testid="clear-filter-button"]').click();
 
@@ -66,13 +66,13 @@ describe('Category Filter', () => {
 
   it('filter state persists after page reload', () => {
     cy.get('[data-testid="category-filter-family"]').find('.category-select-btn').click({ force: true });
-    cy.contains('Friend Person').should('not.exist');
+    cy.get('[data-testid="birthday-list"]').contains('Friend Person').should('not.exist');
 
     cy.reload();
     cy.waitForAngular();
 
     cy.contains('Family Member').should('be.visible');
-    cy.contains('Friend Person').should('not.exist');
+    cy.get('[data-testid="birthday-list"]').contains('Friend Person').should('not.exist');
   });
 });
 

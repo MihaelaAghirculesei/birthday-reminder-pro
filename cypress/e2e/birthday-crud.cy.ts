@@ -30,6 +30,14 @@ describe('Birthday CRUD Operations', () => {
     cy.get('[data-testid="save-birthday-button"]').click();
 
     cy.contains('Jane Smith', { timeout: 10000 }).should('be.visible');
+    // Wait for the Angular zone to fully settle before clicking edit:
+    // (1) HomeComponent.loadDashboard() awaits a dynamic import — zone-tracked Promise
+    // (2) NgRx IDB-write effect completes asynchronously
+    // (3) @expandCollapse :leave animation (150ms WAAPI) finishes and removes the form
+    // Without this, the edit click lands while Angular is mid-flight and the dialog
+    // open call can be dropped or deferred, causing the .dialog-container assertion to
+    // time out on the first attempt.
+    cy.waitForAngular();
 
     cy.get('[data-testid="edit-birthday-button"]').first().click();
 

@@ -1,21 +1,21 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideStore, Store } from '@ngrx/store';
-import { provideEffects } from '@ngrx/effects';
 import { PLATFORM_ID } from '@angular/core';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { provideEffects } from '@ngrx/effects';
+import { provideStore, Store } from '@ngrx/store';
 
-import { IndexedDBStorageService } from '../../core/services/offline-storage.service';
+import { GoogleCalendarService } from '../../core/services/google-calendar.service';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { IndexedDBStorageService } from '../../core/services/offline-storage.service';
 import { PushNotificationService } from '../../core/services/push-notification.service';
-import { GoogleCalendarService } from '../../core/services/google-calendar.service';
 import { SyncCoordinatorService } from '../../core/services/sync-coordinator.service';
-import { birthdayReducer } from '../../core/store/birthday/birthday.reducer';
 import { authReducer } from '../../core/store/auth/auth.reducer';
-import { BirthdayCrudEffects } from '../../core/store/birthday/birthday-crud.effects';
-import { Birthday } from '../../shared/models/birthday.model';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
+import { birthdayReducer } from '../../core/store/birthday/birthday.reducer';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { BirthdayCrudEffects } from '../../core/store/birthday/birthday-crud.effects';
+import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../translate-testing';
 
 describe('Birthday CRUD Integration', () => {
