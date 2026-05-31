@@ -1,8 +1,10 @@
-import { Injectable, inject, DestroyRef } from '@angular/core';
+import { DestroyRef,inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { BehaviorSubject, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { Birthday } from '../../../shared';
+
+import { type Birthday } from '../../../shared';
 
 export interface EditingBirthdayData {
   name: string;

@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CategoryFilterComponent, CategoryStats } from './category-filter.component';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
+import { CategoryFilterComponent, type CategoryStats } from './category-filter.component';
 
 describe('CategoryFilterComponent', () => {
   let component: CategoryFilterComponent;

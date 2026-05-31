@@ -1,9 +1,9 @@
 import { createSelector } from '@ngrx/store';
+
 import {
-  selectSortedBirthdays,
   selectSearchTerm,
-  selectSelectedCategory
-} from '../../../core/store/birthday/birthday.selectors';
+  selectSelectedCategory,
+  selectSortedBirthdays} from '../../../core/store/birthday/birthday.selectors';
 import { selectAllCategories } from '../../../core/store/category/category.selectors';
 
 /**

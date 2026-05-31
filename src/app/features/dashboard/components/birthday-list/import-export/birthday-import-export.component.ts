@@ -1,11 +1,13 @@
-import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy, Signal, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject,Input, Output, type Signal, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { TranslatePipe } from '@ngx-translate/core';
-import { Birthday } from '../../../../../shared';
-import { BackupService, NotificationService, LoggerService, ImportResult } from '../../../../../core';
+
+import { BackupService, type ImportResult,LoggerService, NotificationService } from '../../../../../core';
+import { type Birthday } from '../../../../../shared';
 
 @Component({
     selector: 'app-birthday-import-export',

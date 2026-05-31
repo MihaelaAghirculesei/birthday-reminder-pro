@@ -1,16 +1,19 @@
-import { Injectable, Signal, WritableSignal, computed, signal, inject } from '@angular/core';
+import { computed, inject,Injectable, type Signal, signal, type WritableSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
+
 import { TranslateService } from '@ngx-translate/core';
-import { Birthday, BirthdayCategory } from '../../../shared';
-import { safeParseBirthday } from '../../../shared/schemas/birthday.schema';
+
 import { CategoryFacadeService } from '../../../core';
-import { BirthdayStatsService, ChartDataItem } from './birthday-stats.service';
-import { CategoryStats } from '../components/category-filter/category-filter.component';
-import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
-import { AppState } from '../../../core/store/app.state';
+import { type AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type Birthday, type BirthdayCategory } from '../../../shared';
+import { safeParseBirthday } from '../../../shared/schemas/birthday.schema';
+import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
+import { type CategoryStats } from '../components/category-filter/category-filter.component';
+import { BirthdayStatsService, type ChartDataItem } from './birthday-stats.service';
 
 const CATEGORY_FILTER_KEY = '__category_filter';
 
@@ -85,11 +88,7 @@ export class DashboardFacadeService {
 
   readonly nextBirthdayText: Signal<string> = computed(() => {
     const next5 = this.next5Birthdays();
-    if (next5.length === 0) return 'N/A';
-    const days = next5[0].daysUntil;
-    if (days === 0) return this.translate.instant('BIRTHDAY_ITEM.TODAY');
-    if (days === 1) return this.translate.instant('BIRTHDAY_ITEM.TOMORROW');
-    return this.translate.instant('BIRTHDAY_ITEM.DAYS_UNTIL', { days });
+    return next5.length > 0 ? next5[0].name : 'N/A';
   });
 
   readonly chartData: Signal<ChartDataItem[]> = computed(() =>

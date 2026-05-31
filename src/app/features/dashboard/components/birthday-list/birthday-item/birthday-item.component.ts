@@ -1,12 +1,14 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject } from '@angular/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject,Input, type OnChanges, Output, type SimpleChanges } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
-import { ZodiacIconComponent, CategoryIconComponent, MessageIndicatorComponent, Birthday, calculateAge } from '../../../../../shared';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
+import { type Birthday, calculateAge,CategoryIconComponent, MessageIndicatorComponent, ZodiacIconComponent } from '../../../../../shared';
+import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
 import { parseLocalDate } from '../../../../../shared/utils/date.utils';
 import { RememberPhotoComponent } from '../../remember-photo/remember-photo.component';
 

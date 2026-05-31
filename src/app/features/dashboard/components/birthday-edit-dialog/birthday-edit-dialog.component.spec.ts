@@ -1,11 +1,12 @@
+import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EnvironmentInjector, createEnvironmentInjector, runInInjectionContext } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { BirthdayEditDialogComponent, BirthdayEditDialogData } from './birthday-edit-dialog.component';
-import { BirthdayCategory } from '../../../../shared';
-import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
+import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
+
 import { FirebaseAuthService } from '../../../../core/services/firebase-auth.service';
+import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
+import { type BirthdayCategory } from '../../../../shared';
 import { createMockBirthday } from '../../../../testing/mock-data/birthday-mock.data';
+import { BirthdayEditDialogComponent, type BirthdayEditDialogData } from './birthday-edit-dialog.component';
 
 describe('BirthdayEditDialogComponent', () => {
   let component: BirthdayEditDialogComponent;

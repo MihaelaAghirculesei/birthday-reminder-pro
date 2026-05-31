@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CategoryReassignDialogComponent, CategoryReassignDialogData } from './category-reassign-dialog.component';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
-import { BirthdayCategory } from '../../../../shared';
+import { type BirthdayCategory } from '../../../../shared';
+import { CategoryReassignDialogComponent, type CategoryReassignDialogData } from './category-reassign-dialog.component';
 
 describe('CategoryReassignDialogComponent', () => {
   let component: CategoryReassignDialogComponent;

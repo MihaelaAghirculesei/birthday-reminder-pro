@@ -1,16 +1,19 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
+
 import { Store } from '@ngrx/store';
-import { take } from 'rxjs';
+
 import { TranslateService } from '@ngx-translate/core';
-import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
+import { take } from 'rxjs';
+
 import { CategoryFacadeService, NotificationService } from '../../../core';
 import { LocaleService } from '../../../core/services/locale.service';
-import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
-import { AppState } from '../../../core/store/app.state';
+import { type AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type Birthday, type BirthdayCategory, ConfirmDialogComponent } from '../../../shared';
+import { CategoryReassignDialogComponent } from '../components/category-reassign-dialog/category-reassign-dialog.component';
 
 @Injectable({
   providedIn: 'root'

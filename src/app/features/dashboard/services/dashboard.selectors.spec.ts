@@ -1,9 +1,9 @@
-import { selectFilteredSortedBirthdays } from './dashboard.selectors';
 import { selectSortedBirthdays } from '../../../core/store/birthday/birthday.selectors';
-import { Birthday } from '../../../shared/models/birthday.model';
-import { BirthdayState, initialBirthdayFilters } from '../../../core/store/birthday/birthday.state';
-import { BirthdayCategory } from '../../../shared';
-import { CategoryState, categoryAdapter } from '../../../core/store/category/category.state';
+import { type BirthdayState, initialBirthdayFilters } from '../../../core/store/birthday/birthday.state';
+import { categoryAdapter,type CategoryState } from '../../../core/store/category/category.state';
+import { type BirthdayCategory } from '../../../shared';
+import { type Birthday } from '../../../shared/models/birthday.model';
+import { selectFilteredSortedBirthdays } from './dashboard.selectors';
 
 // ---------------------------------------------------------------------------
 // Helpers

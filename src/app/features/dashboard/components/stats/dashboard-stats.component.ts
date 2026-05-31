@@ -1,7 +1,8 @@
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy,Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+
+import { TranslatePipe } from '@ngx-translate/core';
 @Component({
     selector: 'app-dashboard-stats',
     imports: [TranslatePipe, MatCardModule, MatIconModule],

@@ -1,12 +1,13 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { DashboardFacadeService } from './dashboard-facade.service';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
-import { BirthdayStatsService } from './birthday-stats.service';
-import { Birthday, BirthdayCategory } from '../../../shared';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { signal } from '@angular/core';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type Birthday, type BirthdayCategory } from '../../../shared';
+import { BirthdayStatsService } from './birthday-stats.service';
+import { DashboardFacadeService } from './dashboard-facade.service';
 
 describe('DashboardFacadeService', () => {
   let service: DashboardFacadeService;
@@ -114,20 +115,8 @@ describe('DashboardFacadeService', () => {
       expect(service.nextBirthdayDays()).toBe(0);
     });
 
-    it('should compute nextBirthdayText as "Today!" when 0 days', () => {
-      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, [{ ...mockBirthdays[0], nextBirthday: new Date(), daysUntil: 0 }]);
-      store.refreshState();
-      expect(service.nextBirthdayText()).toBe('Today!');
-    });
-
-    it('should compute nextBirthdayText as "Tomorrow" when 1 day', () => {
-      store.overrideSelector(BirthdaySelectors.selectNext5Birthdays, [{ ...mockBirthdays[0], nextBirthday: new Date(), daysUntil: 1 }]);
-      store.refreshState();
-      expect(service.nextBirthdayText()).toBe('Tomorrow');
-    });
-
-    it('should compute nextBirthdayText with days count', () => {
-      expect(service.nextBirthdayText()).toBe('10 days');
+    it('should return nextBirthdayText as the person name', () => {
+      expect(service.nextBirthdayText()).toBe('John Doe');
     });
 
     it('should return "N/A" for nextBirthdayText when no birthdays', () => {
