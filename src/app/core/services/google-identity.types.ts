@@ -17,6 +17,7 @@ export interface TokenClientConfig {
   client_id: string;
   scope: string;
   callback: (response: TokenResponse) => void;
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- GIS API contract, must match the SDK property name exactly
   error_callback?: (error: { type: string; message: string }) => void;
   prompt?: '' | 'none' | 'consent' | 'select_account';
   enable_granular_consent?: boolean;
@@ -42,13 +43,24 @@ export interface RevokeResponse {
   error_description?: string;
 }
 
+export interface PromptMomentNotification {
+  isDisplayed(): boolean;
+  isNotDisplayed(): boolean;
+  getNotDisplayedReason(): string;
+  isSkippedMoment(): boolean;
+  getSkippedReason(): string;
+  isDismissedMoment(): boolean;
+  getDismissedReason(): string;
+  getMomentType(): 'display' | 'skipped' | 'dismissed';
+}
+
 export interface GoogleAccountsId {
   initialize(config: {
     client_id: string;
     callback: (response: { credential: string }) => void;
     auto_select?: boolean;
   }): void;
-  prompt(): void;
+  prompt(momentListener?: (notification: PromptMomentNotification) => void): void;
   renderButton(parent: HTMLElement, options: Record<string, unknown>): void;
   disableAutoSelect(): void;
 }

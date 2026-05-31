@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { Birthday } from '../../shared/models/birthday.model';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 import { GoogleCalendarService } from './google-calendar.service';
 import { LoggerService } from './logger.service';
 

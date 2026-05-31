@@ -1,8 +1,10 @@
-import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, NgZone,PLATFORM_ID } from '@angular/core';
+
 import { BehaviorSubject } from 'rxjs';
-import type { TokenClient, TokenResponse } from './google-identity.types';
+
 import type { Gapi } from './google-api.types';
+import type { TokenClient, TokenResponse } from './google-identity.types';
 import { LoggerService } from './logger.service';
 import { SecureStorageService } from './secure-storage.service';
 
@@ -62,6 +64,7 @@ export class GoogleCalendarAuthService {
       callback: (response: TokenResponse) => {
         this.ngZone.run(() => { this.handleTokenResponse(response); });
       },
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- GIS API contract, must match the SDK property name exactly
       error_callback: (error: { type: string; message: string }) => {
         this.ngZone.run(() => {
           this.logger.error('[GoogleCalendar] Token error:', error);

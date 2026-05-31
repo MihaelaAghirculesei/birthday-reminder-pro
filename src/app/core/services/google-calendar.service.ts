@@ -1,13 +1,15 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+
 import { BehaviorSubject } from 'rxjs';
-import { Birthday } from '../../shared';
+
 import { environment } from '../../../environments/environment';
+import { type Birthday } from '../../shared';
 import type { Gapi } from './google-api.types';
-import { LoggerService } from './logger.service';
 import { GoogleApiErrorService } from './google-api-error.service';
 import { GoogleApiLoaderService } from './google-api-loader.service';
 import { GoogleCalendarAuthService } from './google-calendar-auth.service';
+import { LoggerService } from './logger.service';
 
 declare const gapi: Gapi;
 

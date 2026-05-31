@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import type { Gapi } from './google-api.types';
 
 declare const gapi: Gapi;
