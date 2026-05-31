@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+
+import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { NotificationFormatterService } from './notification-formatter.service';
 import { SenderSettingsService } from './sender-settings.service';
-import { Birthday, ScheduledMessage } from '../../shared/models';
 
 describe('NotificationFormatterService', () => {
   let service: NotificationFormatterService;

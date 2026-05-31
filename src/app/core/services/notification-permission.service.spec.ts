@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { NotificationPermissionService } from './notification-permission.service';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
+import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs';
+
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { NotificationPermissionService } from './notification-permission.service';
 
 interface MockNotification {
   permission: NotificationPermission;

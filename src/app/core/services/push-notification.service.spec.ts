@@ -1,12 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
-import { PushNotificationService } from './push-notification.service';
-import { BrowserNotificationSchedulerService } from './browser-notification-scheduler.service';
+
+import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { IndexedDBStorageService } from './offline-storage.service';
-import { NotificationPermissionService } from './notification-permission.service';
-import { Birthday, ScheduledMessage } from '../../shared/models';
+import { BrowserNotificationSchedulerService } from './browser-notification-scheduler.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { NotificationPermissionService } from './notification-permission.service';
+import { IndexedDBStorageService } from './offline-storage.service';
+import { PushNotificationService } from './push-notification.service';
 
 describe('PushNotificationService', () => {
   let service: PushNotificationService;

@@ -1,17 +1,20 @@
-import { Injectable, inject, DestroyRef, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { DestroyRef, inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
+
 import { filter, take } from 'rxjs/operators';
-import { Birthday, ScheduledMessage } from '../../shared/models';
+
+import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { parseLocalDate } from '../../shared/utils/date.utils';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { NOTIFICATION_FIRE_WINDOW_MS, ONE_DAY_MS } from '../constants/time.constants';
-import { SenderSettingsService } from './sender-settings.service';
-import { NotificationPermissionService } from './notification-permission.service';
-import { NotificationFormatterService } from './notification-formatter.service';
-import { selectAllBirthdays } from '../store/birthday/birthday.selectors';
 import * as BirthdayActions from '../store/birthday/birthday.actions';
+import { selectAllBirthdays } from '../store/birthday/birthday.selectors';
+import { NotificationFormatterService } from './notification-formatter.service';
+import { NotificationPermissionService } from './notification-permission.service';
+import { SenderSettingsService } from './sender-settings.service';
 
 export interface PendingBrowserNotification {
   id: number;

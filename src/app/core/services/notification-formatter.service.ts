@@ -1,5 +1,6 @@
-import { Injectable, inject } from '@angular/core';
-import { Birthday, ScheduledMessage } from '../../shared/models';
+import { inject,Injectable } from '@angular/core';
+
+import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { parseLocalDate } from '../../shared/utils/date.utils';
 import { SenderSettingsService } from './sender-settings.service';
 
