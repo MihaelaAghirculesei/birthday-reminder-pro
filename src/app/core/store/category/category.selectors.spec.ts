@@ -1,6 +1,6 @@
+import { type BirthdayCategory } from '../../../shared';
 import * as fromSelectors from './category.selectors';
-import { CategoryState } from './category.state';
-import { BirthdayCategory } from '../../../shared';
+import { type CategoryState } from './category.state';
 
 describe('Category Selectors', () => {
   const mockCategories: BirthdayCategory[] = [

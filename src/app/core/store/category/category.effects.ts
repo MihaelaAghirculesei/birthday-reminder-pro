@@ -1,10 +1,13 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+
 import { of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
-import * as CategoryActions from './category.actions';
-import { BIRTHDAY_CATEGORIES, BirthdayCategory } from '../../../shared';
+import { catchError, map, switchMap } from 'rxjs/operators';
+
+import { BIRTHDAY_CATEGORIES, type BirthdayCategory } from '../../../shared';
 import { CategoryStorageService } from '../../services/category-storage.service';
+import * as CategoryActions from './category.actions';
 
 @Injectable()
 export class CategoryEffects {

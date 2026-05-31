@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { BirthdayCategory } from '../../../shared';
+
+import { type BirthdayCategory } from '../../../shared';
 
 export const loadCategories = createAction(
   '[Category] Load Categories'
