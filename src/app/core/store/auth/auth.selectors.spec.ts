@@ -1,6 +1,6 @@
+import { type AuthUser } from '../../services/firebase-auth.service';
 import * as AuthSelectors from './auth.selectors';
-import { AuthState } from './auth.state';
-import { AuthUser } from '../../services/firebase-auth.service';
+import { type AuthState } from './auth.state';
 
 describe('Auth Selectors', () => {
   const mockUser: AuthUser = {

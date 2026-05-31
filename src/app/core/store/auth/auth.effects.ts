@@ -1,11 +1,15 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+
+import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, from, of } from 'rxjs';
 import { catchError, exhaustMap, filter, map, switchMap, take, tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
+
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
-import { NotificationService } from '../../services/notification.service';
+import { FirestoreService } from '../../services/firestore.service';
 import { LoggerService } from '../../services/logger.service';
+import { NotificationService } from '../../services/notification.service';
 import { OrphanPhotoCleanupService } from '../../services/orphan-photo-cleanup.service';
 import * as AuthActions from './auth.actions';
 
@@ -16,6 +20,7 @@ export class AuthEffects {
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
   private readonly orphanCleanup = inject(OrphanPhotoCleanupService);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly logger = inject(LoggerService);
 
   /**
@@ -53,11 +58,26 @@ export class AuthEffects {
       this.actions$.pipe(
         ofType(AuthActions.signInWithGoogle),
         tap(() => {
-          // Sign-in popup is triggered directly from AuthButtonComponent
-          // to avoid browser popup blocking. This effect only handles loading state.
+          // Sign-in is triggered directly from components to avoid popup blocking.
+          // This effect only handles loading state; the actual result comes via
+          // redirectSignIn$ (redirect flow) or component dispatch (GIS flow).
         })
       ),
     { dispatch: false }
+  );
+
+  /** Dispatch signInSuccess after a successful signInWithRedirect round-trip. */
+  redirectSignIn$ = createEffect(() =>
+    this.authService.redirectSignIn$.pipe(
+      map(user => AuthActions.signInSuccess({ user }))
+    )
+  );
+
+  /** Dispatch signInFailure if the redirect sign-in was cancelled or errored. */
+  redirectSignInError$ = createEffect(() =>
+    this.authService.redirectError$.pipe(
+      map(error => AuthActions.signInFailure({ error }))
+    )
   );
 
   signInSuccess$ = createEffect(
@@ -140,6 +160,28 @@ export class AuthEffects {
           from(this.orphanCleanup.cleanupOrphans(user!.uid)).pipe(
             catchError(err => {
               this.logger.warn('[AuthEffects] Orphan photo cleanup error:', err);
+              return EMPTY;
+            })
+          )
+        )
+      ),
+    { dispatch: false }
+  );
+
+  /**
+   * Migrates Firestore birthday documents that still store capability URLs
+   * (with ?token=...) to plain Storage paths on every sign-in.
+   * Becomes a silent no-op once all documents are migrated.
+   */
+  schedulePhotoMigration$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.authStateChanged),
+        filter(({ user }) => user !== null),
+        switchMap(({ user }) =>
+          from(this.firestoreService.migrateCapabilityUrls(user!.uid)).pipe(
+            catchError(err => {
+              this.logger.warn('[AuthEffects] Photo URL migration error:', err);
               return EMPTY;
             })
           )

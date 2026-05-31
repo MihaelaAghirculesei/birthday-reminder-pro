@@ -1,5 +1,6 @@
 import { createSelector } from '@ngrx/store';
-import { AuthState, initialAuthState } from './auth.state';
+
+import { type AuthState, initialAuthState } from './auth.state';
 
 export const selectAuthState = createSelector(
   (state: Record<string, unknown>) => state['auth'] as AuthState | undefined,

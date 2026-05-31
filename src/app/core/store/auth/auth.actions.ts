@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { AuthUser } from '../../services/firebase-auth.service';
+
+import { type AuthUser } from '../../services/firebase-auth.service';
 
 // Auth State Changes (from Firebase listener)
 export const authStateChanged = createAction(
