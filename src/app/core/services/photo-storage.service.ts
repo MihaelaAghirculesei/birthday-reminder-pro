@@ -1,9 +1,11 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
+import { inject,Injectable, PLATFORM_ID } from '@angular/core';
+
+import type { FirebaseOptions } from 'firebase/app';
+
+import { checkFirebaseOptions, FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
-import { FIREBASE_OPTIONS, checkFirebaseOptions, storageGetters } from '../../firebase.config';
-import type { FirebaseOptions } from 'firebase/app';
 
 @Injectable({ providedIn: 'root' })
 export class PhotoStorageService {
@@ -30,6 +32,50 @@ export class PhotoStorageService {
       'data:image/webp;',
     ] as const;
     return SAFE_PREFIXES.some(prefix => value.startsWith(prefix));
+  }
+
+  /**
+   * Extracts the decoded Storage object path from a Firebase Storage download URL.
+   * Returns null for empty strings or URLs without an `/o/` segment.
+   *
+   * @example
+   * extractPath('https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphoto.jpg?alt=media')
+   * // → 'users/uid/photo.jpg'
+   */
+  extractPath(url: string): string | null {
+    if (!url) return null;
+    const oIndex = url.indexOf('/o/');
+    if (oIndex === -1) return null;
+    const afterO = url.slice(oIndex + 3);
+    const boundary = afterO.search(/[?#]/);
+    const encoded = boundary === -1 ? afterO : afterO.slice(0, boundary);
+    return decodeURIComponent(encoded);
+  }
+
+  /**
+   * Resolves a Storage path to a download URL by calling getDownloadURL().
+   *
+   * Unlike the URL returned at upload time (a permanent capability URL that bypasses
+   * Security Rules), this call is evaluated against the rules at resolution time —
+   * the caller must be authenticated as the resource owner. Storing paths in Firestore
+   * instead of capability URLs prevents photo access even if Firestore data is leaked.
+   *
+   * Returns null when running server-side, when Firebase is unconfigured, or on RPC failure.
+   */
+  async resolveUrl(path: string): Promise<string | null> {
+    if (path.startsWith('https://') || path.startsWith('http://')) return path;
+    if (this.isServer || !checkFirebaseOptions(this.firebaseOptions)) return null;
+    try {
+      await storageGetters.initFirebase();
+      const storage = storageGetters.getFirebaseStorage();
+      const storageModule = storageGetters.getStorageModule();
+      if (!storage || !storageModule) return null;
+      const { ref, getDownloadURL } = storageModule;
+      return await getDownloadURL(ref(storage, path));
+    } catch (err) {
+      this.logger.warn('PhotoStorageService: failed to resolve Storage path to URL:', path, err);
+      return null;
+    }
   }
 
   // ─── Upload ───────────────────────────────────────────────────────────────
@@ -106,7 +152,8 @@ export class PhotoStorageService {
       if (!storage || !storageModule) return;
 
       const { ref, deleteObject } = storageModule;
-      await deleteObject(ref(storage, url));
+      const path = this.extractPath(url);
+      await deleteObject(ref(storage, path ?? url));
     } catch (err) {
       this.logger.warn('PhotoStorageService: delete failed', err);
     }

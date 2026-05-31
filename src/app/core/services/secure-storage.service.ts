@@ -1,5 +1,6 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject,Injectable, PLATFORM_ID } from '@angular/core';
+
 import { LoggerService } from './logger.service';
 
 interface EncryptedData {

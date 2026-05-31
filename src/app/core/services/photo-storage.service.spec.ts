@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { PhotoStorageService } from './photo-storage.service';
+import { TestBed } from '@angular/core/testing';
+
+import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
-import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
+import { PhotoStorageService } from './photo-storage.service';
 
 // Minimal 1×1 PNG — valid base64 required by atob() inside base64ToFile()
 const BASE64_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -125,6 +126,87 @@ describe('PhotoStorageService', () => {
         'Foto salvata in locale — cloud sync in sospeso',
         'warning'
       );
+    });
+  });
+
+  // ─── extractPath ─────────────────────────────────────────────────────────
+
+  describe('extractPath', () => {
+    let service: PhotoStorageService;
+    beforeEach(() => ({ service } = setup()));
+
+    it('decodes a standard Firebase Storage download URL', () => {
+      const url = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fuuid.jpg?alt=media&token=tok';
+      expect(service.extractPath(url)).toBe('users/uid/photos/uuid.jpg');
+    });
+
+    it('handles nested paths with multiple encoded slashes', () => {
+      const url = 'https://firebasestorage.googleapis.com/v0/b/proj/o/a%2Fb%2Fc.jpg?alt=media';
+      expect(service.extractPath(url)).toBe('a/b/c.jpg');
+    });
+
+    it('stops at the query-string boundary', () => {
+      const url = 'https://firebasestorage.googleapis.com/v0/b/proj/o/x.jpg?alt=media&token=1';
+      expect(service.extractPath(url)).toBe('x.jpg');
+    });
+
+    it('stops at the fragment boundary', () => {
+      const url = 'https://firebasestorage.googleapis.com/v0/b/proj/o/x.jpg#frag';
+      expect(service.extractPath(url)).toBe('x.jpg');
+    });
+
+    it('returns null for an empty string', () => {
+      expect(service.extractPath('')).toBeNull();
+    });
+
+    it('returns null for a URL without /o/ segment', () => {
+      expect(service.extractPath('https://example.com/photo.jpg')).toBeNull();
+    });
+  });
+
+  // ─── resolveUrl ──────────────────────────────────────────────────────────
+
+  describe('resolveUrl', () => {
+    it('returns null when Firebase is not configured', async () => {
+      const { service } = setup();
+      const result = await service.resolveUrl('users/uid/photo/file.jpg');
+      expect(result).toBeNull();
+    });
+
+    it('returns null on server platform', async () => {
+      const { service } = setup({ platform: 'server', firebase: { apiKey: 'k', projectId: 'p' } });
+      const result = await service.resolveUrl('users/uid/photo/file.jpg');
+      expect(result).toBeNull();
+    });
+
+    it('resolves a path to a download URL via getDownloadURL', async () => {
+      const { service } = setup({ firebase: { apiKey: 'real-key', projectId: 'real-proj' } });
+      const fakeUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/file.jpg?alt=media&token=abc';
+      const mockStorageModule = {
+        ref: jasmine.createSpy('ref').and.returnValue({}),
+        getDownloadURL: jasmine.createSpy('getDownloadURL').and.resolveTo(fakeUrl),
+      };
+      spyOn(storageGetters, 'initFirebase').and.resolveTo();
+      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
+      spyOn(storageGetters, 'getStorageModule').and.returnValue(mockStorageModule as never);
+
+      const result = await service.resolveUrl('users/uid/photo/file.jpg');
+      expect(result).toBe(fakeUrl);
+      expect(mockStorageModule.getDownloadURL).toHaveBeenCalled();
+    });
+
+    it('returns null and logs a warning when getDownloadURL rejects', async () => {
+      const { service } = setup({ firebase: { apiKey: 'k', projectId: 'p' } });
+      const mockStorageModule = {
+        ref: jasmine.createSpy('ref').and.returnValue({}),
+        getDownloadURL: jasmine.createSpy('getDownloadURL').and.rejectWith(new Error('unauthenticated')),
+      };
+      spyOn(storageGetters, 'initFirebase').and.resolveTo();
+      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
+      spyOn(storageGetters, 'getStorageModule').and.returnValue(mockStorageModule as never);
+
+      const result = await service.resolveUrl('users/uid/photo/file.jpg');
+      expect(result).toBeNull();
     });
   });
 

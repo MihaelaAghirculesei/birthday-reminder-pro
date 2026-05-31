@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('IndexedDBConnectionService', () => {
   let service: IndexedDBConnectionService;
