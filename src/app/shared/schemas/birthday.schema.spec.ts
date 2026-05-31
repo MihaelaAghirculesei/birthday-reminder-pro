@@ -1,8 +1,8 @@
 import {
   BirthdaySchema,
   CategorySchema,
-  ScheduledMessageSchema,
   sanitizeBirthdayData,
+  ScheduledMessageSchema,
 } from './birthday.schema';
 
 const BASE_BIRTHDAY = { id: 'abc-123', name: 'Alice', birthDate: '1990-06-15' };

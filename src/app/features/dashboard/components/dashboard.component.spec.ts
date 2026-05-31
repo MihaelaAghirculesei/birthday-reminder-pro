@@ -1,16 +1,17 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { DashboardComponent } from './dashboard.component';
-import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { BirthdayEditService, CategoryManagerService, DashboardFacadeService, ChartDataItem } from '../services';
-import { CategoryFacadeService } from '../../../core';
-import { BirthdayStatsService } from '../services/birthday-stats.service';
 import { provideMockStore } from '@ngrx/store/testing';
-import { Birthday, BirthdayCategory } from '../../../shared';
-import { CategoryStats } from './category-filter/category-filter.component';
+
+import { provideTranslateTesting } from '../../../../testing/translate-testing';
+import { CategoryFacadeService } from '../../../core';
+import { type Birthday, type BirthdayCategory } from '../../../shared';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { BirthdayEditService, CategoryManagerService, type ChartDataItem,DashboardFacadeService } from '../services';
+import { BirthdayStatsService } from '../services/birthday-stats.service';
+import { type CategoryStats } from './category-filter/category-filter.component';
+import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -63,7 +64,7 @@ describe('DashboardComponent', () => {
       birthdaysThisMonth: signal(1),
       averageAge: signal(30),
       nextBirthdayDays: signal(10),
-      nextBirthdayText: signal('In 10 days'),
+      nextBirthdayText: signal('John Doe'),
       chartData: signal(mockChartData),
       maxCount: signal(1),
       categoriesStats: signal(mockCategoryStats),
@@ -148,7 +149,7 @@ describe('DashboardComponent', () => {
     });
 
     it('should expose nextBirthdayText from facade', () => {
-      expect(component.facade.nextBirthdayText()).toBe('In 10 days');
+      expect(component.facade.nextBirthdayText()).toBe('John Doe');
     });
 
     it('should expose chartData from facade', () => {

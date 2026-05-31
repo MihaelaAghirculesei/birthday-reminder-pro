@@ -1,16 +1,17 @@
-import { Component, ChangeDetectionStrategy, inject, ViewChild, Input, DestroyRef, signal, computed, OnInit, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, Input, type OnInit, PLATFORM_ID,signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterModule } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule, MatMenu } from '@angular/material/menu';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LocaleService } from '../../core/services/locale.service';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { type MatMenu,MatMenuModule } from '@angular/material/menu';
+import { RouterModule } from '@angular/router';
 
-import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
-import { ThemeService, NotificationService } from '../../core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
+import { NotificationService,ThemeService } from '../../core';
+import { LocaleService } from '../../core/services/locale.service';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
+import { SenderSettingsDialogComponent } from '../../shared/components/sender-settings-dialog/sender-settings-dialog.component';
 
 @Component({
   selector: 'app-header-settings-menu',

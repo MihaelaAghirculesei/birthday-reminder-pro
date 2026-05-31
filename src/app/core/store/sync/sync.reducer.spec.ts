@@ -1,6 +1,6 @@
-import { syncReducer } from './sync.reducer';
-import { SyncStatus, initialSyncStatus } from './sync.state';
 import * as SyncActions from './sync.actions';
+import { syncReducer } from './sync.reducer';
+import { initialSyncStatus,type SyncStatus } from './sync.state';
 
 describe('Sync Reducer', () => {
   it('should return initial state', () => {

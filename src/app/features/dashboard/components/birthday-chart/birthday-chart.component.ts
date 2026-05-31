@@ -1,10 +1,11 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges, inject, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef,Component, inject, Input, type OnChanges, type SimpleChanges } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ChartDataItem } from '../../services';
+
+import { type ChartDataItem } from '../../services';
 
 const MONTH_SHORT_KEYS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const MONTH_FULL_KEYS  = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];

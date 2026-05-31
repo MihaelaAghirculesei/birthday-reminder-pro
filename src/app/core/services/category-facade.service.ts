@@ -1,9 +1,12 @@
-import { Injectable, Signal, computed, inject } from '@angular/core';
+import { computed, inject,Injectable, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
-import { Observable } from 'rxjs';
-import { BirthdayCategory } from '../../shared';
-import { AppState } from '../store/app.state';
+
+import { type Observable } from 'rxjs';
+
+import { type BirthdayCategory } from '../../shared';
+import { type AppState } from '../store/app.state';
 import * as CategoryActions from '../store/category/category.actions';
 import * as CategorySelectors from '../store/category/category.selectors';
 import { LocaleService } from './locale.service';

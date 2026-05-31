@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
-import { LoggerService } from './logger.service';
+import { inject,Injectable } from '@angular/core';
+
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
+import { LoggerService } from './logger.service';
 
 export const CURRENT_DATA_VERSION = 1;
 

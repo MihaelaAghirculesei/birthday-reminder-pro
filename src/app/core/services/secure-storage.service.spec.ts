@@ -1,8 +1,9 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { SecureStorageService } from './secure-storage.service';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { SecureStorageService } from './secure-storage.service';
 
 function deleteSecureStorageDB(): Promise<void> {
   return new Promise((resolve) => {

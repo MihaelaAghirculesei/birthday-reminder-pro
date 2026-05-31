@@ -1,13 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { BehaviorSubject } from 'rxjs';
-import { GoogleCalendarSyncComponent } from './google-calendar-sync.component';
-import { provideTranslateTesting } from '../../../testing/translate-testing';
-import { GoogleCalendarService, GoogleCalendarItem, SILENT_LOGGER_PROVIDER } from '../../core';
-import { Birthday } from '../../shared';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder,ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { BehaviorSubject } from 'rxjs';
+
+import { provideTranslateTesting } from '../../../testing/translate-testing';
+import { type GoogleCalendarItem, GoogleCalendarService, SILENT_LOGGER_PROVIDER } from '../../core';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { type Birthday } from '../../shared';
+import { GoogleCalendarSyncComponent } from './google-calendar-sync.component';
 
 interface GoogleCalendarSettings {
   enabled: boolean;

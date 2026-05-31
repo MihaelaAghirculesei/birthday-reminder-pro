@@ -1,5 +1,6 @@
-import { EntityState, EntityAdapter, createEntityAdapter } from '@ngrx/entity';
-import { BirthdayCategory } from '../../../shared';
+import { createEntityAdapter,type EntityAdapter, type EntityState } from '@ngrx/entity';
+
+import { type BirthdayCategory } from '../../../shared';
 
 export interface CategoryState extends EntityState<BirthdayCategory> {
   customCategoryIds: string[];

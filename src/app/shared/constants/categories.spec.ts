@@ -1,13 +1,12 @@
 import {
   BIRTHDAY_CATEGORIES,
+  type BirthdayCategory,
   DEFAULT_CATEGORY,
-  getCustomCategories,
   getAllCategories,
   getCategoryById,
-  getCategoryIcon,
   getCategoryColor,
-  BirthdayCategory
-} from './categories';
+  getCategoryIcon,
+  getCustomCategories} from './categories';
 
 describe('Categories Constants', () => {
   beforeEach(() => {

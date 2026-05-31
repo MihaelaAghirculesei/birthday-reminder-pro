@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Birthday } from '../../shared/models/birthday.model';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 
 export type MergeStrategy = 'cloud-wins' | 'latest-wins';
 
@@ -13,6 +14,33 @@ export interface MergeResult {
   toUpload: Birthday[];
 }
 
+/**
+ * Merges birthday records from local (IndexedDB) and cloud (Firestore) sources.
+ *
+ * ## Conflict strategy
+ *
+ * When the same birthday is edited on two devices while offline, the `latest-wins`
+ * strategy resolves conflicts in three tiers based on `updatedAt` timestamps:
+ *
+ * 1. **Equal timestamps** → cloud wins (deterministic tie-breaker; avoids ping-pong).
+ *
+ * 2. **Strictly newer (> 1 s apart)** → last-write-wins: the record with the higher
+ *    `updatedAt` is kept in full. The other device's changes are **silently discarded**.
+ *    No upload is needed when cloud is newer; local is uploaded when local is newer.
+ *
+ * 3. **Near-simultaneous (≤ 1 s apart)** → field-level merge:
+ *    - All scalar fields come from the winner (higher `updatedAt`).
+ *    - `notes` and `category` fall back to the loser's value when the winner's is empty,
+ *      so independent edits on different fields both survive.
+ *    - The merged record is always re-uploaded so both sides converge on the same state.
+ *
+ * ## Strategies
+ *
+ * | Strategy       | When to use                              |
+ * |----------------|------------------------------------------|
+ * | `latest-wins`  | Post-login sync (default)                |
+ * | `cloud-wins`   | Initial load / full reset from Firestore |
+ */
 @Injectable({ providedIn: 'root' })
 export class BirthdayMergeService {
 
@@ -93,6 +121,16 @@ export class BirthdayMergeService {
     };
   }
 
+  /**
+   * Resolves a conflict between local and cloud versions of the same birthday record.
+   *
+   * Returns:
+   * - The **cloud** object (reference-equal) when timestamps are equal or cloud is newer.
+   * - The **local** object (reference-equal) when local is strictly newer (> 1 s).
+   * - A **new merged object** for near-simultaneous edits (≤ 1 s): winner's fields with
+   *   the loser's `notes` / `category` as fallbacks for empty values.
+   *   Callers detect a merged result via `winner !== local && winner !== cloud`.
+   */
   private resolveConflict(local: Birthday, cloud: Birthday): Birthday {
     const localTime = local.updatedAt || 0;
     const cloudTime = cloud.updatedAt || 0;

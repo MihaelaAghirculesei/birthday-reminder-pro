@@ -1,10 +1,13 @@
 import { inject, Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
-import * as BirthdayActions from './birthday.actions';
+
+import { TranslateService } from '@ngx-translate/core';
+import { tap } from 'rxjs/operators';
+
 import { NotificationService } from '../../services/notification.service';
+import * as BirthdayActions from './birthday.actions';
 
 @Injectable()
 export class BirthdayNotificationEffects {

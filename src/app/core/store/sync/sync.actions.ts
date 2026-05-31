@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { Birthday, Category } from '../../../shared/models/birthday.model';
+
+import { type Birthday, type Category } from '../../../shared/models/birthday.model';
 
 // Sync State
 export const setSyncState = createAction(

@@ -1,19 +1,21 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { of, from } from 'rxjs';
-import { map, exhaustMap, switchMap, catchError, tap, withLatestFrom, filter } from 'rxjs/operators';
 
-import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { IndexedDBStorageService } from '../../services/offline-storage.service';
-import { NotificationService } from '../../services/notification.service';
-import { LoggerService } from '../../services/logger.service';
 import { TranslateService } from '@ngx-translate/core';
+import { from,of } from 'rxjs';
+import { catchError, exhaustMap, filter,map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
 import { BirthdayMergeService } from '../../services/birthday-merge.service';
-import { Birthday } from '../../../shared/models/birthday.model';
-import * as SyncActions from './sync.actions';
+import { LoggerService } from '../../services/logger.service';
+import { NotificationService } from '../../services/notification.service';
+import { IndexedDBStorageService } from '../../services/offline-storage.service';
+import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import * as AuthSelectors from '../auth/auth.selectors';
 import * as BirthdayActions from '../birthday/birthday.actions';
+import * as SyncActions from './sync.actions';
 
 @Injectable()
 export class SyncEffects {

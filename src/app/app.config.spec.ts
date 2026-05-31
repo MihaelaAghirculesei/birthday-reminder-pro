@@ -1,7 +1,8 @@
-import { Subject, NEVER, Observable } from 'rxjs';
-import { SwUpdate, UnrecoverableStateEvent } from '@angular/service-worker';
-import { LoggerService } from './core/services/logger.service';
+import { type SwUpdate, type UnrecoverableStateEvent } from '@angular/service-worker';
+import { NEVER, type Observable,Subject } from 'rxjs';
+
 import { initSwErrorLogging } from './app.config';
+import { type LoggerService } from './core/services/logger.service';
 
 function makeSwUpdate(unrecoverable: Observable<UnrecoverableStateEvent>): SwUpdate {
   return { unrecoverable } as unknown as SwUpdate;

@@ -1,4 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
+
 import * as CategoryActions from './category.actions';
 import { categoryAdapter, initialCategoryState } from './category.state';
 

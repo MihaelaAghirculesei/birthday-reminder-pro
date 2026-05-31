@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CategoryDialogComponent } from './category-dialog.component';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { LocaleService } from '../../../../core/services/locale.service';
+import { CategoryDialogComponent } from './category-dialog.component';
 
 describe('CategoryDialogComponent', () => {
   let component: CategoryDialogComponent;

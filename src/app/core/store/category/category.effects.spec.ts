@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
-import { Observable, of } from 'rxjs';
-import { Action } from '@ngrx/store';
-import { CategoryEffects } from './category.effects';
-import * as CategoryActions from './category.actions';
+import { type Action } from '@ngrx/store';
+import { type Observable, of } from 'rxjs';
+
+import { type BirthdayCategory } from '../../../shared';
+import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { CategoryStorageService } from '../../services/category-storage.service';
-import { BirthdayCategory } from '../../../shared';
-import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
+import * as CategoryActions from './category.actions';
+import { CategoryEffects } from './category.effects';
 
 describe('CategoryEffects', () => {
   let actions$: Observable<Action>;

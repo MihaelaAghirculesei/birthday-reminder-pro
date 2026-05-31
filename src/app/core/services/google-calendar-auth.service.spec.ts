@@ -1,11 +1,12 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { GoogleCalendarAuthService } from './google-calendar-auth.service';
-import { SecureStorageService } from './secure-storage.service';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
-import type { Gapi, GapiTokenObject } from './google-api.types';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import type { Gapi, GapiTokenObject } from './google-api.types';
+import { GoogleCalendarAuthService } from './google-calendar-auth.service';
+import type { GoogleAccountsOAuth2,TokenClient, TokenResponse } from './google-identity.types';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { SecureStorageService } from './secure-storage.service';
 
 describe('GoogleCalendarAuthService', () => {
   let service: GoogleCalendarAuthService;

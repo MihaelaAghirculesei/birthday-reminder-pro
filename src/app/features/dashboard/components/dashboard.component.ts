@@ -1,20 +1,22 @@
-import { Component, ChangeDetectionStrategy, inject, DestroyRef, NgZone, OnInit } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, NgZone, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { fromEvent } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Birthday, NotificationPermissionBannerComponent } from '../../../shared';
+
+import { TranslatePipe } from '@ngx-translate/core';
+import { fromEvent } from 'rxjs';
+
+import { type Birthday, NotificationPermissionBannerComponent } from '../../../shared';
 import { CalendarIconComponent } from '../../../shared/icons/calendar-icon.component';
-import { DashboardStatsComponent } from './stats/dashboard-stats.component';
-import { BirthdayChartComponent } from './birthday-chart/birthday-chart.component';
-import { CategoryFilterComponent } from './category-filter/category-filter.component';
-import { BirthdayListComponent } from './birthday-list/birthday-list.component';
 import { MessageScheduleDialogComponent } from '../../scheduled-messages/message-schedule-dialog/message-schedule-dialog.component';
 import { BirthdayEditService, CategoryManagerService, DashboardFacadeService } from '../services';
+import { BirthdayChartComponent } from './birthday-chart/birthday-chart.component';
+import { BirthdayListComponent } from './birthday-list/birthday-list.component';
+import { CategoryFilterComponent } from './category-filter/category-filter.component';
+import { DashboardStatsComponent } from './stats/dashboard-stats.component';
 
 @Component({
   selector: 'app-dashboard',

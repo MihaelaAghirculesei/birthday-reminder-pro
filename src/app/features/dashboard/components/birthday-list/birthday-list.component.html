@@ -1,4 +1,4 @@
-<mat-card class="birthday-list-card">
+<mat-card class="birthday-list-card" data-testid="birthday-list-card">
   <mat-card-header class="birthday-list-header">
     <div class="header-title-section">
       <mat-card-title>{{ 'BIRTHDAY_LIST.TITLE' | translate }}</mat-card-title>
@@ -37,6 +37,7 @@
         [minBufferPx]="virtualScrollItemSize() * 2"
         [maxBufferPx]="virtualScrollItemSize() * 5"
         class="birthday-virtual-scroll"
+        data-testid="birthday-list"
       >
         <app-birthday-item
           *cdkVirtualFor="let birthday of enrichedBirthdays; trackBy: trackByBirthday"

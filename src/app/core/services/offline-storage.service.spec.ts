@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { IndexedDBStorageService, RETRY_CONFIG } from './offline-storage.service';
-import { Birthday, ScheduledMessage } from '../../shared';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
+
+import { type Birthday, type ScheduledMessage } from '../../shared';
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
-import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { IndexedDBStorageService, RETRY_CONFIG } from './offline-storage.service';
 
 describe('IndexedDBStorageService', () => {
   let service: IndexedDBStorageService;

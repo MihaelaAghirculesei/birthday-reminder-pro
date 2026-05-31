@@ -36,33 +36,45 @@ describe('Search Functionality', () => {
     cy.get('[data-testid="search-input"]', { timeout: 15000 }).should('be.visible');
   });
 
+  // All birthday-name assertions are scoped to [data-testid="birthday-list-card"]
+  // (the always-present wrapper card) instead of the global document.
+  //
+  // WHY: the dashboard stats card shows the "Next Birthday" name (e.g. "Carlo Bruns")
+  // from all birthdays — not the filtered list. A global cy.contains('Carlo Bruns')
+  // would find that stats text and make should('not.exist') fail even after Carlo is
+  // correctly removed from the birthday list by the search filter.
+  //
+  // [data-testid="birthday-list-card"] is unconditionally rendered (unlike the virtual
+  // scroll viewport [data-testid="birthday-list"], which disappears when the filtered
+  // list is empty), so it works for both zero-result and non-zero-result searches.
+
   it('should search birthdays by name', () => {
-    cy.contains('Alice Johnson').should('exist');
-    cy.contains('Bob Smith').should('exist');
-    cy.contains('Carlo Bruns').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Carlo Bruns').should('exist');
 
     cy.get('[data-testid="search-input"]')
       .should('be.visible')
       .type('Alice', { force: true });
 
-    cy.contains('Alice Johnson').should('exist');
-    cy.contains('Bob Smith').should('not.exist');
-    cy.contains('Carlo Bruns').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Carlo Bruns').should('not.exist');
   });
 
   it('should clear search and show all birthdays', () => {
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('Alice', { force: true });
-    cy.contains('Bob Smith').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('not.exist');
 
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .clear({ force: true });
 
-    cy.contains('Alice Johnson').should('exist');
-    cy.contains('Bob Smith').should('exist');
-    cy.contains('Carlo Bruns').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Carlo Bruns').should('exist');
   });
 
   it('should show no results message for non-existent search', () => {
@@ -70,9 +82,12 @@ describe('Search Functionality', () => {
       .should('be.visible')
       .type('NonExistent', { force: true });
 
-    // Wait for NgRx pipeline (dispatch → selector → filteredBirthdays → ngOnChanges)
-    // before asserting on the no-results state.
-    cy.get('app-birthday-item', { timeout: 10000 }).should('not.exist');
+    // waitForAngular() uses Angular's whenStable() to confirm the full NgRx
+    // pipeline has settled (dispatch → reducer → selector → signal → CD → render)
+    // before asserting on the no-results state. More reliable than checking
+    // app-birthday-item absence, which can pass prematurely when virtual scroll
+    // hasn't rendered items yet (e.g. items outside the 600px viewport window).
+    cy.waitForAngular();
 
     cy.get('[data-testid="no-results-message"]', { timeout: 10000 })
       .should('be.visible')
@@ -83,7 +98,7 @@ describe('Search Functionality', () => {
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('alice', { force: true });
-    cy.contains('Alice Johnson').should('be.visible');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('be.visible');
 
     cy.get('[data-testid="search-input"]')
       .should('exist')
@@ -91,7 +106,7 @@ describe('Search Functionality', () => {
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('ALICE', { force: true });
-    cy.contains('Alice Johnson').should('be.visible');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('be.visible');
   });
 
   it('should match second word (last name) prefix', () => {
@@ -100,8 +115,8 @@ describe('Search Functionality', () => {
       .type('John', { force: true });
 
     // 'Johnson' starts with 'John' → Alice Johnson should match
-    cy.contains('Alice Johnson').should('exist');
-    cy.contains('Bob Smith').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('not.exist');
   });
 
   it('should NOT match mid-word substrings', () => {
@@ -110,7 +125,7 @@ describe('Search Functionality', () => {
       .type('mith', { force: true });
 
     // 'smith' does not START with 'mith' — should not match Bob Smith
-    cy.contains('Bob Smith').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('not.exist');
   });
 
   it('should search by multi-character prefix', () => {
@@ -118,22 +133,22 @@ describe('Search Functionality', () => {
       .should('exist')
       .type('Car', { force: true });
 
-    cy.contains('Carlo Bruns').should('exist');
-    cy.contains('Alice Johnson').should('not.exist');
-    cy.contains('Bob Smith').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Carlo Bruns').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('not.exist');
   });
 
   it('should handle rapid successive searches', () => {
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .type('Al', { force: true });
-    cy.contains('Alice Johnson').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('exist');
 
     cy.get('[data-testid="search-input"]')
       .should('exist')
       .clear({ force: true })
       .type('Bo', { force: true });
-    cy.contains('Bob Smith').should('exist');
-    cy.contains('Alice Johnson').should('not.exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Bob Smith').should('exist');
+    cy.get('[data-testid="birthday-list-card"]').contains('Alice Johnson').should('not.exist');
   });
 });

@@ -1,8 +1,9 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { BirthdayState } from './birthday.state';
-import { birthdayAdapter } from './birthday.reducer';
+
 import { calculateAge } from '../../../shared';
-import { getNextBirthdayDate, getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday,getNextBirthdayDate } from '../../../shared/utils/date.utils';
+import { birthdayAdapter } from './birthday.reducer';
+import { type BirthdayState } from './birthday.state';
 
 export const selectBirthdayState = createFeatureSelector<BirthdayState>('birthdays');
 

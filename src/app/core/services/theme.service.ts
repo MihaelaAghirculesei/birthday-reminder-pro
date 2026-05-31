@@ -1,10 +1,12 @@
-import { Injectable, PLATFORM_ID, effect, Signal, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { effect, inject,Injectable, PLATFORM_ID, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
-import { AppState } from '../store/app.state';
-import { selectDarkMode } from '../store/ui/ui.selectors';
+
+import { type AppState } from '../store/app.state';
 import * as UIActions from '../store/ui/ui.actions';
+import { selectDarkMode } from '../store/ui/ui.selectors';
 
 @Injectable({
   providedIn: 'root'

@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { SenderSettingsDialogComponent } from './sender-settings-dialog.component';
-import { SenderSettingsService } from '../../../core';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
+import { SenderSettingsService } from '../../../core';
+import { SenderSettingsDialogComponent } from './sender-settings-dialog.component';
 
 describe('SenderSettingsDialogComponent', () => {
   let component: SenderSettingsDialogComponent;

@@ -1,7 +1,8 @@
-import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, fromEvent, merge, interval, from } from 'rxjs';
+import { DestroyRef,inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { BehaviorSubject, from,fromEvent, interval, merge } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 @Injectable({

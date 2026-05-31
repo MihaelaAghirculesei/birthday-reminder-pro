@@ -1,12 +1,13 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { BirthdayListComponent } from './birthday-list.component';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { of } from 'rxjs';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
-import { BirthdayCategory } from '../../../../shared';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { type BirthdayCategory } from '../../../../shared';
 import { createMockBirthday } from '../../../../testing/mock-data/birthday-mock.data';
+import { BirthdayListComponent } from './birthday-list.component';
 
 describe('BirthdayListComponent', () => {
   let component: BirthdayListComponent;

@@ -1,25 +1,28 @@
-import { Injectable, inject, DestroyRef, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { DestroyRef, inject, Injectable, NgZone,PLATFORM_ID } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
-import { Capacitor } from '@capacitor/core';
+
 import { Store } from '@ngrx/store';
-import { Subscription, interval } from 'rxjs';
+
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications, type ScheduleOptions } from '@capacitor/local-notifications';
+import { interval,type Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
-import { Birthday, ScheduledMessage } from '../../shared/models';
+
+import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { parseLocalDate } from '../../shared/utils/date.utils';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import {
-  NOTIFICATION_POLL_INTERVAL_MS,
   NOTIFICATION_FIRE_WINDOW_MS,
+  NOTIFICATION_POLL_INTERVAL_MS,
   ONE_DAY_MS,
 } from '../constants/time.constants';
-import { IndexedDBStorageService } from './offline-storage.service';
-import { LoggerService } from './logger.service';
-import { SenderSettingsService } from './sender-settings.service';
-import { NotificationPermissionService } from './notification-permission.service';
-import { selectAllBirthdays } from '../store/birthday/birthday.selectors';
 import * as BirthdayActions from '../store/birthday/birthday.actions';
+import { selectAllBirthdays } from '../store/birthday/birthday.selectors';
+import { LoggerService } from './logger.service';
+import { NotificationPermissionService } from './notification-permission.service';
+import { IndexedDBStorageService } from './offline-storage.service';
+import { SenderSettingsService } from './sender-settings.service';
 
 export interface BirthdayNotificationData {
   birthdayId: string;

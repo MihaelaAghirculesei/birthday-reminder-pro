@@ -1,6 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { CategoryState, categoryAdapter } from './category.state';
+
 import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
+import { categoryAdapter,type CategoryState } from './category.state';
 
 export const selectCategoryState = createFeatureSelector<CategoryState>('categories');
 

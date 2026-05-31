@@ -1,10 +1,11 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
-import { ThemeService } from './theme.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as UIActions from '../store/ui/ui.actions';
+import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
   let service: ThemeService;

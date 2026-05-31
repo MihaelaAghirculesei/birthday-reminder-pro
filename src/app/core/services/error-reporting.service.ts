@@ -1,5 +1,6 @@
-import { Injectable, InjectionToken, PLATFORM_ID, DestroyRef, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject,Injectable, InjectionToken, PLATFORM_ID } from '@angular/core';
+
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { LoggerService } from './logger.service';
 
@@ -27,11 +28,9 @@ export interface ErrorReporter {
 }
 
 export const ERROR_REPORTER = new InjectionToken<ErrorReporter>('ERROR_REPORTER');
-export const ERROR_REPORTING_ENDPOINT = new InjectionToken<string>('ERROR_REPORTING_ENDPOINT');
 
 const STORE_NAME = 'errorReports';
 const MAX_STORED_ERRORS = 200;
-const FLUSH_INTERVAL_MS = 30_000;
 const PRUNE_EVERY_N = 20;
 
 @Injectable({
@@ -41,29 +40,17 @@ export class ErrorReportingService implements ErrorReporter {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dbConnection = inject(IndexedDBConnectionService);
   private readonly logger = inject(LoggerService);
-  private readonly endpoint: string | null = inject(ERROR_REPORTING_ENDPOINT, { optional: true }) ?? null;
 
   private readonly isBrowser: boolean;
-  private batchBuffer: SerializedErrorReport[] = [];
   private captureCount = 0;
-  private flushTimerId: ReturnType<typeof setInterval> | null = null;
-  private visibilityHandler: (() => void) | null = null;
 
   constructor() {
     this.isBrowser = isPlatformBrowser(this.platformId);
-
-    if (this.isBrowser) {
-      this.startFlushTimer();
-      this.registerVisibilityHandler();
-    }
-
-    inject(DestroyRef).onDestroy(() => this.dispose());
   }
 
   captureError(report: ErrorReport): void {
     try {
       const serialized = this.serializeReport(report);
-      this.batchBuffer.push(serialized);
       if (this.isBrowser) {
         this.persistToIndexedDB(serialized);
         this.captureCount++;
@@ -96,7 +83,6 @@ export class ErrorReportingService implements ErrorReporter {
 
   async clearErrors(): Promise<void> {
     try {
-      this.batchBuffer = [];
       if (!this.isBrowser) {
         return;
       }
@@ -110,25 +96,6 @@ export class ErrorReportingService implements ErrorReporter {
       });
     } catch {
       // Error reporting must never throw
-    }
-  }
-
-  async flush(): Promise<void> {
-    try {
-      if (!this.endpoint || this.batchBuffer.length === 0) {
-        return;
-      }
-      const batch = [...this.batchBuffer];
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(batch)
-      });
-      if (response.ok) {
-        this.batchBuffer = [];
-      }
-    } catch {
-      // Flush failure is non-critical — will retry next interval
     }
   }
 
@@ -212,45 +179,6 @@ export class ErrorReportingService implements ErrorReporter {
       });
     } catch {
       // Pruning failure is non-critical
-    }
-  }
-
-  private startFlushTimer(): void {
-    this.flushTimerId = setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
-  }
-
-  private registerVisibilityHandler(): void {
-    this.visibilityHandler = () => {
-      if (document.visibilityState === 'hidden') {
-        this.flushViaSendBeacon();
-      }
-    };
-    document.addEventListener('visibilitychange', this.visibilityHandler);
-  }
-
-  private flushViaSendBeacon(): void {
-    try {
-      if (!this.endpoint || this.batchBuffer.length === 0) {
-        return;
-      }
-      const data = JSON.stringify(this.batchBuffer);
-      const sent = navigator.sendBeacon(this.endpoint, new Blob([data], { type: 'application/json' }));
-      if (sent) {
-        this.batchBuffer = [];
-      }
-    } catch {
-      // sendBeacon failure is non-critical
-    }
-  }
-
-  private dispose(): void {
-    if (this.flushTimerId !== null) {
-      clearInterval(this.flushTimerId);
-      this.flushTimerId = null;
-    }
-    if (this.visibilityHandler) {
-      document.removeEventListener('visibilitychange', this.visibilityHandler);
-      this.visibilityHandler = null;
     }
   }
 }

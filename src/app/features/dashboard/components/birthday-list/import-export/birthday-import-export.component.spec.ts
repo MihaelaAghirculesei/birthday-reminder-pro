@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { BirthdayImportExportComponent } from './birthday-import-export.component';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { BackupService, NotificationService } from '../../../../../core';
 import { createMockBirthday } from '../../../../../testing/mock-data/birthday-mock.data';
+import { BirthdayImportExportComponent } from './birthday-import-export.component';
 
 interface MockFileInputEvent {
   target: HTMLInputElement | { files: File[] };

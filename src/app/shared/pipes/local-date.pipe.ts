@@ -1,4 +1,5 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, type PipeTransform } from '@angular/core';
+
 import { parseLocalDate } from '../utils/date.utils';
 
 /** Converts a YYYY-MM-DD string to a local Date (no UTC shift). */

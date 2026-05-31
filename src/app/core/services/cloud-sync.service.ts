@@ -1,18 +1,19 @@
-import { Injectable, inject, DestroyRef } from '@angular/core';
+import { DestroyRef,inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Store } from '@ngrx/store';
-import { Subject, firstValueFrom, takeUntil } from 'rxjs';
 
+import { Store } from '@ngrx/store';
+
+import { firstValueFrom, Subject, takeUntil } from 'rxjs';
+
+import { type Birthday } from '../../shared/models/birthday.model';
+import * as SyncActions from '../store/sync/sync.actions';
+import { BirthdayMergeService } from './birthday-merge.service';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
-import { IndexedDBStorageService } from './offline-storage.service';
-import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
+import { NetworkService } from './network.service';
+import { IndexedDBStorageService } from './offline-storage.service';
 import { PhotoStorageService } from './photo-storage.service';
-import { BirthdayMergeService } from './birthday-merge.service';
-import { Birthday } from '../../shared/models/birthday.model';
-
-import * as SyncActions from '../store/sync/sync.actions';
 
 /**
  * Manages Firestore real-time listeners and cloud↔local data migration/merge.

@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { OrphanPhotoCleanupService } from './orphan-photo-cleanup.service';
+
+import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
 import { LoggerService } from './logger.service';
 import { IndexedDBStorageService } from './offline-storage.service';
-import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
+import { OrphanPhotoCleanupService } from './orphan-photo-cleanup.service';
 
 const VALID_FIREBASE_OPTIONS = { apiKey: 'test-key', projectId: 'test-project' };
 

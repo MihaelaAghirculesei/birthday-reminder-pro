@@ -1,8 +1,8 @@
+import * as barrel from './birthday.effects';
 import { BirthdayCalendarSyncEffects } from './birthday-calendar-sync.effects';
 import { BirthdayCrudEffects } from './birthday-crud.effects';
 import { BirthdayMessageEffects } from './birthday-message.effects';
 import { BirthdayNotificationEffects } from './birthday-notification.effects';
-import * as barrel from './birthday.effects';
 
 /**
  * Barrel contract test for birthday.effects.ts.

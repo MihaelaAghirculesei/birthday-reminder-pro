@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { SyncStatusComponent } from './sync-status.component';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
+import { ONE_DAY_MS,ONE_HOUR_MS, ONE_MINUTE_MS } from '../../../core/constants/time.constants';
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
-import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/time.constants';
+import { SyncStatusComponent } from './sync-status.component';
 
 describe('SyncStatusComponent', () => {
   let component: SyncStatusComponent;

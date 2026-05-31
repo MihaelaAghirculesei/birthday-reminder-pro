@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PhotoUploadComponent } from './photo-upload.component';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService } from '../../core/services/notification.service';
+import { PhotoUploadComponent } from './photo-upload.component';
 
 interface MockFileInputTarget {
   files: File[] | null;

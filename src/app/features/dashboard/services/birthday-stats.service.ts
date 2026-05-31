@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Birthday } from '../../../shared';
+
+import { type Birthday } from '../../../shared';
 import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
 
 export interface DashboardStats {

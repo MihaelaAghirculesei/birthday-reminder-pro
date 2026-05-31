@@ -1,14 +1,15 @@
-import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { fakeAsync, flushMicrotasks,TestBed } from '@angular/core/testing';
+import { MatDialog, type MatDialogConfig } from '@angular/material/dialog';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
-import { CategoryManagerService } from './category-manager.service';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService, NotificationService } from '../../../core';
 import { LocaleService } from '../../../core/services/locale.service';
-import { BirthdayCategory } from '../../../shared';
-import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type BirthdayCategory } from '../../../shared';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { CategoryManagerService } from './category-manager.service';
 
 interface DialogData {
   mode?: 'add' | 'edit';

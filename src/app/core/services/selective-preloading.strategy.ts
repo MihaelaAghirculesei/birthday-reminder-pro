@@ -1,7 +1,9 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
-import { PreloadingStrategy, Route } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, EMPTY } from 'rxjs';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { type PreloadingStrategy, type Route } from '@angular/router';
+
+import { EMPTY,Observable } from 'rxjs';
+
 import { LoggerService } from './logger.service';
 
 interface NetworkInformation {

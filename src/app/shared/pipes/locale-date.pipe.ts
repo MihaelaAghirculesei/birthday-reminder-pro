@@ -1,5 +1,6 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { inject,Pipe, type PipeTransform } from '@angular/core';
+
 import { LocaleService } from '../../core/services/locale.service';
 
 /**

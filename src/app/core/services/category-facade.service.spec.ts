@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { of } from 'rxjs';
-import { CategoryFacadeService } from './category-facade.service';
-import { BirthdayCategory } from '../../shared';
+
+import { type BirthdayCategory } from '../../shared';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as CategoryActions from '../store/category/category.actions';
 import * as CategorySelectors from '../store/category/category.selectors';
-import { provideTranslateTesting } from '../../testing/translate-testing';
+import { CategoryFacadeService } from './category-facade.service';
 
 describe('CategoryFacadeService', () => {
   let service: CategoryFacadeService;

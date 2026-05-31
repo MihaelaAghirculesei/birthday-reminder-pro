@@ -1,8 +1,10 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef, inject } from '@angular/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, type ElementRef, EventEmitter, inject,Input, Output, ViewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+
 import { NotificationService } from '../../core/services/notification.service';
 
 @Component({

@@ -1,18 +1,20 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { TranslatePipe } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormBuilder, type FormGroup,ReactiveFormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { toSignal } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
-import { GoogleCalendarService, GoogleCalendarItem, LoggerService } from '../../core';
-import { AppState } from '../../core/store/app.state';
+
+import { TranslatePipe } from '@ngx-translate/core';
+
+import { type GoogleCalendarItem, GoogleCalendarService, LoggerService } from '../../core';
+import { type AppState } from '../../core/store/app.state';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
 
 @Component({

@@ -1,12 +1,12 @@
+import { type Birthday } from '../models/birthday.model';
 import {
-  resolveMessageTemplate,
   buildEmailWishLink,
-  buildWhatsAppWishLink,
   buildSmsWishLink,
   buildTelegramWishLink,
+  buildWhatsAppWishLink,
   getAvailableWishLinks,
+  resolveMessageTemplate,
 } from './wish-links.util';
-import { Birthday } from '../models/birthday.model';
 
 describe('wish-links.util', () => {
   const baseBirthday: Birthday = {

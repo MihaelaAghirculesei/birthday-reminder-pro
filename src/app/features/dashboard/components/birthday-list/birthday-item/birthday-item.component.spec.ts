@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
-import { BirthdayItemComponent } from './birthday-item.component';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
-import { Birthday } from '../../../../../shared';
+import { type Birthday } from '../../../../../shared';
+import { BirthdayItemComponent } from './birthday-item.component';
 
 interface MockMouseEvent {
   currentTarget: { blur: jasmine.Spy } | HTMLButtonElement;

@@ -1,17 +1,17 @@
-import { Injectable, inject, PLATFORM_ID, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
+import { DestroyRef,inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { Store } from '@ngrx/store';
 
-import { PendingChangesService } from './pending-changes.service';
 import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
-import { NetworkService } from './network.service';
-import { LoggerService } from './logger.service';
-import { CloudSyncService } from './cloud-sync.service';
-import { SyncQueueProcessorService } from './sync-queue-processor.service';
-
-import * as SyncActions from '../store/sync/sync.actions';
 import * as AuthSelectors from '../store/auth/auth.selectors';
+import * as SyncActions from '../store/sync/sync.actions';
+import { CloudSyncService } from './cloud-sync.service';
+import { LoggerService } from './logger.service';
+import { NetworkService } from './network.service';
+import { PendingChangesService } from './pending-changes.service';
+import { SyncQueueProcessorService } from './sync-queue-processor.service';
 
 /**
  * Thin orchestrator: wires network, auth and pending-changes streams together,

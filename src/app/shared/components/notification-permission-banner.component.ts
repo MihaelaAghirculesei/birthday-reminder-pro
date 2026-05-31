@@ -1,13 +1,15 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject, DestroyRef, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, type OnInit, PLATFORM_ID,signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
+
 import { TranslatePipe } from '@ngx-translate/core';
+
+import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { SecureStorageService } from '../../core/services/secure-storage.service';
-import { BANNER_DISMISS_TTL_MS } from '../../core/constants/time.constants';
 
 @Component({
     selector: 'app-notification-permission-banner',

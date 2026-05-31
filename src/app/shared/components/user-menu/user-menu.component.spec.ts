@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { UserMenuComponent } from './user-menu.component';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
+import { UserMenuComponent } from './user-menu.component';
 
 describe('UserMenuComponent', () => {
   let component: UserMenuComponent;

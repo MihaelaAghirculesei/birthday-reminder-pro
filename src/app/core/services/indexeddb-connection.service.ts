@@ -1,7 +1,8 @@
-import { Injectable, PLATFORM_ID, DestroyRef, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { LoggerService } from './logger.service';
+import { DestroyRef, inject,Injectable, PLATFORM_ID } from '@angular/core';
+
 import { IdbMigrationError, IdbUnavailableError } from '../errors/app-errors';
+import { LoggerService } from './logger.service';
 
 // ---------------------------------------------------------------------------
 // Migration types

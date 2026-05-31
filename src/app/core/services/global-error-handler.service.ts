@@ -1,8 +1,9 @@
-import { ErrorHandler, Injectable, Injector, inject } from '@angular/core';
-import { NotificationService } from './notification.service';
-import { LoggerService } from './logger.service';
-import { ERROR_REPORTER, ErrorReporter } from './error-reporting.service';
+import { type ErrorHandler, inject,Injectable, Injector } from '@angular/core';
+
 import { IdbError } from '../errors/app-errors';
+import { ERROR_REPORTER, type ErrorReporter } from './error-reporting.service';
+import { LoggerService } from './logger.service';
+import { NotificationService } from './notification.service';
 
 interface ErrorContext {
   type: 'IndexedDB' | 'NgRx' | 'GoogleAPI' | 'Network' | 'Unknown';

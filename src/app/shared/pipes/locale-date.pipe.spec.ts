@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { LocaleDatePipe } from './locale-date.pipe';
+import { TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../testing/translate-testing';
+import { LocaleDatePipe } from './locale-date.pipe';
 
 describe('LocaleDatePipe', () => {
   let pipe: LocaleDatePipe;

@@ -1,6 +1,8 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { inject,Injectable, PLATFORM_ID } from '@angular/core';
+
+import { BehaviorSubject, type Observable } from 'rxjs';
+
 import { LoggerService } from './logger.service';
 
 export type NotificationPermissionStatus = 'default' | 'granted' | 'denied';

@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
-import { BirthdayChartComponent } from './birthday-chart.component';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
-import { ChartDataItem } from '../../services';
+import { type ChartDataItem } from '../../services';
+import { BirthdayChartComponent } from './birthday-chart.component';
 
 describe('BirthdayChartComponent', () => {
   let component: BirthdayChartComponent;

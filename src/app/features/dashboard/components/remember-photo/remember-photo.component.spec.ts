@@ -1,8 +1,9 @@
 import { ChangeDetectorRef } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RememberPhotoComponent } from './remember-photo.component';
+
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
+import { RememberPhotoComponent } from './remember-photo.component';
 
 describe('RememberPhotoComponent', () => {
   let component: RememberPhotoComponent;

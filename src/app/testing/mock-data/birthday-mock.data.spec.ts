@@ -1,9 +1,8 @@
 import {
-  MOCK_BIRTHDAY_RAW_DATA,
+  createMockBirthday,
   generateAvatarUrl,
   generateMockBirthdays,
-  createMockBirthday
-} from './birthday-mock.data';
+  MOCK_BIRTHDAY_RAW_DATA} from './birthday-mock.data';
 
 describe('Birthday Mock Data', () => {
   const mockIdGenerator = () => 'test-id-123';

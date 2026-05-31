@@ -1,5 +1,6 @@
-﻿import { EntityState } from '@ngrx/entity';
-import { Birthday } from '../../../shared/models/birthday.model';
+﻿import { type EntityState } from '@ngrx/entity';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
 
 /**
  * A single slot in the versioned optimistic-backup log.

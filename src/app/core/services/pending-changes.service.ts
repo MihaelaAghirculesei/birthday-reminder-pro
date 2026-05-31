@@ -1,9 +1,11 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+
 import { BehaviorSubject } from 'rxjs';
-import { LoggerService } from './logger.service';
-import { IndexedDBConnectionService } from './indexeddb-connection.service';
+
 import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
+import { IndexedDBConnectionService } from './indexeddb-connection.service';
+import { LoggerService } from './logger.service';
 
 export type ChangeType = 'create' | 'update' | 'delete';
 export type EntityType = 'birthday' | 'category';

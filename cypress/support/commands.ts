@@ -14,6 +14,22 @@ interface VisualSeedBirthday {
   updatedAt: number;
 }
 
+// ---------------------------------------------------------------------------
+// Sync integration test helpers — types
+// ---------------------------------------------------------------------------
+
+interface TestAuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+interface TestBridge {
+  setAuthUser(user: TestAuthUser | null): void;
+  dispatch(action: { type: string; [key: string]: unknown }): void;
+}
+
 declare namespace Cypress {
   interface Chainable {
     clearIndexedDB(): Chainable<void>;
@@ -53,6 +69,26 @@ declare namespace Cypress {
      * Useful after viewport resizes or route changes.
      */
     waitForNavStrip(): Chainable<void>;
+
+    /**
+     * Sets the authenticated user in both FirebaseAuthService and the NgRx
+     * store via the window.__testBridge injected by main.ts when Cypress runs.
+     * Pass null to simulate sign-out.
+     * Internally calls cy.waitForAngular() so the next command sees stable state.
+     */
+    setTestAuthUser(user: TestAuthUser | null): Chainable<void>;
+
+    /**
+     * Dispatches any NgRx action by plain object (must include `type` key).
+     * Uses window.__testBridge; the app must have been bootstrapped first.
+     */
+    dispatchNgrxAction(action: { type: string; [key: string]: unknown }): Chainable<void>;
+
+    /**
+     * Reads all records from an IndexedDB object store and resolves with the array.
+     * Uses BirthdayReminderDB v4. Useful for asserting raw IDB state in sync tests.
+     */
+    readIdbStore<T = Record<string, unknown>>(storeName: string): Chainable<T[]>;
 
     /**
      * Patches window.IntersectionObserver BEFORE the page loads so that Angular
@@ -267,11 +303,20 @@ Cypress.Commands.add('disableAnimations', () => {
       '  transition-duration: 0s !important;',
       '  transition-delay: 0s !important;',
       '}',
-      // Angular Material dialogs start at opacity:0 and rely on CSS transitions
-      // to reach opacity:1. With transitions disabled we must force full opacity.
+      // Angular Material overlays (dialogs, menus) start at opacity:0 /
+      // transform:scale(0.8) and rely on CSS transitions to reach their final
+      // state. With transitions disabled those inline styles never clear, so we
+      // force the final values here.
+      //
+      // .cdk-overlay-pane  — wrapper; opacity on the pane does NOT cascade to
+      //   its children (CSS opacity is per-element), so we must also target the
+      //   panel element directly.
+      // .mat-mdc-menu-panel — the Angular @matMenu animation sets opacity/
+      //   transform as inline styles on this element, bypassing the pane rule.
       '.mat-mdc-dialog-inner-container,',
       '.mat-mdc-dialog-container,',
-      '.cdk-overlay-pane {',
+      '.cdk-overlay-pane,',
+      '.mat-mdc-menu-panel {',
       '  opacity: 1 !important;',
       '  transform: none !important;',
       '}',
@@ -304,4 +349,78 @@ Cypress.Commands.add('visualSnapshot', (name: string) => {
   // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.wait(200);
   cy.screenshot(name, { overwrite: true });
+});
+
+// ---------------------------------------------------------------------------
+// Sync integration helpers
+// ---------------------------------------------------------------------------
+
+Cypress.Commands.add('setTestAuthUser', (user: TestAuthUser | null) => {
+  // Poll until the dynamic import in main.ts finishes setting up __testBridge.
+  // The chunk loads async; on a cold browser (test 1, no cache) it takes longer
+  // than whenStable() needs to fire, causing a race if we check only once.
+  cy.window().then((win) => {
+    return new Cypress.Promise<void>((resolve, reject) => {
+      let attempts = 0;
+      const poll = () => {
+        const bridge = (win as unknown as { __testBridge?: TestBridge }).__testBridge;
+        if (bridge) {
+          bridge.setAuthUser(user);
+          resolve();
+        } else if (attempts++ < 50) {
+          setTimeout(poll, 100);
+        } else {
+          reject(new Error('[setTestAuthUser] window.__testBridge not found after 5 s — was the app bootstrapped with Cypress present?'));
+        }
+      };
+      poll();
+    });
+  });
+  // Wait for Angular to process the auth-state change (NgRx dispatch + effects).
+  cy.waitForAngular();
+});
+
+Cypress.Commands.add('dispatchNgrxAction', (action: { type: string; [key: string]: unknown }) => {
+  cy.window().then((win) => {
+    return new Cypress.Promise<void>((resolve, reject) => {
+      let attempts = 0;
+      const poll = () => {
+        const bridge = (win as unknown as { __testBridge?: TestBridge }).__testBridge;
+        if (bridge) {
+          bridge.dispatch(action);
+          resolve();
+        } else if (attempts++ < 50) {
+          setTimeout(poll, 100);
+        } else {
+          reject(new Error('[dispatchNgrxAction] window.__testBridge not found after 5 s'));
+        }
+      };
+      poll();
+    });
+  });
+});
+
+Cypress.Commands.add('readIdbStore', <T = Record<string, unknown>>(storeName: string) => {
+  cy.window().then((win) => {
+    return new Cypress.Promise<T[]>((resolve, reject) => {
+      const req = win.indexedDB.open('BirthdayReminderDB', 4);
+      req.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.close();
+          resolve([]);
+          return;
+        }
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const getAll = store.getAll();
+        getAll.onsuccess = () => {
+          db.close();
+          resolve(getAll.result as T[]);
+        };
+        getAll.onerror = () => reject(getAll.error);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  });
 });

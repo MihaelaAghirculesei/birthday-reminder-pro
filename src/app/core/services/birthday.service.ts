@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { Birthday, createSyncMetadata, updateSyncMetadata } from '../../shared/models/birthday.model';
+
 import { DEFAULT_CATEGORY } from '../../shared';
-import { IdGeneratorService } from './id-generator.service';
+import { type Birthday, createSyncMetadata, updateSyncMetadata } from '../../shared/models/birthday.model';
 import { BirthdayNormalizationService } from './birthday-normalization.service';
+import { IdGeneratorService } from './id-generator.service';
 
 @Injectable({ providedIn: 'root' })
 export class BirthdayService {

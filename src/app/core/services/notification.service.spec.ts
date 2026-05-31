@@ -1,5 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NotificationService, NotificationMessage } from './notification.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
+import { type NotificationMessage,NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;

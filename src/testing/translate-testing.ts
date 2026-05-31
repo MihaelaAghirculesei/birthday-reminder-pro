@@ -1,6 +1,8 @@
 import { importProvidersFrom } from '@angular/core';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+
+import { TranslateLoader,TranslateModule } from '@ngx-translate/core';
+import { type Observable, of } from 'rxjs';
+
 import { en } from '../app/core/i18n/translations/en';
 
 class FakeLoader implements TranslateLoader {

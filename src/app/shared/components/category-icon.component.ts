@@ -1,8 +1,10 @@
-import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy,Component, Input, type OnChanges, type SimpleChanges } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { getCategoryIcon, getCategoryColor, getCategoryById } from '../constants/categories';
+
+import { TranslatePipe } from '@ngx-translate/core';
+
+import { getCategoryById,getCategoryColor, getCategoryIcon } from '../constants/categories';
 
 const CATEGORY_KEY_MAP: Record<string, string> = {
   family: 'CATEGORIES.FAMILY',

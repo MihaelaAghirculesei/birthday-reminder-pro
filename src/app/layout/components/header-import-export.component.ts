@@ -1,16 +1,18 @@
-import { Component, ChangeDetectionStrategy, inject, ViewChild, Input } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule, MatMenu } from '@angular/material/menu';
+import { ChangeDetectionStrategy, Component, inject, Input,ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { type MatMenu,MatMenuModule } from '@angular/material/menu';
+
+import { Store } from '@ngrx/store';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { NotificationService } from '../../core';
-import { BackupService, ImportResult } from '../../core/services/backup.service';
-import { Birthday } from '../../shared/models';
-import { AppState } from '../../core/store/app.state';
+import { BackupService, type ImportResult } from '../../core/services/backup.service';
+import { type AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { type Birthday } from '../../shared/models';
 
 @Component({
   selector: 'app-header-import-export',

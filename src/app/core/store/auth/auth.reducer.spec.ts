@@ -1,7 +1,7 @@
+import { type AuthUser } from '../../services/firebase-auth.service';
+import * as AuthActions from './auth.actions';
 import { authReducer } from './auth.reducer';
 import { initialAuthState } from './auth.state';
-import * as AuthActions from './auth.actions';
-import { AuthUser } from '../../services/firebase-auth.service';
 
 describe('Auth Reducer', () => {
   const mockUser: AuthUser = {

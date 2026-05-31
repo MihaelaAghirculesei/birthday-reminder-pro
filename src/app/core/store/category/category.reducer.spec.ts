@@ -1,7 +1,7 @@
+import { type BirthdayCategory } from '../../../shared';
+import * as CategoryActions from './category.actions';
 import { categoryReducer } from './category.reducer';
 import { initialCategoryState } from './category.state';
-import * as CategoryActions from './category.actions';
-import { BirthdayCategory } from '../../../shared';
 
 describe('Category Reducer', () => {
   const mockCategory: BirthdayCategory = {

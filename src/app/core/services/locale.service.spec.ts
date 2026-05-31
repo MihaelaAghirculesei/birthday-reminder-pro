@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { LocaleService } from './locale.service';
+import { TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LocaleService } from './locale.service';
 
 describe('LocaleService', () => {
   let service: LocaleService;

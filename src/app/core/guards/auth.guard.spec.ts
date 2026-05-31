@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { MemoizedSelector } from '@ngrx/store';
+import { type ActivatedRouteSnapshot, Router, type RouterStateSnapshot, type UrlTree } from '@angular/router';
+import { type MemoizedSelector } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { of } from 'rxjs';
-import { authGuard } from './auth.guard';
+import { type of } from 'rxjs';
+
 import { selectAuthInitialized, selectIsAuthenticated } from '../store/auth/auth.selectors';
+import { authGuard } from './auth.guard';
 
 describe('authGuard', () => {
   let store: MockStore;

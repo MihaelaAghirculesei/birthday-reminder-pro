@@ -1,13 +1,14 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PLATFORM_ID, NgZone } from '@angular/core';
-import { GoogleCalendarService } from './google-calendar.service';
-import { GoogleApiLoaderService } from './google-api-loader.service';
-import { GoogleCalendarAuthService } from './google-calendar-auth.service';
-import { SecureStorageService } from './secure-storage.service';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import type { TokenResponse, TokenClient, GoogleAccountsOAuth2 } from './google-identity.types';
-import type { Gapi, GapiTokenObject } from './google-api.types';
+import { NgZone,PLATFORM_ID } from '@angular/core';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import type { Gapi, GapiTokenObject } from './google-api.types';
+import { GoogleApiLoaderService } from './google-api-loader.service';
+import { GoogleCalendarService } from './google-calendar.service';
+import { GoogleCalendarAuthService } from './google-calendar-auth.service';
+import type { GoogleAccountsOAuth2,TokenClient, TokenResponse } from './google-identity.types';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { SecureStorageService } from './secure-storage.service';
 
 describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;

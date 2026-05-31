@@ -1,7 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
+
 import { TranslateService } from '@ngx-translate/core';
-import { ScheduledMessage } from '../models';
+
 import { IdGeneratorService } from '../../core/services/id-generator.service';
+import { type ScheduledMessage } from '../models';
 
 export interface MessageTemplate {
   title: string;

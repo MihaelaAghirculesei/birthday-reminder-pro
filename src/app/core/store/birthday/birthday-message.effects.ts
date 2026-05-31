@@ -1,14 +1,17 @@
 import { inject, Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { of, from } from 'rxjs';
+
+import { from,of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
-import * as BirthdayActions from './birthday.actions';
+
+import { type Birthday, updateSyncMetadata } from '../../../shared/models/birthday.model';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { Birthday, updateSyncMetadata } from '../../../shared/models/birthday.model';
 import * as AuthSelectors from '../auth/auth.selectors';
+import * as BirthdayActions from './birthday.actions';
 import { selectBirthdayById } from './birthday.selectors';
 
 @Injectable()

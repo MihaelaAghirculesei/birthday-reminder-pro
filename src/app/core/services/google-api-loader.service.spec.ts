@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { GoogleApiLoaderService } from './google-api-loader.service';
+
 import type { Gapi } from './google-api.types';
+import { GoogleApiLoaderService } from './google-api-loader.service';
 
 describe('GoogleApiLoaderService', () => {
   let service: GoogleApiLoaderService;

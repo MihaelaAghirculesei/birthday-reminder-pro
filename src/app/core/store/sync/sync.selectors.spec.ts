@@ -1,5 +1,5 @@
 import * as SyncSelectors from './sync.selectors';
-import { SyncStatus } from './sync.state';
+import { type SyncStatus } from './sync.state';
 
 describe('Sync Selectors', () => {
   const idleStatus: SyncStatus = {

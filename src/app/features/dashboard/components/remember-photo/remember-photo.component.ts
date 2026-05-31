@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject,Input, Output } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'app-remember-photo',

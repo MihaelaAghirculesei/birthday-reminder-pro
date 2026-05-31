@@ -1,14 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
-import { MessageSchedulerComponent } from './message-scheduler.component';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { ScheduledMessageService } from '../../services/scheduled-message.service';
 import { NotificationService } from '../../../core';
-import { Birthday, ScheduledMessage } from '../..';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { type Birthday, type ScheduledMessage } from '../..';
+import { ScheduledMessageService } from '../../services/scheduled-message.service';
+import { MessageSchedulerComponent } from './message-scheduler.component';
 
 describe('MessageSchedulerComponent', () => {
   let component: MessageSchedulerComponent;

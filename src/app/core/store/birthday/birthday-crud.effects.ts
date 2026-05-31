@@ -1,19 +1,22 @@
 import { inject, Injectable } from '@angular/core';
-import { Actions, createEffect, ofType, OnInitEffects } from '@ngrx/effects';
-import { Action, Store } from '@ngrx/store';
-import { of, from, forkJoin } from 'rxjs';
+
+import { Actions, createEffect, ofType, type OnInitEffects } from '@ngrx/effects';
+import { type Action, Store } from '@ngrx/store';
+
+import { forkJoin,from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { withLatestFrom } from 'rxjs/operators';
-import * as BirthdayActions from './birthday.actions';
-import { IndexedDBStorageService } from '../../services/offline-storage.service';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
 import { BirthdayService } from '../../services/birthday.service';
 import { BirthdayNormalizationService } from '../../services/birthday-normalization.service';
-import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { PushNotificationService } from '../../services/push-notification.service';
-import { PhotoStorageService } from '../../services/photo-storage.service';
 import { LoggerService } from '../../services/logger.service';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { IndexedDBStorageService } from '../../services/offline-storage.service';
+import { PhotoStorageService } from '../../services/photo-storage.service';
+import { PushNotificationService } from '../../services/push-notification.service';
+import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
 import * as AuthSelectors from '../auth/auth.selectors';
+import * as BirthdayActions from './birthday.actions';
 import * as BirthdaySelectors from './birthday.selectors';
 
 @Injectable()

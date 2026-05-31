@@ -1,14 +1,14 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideStore, Store } from '@ngrx/store';
-import { provideEffects } from '@ngrx/effects';
 import { PLATFORM_ID } from '@angular/core';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { provideEffects } from '@ngrx/effects';
+import { provideStore, Store } from '@ngrx/store';
 
 import { CategoryFacadeService } from '../../core/services/category-facade.service';
 import { CategoryStorageService } from '../../core/services/category-storage.service';
-import { categoryReducer } from '../../core/store/category/category.reducer';
 import { CategoryEffects } from '../../core/store/category/category.effects';
-import { BirthdayCategory, BIRTHDAY_CATEGORIES } from '../../shared';
+import { categoryReducer } from '../../core/store/category/category.reducer';
 import * as CategorySelectors from '../../core/store/category/category.selectors';
+import { BIRTHDAY_CATEGORIES,type BirthdayCategory } from '../../shared';
 import { provideTranslateTesting } from '../translate-testing';
 
 describe('Category Management Integration', () => {

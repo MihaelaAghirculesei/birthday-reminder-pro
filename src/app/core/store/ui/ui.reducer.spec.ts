@@ -1,7 +1,8 @@
-import { Action } from '@ngrx/store';
+import { type Action } from '@ngrx/store';
+
+import * as UIActions from './ui.actions';
 import { uiReducer } from './ui.reducer';
 import { initialUIState } from './ui.state';
-import * as UIActions from './ui.actions';
 
 describe('UI Reducer', () => {
   it('should return initial state', () => {

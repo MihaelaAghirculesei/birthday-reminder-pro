@@ -1,25 +1,28 @@
-import { Component, OnInit, ChangeDetectionStrategy, Signal, computed, inject } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
-import { LocaleDatePipe } from '../../../shared/pipes/locale-date.pipe';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { take } from 'rxjs/operators';
+import { ChangeDetectionStrategy, Component, computed, inject,type OnInit, type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MAT_DIALOG_DATA, MatDialog,MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { Store } from '@ngrx/store';
-import { MessageSchedulerComponent } from '../../../shared/components/message-scheduler/message-scheduler.component';
-import { Birthday } from '../../../shared/models';
+
+import { TranslatePipe } from '@ngx-translate/core';
+import { take } from 'rxjs/operators';
+
 import { CategoryFacadeService } from '../../../core';
-import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
-import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
-import { BirthdayEditDialogComponent, BirthdayEditDialogData } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
-import { AppState } from '../../../core/store/app.state';
+import { type AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { MessageSchedulerComponent } from '../../../shared/components/message-scheduler/message-scheduler.component';
+import { type Birthday } from '../../../shared/models';
+import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+import { LocaleDatePipe } from '../../../shared/pipes/locale-date.pipe';
+import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { BirthdayEditDialogComponent, type BirthdayEditDialogData } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
 
 interface MessageScheduleDialogData {
   birthday?: Birthday;

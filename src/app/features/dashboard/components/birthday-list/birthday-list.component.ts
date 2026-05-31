@@ -1,27 +1,30 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, ChangeDetectionStrategy, DestroyRef, signal, inject, computed, Signal, PLATFORM_ID } from '@angular/core';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { isPlatformBrowser } from '@angular/common';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, EventEmitter, inject, Input, type OnChanges, Output, PLATFORM_ID,type Signal, signal, type SimpleChanges } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ScrollingModule } from '@angular/cdk/scrolling';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
-import { take, switchMap, EMPTY, map, timer, fromEvent } from 'rxjs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { Store } from '@ngrx/store';
-import { Birthday, BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
-import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
-import type { BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
-import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
-import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
+
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { EMPTY, fromEvent,map, switchMap, take, timer } from 'rxjs';
+
 import { LoggerService } from '../../../../core/services/logger.service';
-import { AppState } from '../../../../core/store/app.state';
+import { type AppState } from '../../../../core/store/app.state';
 import * as BirthdayActions from '../../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../../core/store/birthday/birthday.selectors';
+import { type Birthday, type BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
+import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
+import type { BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
+import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
+import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
 
 interface EnrichedBirthday extends Birthday {
   daysUntilBirthday: number;

@@ -1,4 +1,4 @@
-import { AuthUser } from '../../services/firebase-auth.service';
+import { type AuthUser } from '../../services/firebase-auth.service';
 
 export interface AuthState {
   user: AuthUser | null;

@@ -1,20 +1,22 @@
-import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, ViewChild, signal, computed, inject, DestroyRef } from '@angular/core';
-import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { Store } from '@ngrx/store';
-import * as AuthActions from '../../core/store/auth/auth.actions';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef,EventEmitter, inject, Input, Output, signal, ViewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog } from '@angular/material/dialog';
+import { NavigationEnd,Router, RouterModule } from '@angular/router';
+
+import { Store } from '@ngrx/store';
+
 import { TranslatePipe } from '@ngx-translate/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { merge } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 
 import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
-import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
+import * as AuthActions from '../../core/store/auth/auth.actions';
 import { HeaderImportExportComponent } from './header-import-export.component';
+import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 import { HeaderUserMenuComponent } from './header-user-menu.component';
 
 @Component({

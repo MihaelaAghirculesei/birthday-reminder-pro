@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PLATFORM_ID } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { FooterComponent } from './footer.component';
+import { PLATFORM_ID } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { FooterComponent } from './footer.component';
 
 describe('FooterComponent', () => {
   let component: FooterComponent;

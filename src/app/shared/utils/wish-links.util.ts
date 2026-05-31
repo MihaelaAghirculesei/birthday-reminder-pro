@@ -1,4 +1,4 @@
-import { Birthday } from '../models/birthday.model';
+import { type Birthday } from '../models/birthday.model';
 import { calculateAge } from './date/age.util';
 
 export interface WishLink {

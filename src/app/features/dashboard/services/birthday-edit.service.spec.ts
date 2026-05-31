@@ -1,7 +1,8 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { BirthdayEditService } from './birthday-edit.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { BirthdayEditService } from './birthday-edit.service';
 
 describe('BirthdayEditService', () => {
   let service: BirthdayEditService;

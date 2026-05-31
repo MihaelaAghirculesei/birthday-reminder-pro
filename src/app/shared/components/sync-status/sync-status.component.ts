@@ -1,13 +1,15 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ChangeDetectionStrategy,Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { Store } from '@ngrx/store';
+
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
+import { ONE_DAY_MS,ONE_HOUR_MS, ONE_MINUTE_MS } from '../../../core/constants/time.constants';
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
-import { ONE_MINUTE_MS, ONE_HOUR_MS, ONE_DAY_MS } from '../../../core/constants/time.constants';
 
 @Component({
   selector: 'app-sync-status',

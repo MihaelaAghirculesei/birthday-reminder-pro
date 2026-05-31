@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+
+import { TranslatePipe } from '@ngx-translate/core';
+
 import { NetworkService } from '../../core';
 
 @Component({

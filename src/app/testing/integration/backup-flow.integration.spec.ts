@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { BackupService, BackupData } from '../../core/services/backup.service';
+
+import { type BackupData,BackupService } from '../../core/services/backup.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
-import { provideTranslateTesting } from '../translate-testing';
 import { createMockBirthday } from '../mock-data/birthday-mock.data';
+import { provideTranslateTesting } from '../translate-testing';
 
 describe('Backup Flow Integration', () => {
   let backupService: BackupService;

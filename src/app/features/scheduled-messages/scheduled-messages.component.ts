@@ -1,22 +1,25 @@
-import { Component, ChangeDetectionStrategy, computed, Signal, inject } from '@angular/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { take } from 'rxjs';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ChangeDetectionStrategy, Component, computed, inject,type Signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { Store } from '@ngrx/store';
-import { Birthday, ScheduledMessage, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../../shared';
-import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
-import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
-import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
+
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { take } from 'rxjs';
+
 import { SenderSettingsService } from '../../core';
-import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
-import { AppState } from '../../core/store/app.state';
+import { type AppState } from '../../core/store/app.state';
 import * as BirthdayActions from '../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { type Birthday, ConfirmDialogComponent,getAvailableWishLinks, type ScheduledMessage, type WishLink } from '../../shared';
+import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
+import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
+import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
+import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 
 interface ScheduledMessageView extends ScheduledMessage {
   wishLinks: WishLink[];

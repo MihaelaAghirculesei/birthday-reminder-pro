@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
+
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
 
 // ---------------------------------------------------------------------------
 // IDB helpers
@@ -133,6 +134,74 @@ describe('IdbDataMigrationService', () => {
       const raw = { id: '3', name: 'Dan' };
       service.migrateRawBirthday(raw);
       expect((raw as Record<string, unknown>)['_dataVersion']).toBeUndefined();
+    });
+
+    it('throws a descriptive error when no migration step is defined for a version', () => {
+      // _dataVersion: -1 forces the loop to look up migration step -1,
+      // which is intentionally absent — exercises the programming-error guard that
+      // prevents silent data corruption when CURRENT_DATA_VERSION is bumped without
+      // a corresponding entry in BIRTHDAY_DATA_MIGRATIONS.
+      expect(() => service.migrateRawBirthday({ id: 'x', _dataVersion: -1 }))
+        .toThrowError(/No birthday migration defined/);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Data migration steps — per-version pre/post contracts
+  //
+  // Each describe block below documents the exact input → output contract for
+  // one migration step. When you add a new data migration (e.g. v1 → v2),
+  // add a matching describe block here before committing.
+  // -------------------------------------------------------------------------
+
+  describe('data migration steps — per-version contracts', () => {
+    describe('v0 → v1: backfill _dataVersion (pure version stamp)', () => {
+      it('sets _dataVersion to 1 on a record that never had a version field', () => {
+        const pre = { id: 'dm-a', name: 'Alice', birthDate: '1990-01-01', notes: 'keep this' };
+        const post = service.migrateRawBirthday(pre);
+        expect(post['_dataVersion']).toBe(1);
+      });
+
+      it('does not add or remove any other fields (pure stamp)', () => {
+        const pre = { id: 'dm-b', name: 'Alice', birthDate: '1990-01-01', notes: 'keep this' };
+        const post = service.migrateRawBirthday(pre);
+        const expectedKeys = [...Object.keys(pre), '_dataVersion'].sort();
+        expect(Object.keys(post).sort()).toEqual(expectedKeys);
+      });
+
+      it('preserves all field values exactly', () => {
+        const pre = { id: 'dm-c', name: 'Bob', birthDate: '1985-06-15', notes: 'important', category: 'family' };
+        const post = service.migrateRawBirthday(pre);
+        expect(post['id']).toBe('dm-c');
+        expect(post['name']).toBe('Bob');
+        expect(post['birthDate']).toBe('1985-06-15');
+        expect(post['notes']).toBe('important');
+        expect(post['category']).toBe('family');
+      });
+
+      it('treats an explicit _dataVersion: 0 identically to a missing version field', () => {
+        const withZero  = service.migrateRawBirthday({ id: 'dm-d', name: 'Carol', _dataVersion: 0 });
+        const withAbsent = service.migrateRawBirthday({ id: 'dm-d', name: 'Carol' });
+        expect(withZero['_dataVersion']).toBe(withAbsent['_dataVersion']);
+        expect(withZero['name']).toBe(withAbsent['name']);
+      });
+    });
+
+    // -----------------------------------------------------------------------
+    // Completeness guard
+    //
+    // This test fails immediately if CURRENT_DATA_VERSION is bumped without a
+    // corresponding entry in BIRTHDAY_DATA_MIGRATIONS, surfacing the omission
+    // before any real data is touched.
+    // -----------------------------------------------------------------------
+
+    it('BIRTHDAY_DATA_MIGRATIONS has an entry for every step 0..CURRENT_DATA_VERSION-1', () => {
+      for (let v = 0; v < CURRENT_DATA_VERSION; v++) {
+        const raw = { id: `completeness-v${v}`, _dataVersion: v };
+        expect(() => service.migrateRawBirthday(raw))
+          .withContext(`migration step v${v} → v${v + 1} must be defined in BIRTHDAY_DATA_MIGRATIONS`)
+          .not.toThrow();
+      }
     });
   });
 

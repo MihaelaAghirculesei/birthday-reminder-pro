@@ -88,13 +88,11 @@ function hasAllVars() {
 }
 
 function buildEnvironmentContent(isProduction) {
-  const clientId      = process.env.GOOGLE_CLIENT_ID ?? '';
-  const errorEndpoint = process.env.ERROR_REPORTING_ENDPOINT;
+  const clientId = process.env.GOOGLE_CLIENT_ID ?? '';
 
   return [
     `export const environment = {`,
     `  production: ${isProduction},`,
-    `  errorReportingEndpoint: ${errorEndpoint ? `'${errorEndpoint}'` : 'undefined as string | undefined'},`,
     `  googleCalendar: {`,
     `    clientId: '${clientId}'`,
     `  },`,

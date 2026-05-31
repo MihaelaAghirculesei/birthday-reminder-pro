@@ -1,6 +1,8 @@
-import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject,Injectable, PLATFORM_ID, signal } from '@angular/core';
+
 import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 
 export type AppLocale = 'en-US' | 'it-IT';
 
@@ -26,7 +28,7 @@ export class LocaleService {
     return this.translate.currentLang ?? DEFAULT_LANG;
   }
 
-  initialize(): void {
+  async initialize(): Promise<void> {
     this.translate.addLangs(['en', 'it']);
     this.translate.setDefaultLang(DEFAULT_LANG);
 
@@ -35,7 +37,20 @@ export class LocaleService {
       : DEFAULT_LANG;
 
     const lang = this.translate.getLangs().includes(saved) ? saved : DEFAULT_LANG;
-    this.setLanguage(lang);
+
+    // Apply state synchronously so signals are up-to-date immediately.
+    this._currentLocale.set(SUPPORTED_LOCALES[lang] ?? 'en-US');
+    this._lang.set(lang);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(STORAGE_KEY, lang);
+      document.documentElement.lang = lang;
+    }
+
+    // Await translation loading so APP_INITIALIZER (and Angular zone stability)
+    // does not complete until the language bundle is ready. Without this await,
+    // whenStable() can fire before a non-English bundle has been applied, causing
+    // the UI to render in English even when the user's saved language is Italian.
+    await firstValueFrom(this.translate.use(lang));
   }
 
   toggleLanguage(): void {

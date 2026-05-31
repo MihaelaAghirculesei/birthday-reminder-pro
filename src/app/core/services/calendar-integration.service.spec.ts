@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 import { CalendarIntegrationService } from './calendar-integration.service';
 import { GoogleCalendarService } from './google-calendar.service';
 import { LoggerService } from './logger.service';
-import { Birthday } from '../../shared/models/birthday.model';
 
 const BIRTHDAY: Birthday = { id: '1', name: 'Alice', birthDate: '1990-06-15' };
 const BIRTHDAY_WITH_EVENT: Birthday = { ...BIRTHDAY, googleCalendarEventId: 'evt-123' };

@@ -1,15 +1,16 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { MessageScheduleDialogComponent } from './message-schedule-dialog.component';
+import { signal } from '@angular/core';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { MAT_DIALOG_DATA, MatDialog,MatDialogRef } from '@angular/material/dialog';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { of } from 'rxjs';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
-import { Birthday } from '../../../shared/models';
-import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { signal } from '@angular/core';
-import { of } from 'rxjs';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type Birthday } from '../../../shared/models';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { MessageScheduleDialogComponent } from './message-schedule-dialog.component';
 
 // ---------------------------------------------------------------------------
 // Helpers

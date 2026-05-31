@@ -1,10 +1,11 @@
-import { Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Birthday, ScheduledMessage } from '../../shared';
+import { inject,Injectable, InjectionToken, PLATFORM_ID } from '@angular/core';
+
+import { type Birthday, type ScheduledMessage } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
-import { LoggerService } from './logger.service';
+import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
-import { IdbDataMigrationService, CURRENT_DATA_VERSION } from './idb-data-migration.service';
+import { LoggerService } from './logger.service';
 
 const RETRYABLE_ERRORS = ['QuotaExceededError', 'UnknownError', 'AbortError'];
 

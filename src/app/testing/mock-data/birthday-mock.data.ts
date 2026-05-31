@@ -1,5 +1,5 @@
-import { Birthday } from '../../shared/models/birthday.model';
 import { getZodiacSign } from '../../shared';
+import { type Birthday } from '../../shared/models/birthday.model';
 
 export interface MockBirthdayData {
   name: string;

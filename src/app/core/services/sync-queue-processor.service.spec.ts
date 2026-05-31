@@ -1,15 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { SyncQueueProcessorService } from './sync-queue-processor.service';
-import { FirebaseAuthService, AuthUser } from './firebase-auth.service';
-import { FirestoreService } from './firestore.service';
-import { PendingChangesService, PendingChange } from './pending-changes.service';
-import { NetworkService } from './network.service';
-import { LoggerService } from './logger.service';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { Birthday } from '../../shared/models/birthday.model';
+import { type AuthUser,FirebaseAuthService } from './firebase-auth.service';
+import { FirestoreService } from './firestore.service';
+import { LoggerService } from './logger.service';
+import { NetworkService } from './network.service';
+import { type PendingChange,PendingChangesService } from './pending-changes.service';
+import { SyncQueueProcessorService } from './sync-queue-processor.service';
 
 describe('SyncQueueProcessorService', () => {
   let service: SyncQueueProcessorService;

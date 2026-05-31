@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { GoogleApiErrorService, GoogleApiErrorDetails } from './google-api-error.service';
-import { LoggerService, SILENT_LOGGING } from './logger.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { type GoogleApiErrorDetails,GoogleApiErrorService } from './google-api-error.service';
+import { LoggerService, SILENT_LOGGING } from './logger.service';
 
 describe('GoogleApiErrorService', () => {
   let service: GoogleApiErrorService;
