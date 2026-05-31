@@ -1,9 +1,11 @@
-import { Injectable, inject, isDevMode } from '@angular/core';
+import { inject, Injectable, isDevMode } from '@angular/core';
+
+import type { FirebaseOptions } from 'firebase/app';
+
+import { checkFirebaseOptions, FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
+import type { Birthday } from '../../shared/models/birthday.model';
 import { LoggerService } from './logger.service';
 import { IndexedDBStorageService } from './offline-storage.service';
-import { FIREBASE_OPTIONS, checkFirebaseOptions, storageGetters } from '../../firebase.config';
-import type { FirebaseOptions } from 'firebase/app';
-import type { Birthday } from '../../shared/models/birthday.model';
 
 const CLEANUP_KEY = '__orphan_cleanup_ts';
 const INTERVAL_MS = 24 * 60 * 60 * 1000;

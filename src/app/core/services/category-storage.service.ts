@@ -1,6 +1,7 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { BirthdayCategory } from '../../shared';
+import { inject,Injectable, PLATFORM_ID } from '@angular/core';
+
+import { type BirthdayCategory } from '../../shared';
 import { LoggerService } from './logger.service';
 
 @Injectable({

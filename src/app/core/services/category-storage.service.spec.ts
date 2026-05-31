@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { CategoryStorageService } from './category-storage.service';
-import { BirthdayCategory } from '../../shared';
-import { SILENT_LOGGER_PROVIDER } from './logger.service';
+import { TestBed } from '@angular/core/testing';
+
+import { type BirthdayCategory } from '../../shared';
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { CategoryStorageService } from './category-storage.service';
+import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
 describe('CategoryStorageService', () => {
   let service: CategoryStorageService;
