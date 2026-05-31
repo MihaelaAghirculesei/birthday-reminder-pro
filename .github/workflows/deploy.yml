@@ -1,0 +1,48 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+
+# workflow_run executes in the context of the default branch, which is a
+# security feature: secrets are not exposed to untrusted PR code.
+permissions:
+  actions: read      # download artifacts from the triggering CI run
+  deployments: write # create a GitHub deployment record
+  statuses: write    # let Cloudflare Pages action update the commit status
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Gate: only deploy when CI completed successfully — not on failure/cancel.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    environment:
+      name: production
+      url: https://birthday-reminder-aghirculesei.pages.dev
+
+    steps:
+      - name: Download production build from CI
+        # Reuses the artifact built (and tested) by the CI workflow.
+        # No rebuild: what we deploy is exactly what passed all checks.
+        uses: actions/download-artifact@v4
+        with:
+          name: production-build
+          path: dist/birthday-reminder-pro
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: birthday-reminder-aghirculesei
+          # Angular SSR with prerender outputs static files to the browser/ subdir.
+          directory: dist/birthday-reminder-pro/browser
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          wranglerVersion: '3'
