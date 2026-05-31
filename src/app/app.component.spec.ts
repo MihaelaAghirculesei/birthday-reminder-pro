@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideMockStore } from '@ngrx/store/testing';
+
 import { AppComponent } from './app.component';
 import { provideTranslateTesting } from './testing/translate-testing';
 
