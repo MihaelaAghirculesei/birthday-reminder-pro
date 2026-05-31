@@ -1,13 +1,16 @@
 import { inject, Injectable } from '@angular/core';
+
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
+
 import { EMPTY, from, of } from 'rxjs';
 import { catchError, filter, ignoreElements, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+
+import { CalendarIntegrationService } from '../../services/calendar-integration.service';
+import { NotificationService } from '../../services/notification.service';
+import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import * as BirthdayActions from './birthday.actions';
 import { selectBirthdayState } from './birthday.selectors';
-import { CalendarIntegrationService } from '../../services/calendar-integration.service';
-import { IndexedDBStorageService } from '../../services/offline-storage.service';
-import { NotificationService } from '../../services/notification.service';
 
 /**
  * Handles Google Calendar sync as a side-effect domain, fully decoupled from CRUD persistence.

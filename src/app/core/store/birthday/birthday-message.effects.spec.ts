@@ -1,16 +1,17 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { Observable, of } from 'rxjs';
-import { Action } from '@ngrx/store';
-import { BirthdayMessageEffects } from './birthday-message.effects';
-import * as BirthdayActions from './birthday.actions';
+import { type Action } from '@ngrx/store';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { type Observable, of } from 'rxjs';
+
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import * as BirthdayActions from './birthday.actions';
 import { selectBirthdayById } from './birthday.selectors';
+import { BirthdayMessageEffects } from './birthday-message.effects';
 
 describe('BirthdayMessageEffects', () => {
   let actions$: Observable<Action>;

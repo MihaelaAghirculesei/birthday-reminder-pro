@@ -1,21 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { Observable, of } from 'rxjs';
-import { Action } from '@ngrx/store';
-import { BirthdayCrudEffects } from './birthday-crud.effects';
-import * as BirthdayActions from './birthday.actions';
-import * as AuthSelectors from '../auth/auth.selectors';
-import * as BirthdaySelectors from './birthday.selectors';
+import { type Action } from '@ngrx/store';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { type Observable, of } from 'rxjs';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
+import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 import { provideTranslateTesting } from '../../../testing/translate-testing';
-import { IndexedDBStorageService } from '../../services/offline-storage.service';
-import { PushNotificationService } from '../../services/push-notification.service';
 import { IdGeneratorService } from '../../services/id-generator.service';
 import { LoggerService } from '../../services/logger.service';
-import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
-import { Birthday } from '../../../shared/models/birthday.model';
-import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PhotoStorageService } from '../../services/photo-storage.service';
+import { PushNotificationService } from '../../services/push-notification.service';
+import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
+import * as AuthSelectors from '../auth/auth.selectors';
+import * as BirthdayActions from './birthday.actions';
+import * as BirthdaySelectors from './birthday.selectors';
+import { BirthdayCrudEffects } from './birthday-crud.effects';
 
 describe('BirthdayCrudEffects', () => {
   let actions$: Observable<Action>;

@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { Birthday, ScheduledMessage } from '../../../shared/models/birthday.model';
+
+import { type Birthday, type ScheduledMessage } from '../../../shared/models/birthday.model';
 
 export const loadBirthdays = createAction(
   '[Birthday] Load Birthdays'

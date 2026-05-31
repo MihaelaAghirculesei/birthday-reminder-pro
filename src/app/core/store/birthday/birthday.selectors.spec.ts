@@ -1,6 +1,6 @@
-import * as fromSelectors from './birthday.selectors';
-import { BirthdayState, initialBirthdayFilters } from './birthday.state';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import * as fromSelectors from './birthday.selectors';
+import { type BirthdayState, initialBirthdayFilters } from './birthday.state';
 
 describe('Birthday Selectors', () => {
   beforeEach(() => {

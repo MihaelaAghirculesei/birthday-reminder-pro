@@ -1,14 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { Observable, of } from 'rxjs';
-import { Action } from '@ngrx/store';
-import { BirthdayCalendarSyncEffects } from './birthday-calendar-sync.effects';
-import * as BirthdayActions from './birthday.actions';
+import { type Action } from '@ngrx/store';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { type Observable, of } from 'rxjs';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
 import { CalendarIntegrationService } from '../../services/calendar-integration.service';
-import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { NotificationService } from '../../services/notification.service';
-import { Birthday } from '../../../shared/models/birthday.model';
+import { IndexedDBStorageService } from '../../services/offline-storage.service';
+import * as BirthdayActions from './birthday.actions';
+import { BirthdayCalendarSyncEffects } from './birthday-calendar-sync.effects';
 
 describe('BirthdayCalendarSyncEffects', () => {
   let actions$: Observable<Action>;

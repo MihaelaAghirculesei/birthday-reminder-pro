@@ -1,8 +1,9 @@
-﻿import { createReducer, on } from '@ngrx/store';
-import { createEntityAdapter, EntityAdapter } from '@ngrx/entity';
-import { Birthday } from '../../../shared/models/birthday.model';
-import { BirthdayState, initialBirthdayFilters, OptimisticBackupEntry } from './birthday.state';
+﻿import { createEntityAdapter, type EntityAdapter } from '@ngrx/entity';
+import { createReducer, on } from '@ngrx/store';
+
+import { type Birthday } from '../../../shared/models/birthday.model';
 import * as BirthdayActions from './birthday.actions';
+import { type BirthdayState, initialBirthdayFilters, type OptimisticBackupEntry } from './birthday.state';
 
 export const MAX_OPTIMISTIC_BACKUP_SIZE = 50;
 
