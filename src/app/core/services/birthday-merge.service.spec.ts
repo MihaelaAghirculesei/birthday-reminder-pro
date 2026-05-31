@@ -1,5 +1,5 @@
+import { type Birthday } from '../../shared/models/birthday.model';
 import { BirthdayMergeService } from './birthday-merge.service';
-import { Birthday } from '../../shared/models/birthday.model';
 
 describe('BirthdayMergeService', () => {
   let service: BirthdayMergeService;
@@ -319,6 +319,64 @@ describe('BirthdayMergeService', () => {
 
       expect(result.merged[0].name).toBe('Cloud');
       expect(result.toUpload.length).toBe(0);
+    });
+  });
+
+  describe('offline conflict scenario — same birthday edited on two devices', () => {
+    /**
+     * These tests model the end-to-end conflict case:
+     *   1. Two devices go offline with the same birthday record.
+     *   2. Both make edits locally (different or overlapping fields).
+     *   3. Device B syncs first — its version is now in cloud.
+     *   4. Device A syncs: merge() is called with Device A's local vs Device B's cloud.
+     *
+     * The outcome depends on how far apart the edits happened (updatedAt diff).
+     */
+
+    it('strictly newer edit wins entirely (>1s diff): earlier device changes are discarded', () => {
+      // Device A renamed the birthday and added a note 4 seconds before Device B renamed it again.
+      // Device B synced first → cloud has Device B's version.
+      // When Device A syncs, cloud is strictly newer → cloud wins in full; Device A's note is lost.
+      const deviceA = [makeBirthday({ id: 'b-1', name: 'Old Name', notes: 'A note', updatedAt: 1000 })];
+      const deviceB = [makeBirthday({ id: 'b-1', name: 'New Name', notes: '', updatedAt: 5000 })];
+
+      const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
+
+      expect(result.merged[0].name).toBe('New Name');
+      expect(result.merged[0].notes).toBe('');  // Device A's note is silently discarded — cloud wins entirely
+      expect(result.toUpload.length).toBe(0);   // Cloud already has the winning version
+    });
+
+    it('near-simultaneous edits on different fields both survive (≤1s diff): field-level merge', () => {
+      // Device A went offline and set category='family' at t=1000.
+      // Device B went offline and added notes='Call mum' at t=1800 (800 ms later).
+      // Device B synced first → cloud has notes but no category.
+      // Device A syncs: near-simultaneous → field-merge preserves both changes.
+      const deviceA = [makeBirthday({ id: 'b-1', notes: '', category: 'family', updatedAt: 1000 })];
+      const deviceB = [makeBirthday({ id: 'b-1', notes: 'Call mum', category: '', updatedAt: 1800 })];
+
+      const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
+      const merged = result.merged[0];
+
+      expect(merged.notes).toBe('Call mum');    // From Device B (winner — higher updatedAt)
+      expect(merged.category).toBe('family');   // From Device A (loser fallback — winner's was empty)
+      expect(result.toUpload.length).toBe(1);   // Re-upload so cloud gains Device A's category
+      expect(result.toUpload[0].notes).toBe('Call mum');
+      expect(result.toUpload[0].category).toBe('family');
+    });
+
+    it('near-simultaneous conflict on the same field: strictly newer value wins, result is uploaded', () => {
+      // Both devices changed the name within 1 second of each other — no field-level merge possible.
+      // The newer timestamp wins the field; the result is re-uploaded to cloud.
+      const deviceA = [makeBirthday({ id: 'b-1', name: 'Device A Name', updatedAt: 1000 })];
+      const deviceB = [makeBirthday({ id: 'b-1', name: 'Device B Name', updatedAt: 1900 })];
+
+      const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
+
+      expect(result.merged[0].name).toBe('Device B Name'); // Newer timestamp wins
+      expect(result.toUpload.length).toBe(1);              // Merged object must be re-uploaded
+      expect(result.toUpload[0].name).toBe('Device B Name');
+      expect(result.toUpload[0].syncStatus).toBe('synced');
     });
   });
 

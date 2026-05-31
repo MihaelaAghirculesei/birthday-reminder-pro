@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { BirthdayNormalizationService } from './birthday-normalization.service';
-import { Birthday } from '../../shared/models/birthday.model';
+
 import { DEFAULT_CATEGORY } from '../../shared';
+import { type Birthday } from '../../shared/models/birthday.model';
+import { BirthdayNormalizationService } from './birthday-normalization.service';
 
 const BASE: Birthday = { id: '1', name: 'Alice', birthDate: '1990-03-21' };
 

@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { BirthdayService } from './birthday.service';
-import { Birthday } from '../../shared/models/birthday.model';
+
 import { DEFAULT_CATEGORY } from '../../shared';
+import { type Birthday } from '../../shared/models/birthday.model';
+import { BirthdayService } from './birthday.service';
 
 describe('BirthdayService', () => {
   let service: BirthdayService;
