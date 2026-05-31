@@ -1,7 +1,9 @@
-import { Component, Input, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed,Input, signal } from '@angular/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { TranslatePipe } from '@ngx-translate/core';
-import { Birthday } from '../../models';
+
+import { type Birthday } from '../../models';
 
 @Component({
     selector: 'app-message-indicator',

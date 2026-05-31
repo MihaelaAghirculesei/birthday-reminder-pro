@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MessageIndicatorComponent } from './message-indicator.component';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { Birthday, ScheduledMessage } from '../../models';
+import { type Birthday, type ScheduledMessage } from '../../models';
+import { MessageIndicatorComponent } from './message-indicator.component';
 
 describe('MessageIndicatorComponent', () => {
   let component: MessageIndicatorComponent;

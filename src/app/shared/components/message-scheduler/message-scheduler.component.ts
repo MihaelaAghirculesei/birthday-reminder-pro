@@ -1,33 +1,35 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, inject, DestroyRef, signal } from '@angular/core';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LocaleService } from '../../../core/services/locale.service';
+import { ChangeDetectionStrategy, Component, DestroyRef, EventEmitter, inject, Input, type OnChanges, type OnInit, Output, signal,type SimpleChanges } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, of, switchMap, take } from 'rxjs';
-
 import {
-  ReactiveFormsModule,
   FormBuilder,
-  FormGroup,
+  type FormGroup,
+  ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { Store } from '@ngrx/store';
-import { ScheduledMessage, Birthday, calculateAge, WishLink, getAvailableWishLinks, ConfirmDialogComponent } from '../..';
-import { ScheduledMessageService, MessageTemplate } from '../../services/scheduled-message.service';
+
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { BehaviorSubject, of, switchMap, take } from 'rxjs';
+
 import { NotificationService, SenderSettingsService } from '../../../core';
-import { AppState } from '../../../core/store/app.state';
+import { LocaleService } from '../../../core/services/locale.service';
+import { type AppState } from '../../../core/store/app.state';
 import * as BirthdayActions from '../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
+import { type Birthday, calculateAge, ConfirmDialogComponent,getAvailableWishLinks, type ScheduledMessage, type WishLink } from '../..';
+import { type MessageTemplate,ScheduledMessageService } from '../../services/scheduled-message.service';
 
 interface ScheduledMessageView extends ScheduledMessage {
   processedMessage: string;
