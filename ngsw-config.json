@@ -40,6 +40,19 @@
   ],
   "dataGroups": [
     {
+      "name": "firebase-storage-photos",
+      "urls": [
+        "https://firebasestorage.googleapis.com/**",
+        "https://storage.googleapis.com/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "7d",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
       "name": "api-performance",
       "urls": [
         "/api/**"

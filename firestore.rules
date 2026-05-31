@@ -43,26 +43,30 @@ service cloud.firestore {
     // User document rules
     match /users/{userId} {
       // Users can only read/write their own user doc
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId)
-                   && request.resource.data.keys().size() <= 20;
+      allow read:          if isOwner(userId);
+      allow create, update: if isOwner(userId)
+                            && request.resource.data.keys().size() <= 20;
+      allow delete:        if isOwner(userId);
 
       // Birthdays subcollection
       match /birthdays/{birthdayId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidBirthday();
+        allow read:          if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidBirthday();
+        allow delete:        if isOwner(userId);
       }
 
       // Categories subcollection
       match /categories/{categoryId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidCategory();
+        allow read:          if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidCategory();
+        allow delete:        if isOwner(userId);
       }
 
       // Settings subcollection
       match /settings/{settingId} {
-        allow read: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidSettings();
+        allow read:          if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidSettings();
+        allow delete:        if isOwner(userId);
       }
     }
 
