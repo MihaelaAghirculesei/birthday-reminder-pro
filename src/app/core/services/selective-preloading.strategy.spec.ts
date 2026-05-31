@@ -1,8 +1,9 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { SelectivePreloadingStrategy } from './selective-preloading.strategy';
+
 import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
+import { SelectivePreloadingStrategy } from './selective-preloading.strategy';
 
 describe('SelectivePreloadingStrategy', () => {
   let strategy: SelectivePreloadingStrategy;

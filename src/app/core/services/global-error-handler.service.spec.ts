@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { GlobalErrorHandler } from './global-error-handler.service';
-import { NotificationService } from './notification.service';
-import { ErrorReporter, ERROR_REPORTER } from './error-reporting.service';
-import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { IdbError, IdbMigrationError, IdbUnavailableError } from '../errors/app-errors';
+import { ERROR_REPORTER,type ErrorReporter } from './error-reporting.service';
+import { GlobalErrorHandler } from './global-error-handler.service';
+import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
+import { NotificationService } from './notification.service';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;

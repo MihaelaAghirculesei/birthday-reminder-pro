@@ -1,4 +1,4 @@
-import { Injectable, InjectionToken, isDevMode, inject } from '@angular/core';
+import { inject,Injectable, InjectionToken, isDevMode } from '@angular/core';
 
 /**
  * Token to disable logging in tests

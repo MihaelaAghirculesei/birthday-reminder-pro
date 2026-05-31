@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { SenderSettingsService } from './sender-settings.service';
-import { SecureStorageService } from './secure-storage.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { SecureStorageService } from './secure-storage.service';
+import { SenderSettingsService } from './sender-settings.service';
 
 describe('SenderSettingsService', () => {
   let service: SenderSettingsService;

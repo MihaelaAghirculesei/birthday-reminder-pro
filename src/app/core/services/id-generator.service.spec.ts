@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { IdGeneratorService } from './id-generator.service';
+import { TestBed } from '@angular/core/testing';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { IdGeneratorService } from './id-generator.service';
 
 const cryptoRef = crypto as unknown as { randomUUID?: () => string };
 

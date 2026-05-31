@@ -1,8 +1,9 @@
-import { TestBed, fakeAsync, tick, flushMicrotasks, discardPeriodicTasks } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { NetworkService } from './network.service';
+import { discardPeriodicTasks,fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
+import { type Subscription } from 'rxjs';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { Subscription } from 'rxjs';
+import { NetworkService } from './network.service';
 
 describe('NetworkService', () => {
   let service: NetworkService;

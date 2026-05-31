@@ -1,5 +1,6 @@
-import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+
 import { SecureStorageService } from './secure-storage.service';
 
 @Injectable({

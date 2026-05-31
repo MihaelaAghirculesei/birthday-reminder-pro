@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { ErrorReportingService, ErrorReport, ERROR_REPORTING_ENDPOINT } from './error-reporting.service';
+import { TestBed } from '@angular/core/testing';
+
+import { provideTranslateTesting } from '../../testing/translate-testing';
+import { type ErrorReport,ErrorReportingService } from './error-reporting.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
 
 describe('ErrorReportingService', () => {
   let service: ErrorReportingService;
@@ -109,7 +110,7 @@ describe('ErrorReportingService', () => {
       expect(parsed.detail).toBe('object error');
     });
 
-    it('should accumulate multiple errors in batch buffer', async () => {
+    it('should persist multiple errors to IndexedDB', async () => {
       service.captureError(createReport({ technicalMessage: 'error 1' }));
       service.captureError(createReport({ technicalMessage: 'error 2' }));
       service.captureError(createReport({ technicalMessage: 'error 3' }));
@@ -122,7 +123,7 @@ describe('ErrorReportingService', () => {
   });
 
   describe('clearErrors', () => {
-    it('should clear both memory buffer and IndexedDB', async () => {
+    it('should clear IndexedDB', async () => {
       service.captureError(createReport());
       service.captureError(createReport());
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -166,97 +167,6 @@ describe('ErrorReportingService', () => {
       // 205 pre-seeded + 20 captured = 225, pruned to 200
       expect(errors.length).toBeLessThanOrEqual(200);
     });
-  });
-
-  describe('flush', () => {
-    it('should not throw when no endpoint is configured', async () => {
-      service.captureError(createReport());
-      await expectAsync(service.flush()).toBeResolved();
-    });
-
-    it('should not flush when buffer is empty', async () => {
-      await expectAsync(service.flush()).toBeResolved();
-    });
-  });
-});
-
-describe('ErrorReportingService with endpoint', () => {
-  let service: ErrorReportingService;
-  let dbConnection: IndexedDBConnectionService;
-
-  beforeEach(async () => {
-    TestBed.configureTestingModule({
-      providers: [
-        SILENT_LOGGER_PROVIDER,
-        { provide: ERROR_REPORTING_ENDPOINT, useValue: 'https://example.com/errors' }
-      ]
-    });
-    dbConnection = TestBed.inject(IndexedDBConnectionService);
-    service = TestBed.inject(ErrorReportingService);
-  });
-
-  afterEach(async () => {
-    await service.clearErrors();
-    dbConnection.close();
-  });
-
-  it('should POST to endpoint on flush', async () => {
-    const fetchSpy = spyOn(window, 'fetch').and.returnValue(
-      Promise.resolve(new Response(null, { status: 200 }))
-    );
-
-    service.captureError({
-      error: new Error('test'),
-      type: 'runtime',
-      technicalMessage: 'flush test',
-      timestamp: Date.now()
-    });
-
-    await service.flush();
-
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const [url, options] = fetchSpy.calls.mostRecent().args;
-    expect(url).toBe('https://example.com/errors');
-    expect(options!.method).toBe('POST');
-    expect(options!.headers).toEqual({ 'Content-Type': 'application/json' });
-  });
-
-  it('should clear batch buffer after successful flush', async () => {
-    spyOn(window, 'fetch').and.returnValue(
-      Promise.resolve(new Response(null, { status: 200 }))
-    );
-
-    service.captureError({
-      error: new Error('test'),
-      type: 'runtime',
-      technicalMessage: 'flush test',
-      timestamp: Date.now()
-    });
-
-    await service.flush();
-    // Second flush should not call fetch since buffer is empty
-    await service.flush();
-
-    expect(window.fetch).toHaveBeenCalledTimes(1);
-  });
-
-  it('should retain buffer on failed flush', async () => {
-    spyOn(window, 'fetch').and.returnValue(
-      Promise.resolve(new Response(null, { status: 500 }))
-    );
-
-    service.captureError({
-      error: new Error('test'),
-      type: 'runtime',
-      technicalMessage: 'flush test',
-      timestamp: Date.now()
-    });
-
-    await service.flush();
-    // Buffer should still have the error, so flushing again calls fetch
-    await service.flush();
-
-    expect(window.fetch).toHaveBeenCalledTimes(2);
   });
 });
 

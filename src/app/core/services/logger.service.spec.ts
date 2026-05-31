@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { LoggerService, SILENT_LOGGING, SILENT_LOGGER_PROVIDER } from './logger.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LoggerService, SILENT_LOGGER_PROVIDER,SILENT_LOGGING } from './logger.service';
 
 describe('LoggerService', () => {
   // isDevMode() returns true in test environment
