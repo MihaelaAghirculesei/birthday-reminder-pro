@@ -1,11 +1,14 @@
-import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, NgZone, PLATFORM_ID } from '@angular/core';
+
 import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
-import { BehaviorSubject, Observable, from, of } from 'rxjs';
-import { firebaseGetters, checkFirebaseOptions, FIREBASE_OPTIONS } from '../../firebase.config';
-import { LoggerService } from './logger.service';
-import { Birthday, Category } from '../../shared/models/birthday.model';
+import { BehaviorSubject, from, type Observable, of } from 'rxjs';
+
+import { checkFirebaseOptions, FIREBASE_OPTIONS, firebaseGetters } from '../../firebase.config';
+import { type Birthday, type Category } from '../../shared/models/birthday.model';
 import { toDateString } from '../../shared/utils/date.utils';
+import { LoggerService } from './logger.service';
+import { PhotoStorageService } from './photo-storage.service';
 
 /** Firebase error codes that indicate transient failures safe to retry. */
 const RETRYABLE_CODES = new Set(['unavailable', 'deadline-exceeded', 'internal', 'resource-exhausted']);
@@ -34,6 +37,7 @@ export class FirestoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
+  private readonly photoStorage = inject(PhotoStorageService);
   private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
 
   private get isFirebaseConfigured(): boolean {
@@ -152,10 +156,11 @@ export class FirestoreService {
 
     const schemas = await this.loadSchemas();
     try {
-      return await this.withRetry(async () => {
+      const raw = await this.withRetry(async () => {
         const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
         return this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
       }, 'fetch birthdays');
+      return this.resolvePhotoUrls(raw);
     } catch (error) {
       this.logger.error('[Firestore] Failed to fetch birthdays:', error);
       throw error;
@@ -175,10 +180,12 @@ export class FirestoreService {
       this.birthdaysListener = fs.onSnapshot(
         fs.collection(db, this.getUserPath(userId), 'birthdays'),
         (snapshot) => {
-          this.ngZone.run(() => {
-            const birthdays = this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
-            this.birthdaysSubject.next(birthdays);
-            this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
+          const raw = this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
+          void this.resolvePhotoUrls(raw).then(birthdays => {
+            this.ngZone.run(() => {
+              this.birthdaysSubject.next(birthdays);
+              this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
+            });
           });
         },
         (error) => {
@@ -485,14 +492,23 @@ export class FirestoreService {
       updatedAt: Date.now()
     };
 
-    // Firestore documents have a hard 1 MB limit. Never write base64-encoded
-    // photos (up to 7 MB) into a document. Only Firebase Storage CDN URLs are
-    // persisted; base64 blobs are skipped so the existing Firestore value is
-    // preserved via merge:true until the photo is re-uploaded to Storage.
+    // Firestore documents have a hard 1 MB limit. Never write base64-encoded photos.
+    // For Firebase Storage CDN URLs, store the Storage path instead of the capability
+    // URL — getDownloadURL() enforces Security Rules at call time, so paths stored in
+    // Firestore cannot be used to access photos without owner authentication.
     for (const field of ['photo', 'rememberPhoto']) {
       const val = data[field];
-      if (typeof val === 'string' && val.startsWith('data:')) {
-        delete data[field];
+      if (typeof val === 'string') {
+        if (val.startsWith('data:')) {
+          delete data[field];
+        } else if (this.photoStorage.isStorageUrl(val)) {
+          const path = this.photoStorage.extractPath(val);
+          if (path) {
+            data[field] = path;
+          } else {
+            delete data[field];
+          }
+        }
       }
     }
 
@@ -503,6 +519,74 @@ export class FirestoreService {
     }
 
     return data;
+  }
+
+  /**
+   * Resolves Storage paths in photo fields to download URLs.
+   * Called after reading from Firestore so that IndexedDB always stores usable URLs.
+   * Fields that are already download URLs or base64 blobs are passed through unchanged
+   * (backwards-compatible with legacy documents that stored capability URLs).
+   */
+  private async resolvePhotoUrls(birthdays: Birthday[]): Promise<Birthday[]> {
+    return Promise.all(birthdays.map(async (b) => {
+      const photo = b.photo ? await this.resolvePhotoField(b.photo) : b.photo;
+      const rememberPhoto = b.rememberPhoto
+        ? await this.resolvePhotoField(b.rememberPhoto)
+        : b.rememberPhoto;
+      return { ...b, photo, rememberPhoto };
+    }));
+  }
+
+  private async resolvePhotoField(value: string): Promise<string> {
+    if (
+      this.photoStorage.isStorageUrl(value) ||
+      this.photoStorage.isBase64(value) ||
+      value.startsWith('https://') ||
+      value.startsWith('http://')
+    ) {
+      return value;
+    }
+    // Treat as a Storage path — resolve via getDownloadURL (enforces owner auth rule)
+    const url = await this.photoStorage.resolveUrl(value);
+    if (!url) this.logger.warn('[Firestore] Could not resolve Storage path to URL:', value);
+    return url ?? value;
+  }
+
+  /**
+   * One-time migration: rewrites Firestore birthday documents that still store
+   * Firebase Storage capability URLs (with ?token=...) as plain Storage paths.
+   *
+   * Safe to call on every sign-in — becomes a no-op once all documents are migrated.
+   * Errors are logged and swallowed so a migration failure never blocks the app.
+   */
+  async migrateCapabilityUrls(userId: string): Promise<void> {
+    if (!this.isFirebaseConfigured) return;
+
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
+    if (!db || !fs) return;
+
+    const schemas = await this.loadSchemas();
+
+    try {
+      const snapshot = await fs.getDocs(fs.collection(db, this.getUserPath(userId), 'birthdays'));
+      const birthdays = this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
+
+      const toMigrate = birthdays.filter(b =>
+        (b.photo && this.photoStorage.isStorageUrl(b.photo)) ||
+        (b.rememberPhoto && this.photoStorage.isStorageUrl(b.rememberPhoto))
+      );
+
+      if (toMigrate.length === 0) {
+        this.logger.info('[Firestore] Photo URL migration: already up to date');
+        return;
+      }
+
+      await this.performBatchSave(userId, toMigrate);
+      this.logger.info(`[Firestore] Photo URL migration: migrated ${toMigrate.length} document(s)`);
+    } catch (error) {
+      this.logger.warn('[Firestore] Photo URL migration failed:', error);
+    }
   }
 
   unsubscribeAll(): void {

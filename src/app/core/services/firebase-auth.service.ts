@@ -1,15 +1,17 @@
-import { Injectable, inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { inject, Injectable, NgZone,PLATFORM_ID } from '@angular/core';
+
 import type { Auth, User } from 'firebase/auth';
-import { Observable, BehaviorSubject, from } from 'rxjs';
+import { BehaviorSubject, from, type Observable,Subject } from 'rxjs';
+
+import { environment } from '../../../environments/environment';
 import {
+  checkFirebaseOptions,
+  FIREBASE_OPTIONS,
   getFirebaseAuth,
   getFirebaseAuthModule,
   initFirebase,
-  checkFirebaseOptions,
-  FIREBASE_OPTIONS,
 } from '../../firebase.config';
-import { environment } from '../../../environments/environment';
 import { LoggerService } from './logger.service';
 
 export interface AuthUser {
@@ -27,12 +29,13 @@ export interface AuthUser {
  * narrowing in switch statements.
  */
 export const FIREBASE_AUTH_CODES = {
-  POPUP_CLOSED:    'auth/popup-closed-by-user',
-  POPUP_BLOCKED:   'auth/popup-blocked',
-  CANCELLED:       'auth/cancelled-popup-request',
-  NETWORK_ERROR:   'auth/network-request-failed',
-  TOO_MANY_REQS:   'auth/too-many-requests',
-  USER_DISABLED:   'auth/user-disabled',
+  POPUP_CLOSED:       'auth/popup-closed-by-user',
+  POPUP_BLOCKED:      'auth/popup-blocked',
+  CANCELLED:          'auth/cancelled-popup-request',
+  REDIRECT_CANCELLED: 'auth/redirect-cancelled-by-user',
+  NETWORK_ERROR:      'auth/network-request-failed',
+  TOO_MANY_REQS:      'auth/too-many-requests',
+  USER_DISABLED:      'auth/user-disabled',
 } as const;
 
 export type FirebaseAuthCode =
@@ -62,6 +65,7 @@ export interface FirebaseAuthError {
 export function mapFirebaseSignInError(error: FirebaseAuthError): Error {
   switch (error.code) {
     case FIREBASE_AUTH_CODES.POPUP_CLOSED:
+    case FIREBASE_AUTH_CODES.REDIRECT_CANCELLED:
       return new Error('Sign-in cancelled');
     case FIREBASE_AUTH_CODES.POPUP_BLOCKED:
       return new Error('Popup blocked by browser. Please allow popups for this site.');
@@ -102,6 +106,8 @@ export function isFirebaseAuthError(err: unknown): err is FirebaseAuthError {
  * The stored value is `'1'` — a non-sensitive boolean hint, not a credential.
  */
 const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
+/** sessionStorage key set before a redirect sign-in so the return page loads Firebase. */
+const REDIRECT_PENDING_KEY = 'fb_redirect_pending';
 const AUTH_HINT_MAX_AGE = 30 * 24 * 3600; // 30 days in seconds
 
 function setAuthHint(): void {
@@ -133,11 +139,17 @@ export class FirebaseAuthService {
 
   private readonly userSubject = new BehaviorSubject<AuthUser | null>(null);
   private readonly loadingSubject = new BehaviorSubject<boolean>(true);
+  private readonly _redirectSignInSubject = new Subject<AuthUser>();
+  private readonly _redirectErrorSubject = new Subject<string>();
   private authUnsubscribe: (() => void) | null = null;
   private isDestroyed = false;
 
   readonly user$ = this.userSubject.asObservable();
   readonly loading$ = this.loadingSubject.asObservable();
+  /** Emits the signed-in user after a successful signInWithRedirect round-trip. */
+  readonly redirectSignIn$ = this._redirectSignInSubject.asObservable();
+  /** Emits an error message if the redirect sign-in failed (e.g. cancelled). */
+  readonly redirectError$ = this._redirectErrorSubject.asObservable();
 
   get currentUser(): AuthUser | null {
     return this.userSubject.getValue();
@@ -171,13 +183,15 @@ export class FirebaseAuthService {
     }
 
     const authHintPresent = hasAuthHint();
-    if (!authHintPresent) {
-      // Anonymous user — skip Firebase SDK entirely; resolve loading immediately.
+    const redirectPending = sessionStorage.getItem(REDIRECT_PENDING_KEY) === '1';
+
+    if (!authHintPresent && !redirectPending) {
+      // Anonymous user with no pending redirect — skip Firebase SDK entirely.
       this.loadingSubject.next(false);
       return;
     }
 
-    // Returning user — load Firebase SDK asynchronously (fire-and-forget).
+    // Returning user or pending redirect — load Firebase SDK asynchronously.
     initFirebase()
       .then(() => this.setupAuthStateListener())
       .catch((error) => {
@@ -220,6 +234,32 @@ export class FirebaseAuthService {
         this.loadingSubject.next(false);
       });
     });
+
+    // Check for a pending redirect sign-in result (fire-and-forget).
+    this.processRedirectResult(auth, authModule);
+  }
+
+  private processRedirectResult(auth: Auth, authModule: typeof import('firebase/auth')): void {
+    authModule.getRedirectResult(auth)
+      .then((result) => {
+        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+        if (result?.user) {
+          this.ngZone.run(() => {
+            this._redirectSignInSubject.next(this.mapFirebaseUser(result.user));
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+        if (isFirebaseAuthError(error)) {
+          const signInError = mapFirebaseSignInError(error);
+          this.ngZone.run(() => {
+            this._redirectErrorSubject.next(signInError.message);
+          });
+        } else {
+          this.logger.error('[FirebaseAuth] Redirect result error:', error);
+        }
+      });
   }
 
   async performGoogleSignInDirect(): Promise<AuthUser> {
@@ -263,45 +303,44 @@ export class FirebaseAuthService {
       throw new Error('Firebase Auth not available');
     }
 
-    const { GoogleAuthProvider, signInWithPopup, signInWithCredential } = authModule;
+    const { GoogleAuthProvider, signInWithRedirect, signInWithCredential } = authModule;
 
-    // Try Google Identity Services first (no popup → avoids COOP header issues).
+    // Try Google Identity Services first (no redirect → better UX when available).
     if (environment.googleAuthClientId && isPlatformBrowser(this.platformId)) {
       try {
         return await this.signInWithGIS(auth, GoogleAuthProvider, signInWithCredential);
       } catch (error) {
         const msg = error instanceof Error ? error.message : '';
         if (msg.startsWith('GIS_')) {
-          this.logger.info('[FirebaseAuth] GIS unavailable, falling back to popup');
+          this.logger.info('[FirebaseAuth] GIS unavailable, falling back to redirect');
         } else {
           throw error;
         }
       }
     }
 
-    // Fallback: Firebase popup flow.
+    // Fallback: Firebase redirect flow (avoids COOP header issues with signInWithPopup).
     const provider = new GoogleAuthProvider();
     provider.addScope('email');
     provider.addScope('profile');
 
     try {
-      const result = await signInWithPopup(auth, provider);
-      this.logger.info('[FirebaseAuth] Google sign-in successful');
-      setAuthHint();
-      return this.mapFirebaseUser(result.user);
+      // Set flag BEFORE navigating so the return page loads Firebase to process the result.
+      sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
+      return await signInWithRedirect(auth, provider);
     } catch (error: unknown) {
+      sessionStorage.removeItem(REDIRECT_PENDING_KEY);
       if (isFirebaseAuthError(error)) {
-        this.logger.error('[FirebaseAuth] Google sign-in failed:', error);
+        this.logger.error('[FirebaseAuth] Google redirect sign-in failed:', error);
         throw mapFirebaseSignInError(error);
       }
-      // Non-Firebase error (network timeout, internal, etc.) — re-throw as-is.
       throw error instanceof Error ? error : new Error('Sign-in failed');
     }
   }
 
   private signInWithGIS(
     auth: Auth,
-    GoogleAuthProvider: typeof import('firebase/auth').GoogleAuthProvider,
+    googleAuthProvider: typeof import('firebase/auth').GoogleAuthProvider,
     signInWithCredential: typeof import('firebase/auth').signInWithCredential,
   ): Promise<AuthUser> {
     return new Promise<AuthUser>((resolve, reject) => {
@@ -311,24 +350,35 @@ export class FirebaseAuthService {
         return;
       }
 
+      let settled = false;
+      const settle = (fn: () => void): void => { if (!settled) { settled = true; fn(); } };
+
       gis.initialize({
         client_id: environment.googleAuthClientId,
         callback: async (response: { credential: string }) => {
           try {
-            const credential = GoogleAuthProvider.credential(response.credential);
+            const credential = googleAuthProvider.credential(response.credential);
             const result = await signInWithCredential(auth, credential);
             this.logger.info('[FirebaseAuth] GIS sign-in successful');
             setAuthHint();
-            resolve(this.mapFirebaseUser(result.user));
+            settle(() => resolve(this.mapFirebaseUser(result.user)));
           } catch (error) {
             this.logger.error('[FirebaseAuth] GIS credential sign-in failed:', error);
-            reject(error);
+            settle(() => reject(error));
           }
         },
         auto_select: true,
       });
 
-      gis.prompt();
+      gis.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // One Tap couldn't be shown — fall back to redirect.
+          settle(() => reject(new Error('GIS_NOT_SHOWN')));
+        } else if (notification.isDismissedMoment()) {
+          // User explicitly dismissed the overlay — treat as cancellation.
+          settle(() => reject(new Error('Sign-in cancelled')));
+        }
+      });
     });
   }
 
@@ -370,6 +420,19 @@ export class FirebaseAuthService {
       displayName: user.displayName,
       photoURL: user.photoURL
     };
+  }
+
+  /**
+   * Cypress-only test seam: injects an auth user without going through Firebase.
+   * Called exclusively by the test bridge in src/testing/test-bridge.ts.
+   * No-ops in production (guard checks window.Cypress at call time).
+   */
+  setTestUser(user: AuthUser | null): void {
+    if (typeof window === 'undefined' || !(window as unknown as Record<string, unknown>)['Cypress']) return;
+    this.ngZone.run(() => {
+      this.userSubject.next(user);
+      this.loadingSubject.next(false);
+    });
   }
 
   destroy(): void {

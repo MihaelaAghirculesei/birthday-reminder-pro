@@ -1,10 +1,23 @@
 import { TestBed } from '@angular/core/testing';
+
+import * as firebaseConfig from '../../firebase.config';
+import { FIREBASE_OPTIONS } from '../../firebase.config';
+import { type Birthday, type Category } from '../../shared/models/birthday.model';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
-import { Birthday, Category } from '../../shared/models/birthday.model';
-import { FIREBASE_OPTIONS } from '../../firebase.config';
-import * as firebaseConfig from '../../firebase.config';
-import { provideTranslateTesting } from '../../testing/translate-testing';
+import { PhotoStorageService } from './photo-storage.service';
+
+function makePhotoStorageMock(): jasmine.SpyObj<PhotoStorageService> {
+  const mock = jasmine.createSpyObj<PhotoStorageService>('PhotoStorageService', [
+    'isStorageUrl', 'isBase64', 'extractPath', 'resolveUrl',
+  ]);
+  mock.isStorageUrl.and.returnValue(false);
+  mock.isBase64.and.returnValue(false);
+  mock.extractPath.and.returnValue(null);
+  mock.resolveUrl.and.resolveTo(null);
+  return mock;
+}
 
 describe('FirestoreService', () => {
   describe('basic tests', () => {
@@ -17,6 +30,7 @@ describe('FirestoreService', () => {
       TestBed.configureTestingModule({
         providers: [
           { provide: LoggerService, useValue: loggerMock },
+          { provide: PhotoStorageService, useValue: makePhotoStorageMock() },
           { provide: FIREBASE_OPTIONS, useValue: undefined },
           provideTranslateTesting()
         ]
@@ -146,6 +160,7 @@ describe('FirestoreService', () => {
       TestBed.configureTestingModule({
         providers: [
           { provide: LoggerService, useValue: loggerMock },
+          { provide: PhotoStorageService, useValue: makePhotoStorageMock() },
           { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
           provideTranslateTesting()
         ]
@@ -299,6 +314,7 @@ describe('FirestoreService', () => {
       TestBed.configureTestingModule({
         providers: [
           { provide: LoggerService, useValue: jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']) },
+          { provide: PhotoStorageService, useValue: makePhotoStorageMock() },
           { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
           provideTranslateTesting()
         ]
@@ -383,6 +399,7 @@ describe('FirestoreService', () => {
       TestBed.configureTestingModule({
         providers: [
           { provide: LoggerService, useValue: loggerMock },
+          { provide: PhotoStorageService, useValue: makePhotoStorageMock() },
           { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
           provideTranslateTesting()
         ]
@@ -673,6 +690,205 @@ describe('FirestoreService', () => {
         },
         error: done.fail
       });
+    });
+  });
+
+  describe('photo URL security', () => {
+    const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
+    const DOWNLOAD_URL = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphoto%2F1234.jpg?alt=media&token=xyz';
+    const STORAGE_PATH = 'users/uid/photo/1234.jpg';
+    const RESOLVED_URL = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphoto%2F1234.jpg?alt=media&token=new';
+
+    let service: FirestoreService;
+    let loggerMock: jasmine.SpyObj<LoggerService>;
+    let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
+
+    beforeEach(() => {
+      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+      photoStorageMock = makePhotoStorageMock();
+
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: LoggerService, useValue: loggerMock },
+          { provide: PhotoStorageService, useValue: photoStorageMock },
+          { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
+          provideTranslateTesting()
+        ]
+      });
+
+      service = TestBed.inject(FirestoreService);
+      spyOn(service as unknown as { delayMs: (ms: number) => Promise<void> }, 'delayMs')
+        .and.returnValue(Promise.resolve());
+      spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
+        {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
+      );
+    });
+
+    it('saveBirthday stores photo as Storage path — not capability URL — in Firestore', (done) => {
+      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.extractPath.and.returnValue(STORAGE_PATH);
+
+      const setSpy = jasmine.createSpy('batch.set');
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        writeBatch: jasmine.createSpy().and.returnValue({ set: setSpy, commit: jasmine.createSpy().and.resolveTo() }),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const birthday = {
+        id: 'b-photo', name: 'Test', birthDate: '2000-01-01',
+        syncStatus: 'local-only', photo: DOWNLOAD_URL,
+      } as Birthday;
+
+      service.saveBirthday('user-123', birthday).subscribe({
+        complete: () => {
+          const data = setSpy.calls.first().args[1] as Record<string, unknown>;
+          expect(data['photo']).toBe(STORAGE_PATH);
+          expect(data['photo']).not.toContain('token=');
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('getBirthdays resolves Storage paths to download URLs for IndexedDB', (done) => {
+      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.isBase64.and.returnValue(false);
+      photoStorageMock.resolveUrl.and.resolveTo(RESOLVED_URL);
+
+      const mockDoc = {
+        id: 'b-1',
+        data: () => ({
+          name: 'Test', birthDate: '2000-01-01', syncStatus: 'synced',
+          ownerId: 'user-123', photo: STORAGE_PATH,
+        }),
+      };
+
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        collection: jasmine.createSpy().and.returnValue({}),
+        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
+        Timestamp: class {},
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.getBirthdays('user-123').subscribe({
+        next: (birthdays) => {
+          expect(birthdays[0].photo).toBe(RESOLVED_URL);
+          expect(photoStorageMock.resolveUrl).toHaveBeenCalledWith(STORAGE_PATH);
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('getBirthdays passes through legacy capability URLs unchanged', (done) => {
+      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.isBase64.and.returnValue(false);
+
+      const mockDoc = {
+        id: 'b-legacy',
+        data: () => ({
+          name: 'Legacy', birthDate: '1990-01-01', syncStatus: 'synced',
+          ownerId: 'user-123', photo: DOWNLOAD_URL,
+        }),
+      };
+
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        collection: jasmine.createSpy().and.returnValue({}),
+        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
+        Timestamp: class {},
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.getBirthdays('user-123').subscribe({
+        next: (birthdays) => {
+          expect(birthdays[0].photo).toBe(DOWNLOAD_URL);
+          expect(photoStorageMock.resolveUrl).not.toHaveBeenCalled();
+          done();
+        },
+        error: done.fail
+      });
+    });
+
+    it('migrateCapabilityUrls rewrites documents with capability URLs to Storage paths', (done) => {
+      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.extractPath.and.returnValue(STORAGE_PATH);
+
+      const setSpy = jasmine.createSpy('batch.set');
+      const mockDoc = {
+        id: 'b-migrate',
+        data: () => ({
+          name: 'Test', birthDate: '2000-01-01', syncStatus: 'synced',
+          ownerId: 'user-123', photo: DOWNLOAD_URL,
+        }),
+      };
+
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        collection: jasmine.createSpy().and.returnValue({}),
+        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
+        writeBatch: jasmine.createSpy().and.returnValue({
+          set: setSpy,
+          commit: jasmine.createSpy().and.resolveTo(),
+        }),
+        doc: jasmine.createSpy().and.returnValue({}),
+        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+        Timestamp: class {},
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.migrateCapabilityUrls('user-123').then(() => {
+        const data = setSpy.calls.first().args[1] as Record<string, unknown>;
+        expect(data['photo']).toBe(STORAGE_PATH);
+        expect(data['photo']).not.toContain('token=');
+        expect(loggerMock.info).toHaveBeenCalledWith(
+          jasmine.stringContaining('migrated 1')
+        );
+        done();
+      }).catch(done.fail);
+    });
+
+    it('migrateCapabilityUrls is a no-op when all documents already use paths', (done) => {
+      photoStorageMock.isStorageUrl.and.returnValue(false);
+
+      const writeBatchSpy = jasmine.createSpy('writeBatch');
+      const mockDoc = {
+        id: 'b-already',
+        data: () => ({
+          name: 'Test', birthDate: '1990-01-01', syncStatus: 'synced',
+          ownerId: 'user-123', photo: STORAGE_PATH,
+        }),
+      };
+
+      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
+        collection: jasmine.createSpy().and.returnValue({}),
+        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
+        writeBatch: writeBatchSpy,
+        Timestamp: class {},
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      service.migrateCapabilityUrls('user-123').then(() => {
+        expect(writeBatchSpy).not.toHaveBeenCalled();
+        expect(loggerMock.info).toHaveBeenCalledWith(
+          jasmine.stringContaining('up to date')
+        );
+        done();
+      }).catch(done.fail);
+    });
+
+    it('migrateCapabilityUrls is a no-op when Firebase is not configured', (done) => {
+      // service in this describe has VALID_OPTIONS; re-create with undefined to test the guard
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: LoggerService, useValue: loggerMock },
+          { provide: PhotoStorageService, useValue: photoStorageMock },
+          { provide: FIREBASE_OPTIONS, useValue: undefined },
+          provideTranslateTesting()
+        ]
+      });
+      const unconfiguredService = TestBed.inject(FirestoreService);
+
+      unconfiguredService.migrateCapabilityUrls('user-123').then(() => {
+        expect(photoStorageMock.isStorageUrl).not.toHaveBeenCalled();
+        done();
+      }).catch(done.fail);
     });
   });
 });

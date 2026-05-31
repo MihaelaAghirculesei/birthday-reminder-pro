@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+
+import { FIREBASE_OPTIONS } from '../../firebase.config';
+import { provideTranslateTesting } from '../../testing/translate-testing';
 import {
+  FIREBASE_AUTH_CODES,
   FirebaseAuthService,
   isFirebaseAuthError,
   mapFirebaseSignInError,
-  FIREBASE_AUTH_CODES,
 } from './firebase-auth.service';
 import { LoggerService } from './logger.service';
-import { provideTranslateTesting } from '../../testing/translate-testing';
-import { FIREBASE_OPTIONS } from '../../firebase.config';
 
 const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
 
@@ -246,6 +247,10 @@ describe('FirebaseAuthService', () => {
     it('USER_DISABLED maps to auth/user-disabled', () => {
       expect(FIREBASE_AUTH_CODES.USER_DISABLED).toBe('auth/user-disabled');
     });
+
+    it('REDIRECT_CANCELLED maps to auth/redirect-cancelled-by-user', () => {
+      expect(FIREBASE_AUTH_CODES.REDIRECT_CANCELLED).toBe('auth/redirect-cancelled-by-user');
+    });
   });
 
   // ── mapFirebaseSignInError — popup error mapping ──────────────────────────
@@ -253,6 +258,11 @@ describe('FirebaseAuthService', () => {
   describe('mapFirebaseSignInError', () => {
     it('maps auth/popup-closed-by-user to "Sign-in cancelled"', () => {
       const err = { name: 'FirebaseError' as const, code: 'auth/popup-closed-by-user', message: 'popup closed' };
+      expect(mapFirebaseSignInError(err).message).toBe('Sign-in cancelled');
+    });
+
+    it('maps auth/redirect-cancelled-by-user to "Sign-in cancelled"', () => {
+      const err = { name: 'FirebaseError' as const, code: 'auth/redirect-cancelled-by-user', message: 'redirect cancelled' };
       expect(mapFirebaseSignInError(err).message).toBe('Sign-in cancelled');
     });
 
