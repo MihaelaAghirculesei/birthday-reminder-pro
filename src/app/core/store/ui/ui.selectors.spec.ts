@@ -1,5 +1,5 @@
 import * as fromSelectors from './ui.selectors';
-import { initialUIState, UIState } from './ui.state';
+import { initialUIState, type UIState } from './ui.state';
 
 interface AppState {
   ui: UIState;

@@ -1,6 +1,7 @@
 import { createReducer, on } from '@ngrx/store';
-import { SyncStatus, initialSyncStatus } from './sync.state';
+
 import * as SyncActions from './sync.actions';
+import { initialSyncStatus,type SyncStatus } from './sync.state';
 
 export const syncReducer = createReducer(
   initialSyncStatus,

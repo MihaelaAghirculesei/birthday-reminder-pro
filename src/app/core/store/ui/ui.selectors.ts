@@ -1,5 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { UIState } from './ui.state';
+
+import { type UIState } from './ui.state';
 
 export const selectUIState = createFeatureSelector<UIState>('ui');
 
