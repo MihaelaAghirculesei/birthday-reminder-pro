@@ -1,13 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatNativeDateModule } from '@angular/material/core';
-import { BirthdayFormComponent } from './birthday-form.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { SILENT_LOGGER_PROVIDER, LoggerService } from '../../../core';
-import { BIRTHDAY_CATEGORIES, DEFAULT_CATEGORY } from '../../constants';
-import { Birthday } from '../../models';
-import { PhotoStorageService } from '../../../core/services/photo-storage.service';
+import { LoggerService,SILENT_LOGGER_PROVIDER } from '../../../core';
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
+import { PhotoStorageService } from '../../../core/services/photo-storage.service';
+import { BIRTHDAY_CATEGORIES, DEFAULT_CATEGORY } from '../../constants';
+import { type Birthday } from '../../models';
+import { BirthdayFormComponent } from './birthday-form.component';
 
 describe('BirthdayFormComponent', () => {
   let component: BirthdayFormComponent;

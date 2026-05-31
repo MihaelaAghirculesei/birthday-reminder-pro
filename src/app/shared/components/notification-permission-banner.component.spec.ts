@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NotificationPermissionBannerComponent } from './notification-permission-banner.component';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { BehaviorSubject } from 'rxjs';
+
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { SecureStorageService } from '../../core/services/secure-storage.service';
-import { BehaviorSubject } from 'rxjs';
+import { NotificationPermissionBannerComponent } from './notification-permission-banner.component';
 
 describe('NotificationPermissionBannerComponent', () => {
   let component: NotificationPermissionBannerComponent;

@@ -1,5 +1,7 @@
-import { Component, Input, ChangeDetectionStrategy, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, type OnChanges, type SimpleChanges } from '@angular/core';
+
 import { TranslatePipe } from '@ngx-translate/core';
+
 import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
 
 const ZODIAC_KEY_MAP: Record<string, string> = {

@@ -1,26 +1,28 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import {
-  ReactiveFormsModule,
+  type AbstractControl,
   FormBuilder,
-  FormGroup,
+  type FormGroup,
+  ReactiveFormsModule,
+  type ValidationErrors,
   Validators,
-  AbstractControl,
-  ValidationErrors,
 } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { PhotoUploadComponent } from '../photo-upload.component';
-import { DEFAULT_CATEGORY, BirthdayCategory } from '../../constants';
-import { Birthday } from '../../models';
-import { getZodiacSign, parseLocalDate, toDateString } from '../../utils';
+
+import { TranslatePipe } from '@ngx-translate/core';
+
 import { LoggerService } from '../../../core';
-import { PhotoStorageService } from '../../../core/services/photo-storage.service';
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
+import { PhotoStorageService } from '../../../core/services/photo-storage.service';
+import { type BirthdayCategory,DEFAULT_CATEGORY } from '../../constants';
+import { type Birthday } from '../../models';
+import { getZodiacSign, parseLocalDate, toDateString } from '../../utils';
+import { PhotoUploadComponent } from '../photo-upload.component';
 
 @Component({
   selector: 'app-birthday-form',

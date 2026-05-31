@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NotificationComponent } from './notification.component';
-import { provideTranslateTesting } from '../../../testing/translate-testing';
-import { NotificationService, NotificationMessage } from '../../core/services/notification.service';
-import { BehaviorSubject } from 'rxjs';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { BehaviorSubject } from 'rxjs';
+
+import { provideTranslateTesting } from '../../../testing/translate-testing';
+import { type NotificationMessage,NotificationService } from '../../core/services/notification.service';
+import { NotificationComponent } from './notification.component';
 
 describe('NotificationComponent', () => {
   let component: NotificationComponent;

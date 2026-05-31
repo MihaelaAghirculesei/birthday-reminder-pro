@@ -1,8 +1,9 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
+import { ConfirmDialogComponent, type ConfirmDialogData } from './confirm-dialog.component';
 
 describe('ConfirmDialogComponent', () => {
   let fixture: ComponentFixture<ConfirmDialogComponent>;

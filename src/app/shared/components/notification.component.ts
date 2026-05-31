@@ -1,10 +1,12 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { animate,style, transition, trigger } from '@angular/animations';
 import { AsyncPipe } from '@angular/common';
-import { trigger, style, transition, animate } from '@angular/animations';
-import { Observable } from 'rxjs';
-import { MatIconModule } from '@angular/material/icon';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { NotificationService, NotificationMessage } from '../../core/services/notification.service';
+import { MatIconModule } from '@angular/material/icon';
+
+import { type Observable } from 'rxjs';
+
+import { type NotificationMessage,NotificationService } from '../../core/services/notification.service';
 
 @Component({
     selector: 'app-notification',

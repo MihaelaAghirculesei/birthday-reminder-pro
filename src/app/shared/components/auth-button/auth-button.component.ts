@@ -1,10 +1,12 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Store } from '@ngrx/store';
+import { ChangeDetectionStrategy,Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
+import { Store } from '@ngrx/store';
+
 import { TranslatePipe } from '@ngx-translate/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
