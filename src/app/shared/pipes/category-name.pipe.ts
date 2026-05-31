@@ -1,7 +1,9 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
+import { inject,Pipe, type PipeTransform } from '@angular/core';
+
 import { TranslateService } from '@ngx-translate/core';
+
 import { LocaleService } from '../../core/services/locale.service';
-import { BirthdayCategory } from '../constants/categories';
+import { type BirthdayCategory } from '../constants/categories';
 
 @Pipe({ name: 'categoryName', standalone: true, pure: false })
 export class CategoryNamePipe implements PipeTransform {

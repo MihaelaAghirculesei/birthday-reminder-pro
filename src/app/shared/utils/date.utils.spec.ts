@@ -1,4 +1,4 @@
-import { getDaysUntilBirthday, getNextBirthdayDate, formatDaysUntil, parseLocalDate, toDateString } from './date.utils';
+import { formatDaysUntil, getDaysUntilBirthday, getNextBirthdayDate, parseLocalDate, toDateString } from './date.utils';
 
 describe('Date Utils', () => {
 
