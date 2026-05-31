@@ -1,6 +1,7 @@
-import { checkFirebaseOptions, isFirebaseConfigured } from './firebase.config';
-import { environment } from '../environments/environment';
 import type { FirebaseOptions } from 'firebase/app';
+
+import { environment } from '../environments/environment';
+import { checkFirebaseOptions, isFirebaseConfigured } from './firebase.config';
 
 describe('checkFirebaseOptions', () => {
   it('returns false when opts is undefined', () => {

@@ -1,9 +1,11 @@
 import { InjectionToken } from '@angular/core';
-import { environment } from '../environments/environment';
+
 import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
+
+import { environment } from '../environments/environment';
 
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
@@ -99,7 +101,7 @@ export function getFirebaseStorage(): FirebaseStorage | null { return _storage; 
 
 /**
  * Full firebase/auth module — needed by FirebaseAuthService to call
- * onAuthStateChanged, signInWithPopup, signOut, etc. without a static import.
+ * onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut, etc. without a static import.
  */
 export function getFirebaseAuthModule(): typeof import('firebase/auth') | null {
   return _authModule;

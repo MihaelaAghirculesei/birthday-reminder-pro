@@ -1,32 +1,33 @@
-import { ApplicationConfig, isDevMode, ErrorHandler, APP_INITIALIZER, importProvidersFrom, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { provideRouter, withPreloading } from '@angular/router';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
-import { LocaleService } from './core/services/locale.service';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideStore } from '@ngrx/store';
-import { provideEffects } from '@ngrx/effects';
+import { APP_INITIALIZER, type ApplicationConfig, ErrorHandler, importProvidersFrom, isDevMode, PLATFORM_ID } from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideRouter, withPreloading } from '@angular/router';
+import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
+
+import { provideEffects } from '@ngrx/effects';
+import { provideStore } from '@ngrx/store';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
+
+import { TranslateLoader,TranslateModule } from '@ngx-translate/core';
 
 import { routes } from './app.routes';
-import { NotificationService, GlobalErrorHandler, ThemeService, SelectivePreloadingStrategy, ERROR_REPORTER, ErrorReportingService, ERROR_REPORTING_ENDPOINT } from './core';
-import { environment } from '../environments/environment';
-import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
-import { birthdayReducer } from './core/store/birthday/birthday.reducer';
-import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
-import { categoryReducer } from './core/store/category/category.reducer';
-import { CategoryEffects } from './core/store/category/category.effects';
-import { uiReducer } from './core/store/ui/ui.reducer';
-import { authReducer } from './core/store/auth/auth.reducer';
-import { AuthEffects } from './core/store/auth/auth.effects';
-import { syncReducer } from './core/store/sync/sync.reducer';
-import { SyncEffects } from './core/store/sync/sync.effects';
+import { ERROR_REPORTER, ErrorReportingService,GlobalErrorHandler, NotificationService, SelectivePreloadingStrategy, ThemeService } from './core';
+import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
 import { FirebaseAuthService } from './core/services/firebase-auth.service';
-import { SyncCoordinatorService } from './core/services/sync-coordinator.service';
+import { LocaleService } from './core/services/locale.service';
 import { LoggerService } from './core/services/logger.service';
-import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { SyncCoordinatorService } from './core/services/sync-coordinator.service';
+import { AuthEffects } from './core/store/auth/auth.effects';
+import { authReducer } from './core/store/auth/auth.reducer';
+import { BirthdayCrudEffects, BirthdayMessageEffects, BirthdayNotificationEffects } from './core/store/birthday/birthday.effects';
+import { birthdayReducer } from './core/store/birthday/birthday.reducer';
+import { CategoryEffects } from './core/store/category/category.effects';
+import { categoryReducer } from './core/store/category/category.reducer';
+import { SyncEffects } from './core/store/sync/sync.effects';
+import { syncReducer } from './core/store/sync/sync.reducer';
+import { uiReducer } from './core/store/ui/ui.reducer';
 
 function initializeApp(
   authService: FirebaseAuthService,
@@ -36,7 +37,7 @@ function initializeApp(
 ) {
   return async () => {
     try {
-      localeService.initialize();
+      await localeService.initialize();
       // Firebase is loaded on-demand: initAuthListener() triggers it for returning users,
       // performGoogleSignIn() triggers it on first sign-in. Anonymous users never pay the cost.
       authService.initAuthListener();
@@ -94,9 +95,6 @@ export const appConfig: ApplicationConfig = {
     ThemeService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: ERROR_REPORTER, useExisting: ErrorReportingService },
-    ...(environment.errorReportingEndpoint
-      ? [{ provide: ERROR_REPORTING_ENDPOINT, useValue: environment.errorReportingEndpoint }]
-      : []),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
