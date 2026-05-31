@@ -1,6 +1,7 @@
-import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Birthday } from '../../shared';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+
+import { type Birthday } from '../../shared';
 import { toDateString } from '../../shared/utils/date.utils';
 import { LoggerService } from './logger.service';
 

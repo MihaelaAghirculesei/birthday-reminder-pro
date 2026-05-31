@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { PendingChangesService, SyncPayloadData } from './pending-changes.service';
-import { LoggerService } from './logger.service';
+
 import { provideTranslateTesting } from '../../testing/translate-testing';
+import { LoggerService } from './logger.service';
+import { PendingChangesService, type SyncPayloadData } from './pending-changes.service';
 
 // Helpers to cast lightweight test fixtures to SyncPayloadData without
 // constructing full ValidatedBirthday/ValidatedCategory objects.

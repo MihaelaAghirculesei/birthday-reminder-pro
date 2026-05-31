@@ -1,15 +1,16 @@
-import { Injectable, inject } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
+
 import { Store } from '@ngrx/store';
+
 import { firstValueFrom } from 'rxjs';
 
+import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
+import * as SyncActions from '../store/sync/sync.actions';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
-import { PendingChangesService, PendingChange, EntityType, ChangeType, SyncPayloadData } from './pending-changes.service';
-import { NetworkService } from './network.service';
 import { LoggerService } from './logger.service';
-import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
-
-import * as SyncActions from '../store/sync/sync.actions';
+import { NetworkService } from './network.service';
+import { type ChangeType, type EntityType, type PendingChange, PendingChangesService, type SyncPayloadData } from './pending-changes.service';
 
 const MAX_RETRY_COUNT = 3;
 const BATCH_SIZE = 100;

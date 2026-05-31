@@ -1,16 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { SyncCoordinatorService } from './sync-coordinator.service';
-import { CloudSyncService } from './cloud-sync.service';
-import { SyncQueueProcessorService } from './sync-queue-processor.service';
-import { PendingChangesService } from './pending-changes.service';
-import { NetworkService } from './network.service';
-import { LoggerService } from './logger.service';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { BehaviorSubject } from 'rxjs';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
-import { AuthUser } from './firebase-auth.service';
-import { BehaviorSubject } from 'rxjs';
-import { Birthday } from '../../shared/models/birthday.model';
+import { CloudSyncService } from './cloud-sync.service';
+import { type AuthUser } from './firebase-auth.service';
+import { LoggerService } from './logger.service';
+import { NetworkService } from './network.service';
+import { PendingChangesService } from './pending-changes.service';
+import { SyncCoordinatorService } from './sync-coordinator.service';
+import { SyncQueueProcessorService } from './sync-queue-processor.service';
 
 describe('SyncCoordinatorService', () => {
   let service: SyncCoordinatorService;

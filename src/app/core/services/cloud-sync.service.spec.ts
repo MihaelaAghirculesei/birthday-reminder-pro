@@ -1,17 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { CloudSyncService } from './cloud-sync.service';
-import { FirebaseAuthService, AuthUser } from './firebase-auth.service';
-import { FirestoreService } from './firestore.service';
-import { IndexedDBStorageService } from './offline-storage.service';
-import { NetworkService } from './network.service';
-import { LoggerService } from './logger.service';
-import { BirthdayMergeService, MergeResult } from './birthday-merge.service';
-import { PhotoStorageService } from './photo-storage.service';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { of, Subject, throwError } from 'rxjs';
+
+import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
-import { of, Subject, throwError } from 'rxjs';
-import { Birthday } from '../../shared/models/birthday.model';
+import { BirthdayMergeService, type MergeResult } from './birthday-merge.service';
+import { CloudSyncService } from './cloud-sync.service';
+import { type AuthUser,FirebaseAuthService } from './firebase-auth.service';
+import { FirestoreService } from './firestore.service';
+import { LoggerService } from './logger.service';
+import { NetworkService } from './network.service';
+import { IndexedDBStorageService } from './offline-storage.service';
+import { PhotoStorageService } from './photo-storage.service';
 
 describe('CloudSyncService', () => {
   let service: CloudSyncService;
