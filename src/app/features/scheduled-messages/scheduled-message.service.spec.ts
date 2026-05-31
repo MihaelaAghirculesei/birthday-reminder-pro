@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { ScheduledMessageService } from '../../shared/services/scheduled-message.service';
+
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
+import { ScheduledMessageService } from '../../shared/services/scheduled-message.service';
 
 describe('ScheduledMessageService', () => {
   let service: ScheduledMessageService;

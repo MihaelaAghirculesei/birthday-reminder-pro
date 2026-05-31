@@ -1,13 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { ScheduledMessagesComponent } from './scheduled-messages.component';
+import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { of } from 'rxjs';
+
 import { provideTranslateTesting } from '../../../testing/translate-testing';
-import { Birthday, ScheduledMessage } from '../../shared';
-import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
+import { type Birthday, type ScheduledMessage } from '../../shared';
+import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
+import { ScheduledMessagesComponent } from './scheduled-messages.component';
 
 describe('ScheduledMessagesComponent', () => {
   let component: ScheduledMessagesComponent;
