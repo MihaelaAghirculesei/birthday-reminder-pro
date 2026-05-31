@@ -1,8 +1,8 @@
 import {
-  createSyncMetadata,
-  updateSyncMetadata,
-  ensureSyncMetadata,
   type Birthday,
+  createSyncMetadata,
+  ensureSyncMetadata,
+  updateSyncMetadata,
 } from './birthday.model';
 
 describe('birthday.model', () => {
