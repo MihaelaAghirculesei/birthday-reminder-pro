@@ -383,7 +383,9 @@ export const en = {
     DELETE_ARIA: 'Delete {{name}} category',
     ADD_ARIA: 'Add new category',
     NEW_CATEGORY: 'New Category',
-    CLICK_TO_ADD: 'Click to add'
+    CLICK_TO_ADD: 'Click to add',
+    ALL_CATEGORIES: 'All Birthdays',
+    ALL_ARIA: 'Show all birthdays, {{count}} {{people}}'
   },
   LANG: {
     SWITCH: 'Italiano'
