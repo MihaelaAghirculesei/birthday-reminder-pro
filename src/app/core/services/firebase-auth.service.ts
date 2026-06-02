@@ -12,6 +12,7 @@ import {
   getFirebaseAuthModule,
   initFirebase,
 } from '../../firebase.config';
+import type { GoogleAccountsId, PromptMomentNotification } from './google-identity.types';
 import { LoggerService } from './logger.service';
 
 export interface AuthUser {
@@ -106,22 +107,36 @@ export function isFirebaseAuthError(err: unknown): err is FirebaseAuthError {
  * The stored value is `'1'` — a non-sensitive boolean hint, not a credential.
  */
 const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
+/** localStorage key used as auth-hint fallback on HTTP (localhost dev). */
+const AUTH_HINT_LS_KEY = 'fb_auth_hint';
 /** sessionStorage key set before a redirect sign-in so the return page loads Firebase. */
 const REDIRECT_PENDING_KEY = 'fb_redirect_pending';
 const AUTH_HINT_MAX_AGE = 30 * 24 * 3600; // 30 days in seconds
 
 function setAuthHint(): void {
-  document.cookie =
-    `${AUTH_HINT_COOKIE}=1; Secure; SameSite=Strict; Max-Age=${AUTH_HINT_MAX_AGE}; Path=/`;
+  // __Secure- prefix requires HTTPS; fall back to localStorage on http://localhost.
+  if (location.protocol === 'https:') {
+    document.cookie =
+      `${AUTH_HINT_COOKIE}=1; Secure; SameSite=Strict; Max-Age=${AUTH_HINT_MAX_AGE}; Path=/`;
+  } else {
+    localStorage.setItem(AUTH_HINT_LS_KEY, '1');
+  }
 }
 
 function clearAuthHint(): void {
-  document.cookie =
-    `${AUTH_HINT_COOKIE}=; Secure; SameSite=Strict; Max-Age=0; Path=/`;
+  if (location.protocol === 'https:') {
+    document.cookie =
+      `${AUTH_HINT_COOKIE}=; Secure; SameSite=Strict; Max-Age=0; Path=/`;
+  } else {
+    localStorage.removeItem(AUTH_HINT_LS_KEY);
+  }
 }
 
 function hasAuthHint(): boolean {
-  return document.cookie.split(';').some(c => c.trim().startsWith(`${AUTH_HINT_COOKIE}=1`));
+  if (location.protocol === 'https:') {
+    return document.cookie.split(';').some(c => c.trim().startsWith(`${AUTH_HINT_COOKIE}=1`));
+  }
+  return localStorage.getItem(AUTH_HINT_LS_KEY) === '1';
 }
 
 @Injectable({
@@ -303,39 +318,79 @@ export class FirebaseAuthService {
       throw new Error('Firebase Auth not available');
     }
 
-    const { GoogleAuthProvider, signInWithRedirect, signInWithCredential } = authModule;
+    const { GoogleAuthProvider, signInWithPopup, signInWithCredential } = authModule;
 
-    // Try Google Identity Services first (no redirect → better UX when available).
+    const provider = new GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+
+    // Dev (http://localhost): skip GIS and use popup directly.
+    // GIS + popup in sequence caused a race where GIS silently signed in via
+    // signInWithCredential while its promise settled as rejected (isSkippedMoment),
+    // opening the popup on top of an already-authenticated session.
+    // Popup avoids getRedirectResult() iframe issues caused by third-party cookie blocking.
+    //
+    // signInWithPopup resolves via window.postMessage (a browser macrotask), which fires
+    // outside Angular zone. The explicit ngZone.run() brings the result back into zone so
+    // that the component's signInSuccess dispatch triggers OnPush change detection.
+    if (!environment.production) {
+      return new Promise<AuthUser>((resolve, reject) => {
+        signInWithPopup(auth, provider).then(
+          (result) => {
+            this.ngZone.run(() => {
+              setAuthHint();
+              resolve(this.mapFirebaseUser(result.user));
+            });
+          },
+          (error: unknown) => {
+            this.ngZone.run(() => {
+              if (isFirebaseAuthError(error)) {
+                this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
+                reject(mapFirebaseSignInError(error));
+              } else {
+                reject(error instanceof Error ? error : new Error('Sign-in failed'));
+              }
+            });
+          }
+        );
+      });
+    }
+
+    // Production: try Google Identity Services first (no redirect → better UX).
     if (environment.googleAuthClientId && isPlatformBrowser(this.platformId)) {
       try {
         return await this.signInWithGIS(auth, GoogleAuthProvider, signInWithCredential);
       } catch (error) {
         const msg = error instanceof Error ? error.message : '';
         if (msg.startsWith('GIS_')) {
-          this.logger.info('[FirebaseAuth] GIS unavailable, falling back to redirect');
+          this.logger.info('[FirebaseAuth] GIS unavailable, falling back to popup');
         } else {
           throw error;
         }
       }
     }
 
-    // Fallback: Firebase redirect flow (avoids COOP header issues with signInWithPopup).
-    const provider = new GoogleAuthProvider();
-    provider.addScope('email');
-    provider.addScope('profile');
-
-    try {
-      // Set flag BEFORE navigating so the return page loads Firebase to process the result.
-      sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
-      return await signInWithRedirect(auth, provider);
-    } catch (error: unknown) {
-      sessionStorage.removeItem(REDIRECT_PENDING_KEY);
-      if (isFirebaseAuthError(error)) {
-        this.logger.error('[FirebaseAuth] Google redirect sign-in failed:', error);
-        throw mapFirebaseSignInError(error);
-      }
-      throw error instanceof Error ? error : new Error('Sign-in failed');
-    }
+    // Production fallback: popup (avoids Firefox bounce-tracker classification from redirect flow).
+    return new Promise<AuthUser>((resolve, reject) => {
+      signInWithPopup(auth, provider).then(
+        (result) => {
+          this.ngZone.run(() => {
+            setAuthHint();
+            resolve(this.mapFirebaseUser(result.user));
+          });
+        },
+        (error: unknown) => {
+          this.ngZone.run(() => {
+            if (isFirebaseAuthError(error)) {
+              this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
+              reject(mapFirebaseSignInError(error));
+            } else {
+              reject(error instanceof Error ? error : new Error('Sign-in failed'));
+            }
+          });
+        }
+      );
+    });
   }
 
   private signInWithGIS(
@@ -344,7 +399,7 @@ export class FirebaseAuthService {
     signInWithCredential: typeof import('firebase/auth').signInWithCredential,
   ): Promise<AuthUser> {
     return new Promise<AuthUser>((resolve, reject) => {
-      const gis = window.google?.accounts?.id;
+      const gis = window.google?.accounts?.id as GoogleAccountsId | undefined;
       if (!gis) {
         reject(new Error('GIS_NOT_LOADED'));
         return;
@@ -370,7 +425,7 @@ export class FirebaseAuthService {
         auto_select: true,
       });
 
-      gis.prompt((notification) => {
+      gis.prompt((notification: PromptMomentNotification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           // One Tap couldn't be shown — fall back to redirect.
           settle(() => reject(new Error('GIS_NOT_SHOWN')));
