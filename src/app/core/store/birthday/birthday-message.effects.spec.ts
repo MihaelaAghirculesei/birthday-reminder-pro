@@ -9,6 +9,7 @@ import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { SyncCoordinatorService } from '../../services/sync-coordinator.service';
+import * as AuthSelectors from '../auth/auth.selectors';
 import * as BirthdayActions from './birthday.actions';
 import { selectBirthdayById } from './birthday.selectors';
 import { BirthdayMessageEffects } from './birthday-message.effects';
@@ -133,6 +134,65 @@ describe('BirthdayMessageEffects', () => {
         done();
       });
     });
+
+    it('should dispatch success without updating IDB when birthday is not in the store', (done) => {
+      store.overrideSelector(selectBirthdayById('1'), undefined);
+      store.refreshState();
+
+      const message = { id: 'msg1', birthdayId: '1', title: 'Test', message: 'Test message',
+        scheduledTime: '09:00', priority: 'normal' as const, active: true, messageType: 'text' as const, createdDate: new Date() };
+      actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
+
+      effects.addMessageToBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.addMessageToBirthdaySuccess.type);
+        expect(offlineStorageMock.updateBirthday).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should default to empty array when birthday has no scheduledMessages', (done) => {
+      const birthdayNoMessages = createMockBirthday({ id: '1', scheduledMessages: undefined as unknown as [] });
+      store.overrideSelector(selectBirthdayById('1'), birthdayNoMessages);
+      store.refreshState();
+
+      const message = { id: 'msg1', birthdayId: '1', title: 'Test', message: 'Test message',
+        scheduledTime: '09:00', priority: 'normal' as const, active: true, messageType: 'text' as const, createdDate: new Date() };
+      actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
+
+      effects.addMessageToBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.addMessageToBirthdaySuccess.type);
+        expect(offlineStorageMock.updateBirthday).toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should queue a sync change when the user is authenticated', (done) => {
+      store.overrideSelector(AuthSelectors.selectUserId, 'user123');
+      store.refreshState();
+
+      const message = { id: 'msg1', birthdayId: '1', title: 'Test', message: 'Test message',
+        scheduledTime: '09:00', priority: 'normal' as const, active: true, messageType: 'text' as const, createdDate: new Date() };
+      actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
+
+      effects.addMessageToBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.addMessageToBirthdaySuccess.type);
+        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'update', jasmine.any(Object));
+        done();
+      });
+    });
+
+    it('should use fallback error text when the rejection is not an Error instance', (done) => {
+      offlineStorageMock.saveScheduledMessage.and.callFake(() => Promise.reject({ code: 500 }));
+
+      const message = { id: 'msg1', birthdayId: '1', title: 'Test', message: 'Test message',
+        scheduledTime: '09:00', priority: 'normal' as const, active: true, messageType: 'text' as const, createdDate: new Date() };
+      actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
+
+      effects.addMessageToBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.addMessageToBirthdayFailure({ error: 'Failed to add message' }));
+        done();
+      });
+    });
   });
 
   describe('updateMessageInBirthday$', () => {
@@ -173,6 +233,73 @@ describe('BirthdayMessageEffects', () => {
         done();
       });
     });
+
+    it('should skip store update when birthday has no scheduledMessages', (done) => {
+      const birthdayNoMessages = createMockBirthday({ id: '1', scheduledMessages: undefined as unknown as [] });
+      store.overrideSelector(selectBirthdayById('1'), birthdayNoMessages);
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: { title: 'x' } }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.updateMessageInBirthdaySuccess.type);
+        expect(offlineStorageMock.updateBirthday).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should reschedule notification when the target message exists in birthday.scheduledMessages', (done) => {
+      const birthdayWithMsg = createMockBirthday({ id: '1', scheduledMessages: [existingMessage] });
+      store.overrideSelector(selectBirthdayById('1'), birthdayWithMsg);
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: { title: 'New Title' } }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.updateMessageInBirthdaySuccess.type);
+        expect(pushNotificationMock.scheduleNotification).toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should NOT reschedule notification when target message is absent from birthday.scheduledMessages', (done) => {
+      const otherMessage = { ...existingMessage, id: 'other-msg' };
+      const birthdayWithOther = createMockBirthday({ id: '1', scheduledMessages: [otherMessage] });
+      store.overrideSelector(selectBirthdayById('1'), birthdayWithOther);
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: {} }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.updateMessageInBirthdaySuccess.type);
+        expect(pushNotificationMock.scheduleNotification).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should queue a sync change for update when the user is authenticated', (done) => {
+      store.overrideSelector(AuthSelectors.selectUserId, 'user123');
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: {} }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.updateMessageInBirthdaySuccess.type);
+        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'update', jasmine.any(Object));
+        done();
+      });
+    });
+
+    it('should use fallback error text for update when the rejection is not an Error instance', (done) => {
+      offlineStorageMock.getScheduledMessagesByBirthday.and.callFake(() => Promise.reject({ code: 500 }));
+
+      actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: {} }));
+
+      effects.updateMessageInBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.updateMessageInBirthdayFailure({ error: 'Failed to update message' }));
+        done();
+      });
+    });
   });
 
   describe('deleteMessageFromBirthday$', () => {
@@ -194,6 +321,44 @@ describe('BirthdayMessageEffects', () => {
 
       effects.deleteMessageFromBirthday$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.deleteMessageFromBirthdayFailure({ error: 'Delete failed' }));
+        done();
+      });
+    });
+
+    it('should skip store update when birthday has no scheduledMessages', (done) => {
+      const birthdayNoMessages = createMockBirthday({ id: '1', scheduledMessages: undefined as unknown as [] });
+      store.overrideSelector(selectBirthdayById('1'), birthdayNoMessages);
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
+
+      effects.deleteMessageFromBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.deleteMessageFromBirthdaySuccess.type);
+        expect(offlineStorageMock.updateBirthday).not.toHaveBeenCalled();
+        done();
+      });
+    });
+
+    it('should queue a sync change for delete when the user is authenticated', (done) => {
+      store.overrideSelector(AuthSelectors.selectUserId, 'user123');
+      store.refreshState();
+
+      actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
+
+      effects.deleteMessageFromBirthday$.subscribe(action => {
+        expect(action.type).toBe(BirthdayActions.deleteMessageFromBirthdaySuccess.type);
+        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'update', jasmine.any(Object));
+        done();
+      });
+    });
+
+    it('should use fallback error text for delete when the rejection is not an Error instance', (done) => {
+      offlineStorageMock.deleteScheduledMessage.and.callFake(() => Promise.reject({ code: 500 }));
+
+      actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
+
+      effects.deleteMessageFromBirthday$.subscribe(action => {
+        expect(action).toEqual(BirthdayActions.deleteMessageFromBirthdayFailure({ error: 'Failed to delete message' }));
         done();
       });
     });
