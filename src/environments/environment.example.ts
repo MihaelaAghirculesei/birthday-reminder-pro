@@ -17,6 +17,8 @@ export const environment = {
   },
   // Firebase Console → Authentication → Sign-in method → Google → Web client ID
   googleAuthClientId: '',
+  // Sentry DSN — leave empty in dev so local errors never reach the prod project.
+  sentryDsn: '',
   firebase: {
     apiKey: 'YOUR_FIREBASE_API_KEY',
     authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',

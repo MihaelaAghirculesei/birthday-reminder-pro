@@ -88,7 +88,8 @@ function hasAllVars() {
 }
 
 function buildEnvironmentContent(isProduction) {
-  const clientId = process.env.GOOGLE_CLIENT_ID ?? '';
+  const clientId  = process.env.GOOGLE_CLIENT_ID ?? '';
+  const sentryDsn = isProduction ? (process.env.SENTRY_DSN ?? '') : '';
 
   return [
     `export const environment = {`,
@@ -97,6 +98,7 @@ function buildEnvironmentContent(isProduction) {
     `    clientId: '${clientId}'`,
     `  },`,
     `  googleAuthClientId: '${clientId}',`,
+    `  sentryDsn: '${sentryDsn}',`,
     `  firebase: {`,
     `    apiKey: '${process.env.FIREBASE_API_KEY}',`,
     `    authDomain: '${process.env.FIREBASE_AUTH_DOMAIN}',`,

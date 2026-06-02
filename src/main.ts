@@ -2,8 +2,21 @@ import { registerLocaleData } from '@angular/common';
 import localeIt from '@angular/common/locales/it';
 import { bootstrapApplication } from '@angular/platform-browser';
 
+import * as Sentry from '@sentry/angular';
+
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
+import { environment } from './environments/environment';
+
+if (environment.production && environment.sentryDsn) {
+  Sentry.init({
+    dsn: environment.sentryDsn,
+    environment: 'production',
+    // Disable performance tracing to preserve the free-tier error quota.
+    tracesSampleRate: 0,
+    integrations: [],
+  });
+}
 
 registerLocaleData(localeIt);
 
