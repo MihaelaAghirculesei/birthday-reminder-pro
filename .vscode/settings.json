@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["ngsw-config.json"],
+      "url": "${workspaceFolder}/node_modules/@angular/service-worker/config/schema.json"
+    }
+  ]
+}
