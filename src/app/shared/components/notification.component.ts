@@ -38,16 +38,15 @@ import { type NotificationMessage,NotificationService } from '../../core/service
     styles: [`
     .notification-container {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 16px;
+      right: 16px;
       z-index: 9999;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
       max-width: 400px;
-      width: 100%;
-      align-items: center;
+      width: calc(100% - 32px);
+      align-items: flex-end;
     }
 
     .notification {
