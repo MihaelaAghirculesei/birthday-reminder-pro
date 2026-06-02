@@ -66,6 +66,10 @@ export class CategoryFilterComponent {
     });
   }
 
+  get totalCount(): number {
+    return this.categoriesStats.reduce((sum, s) => sum + s.count, 0);
+  }
+
   trackByCategoryStats(_index: number, categoryStats: CategoryStats): string {
     return categoryStats.id;
   }

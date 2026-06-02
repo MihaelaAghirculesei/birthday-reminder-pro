@@ -182,11 +182,14 @@ describe('AuthEffects', () => {
       });
     });
 
-    it('should not show notification for cancelled sign-in', (done) => {
+    it('should show a user-friendly message for cancelled sign-in', (done) => {
       actions$ = of(AuthActions.signInFailure({ error: 'Sign-in cancelled' }));
 
       effects.signInFailure$.subscribe(() => {
-        expect(notificationServiceMock.show).not.toHaveBeenCalled();
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Sign-in cancelled — popup was closed before completing',
+          'error'
+        );
         done();
       });
     });

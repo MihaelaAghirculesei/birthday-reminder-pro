@@ -99,9 +99,10 @@ export class AuthEffects {
       this.actions$.pipe(
         ofType(AuthActions.signInFailure),
         tap(({ error }) => {
-          if (error !== 'Sign-in cancelled') {
-            this.notificationService.show(error, 'error');
-          }
+          this.notificationService.show(
+            error === 'Sign-in cancelled' ? 'Sign-in cancelled — popup was closed before completing' : error,
+            'error'
+          );
         })
       ),
     { dispatch: false }

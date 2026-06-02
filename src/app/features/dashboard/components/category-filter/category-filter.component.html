@@ -25,6 +25,40 @@
       }
     </div>
     <div class="categories-grid">
+      <div
+        class="category-stat-card"
+        [class.selected]="!selectedCategory"
+        data-testid="category-filter-all"
+      >
+        <button
+          class="category-select-btn"
+          (click)="clearFilter()"
+          [attr.aria-label]="'CATEGORY_FILTER.ALL_ARIA' | translate: {count: totalCount, people: totalCount === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate)}"
+          [attr.aria-pressed]="!selectedCategory"
+        ><span class="sr-only">{{ 'CATEGORY_FILTER.ALL_ARIA' | translate: {count: totalCount, people: totalCount === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate)} }}</span></button>
+        <div class="category-card-background" aria-hidden="true"></div>
+        <div class="category-stat-content">
+          <div class="category-icon-section">
+            <app-category-icon
+              categoryId="__all__"
+              icon="people"
+              color="#5C6BC0"
+              cssClass="category-stat-icon"
+            ></app-category-icon>
+          </div>
+          <div class="category-stat-info">
+            <div class="category-stat-name">{{ 'CATEGORY_FILTER.ALL_CATEGORIES' | translate }}</div>
+            <div class="category-stat-count">{{ totalCount }} {{ totalCount === 1 ? ('CATEGORY_FILTER.PERSON' | translate) : ('CATEGORY_FILTER.PEOPLE' | translate) }}</div>
+          </div>
+          @if (!selectedCategory) {
+            <div class="category-actions">
+              <div class="selection-indicator">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
       @for (categoryStats of categoriesStats; track categoryStats.id) {
         <div
           class="category-stat-card"
