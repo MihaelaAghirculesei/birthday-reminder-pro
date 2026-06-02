@@ -133,18 +133,18 @@ jobs:
 
           jq -r '
             .total |
-            "Statements: \(.statements.pct)%  (min 91%)",
-            "Branches:   \(.branches.pct)%  (min 85%)",
-            "Functions:  \(.functions.pct)%  (min 91%)",
-            "Lines:      \(.lines.pct)%  (min 92%)"
+            "Statements: \(.statements.pct)%  (min 92%)",
+            "Branches:   \(.branches.pct)%  (min 86%)",
+            "Functions:  \(.functions.pct)%  (min 92%)",
+            "Lines:      \(.lines.pct)%  (min 93%)"
           ' "$SUMMARY"
 
           BELOW=$(jq -r '
             .total |
-            (if .statements.pct < 91 then "statements \(.statements.pct)% < 91%" else empty end),
-            (if .branches.pct   < 85 then "branches \(.branches.pct)% < 85%"     else empty end),
-            (if .functions.pct  < 91 then "functions \(.functions.pct)% < 91%"   else empty end),
-            (if .lines.pct      < 92 then "lines \(.lines.pct)% < 92%"           else empty end)
+            (if .statements.pct < 92 then "statements \(.statements.pct)% < 92%" else empty end),
+            (if .branches.pct   < 86 then "branches \(.branches.pct)% < 86%"     else empty end),
+            (if .functions.pct  < 92 then "functions \(.functions.pct)% < 92%"   else empty end),
+            (if .lines.pct      < 93 then "lines \(.lines.pct)% < 93%"           else empty end)
           ' "$SUMMARY")
 
           if [ -n "$BELOW" ]; then
@@ -156,7 +156,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage/lcov.info
+          files: ./coverage/birthday-reminder-pro/lcov.info
           flags: unittests
           fail_ci_if_error: false
 
