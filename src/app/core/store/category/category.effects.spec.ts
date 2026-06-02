@@ -137,6 +137,19 @@ describe('CategoryEffects', () => {
         done();
       });
     });
+
+    it('should use fallback message when load throws a non-Error value', (done) => {
+      categoryStorageMock.getCustomCategories.and.callFake(() => { throw 'unexpected'; });
+
+      actions$ = of(CategoryActions.loadCategories());
+
+      effects.loadCategories$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.loadCategoriesFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.loadCategoriesFailure>;
+        expect(payload.error).toBe('Failed to load categories');
+        done();
+      });
+    });
   });
 
   describe('addCategory$', () => {
@@ -158,6 +171,18 @@ describe('CategoryEffects', () => {
         expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.addCategoryFailure>;
         expect(payload.error).toBe('Storage error');
+        done();
+      });
+    });
+
+    it('should use fallback message when add throws a non-Error value', (done) => {
+      categoryStorageMock.addCustomCategory.and.callFake(() => { throw 'unexpected'; });
+      actions$ = of(CategoryActions.addCategory({ category: mockCategory }));
+
+      effects.addCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.addCategoryFailure>;
+        expect(payload.error).toBe('Failed to add category');
         done();
       });
     });
@@ -186,6 +211,18 @@ describe('CategoryEffects', () => {
         done();
       });
     });
+
+    it('should use fallback message when update throws a non-Error value', (done) => {
+      categoryStorageMock.updateCategory.and.callFake(() => { throw 'unexpected'; });
+      actions$ = of(CategoryActions.updateCategory({ category: mockCategory }));
+
+      effects.updateCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.updateCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.updateCategoryFailure>;
+        expect(payload.error).toBe('Failed to update category');
+        done();
+      });
+    });
   });
 
   describe('deleteCategory$', () => {
@@ -210,6 +247,18 @@ describe('CategoryEffects', () => {
         done();
       });
     });
+
+    it('should use fallback message when delete throws a non-Error value', (done) => {
+      categoryStorageMock.deleteCategory.and.callFake(() => { throw 'unexpected'; });
+      actions$ = of(CategoryActions.deleteCategory({ categoryId: 'custom1' }));
+
+      effects.deleteCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.deleteCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.deleteCategoryFailure>;
+        expect(payload.error).toBe('Failed to delete category');
+        done();
+      });
+    });
   });
 
   describe('restoreCategory$', () => {
@@ -231,6 +280,18 @@ describe('CategoryEffects', () => {
         expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.restoreCategoryFailure>;
         expect(payload.error).toBe('Storage error');
+        done();
+      });
+    });
+
+    it('should use fallback message when restore throws a non-Error value', (done) => {
+      categoryStorageMock.restoreCategory.and.callFake(() => { throw 'unexpected'; });
+      actions$ = of(CategoryActions.restoreCategory({ categoryId: 'family' }));
+
+      effects.restoreCategory$.subscribe(action => {
+        expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
+        const payload = action as ReturnType<typeof CategoryActions.restoreCategoryFailure>;
+        expect(payload.error).toBe('Failed to restore category');
         done();
       });
     });
