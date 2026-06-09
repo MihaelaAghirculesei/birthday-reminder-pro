@@ -64,6 +64,13 @@ module.exports = {
         // Showing as "unused" on first load IS the correct behaviour.
         'unused-javascript': 'off',
 
+        // ── Legacy JavaScript ────────────────────────────────────────────────
+        // @sentry/browser ships one legacy-polyfill transform in its bundle
+        // (regenerator-runtime for older async/await transpilation).  This is
+        // a third-party artefact we cannot remove; the audit will always find
+        // exactly 1 item when Sentry is included in the build.
+        'legacy-javascript': 'off',
+
         // ── Image format & sizing ────────────────────────────────────────────
         // All flagged images are 46 px app icons also used in the Web Manifest
         // where PNG is required. WebP conversion would save <1 kB and breaks
