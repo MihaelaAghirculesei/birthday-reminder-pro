@@ -1,21 +1,26 @@
+import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { APP_BASE_HREF } from '@angular/common';
 import { CSP_NONCE } from '@angular/core';
 import { CommonEngine } from '@angular/ssr/node';
-import express from 'express';
 import compression from 'compression';
-import helmet from 'helmet';
+import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { randomBytes } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
-import bootstrap from './src/main.server';
-import { environment } from './src/environments/environment';
+import helmet from 'helmet';
+
 import { checkFirebaseOptions } from './src/app/firebase.config';
+import { environment } from './src/environments/environment';
+import bootstrap from './src/main.server';
 
 // Build CSP directives once per request using the per-request nonce.
 function buildCsp(nonce: string): string {
   const firebaseConfigured = checkFirebaseOptions(environment.firebase);
+  const sentryIngestUrl = environment.sentryDsn
+    ? `https://${new URL(environment.sentryDsn).host}`
+    : null;
   return [
     `default-src 'self'`,
     // Complete strict-CSP pattern (web.dev/strict-csp):
@@ -43,6 +48,7 @@ function buildCsp(nonce: string): string {
       `https://firestore.googleapis.com`,
       `https://lh3.googleusercontent.com`,
       ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
+      ...(sentryIngestUrl ? [sentryIngestUrl] : []),
     ].join(' '),
     // https://www.google.com required for GIS One Tap / FedCM iframe
     `frame-src 'self' https://accounts.google.com https://www.google.com${firebaseConfigured ? ` https://${environment.firebase.authDomain}` : ''}`,
@@ -160,7 +166,7 @@ function run(): void {
   const port = process.env['PORT'] || 4000;
   const server = app();
   server.listen(port, () => {
-    console.log(`Node SSR server listening on http://localhost:${port}`);
+    console.info(`Node SSR server listening on http://localhost:${port}`);
   });
 }
 
