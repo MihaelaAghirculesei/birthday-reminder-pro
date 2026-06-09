@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { type Scope } from '@sentry/angular';
+import { type Scope } from '@sentry/browser';
 
 import { environment } from '../../../environments/environment';
 import { type ErrorReport, ErrorReportingService } from './error-reporting.service';
@@ -53,6 +53,25 @@ describe('SentryReporterService', () => {
     service.captureError(mockReport);
 
     expect(sentryClientMock.withScope).not.toHaveBeenCalled();
+  });
+
+  it('should NOT call Sentry when SENTRY_CLIENT token is not provided', () => {
+    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        SentryReporterService,
+        { provide: ErrorReportingService, useValue: idbReporterMock },
+        // SENTRY_CLIENT intentionally omitted — simulates non-production / SSR bootstrap
+      ]
+    });
+    const serviceWithoutSentry = TestBed.inject(SentryReporterService);
+
+    serviceWithoutSentry.captureError(mockReport);
+
+    expect(sentryClientMock.withScope).not.toHaveBeenCalled();
+    expect(idbReporterMock.captureError).toHaveBeenCalledWith(mockReport);
   });
 
   it('should call Sentry.captureException when sentryDsn is set', () => {
