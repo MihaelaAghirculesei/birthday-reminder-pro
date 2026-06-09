@@ -82,12 +82,14 @@ describe('Search Functionality', () => {
       .should('be.visible')
       .type('NonExistent', { force: true });
 
-    // waitForAngular() uses Angular's whenStable() to confirm the full NgRx
-    // pipeline has settled (dispatch → reducer → selector → signal → CD → render)
-    // before asserting on the no-results state. More reliable than checking
-    // app-birthday-item absence, which can pass prematurely when virtual scroll
-    // hasn't rendered items yet (e.g. items outside the 600px viewport window).
-    cy.waitForAngular();
+    // 'NonExistent' matches zero birthdays, so the virtual scroll removes ALL
+    // app-birthday-item elements from the DOM. Waiting for their absence is more
+    // reliable than cy.waitForAngular() here: whenStable() resolves as soon as
+    // zone tasks drain, but Angular's signal-based reactive pipeline may schedule
+    // template re-renders on the next microtask flush — after whenStable() fires.
+    // The DOM change (items gone → no-results-message rendered) is the concrete
+    // indicator that the full NgRx → signal → CD → render cycle completed.
+    cy.get('app-birthday-item', { timeout: 10000 }).should('not.exist');
 
     cy.get('[data-testid="no-results-message"]', { timeout: 10000 })
       .should('be.visible')

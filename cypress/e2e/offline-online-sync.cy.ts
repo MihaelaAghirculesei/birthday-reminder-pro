@@ -73,6 +73,12 @@ describe('Offline → Online sync flow', () => {
   it('birthday added while offline is immediately visible in the UI', () => {
     cy.window().then((win) => win.dispatchEvent(new Event('offline')));
 
+    // Wait for Angular (NetworkService → NgRx → CD chain) to finish processing
+    // the offline event before interacting with the form. Without this, the
+    // click may arrive while zone.js is still draining the offline-event effects,
+    // making the 5 s form-visibility timeout unreliable.
+    cy.get('app-network-status', { timeout: 5000 }).should('contain.text', 'Offline');
+
     cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Offline Birthday User');
     cy.get('[data-testid="birthday-date-input"]').type('05/10/1993');
