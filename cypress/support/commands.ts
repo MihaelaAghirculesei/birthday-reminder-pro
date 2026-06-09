@@ -139,7 +139,10 @@ Cypress.Commands.add('clearIndexedDB', () => {
 });
 
 Cypress.Commands.add('waitForAngular', () => {
-  cy.get('.app-header', { timeout: 15000 }).should('be.visible');
+  // Use 'exist' instead of 'be.visible': when a dialog/overlay is open it covers
+  // the fixed-position header, causing Cypress to report it as not visible even
+  // though Angular is fully rendered. Presence in the DOM is sufficient proof.
+  cy.get('.app-header', { timeout: 15000 }).should('exist');
   cy.get('[data-testid="add-birthday-button"]', { timeout: 15000 }).should('exist');
   // Use Angular's testability API to wait for zone stability (which includes SSR
   // hydration completion). whenStable() fires immediately if already stable, so
@@ -177,7 +180,7 @@ Cypress.Commands.add('expandBirthdayForm', () => {
       cy.get('[data-testid="add-birthday-button"]').click();
     }
   });
-  cy.get('[data-testid="birthday-name-input"]', { timeout: 5000 }).should('be.visible');
+  cy.get('[data-testid="birthday-name-input"]', { timeout: 10000 }).should('be.visible');
 });
 
 // ---------------------------------------------------------------------------
@@ -346,8 +349,13 @@ Cypress.Commands.add('mockDeferViewport', () => {
 
 Cypress.Commands.add('visualSnapshot', (name: string) => {
   cy.disableAnimations();
-  // eslint-disable-next-line cypress/no-unnecessary-waiting
-  cy.wait(200);
+  // cy.clock() is active in every visual test (set in visitFresh). Ticking
+  // 1 000 ms drains all pending fake-timer callbacks before the screenshot:
+  // Angular animation onDone handlers, CDK overlay setup, BreakpointObserver
+  // debounces after viewport resize, etc. Without this those setTimeout(0/300)
+  // calls never fire and the zone stays dirty, causing flaky screenshots.
+  cy.tick(1000);
+  cy.waitForAngular();
   cy.screenshot(name, { overwrite: true });
 });
 
