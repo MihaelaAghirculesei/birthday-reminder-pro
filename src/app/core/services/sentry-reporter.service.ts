@@ -1,18 +1,18 @@
 import { inject, Injectable, InjectionToken } from '@angular/core';
 
-import * as Sentry from '@sentry/angular';
+import type { Scope } from '@sentry/browser';
 
 import { environment } from '../../../environments/environment';
 import { type ErrorReport, type ErrorReporter,ErrorReportingService } from './error-reporting.service';
 
 export interface SentryClient {
   captureException(exception: unknown): string;
-  withScope<T>(callback: (scope: Sentry.Scope) => T): T;
+  withScope<T>(callback: (scope: Scope) => T): T;
 }
 
-export const SENTRY_CLIENT = new InjectionToken<SentryClient>('SENTRY_CLIENT', {
-  factory: () => Sentry as unknown as SentryClient,
-});
+// No factory: the token is provided at browser bootstrap via a dynamic import
+// of @sentry/browser. SSR and non-production contexts leave it unset (null).
+export const SENTRY_CLIENT = new InjectionToken<SentryClient>('SENTRY_CLIENT');
 
 /**
  * Production error reporter: persists to IndexedDB (for local inspection)
@@ -24,14 +24,15 @@ export const SENTRY_CLIENT = new InjectionToken<SentryClient>('SENTRY_CLIENT', {
 @Injectable({ providedIn: 'root' })
 export class SentryReporterService implements ErrorReporter {
   private readonly idbReporter = inject(ErrorReportingService);
-  private readonly sentry = inject(SENTRY_CLIENT);
+  private readonly sentry = inject(SENTRY_CLIENT, { optional: true });
 
   captureError(report: ErrorReport): void {
     this.idbReporter.captureError(report);
 
-    if (!environment.sentryDsn) return;
+    if (!environment.sentryDsn || !this.sentry) return;
 
-    this.sentry.withScope(scope => {
+    const sentry = this.sentry;
+    sentry.withScope(scope => {
       scope.setTag('errorType', report.type);
       scope.setExtra('technicalMessage', report.technicalMessage);
       if (report.url) scope.setExtra('url', report.url);
@@ -41,7 +42,7 @@ export class SentryReporterService implements ErrorReporter {
           ? report.error
           : new Error(report.technicalMessage);
 
-      this.sentry.captureException(exception);
+      sentry.captureException(exception);
     });
   }
 }
