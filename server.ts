@@ -18,7 +18,10 @@ import bootstrap from './src/main.server';
 // Build CSP directives once per request using the per-request nonce.
 function buildCsp(nonce: string): string {
   const firebaseConfigured = checkFirebaseOptions(environment.firebase);
-  const sentryIngestUrl = environment.sentryDsn
+  // Guard matches the one in main.ts — only treat the value as a URL if it
+  // actually starts with https://, so placeholder strings like 'YOUR_SENTRY_DSN'
+  // never reach new URL() and crash every SSR request with a TypeError.
+  const sentryIngestUrl = environment.sentryDsn && environment.sentryDsn.startsWith('https://')
     ? `https://${new URL(environment.sentryDsn).host}`
     : null;
   return [
@@ -157,6 +160,13 @@ export function app(): express.Express {
         res.send(html);
       })
       .catch((err) => next(err));
+  });
+
+  // Log unhandled Express errors to stdout so they appear in LHCI server output.
+  server.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[SSR] Unhandled error:', err?.message ?? String(err));
+    if (err?.stack) console.error(err.stack);
+    res.status(500).send('Internal Server Error');
   });
 
   return server;
