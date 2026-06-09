@@ -47,20 +47,28 @@ describe('Keyboard navigation — dialogs', () => {
     cy.clearIndexedDB();
     cy.visit('/');
     cy.waitForAngular();
+    cy.disableAnimations();
   });
 
   it('Escape key closes the edit birthday dialog', () => {
     cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Esc Test User');
-    cy.get('[data-testid="birthday-date-input"]').type('08/08/1988');
+    cy.get('[data-testid="birthday-date-input"]').type('08/08/1988').blur();
     cy.get('[data-testid="save-birthday-button"]').click();
-    cy.contains('Esc Test User').should('be.visible');
+    cy.contains('Esc Test User', { timeout: 10000 }).should('be.visible');
+    // Wait for zone stability: NgRx IDB-write effect + @expandCollapse leave animation
+    // must finish before clicking edit, otherwise the lazy dialog import can be dropped.
+    cy.waitForAngular();
 
     cy.get('[data-testid="edit-birthday-button"]').first().click();
-    cy.get('.dialog-container').should('be.visible');
+    // editBirthday() does a lazy import() before opening the dialog; 15 s covers
+    // the module-load round-trip and any remaining animation delay.
+    cy.get('.dialog-container', { timeout: 15000 }).should('be.visible');
 
-    // mat-dialog-container has tabindex="-1" and is focusable; CDK handles Escape
-    cy.get('mat-dialog-container').focus().type('{esc}');
+    // CDK auto-focuses the first tabbable element in the dialog (the name input).
+    // Type {esc} on whichever element CDK has focused so the keydown bubbles to
+    // the window and fires the component's @HostListener('window:keydown.escape').
+    cy.focused().type('{esc}');
     cy.get('.dialog-container').should('not.exist');
   });
 });
@@ -72,15 +80,20 @@ describe('Keyboard navigation — search and skip link', () => {
     cy.clearIndexedDB();
     cy.visit('/');
     cy.waitForAngular();
+    cy.disableAnimations();
   });
 
   it('search input is focusable once birthdays exist', () => {
     cy.expandBirthdayForm();
     cy.get('[data-testid="birthday-name-input"]').type('Search Focus Test');
-    cy.get('[data-testid="birthday-date-input"]').type('03/03/1993');
+    cy.get('[data-testid="birthday-date-input"]').type('03/03/1993').blur();
     cy.get('[data-testid="save-birthday-button"]').click();
+    // Wait for the birthday to appear and for zone stability (form collapse animation,
+    // NgRx effects, and CDK restoreFocus must all complete before we assert focus).
+    cy.contains('Search Focus Test', { timeout: 10000 }).should('be.visible');
+    cy.waitForAngular();
 
-    cy.get('[data-testid="search-input"]', { timeout: 8000 })
+    cy.get('[data-testid="search-input"]')
       .focus()
       .should('be.focused');
   });

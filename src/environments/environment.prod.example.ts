@@ -17,6 +17,8 @@ export const environment = {
   },
   // Firebase Console → Authentication → Sign-in method → Google → Web client ID
   googleAuthClientId: '',
+  // Sentry DSN — Sentry project settings → Client Keys (DSN).
+  sentryDsn: 'YOUR_SENTRY_DSN',
   firebase: {
     apiKey: 'YOUR_FIREBASE_API_KEY',
     authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',

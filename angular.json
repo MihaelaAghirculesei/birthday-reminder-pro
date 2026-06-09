@@ -90,6 +90,13 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "ci": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": false,
+              "prerender": false,
+              "ssr": false
             }
           },
           "defaultConfiguration": "production"
@@ -105,6 +112,11 @@
             },
             "development": {
               "buildTarget": "birthday-reminder-pro:build:development"
+            },
+            "ci": {
+              "buildTarget": "birthday-reminder-pro:build:ci",
+              "hmr": false,
+              "host": "127.0.0.1"
             }
           },
           "defaultConfiguration": "development"

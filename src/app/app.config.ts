@@ -13,7 +13,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { TranslateLoader,TranslateModule } from '@ngx-translate/core';
 
 import { routes } from './app.routes';
-import { ERROR_REPORTER, ErrorReportingService,GlobalErrorHandler, NotificationService, SelectivePreloadingStrategy, ThemeService } from './core';
+import { ERROR_REPORTER, GlobalErrorHandler, NotificationService, SelectivePreloadingStrategy, SentryReporterService, ThemeService } from './core';
 import { InlineTranslateLoader } from './core/i18n/inline-translate-loader';
 import { FirebaseAuthService } from './core/services/firebase-auth.service';
 import { LocaleService } from './core/services/locale.service';
@@ -94,7 +94,7 @@ export const appConfig: ApplicationConfig = {
     NotificationService,
     ThemeService,
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
-    { provide: ERROR_REPORTER, useExisting: ErrorReportingService },
+    { provide: ERROR_REPORTER, useExisting: SentryReporterService },
     {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
