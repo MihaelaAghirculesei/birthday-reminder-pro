@@ -47,6 +47,7 @@ cypress/downloads
 
 .lighthouseci
 localhost_*.report.html
+lh-debug*.json
 
 .firebase/
 firestore-debug.log
