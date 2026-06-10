@@ -26,7 +26,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>1. Titolare del trattamento</h2>
-              <p>Mihaela Melania Aghirculesei — <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Mihaela Melania Aghirculesei — <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
 
             <section>
@@ -62,7 +62,7 @@ import { map } from 'rxjs/operators';
                 <li><strong>Cancellazione</strong> — usa il pulsante "Elimina account" nel menu utente per rimuovere definitivamente tutti i tuoi dati.</li>
                 <li><strong>Portabilità</strong> — il file JSON esportato è in formato standard leggibile da qualsiasi editor di testo.</li>
               </ul>
-              <p>Per esercitare altri diritti scrivi a <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a>.</p>
+              <p>Per esercitare altri diritti scrivi a <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a>.</p>
             </section>
 
             <section>
@@ -72,7 +72,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>7. Contatti</h2>
-              <p>Per qualsiasi domanda relativa alla privacy: <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Per qualsiasi domanda relativa alla privacy: <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
           </article>
         } @else {
@@ -82,7 +82,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>1. Data Controller</h2>
-              <p>Mihaela Melania Aghirculesei — <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Mihaela Melania Aghirculesei — <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
 
             <section>
@@ -118,7 +118,7 @@ import { map } from 'rxjs/operators';
                 <li><strong>Erasure</strong> — use the "Delete account" button in the user menu to permanently remove all your data.</li>
                 <li><strong>Portability</strong> — the exported JSON file is a standard format readable in any text editor.</li>
               </ul>
-              <p>To exercise other rights, contact <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a>.</p>
+              <p>To exercise other rights, contact <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a>.</p>
             </section>
 
             <section>
@@ -128,7 +128,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>7. Contact</h2>
-              <p>Privacy questions: <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Privacy questions: <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
           </article>
         }

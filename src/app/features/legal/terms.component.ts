@@ -66,7 +66,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>8. Contatti</h2>
-              <p>Per domande: <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Per domande: <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
           </article>
         } @else {
@@ -116,7 +116,7 @@ import { map } from 'rxjs/operators';
 
             <section>
               <h2>8. Contact</h2>
-              <p>Questions: <a href="mailto:aghirculesei@gmail.com">aghirculesei@gmail.com</a></p>
+              <p>Questions: <a href="mailto:aghirculesei@gmail.com">aghirculesei&#64;gmail.com</a></p>
             </section>
           </article>
         }
