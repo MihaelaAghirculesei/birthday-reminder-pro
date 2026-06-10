@@ -33,5 +33,18 @@ export const signOutFailure = createAction(
   props<{ error: string }>()
 );
 
+// Delete Account
+export const deleteAccount = createAction(
+  '[Auth] Delete Account',
+  props<{ userId: string }>()
+);
+
+export const deleteAccountSuccess = createAction('[Auth] Delete Account Success');
+
+export const deleteAccountFailure = createAction(
+  '[Auth] Delete Account Failure',
+  props<{ error: string }>()
+);
+
 // Clear Error
 export const clearAuthError = createAction('[Auth] Clear Error');

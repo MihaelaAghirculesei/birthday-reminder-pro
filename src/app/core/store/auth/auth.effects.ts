@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EMPTY, from, of } from 'rxjs';
 import { catchError, exhaustMap, filter, map, switchMap, take, tap } from 'rxjs/operators';
 
+import { AccountDeletionService } from '../../services/account-deletion.service';
 import { FirebaseAuthService } from '../../services/firebase-auth.service';
 import { FirestoreService } from '../../services/firestore.service';
 import { LoggerService } from '../../services/logger.service';
@@ -17,6 +18,7 @@ import * as AuthActions from './auth.actions';
 export class AuthEffects {
   private readonly actions$ = inject(Actions);
   private readonly authService = inject(FirebaseAuthService);
+  private readonly accountDeletion = inject(AccountDeletionService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
   private readonly orphanCleanup = inject(OrphanPhotoCleanupService);
@@ -140,6 +142,52 @@ export class AuthEffects {
         tap(({ error }) => {
           this.notificationService.show(
             this.translate.instant('NOTIFICATIONS.SIGN_OUT_FAILED', { error }),
+            'error'
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  deleteAccount$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.deleteAccount),
+      exhaustMap(({ userId }) =>
+        this.accountDeletion.deleteAccount(userId).pipe(
+          map(() => AuthActions.deleteAccountSuccess()),
+          catchError((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            return of(AuthActions.deleteAccountFailure({ error: message }));
+          })
+        )
+      )
+    )
+  );
+
+  deleteAccountSuccess$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.deleteAccountSuccess),
+        tap(() => {
+          this.notificationService.show(
+            this.translate.instant('NOTIFICATIONS.ACCOUNT_DELETED'),
+            'success'
+          );
+        })
+      ),
+    { dispatch: false }
+  );
+
+  deleteAccountFailure$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.deleteAccountFailure),
+        tap(({ error }) => {
+          const key = error.includes('requires-recent-login')
+            ? 'NOTIFICATIONS.DELETE_ACCOUNT_REAUTH'
+            : 'NOTIFICATIONS.DELETE_ACCOUNT_FAILED';
+          this.notificationService.show(
+            this.translate.instant(key, { error }),
             'error'
           );
         })

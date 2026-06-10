@@ -2,16 +2,19 @@ import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy,Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 
 import { Store } from '@ngrx/store';
 
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { filter, take } from 'rxjs/operators';
 
 import * as AuthActions from '../../../core/store/auth/auth.actions';
 import * as AuthSelectors from '../../../core/store/auth/auth.selectors';
+import { ConfirmDialogComponent, type ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 import { SyncStatusComponent } from '../sync-status/sync-status.component';
 
 @Component({
@@ -77,7 +80,14 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
 
       <button mat-menu-item (click)="signOut()">
         <mat-icon>logout</mat-icon>
-        <span>Sign out</span>
+        <span>{{ 'AUTH.SIGN_OUT' | translate }}</span>
+      </button>
+
+      <mat-divider></mat-divider>
+
+      <button mat-menu-item class="delete-account-item" (click)="confirmDeleteAccount()">
+        <mat-icon color="warn">delete_forever</mat-icon>
+        <span class="warn-text">{{ 'AUTH.DELETE_ACCOUNT' | translate }}</span>
       </button>
     </mat-menu>
   `,
@@ -143,11 +153,21 @@ import { SyncStatusComponent } from '../sync-status/sync-status.component';
       pointer-events: none;
     }
 
+    .warn-text {
+      color: #f44336;
+    }
+
+    .delete-account-item mat-icon {
+      color: #f44336 !important;
+    }
+
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserMenuComponent {
   private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
+  private readonly translate = inject(TranslateService);
 
   displayName = toSignal(
     this.store.select(AuthSelectors.selectUserDisplayName),
@@ -164,7 +184,33 @@ export class UserMenuComponent {
     { initialValue: null }
   );
 
+  private userId = toSignal(
+    this.store.select(AuthSelectors.selectUserId),
+    { initialValue: null }
+  );
+
   signOut(): void {
     this.store.dispatch(AuthActions.signOut());
+  }
+
+  confirmDeleteAccount(): void {
+    const userId = this.userId();
+    if (!userId) return;
+
+    const data: ConfirmDialogData = {
+      title: this.translate.instant('CONFIRM.DELETE_ACCOUNT_TITLE'),
+      message: this.translate.instant('CONFIRM.DELETE_ACCOUNT_MESSAGE'),
+      confirmText: this.translate.instant('CONFIRM.DELETE_ACCOUNT_BTN'),
+      cancelText: this.translate.instant('CONFIRM.CANCEL_BTN'),
+      icon: 'delete_forever',
+      color: 'warn'
+    };
+
+    this.dialog.open(ConfirmDialogComponent, { data, maxWidth: '400px' })
+      .afterClosed()
+      .pipe(filter(Boolean), take(1))
+      .subscribe(() => {
+        this.store.dispatch(AuthActions.deleteAccount({ userId }));
+      });
   }
 }
