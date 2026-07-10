@@ -32,7 +32,7 @@
     "typecheck:app": "npx tsc --noEmit --strict --skipLibCheck -p tsconfig.app.json",
     "typecheck:spec": "npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json",
     "typecheck": "npm run typecheck:app && npm run typecheck:spec",
-    "ci:audit": "npm audit --omit=dev --audit-level=high",
+    "ci:audit": "node scripts/check-audit.js",
     "ci:bundle": "node scripts/check-bundle.js",
     "ci:security": "npm run ci:audit",
     "ci:quality": "npm run lint && npm run typecheck",
@@ -131,6 +131,8 @@
     "serialize-javascript": "7.0.5",
     "file-type": "21.3.3",
     "ws": ">=8.20.1",
-    "webpack-dev-server": ">=5.2.4"
+    "webpack-dev-server": ">=5.2.4",
+    "@grpc/grpc-js": "1.9.16",
+    "protobufjs": "7.6.5"
   }
 }
