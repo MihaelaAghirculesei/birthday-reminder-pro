@@ -249,6 +249,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint-and-typecheck, unit-tests]
+    env:
+      # `secrets` isn't a valid context in a step `if:` — mirror it into `env` at
+      # job level (which is) so the source-map upload step below can check it.
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -280,9 +284,8 @@ jobs:
         # browsers never fetch them) purely so this step can ship them to Sentry —
         # without it, production stack traces are minified and unreadable. Runs
         # only when the secret is configured, so forks/PRs without it still build.
-        if: ${{ secrets.SENTRY_AUTH_TOKEN != '' }}
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' }}
         env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: npx @sentry/cli sourcemaps upload --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" dist/birthday-reminder-pro/browser
