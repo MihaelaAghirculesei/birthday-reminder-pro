@@ -7,7 +7,7 @@ import { Store } from '@ngrx/store';
 import { filter, take } from 'rxjs/operators';
 
 import { type Birthday, type ScheduledMessage } from '../../shared/models';
-import { parseLocalDate } from '../../shared/utils/date.utils';
+import { parseLocalDate } from '../../shared/utils/date';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import { NOTIFICATION_FIRE_WINDOW_MS, ONE_DAY_MS } from '../constants/time.constants';
 import * as BirthdayActions from '../store/birthday/birthday.actions';
