@@ -39,7 +39,11 @@ function buildCsp(nonce: string): string {
     // Angular Material sets inline style="" attributes that cannot carry a nonce.
     `style-src-attr 'unsafe-inline'`,
     `font-src 'self' https://fonts.gstatic.com data:`,
-    `img-src 'self' data: blob: https:`,
+    // Explicit origins instead of a bare 'https:' wildcard: Google profile photos,
+    // Firebase Storage (user photo uploads, two historical hostnames), and the
+    // two stock-photo APIs behind "Load Test Data" (Unsplash curated portraits,
+    // pravatar.cc avatars). data:/blob: cover base64 photos and local previews.
+    `img-src 'self' data: blob: https://lh3.googleusercontent.com https://firebasestorage.googleapis.com https://storage.googleapis.com https://images.unsplash.com https://i.pravatar.cc`,
     [
       `connect-src 'self'`,
       `https://www.googleapis.com`,
@@ -108,6 +112,10 @@ export function app(): express.Express {
   server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
 
   // ── Rate limiter for SSR routes ──────────────────────────────────────────────
+  // App is single-user/family scale, not enterprise: a handful of people share a
+  // household IP, so the limit must tolerate several devices reloading at once.
+  // 100 SSR renders / 15 min per IP (~1 every 9s sustained) comfortably covers
+  // that while still bounding the cost of the expensive Angular Universal render.
   const ssrLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 100,

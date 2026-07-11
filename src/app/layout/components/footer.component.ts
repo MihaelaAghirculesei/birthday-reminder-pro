@@ -1,12 +1,13 @@
 import { DOCUMENT,isPlatformBrowser } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, PLATFORM_ID } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { TranslatePipe } from '@ngx-translate/core';
 
 
 @Component({
     selector: 'app-footer',
-    imports: [TranslatePipe],
+    imports: [RouterLink, TranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <footer class="app-footer">
@@ -17,6 +18,11 @@ import { TranslatePipe } from '@ngx-translate/core';
       <div class="footer-center">
         <p class="footer-tagline">{{ 'FOOTER.TAGLINE' | translate }}</p>
         <p class="footer-copyright">&copy; {{ currentYear }} Mihaela Melania Aghirculesei</p>
+        <nav class="footer-legal" aria-label="Legal">
+          <a routerLink="/privacy-policy">{{ 'FOOTER.PRIVACY_POLICY' | translate }}</a>
+          <span aria-hidden="true">·</span>
+          <a routerLink="/terms">{{ 'FOOTER.TERMS' | translate }}</a>
+        </nav>
       </div>
 
       <div class="footer-social">
@@ -91,6 +97,31 @@ import { TranslatePipe } from '@ngx-translate/core';
       color: rgba(255, 255, 255, 0.6);
       font-size: clamp(0.75rem, 1vw, 0.95rem);
       margin: 0.25rem 0 0;
+    }
+
+    .footer-legal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 6px;
+
+      a {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: rgba(255, 255, 255, 0.85);
+          text-decoration: underline;
+        }
+      }
+
+      span {
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 0.75rem;
+      }
     }
 
     .footer-social {

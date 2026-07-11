@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { inject,Injectable, InjectionToken, PLATFORM_ID } from '@angular/core';
 
 import { type Birthday, type ScheduledMessage } from '../../shared';
-import { toDateString } from '../../shared/utils/date.utils';
+import { toDateString } from '../../shared/utils/date';
 import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { LoggerService } from './logger.service';

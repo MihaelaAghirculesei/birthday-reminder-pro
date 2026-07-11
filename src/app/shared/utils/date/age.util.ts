@@ -1,4 +1,4 @@
-import { parseLocalDate } from '../date.utils';
+import { parseLocalDate } from './parsing.util';
 
 /**
  * Calculate the age based on a birth date
@@ -16,4 +16,10 @@ export function calculateAge(birthDate: string): number {
   }
 
   return age;
+}
+
+/** Same as calculateAge, but null for a not-yet-reached (future) birth date */
+export function calculateAgeOrNull(birthDate: string): number | null {
+  const age = calculateAge(birthDate);
+  return age >= 0 ? age : null;
 }

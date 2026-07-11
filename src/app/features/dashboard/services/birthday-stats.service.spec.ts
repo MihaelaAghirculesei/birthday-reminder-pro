@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { type Birthday } from '../../../shared';
-import { parseLocalDate } from '../../../shared/utils/date.utils';
+import { parseLocalDate } from '../../../shared/utils/date';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
 import { BirthdayStatsService } from './birthday-stats.service';
 

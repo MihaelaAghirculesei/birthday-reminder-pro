@@ -81,7 +81,11 @@
                 }
               },
               "outputHashing": "all",
-              "sourceMap": false,
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": true
+              },
               "namedChunks": false,
               "extractLicenses": true,
               "serviceWorker": "ngsw-config.json"

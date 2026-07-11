@@ -21,7 +21,7 @@ import { MessageSchedulerComponent } from '../../../shared/components/message-sc
 import { type Birthday } from '../../../shared/models';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 import { LocaleDatePipe } from '../../../shared/pipes/locale-date.pipe';
-import { getDaysUntilBirthday } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday } from '../../../shared/utils/date';
 import { BirthdayEditDialogComponent, type BirthdayEditDialogData } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
 
 interface MessageScheduleDialogData {

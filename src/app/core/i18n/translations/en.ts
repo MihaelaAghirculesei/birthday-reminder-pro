@@ -9,7 +9,9 @@ export const en = {
     SIGNING_IN: 'Signing in...',
     SIGNING_OUT: 'Signing out...',
     USER: 'User',
-    USER_MENU: 'User menu'
+    USER_MENU: 'User menu',
+    DELETE_ACCOUNT: 'Delete account',
+    DELETING_ACCOUNT: 'Deleting account...'
   },
   NAV: {
     OPEN_MENU: 'Open navigation menu',
@@ -282,7 +284,10 @@ export const en = {
     FAILED_MIGRATION: 'Cloud migration failed: {{error}}',
     FAILED_IMPORT: 'Failed to import birthdays',
     FAILED_CLEAR: 'Failed to clear all birthdays',
-    FAILED_LOAD_TEST_DATA: 'Failed to load test data'
+    FAILED_LOAD_TEST_DATA: 'Failed to load test data',
+    ACCOUNT_DELETED: 'Account deleted. All your data has been permanently removed.',
+    DELETE_ACCOUNT_FAILED: 'Failed to delete account: {{error}}',
+    DELETE_ACCOUNT_REAUTH: 'For security, please sign out and sign in again before deleting your account.'
   },
   CONFIRM: {
     CANCEL_BTN: 'Cancel',
@@ -296,7 +301,10 @@ export const en = {
     DELETE_CATEGORY_TITLE: 'Delete Category?',
     DELETE_CATEGORY_MESSAGE: 'Are you sure you want to delete the category "{{name}}"?',
     DELETE_MESSAGE_TITLE: 'Delete Message?',
-    DELETE_MESSAGE_CONFIRM: 'Are you sure you want to delete this scheduled message?'
+    DELETE_MESSAGE_CONFIRM: 'Are you sure you want to delete this scheduled message?',
+    DELETE_ACCOUNT_TITLE: 'Delete Account?',
+    DELETE_ACCOUNT_MESSAGE: 'This will permanently delete your account and all your data — birthdays, categories, and photos. This action cannot be undone.',
+    DELETE_ACCOUNT_BTN: 'Delete Account'
   },
   MESSAGE_TEMPLATES: {
     SIMPLE_TITLE: 'Simple Happy Birthday',
@@ -416,7 +424,9 @@ export const en = {
     ARIA: 'Notification permission request'
   },
   FOOTER: {
-    TAGLINE: 'Made with ❤️ to never forget special moments'
+    TAGLINE: 'Made with ❤️ to never forget special moments',
+    PRIVACY_POLICY: 'Privacy Policy',
+    TERMS: 'Terms of Service'
   },
   SENDER_SETTINGS: {
     TITLE: 'Your Name (Message Signature)',

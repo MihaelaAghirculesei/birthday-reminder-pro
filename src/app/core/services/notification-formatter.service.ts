@@ -1,7 +1,7 @@
 import { inject,Injectable } from '@angular/core';
 
 import { type Birthday, type ScheduledMessage } from '../../shared/models';
-import { parseLocalDate } from '../../shared/utils/date.utils';
+import { calculateAgeOrNull, parseLocalDate } from '../../shared/utils/date';
 import { SenderSettingsService } from './sender-settings.service';
 
 /**
@@ -24,14 +24,7 @@ export class NotificationFormatterService {
   }
 
   calculateAge(birthDate: string): number | null {
-    const today = new Date();
-    const birth = parseLocalDate(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age >= 0 ? age : null;
+    return calculateAgeOrNull(birthDate);
   }
 
   /**

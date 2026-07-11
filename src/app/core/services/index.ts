@@ -1,5 +1,6 @@
 // ─── Infrastructure ───────────────────────────────────────────────────────────
 export { ERROR_REPORTER,ErrorReport, ErrorReporter, ErrorReportingService, SerializedErrorReport } from './error-reporting.service';
+export { FeatureFlagsService } from './feature-flags.service';
 export { GlobalErrorHandler } from './global-error-handler.service';
 export { IdGeneratorService } from './id-generator.service';
 export { AppLocale,LocaleService } from './locale.service';
@@ -7,7 +8,7 @@ export { LoggerService, SILENT_LOGGER_PROVIDER,SILENT_LOGGING } from './logger.s
 export { NetworkService } from './network.service';
 export { SecureStorageService } from './secure-storage.service';
 export { SelectivePreloadingStrategy } from './selective-preloading.strategy';
-export { SENTRY_CLIENT, SentryClient, SentryReporterService } from './sentry-reporter.service';
+export { SentryClient, SentryClientHolder, SentryReporterService } from './sentry-reporter.service';
 export { ThemeService } from './theme.service';
 
 // ─── Offline Storage (IndexedDB) ──────────────────────────────────────────────

@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { FooterComponent } from './footer.component';
@@ -13,6 +14,7 @@ describe('FooterComponent', () => {
     await TestBed.configureTestingModule({
       imports: [FooterComponent],
       providers: [
+        provideRouter([]),
         { provide: PLATFORM_ID, useValue: platformId },
         provideTranslateTesting()
       ]

@@ -24,7 +24,13 @@ describe('ErrorReportingService', () => {
 
   async function clearErrorStore(): Promise<void> {
     try {
-      const db = await dbConnection.getDB();
+      // Race against a short timeout so a blocked IDB open never stalls the suite.
+      const db = await Promise.race([
+        dbConnection.getDB(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('IDB open timeout')), 3000)
+        ),
+      ]);
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction('errorReports', 'readwrite');
         const store = tx.objectStore('errorReports');
@@ -33,7 +39,7 @@ describe('ErrorReportingService', () => {
         req.onerror = () => reject(req.error);
       });
     } catch {
-      // Store may not exist yet
+      // Store may not exist yet, or IDB was temporarily unavailable
     }
   }
 

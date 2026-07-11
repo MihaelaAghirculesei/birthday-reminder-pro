@@ -54,7 +54,13 @@ jobs:
       - run: npm ci
 
       - name: Run npm audit (production dependencies)
-        run: npm audit --omit=dev --audit-level=high
+        # `--audit-level=high` fails the step on ANY high/critical finding, which is
+        # stricter than this repo's actual policy (see "Check vulnerability thresholds"
+        # below: block on critical, or >5 high). As of 2026-07-09, 3 high + 1 moderate
+        # findings in @angular/* <=19.2.25 are a tracked, accepted risk — the only fix
+        # is a major version bump (Angular 21), planned as an isolated migration (see
+        # SECURITY.md). This step stays informational; the threshold step is the gate.
+        run: npm audit --omit=dev --audit-level=high || true
 
       - name: Check vulnerability thresholds
         run: |
@@ -243,6 +249,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint-and-typecheck, unit-tests]
+    env:
+      # `secrets` isn't a valid context in a step `if:` — mirror it into `env` at
+      # job level (which is) so the source-map upload step below can check it.
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -268,6 +278,25 @@ jobs:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+      - name: Upload source maps to Sentry
+        # angular.json builds hidden source maps (no sourceMappingURL comment, so
+        # browsers never fetch them) purely so this step can ship them to Sentry —
+        # without it, production stack traces are minified and unreadable. Runs
+        # only when the secret is configured, so forks/PRs without it still build.
+        if: ${{ env.SENTRY_AUTH_TOKEN != '' }}
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: npx @sentry/cli sourcemaps upload --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" dist/birthday-reminder-pro/browser
+
+      - name: Strip source maps before deploy
+        # Hidden source maps are never linked from the shipped JS, but leaving the
+        # .map files themselves in the deployed directory would still let anyone
+        # fetch app.js.map directly and read de-minified source. Sentry already has
+        # its copy from the step above, so remove them before the artifact — which
+        # deploy.yml serves as-is via Cloudflare Pages — is uploaded.
+        run: find dist/birthday-reminder-pro -name '*.map' -delete
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -25,6 +25,16 @@ export const routes: Routes = [
     data: { preload: false }
   },
   {
+    path: 'privacy-policy',
+    loadComponent: () => import('./features/legal/privacy-policy.component').then(m => m.PrivacyPolicyComponent),
+    data: { preload: false }
+  },
+  {
+    path: 'terms',
+    loadComponent: () => import('./features/legal/terms.component').then(m => m.TermsComponent),
+    data: { preload: false }
+  },
+  {
     path: '**',
     redirectTo: ''
   }

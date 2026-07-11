@@ -158,6 +158,33 @@ describe('Birthdays — create', () => {
     const { name, ...withoutName } = birthday(ALICE);
     await assertFails(setDoc(doc(db, path), withoutName));
   });
+
+  it('rejects missing required field `date`', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { date, ...withoutDate } = birthday(ALICE);
+    await assertFails(setDoc(doc(db, path), withoutDate));
+  });
+
+  it('rejects date longer than 20 characters', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { date: '1'.repeat(21) })));
+  });
+
+  it('rejects non-string date', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { date: 19900515 })));
+  });
+
+  it('rejects non-string name', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { name: 12345 })));
+  });
+
+  it('rejects categoryId longer than 100 characters', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { categoryId: 'c'.repeat(101) })));
+  });
 });
 
 describe('Birthdays — update', () => {
@@ -248,6 +275,23 @@ describe('Categories — write', () => {
   it('rejects category with unknown fields', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
     await assertFails(setDoc(doc(db, path), category(ALICE, { badField: 'x' })));
+  });
+
+  it('rejects missing required field `name`', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { name, ...withoutName } = category(ALICE);
+    await assertFails(setDoc(doc(db, path), withoutName));
+  });
+
+  it('rejects color longer than 20 characters', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), category(ALICE, { color: '#'.repeat(21) })));
+  });
+
+  it('rejects icon longer than 50 characters', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), category(ALICE, { icon: 'i'.repeat(51) })));
   });
 
   it('other user cannot write to another user\'s categories', async () => {

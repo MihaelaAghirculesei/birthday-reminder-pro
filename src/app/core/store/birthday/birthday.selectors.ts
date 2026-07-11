@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 
 import { calculateAge } from '../../../shared';
-import { getDaysUntilBirthday,getNextBirthdayDate } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday,getNextBirthdayDate } from '../../../shared/utils/date';
 import { birthdayAdapter } from './birthday.reducer';
 import { type BirthdayState } from './birthday.state';
 

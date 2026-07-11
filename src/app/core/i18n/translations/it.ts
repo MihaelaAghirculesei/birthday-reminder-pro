@@ -9,7 +9,9 @@ export const it = {
     SIGNING_IN: 'Accesso in corso...',
     SIGNING_OUT: 'Uscita in corso...',
     USER: 'Utente',
-    USER_MENU: 'Menu utente'
+    USER_MENU: 'Menu utente',
+    DELETE_ACCOUNT: 'Elimina account',
+    DELETING_ACCOUNT: 'Eliminazione account...'
   },
   NAV: {
     OPEN_MENU: 'Apri menu di navigazione',
@@ -282,7 +284,10 @@ export const it = {
     FAILED_MIGRATION: 'Migrazione cloud fallita: {{error}}',
     FAILED_IMPORT: 'Impossibile importare i compleanni',
     FAILED_CLEAR: 'Impossibile cancellare tutti i compleanni',
-    FAILED_LOAD_TEST_DATA: 'Impossibile caricare i dati di test'
+    FAILED_LOAD_TEST_DATA: 'Impossibile caricare i dati di test',
+    ACCOUNT_DELETED: 'Account eliminato. Tutti i tuoi dati sono stati rimossi definitivamente.',
+    DELETE_ACCOUNT_FAILED: 'Impossibile eliminare l\'account: {{error}}',
+    DELETE_ACCOUNT_REAUTH: 'Per sicurezza, esci e accedi di nuovo prima di eliminare l\'account.'
   },
   CONFIRM: {
     CANCEL_BTN: 'Annulla',
@@ -296,7 +301,10 @@ export const it = {
     DELETE_CATEGORY_TITLE: 'Eliminare la Categoria?',
     DELETE_CATEGORY_MESSAGE: 'Sei sicuro di voler eliminare la categoria "{{name}}"?',
     DELETE_MESSAGE_TITLE: 'Eliminare il Messaggio?',
-    DELETE_MESSAGE_CONFIRM: 'Sei sicuro di voler eliminare questo messaggio pianificato?'
+    DELETE_MESSAGE_CONFIRM: 'Sei sicuro di voler eliminare questo messaggio pianificato?',
+    DELETE_ACCOUNT_TITLE: 'Eliminare l\'Account?',
+    DELETE_ACCOUNT_MESSAGE: 'Questo eliminerà definitivamente il tuo account e tutti i tuoi dati — compleanni, categorie e foto. Questa azione non può essere annullata.',
+    DELETE_ACCOUNT_BTN: 'Elimina Account'
   },
   MESSAGE_TEMPLATES: {
     SIMPLE_TITLE: 'Semplice Buon Compleanno',
@@ -416,7 +424,9 @@ export const it = {
     ARIA: 'Richiesta permesso notifiche'
   },
   FOOTER: {
-    TAGLINE: 'Fatto con ❤️ per non dimenticare mai i momenti speciali'
+    TAGLINE: 'Fatto con ❤️ per non dimenticare mai i momenti speciali',
+    PRIVACY_POLICY: 'Informativa Privacy',
+    TERMS: 'Termini di Servizio'
   },
   SENDER_SETTINGS: {
     TITLE: 'Il Tuo Nome (Firma Messaggi)',

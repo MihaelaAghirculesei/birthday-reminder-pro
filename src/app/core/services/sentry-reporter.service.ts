@@ -1,4 +1,4 @@
-import { inject, Injectable, InjectionToken } from '@angular/core';
+import { inject,Injectable } from '@angular/core';
 
 import type { Scope } from '@sentry/browser';
 
@@ -10,9 +10,16 @@ export interface SentryClient {
   withScope<T>(callback: (scope: Scope) => T): T;
 }
 
-// No factory: the token is provided at browser bootstrap via a dynamic import
-// of @sentry/browser. SSR and non-production contexts leave it unset (null).
-export const SENTRY_CLIENT = new InjectionToken<SentryClient>('SENTRY_CLIENT');
+/**
+ * Mutable holder for the Sentry client, set once the `@sentry/browser` chunk
+ * finishes loading. Bootstrap doesn't wait for that chunk (see main.ts), so
+ * this starts as `null` and is filled in asynchronously, shortly after the
+ * app is already interactive. SSR and non-production contexts leave it null.
+ */
+@Injectable({ providedIn: 'root' })
+export class SentryClientHolder {
+  client: SentryClient | null = null;
+}
 
 /**
  * Production error reporter: persists to IndexedDB (for local inspection)
@@ -24,14 +31,14 @@ export const SENTRY_CLIENT = new InjectionToken<SentryClient>('SENTRY_CLIENT');
 @Injectable({ providedIn: 'root' })
 export class SentryReporterService implements ErrorReporter {
   private readonly idbReporter = inject(ErrorReportingService);
-  private readonly sentry = inject(SENTRY_CLIENT, { optional: true });
+  private readonly sentryHolder = inject(SentryClientHolder);
 
   captureError(report: ErrorReport): void {
     this.idbReporter.captureError(report);
 
-    if (!environment.sentryDsn || !this.sentry) return;
+    const sentry = this.sentryHolder.client;
+    if (!environment.sentryDsn || !sentry) return;
 
-    const sentry = this.sentry;
     sentry.withScope(scope => {
       scope.setTag('errorType', report.type);
       scope.setExtra('technicalMessage', report.technicalMessage);

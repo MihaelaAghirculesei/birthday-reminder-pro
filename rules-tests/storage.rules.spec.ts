@@ -137,6 +137,24 @@ describe('Photo — create (new upload)', () => {
       )
     );
   });
+
+  it('rejects a file larger than 7 MB', async () => {
+    const storage = testEnv.authenticatedContext(ALICE).storage();
+    const oversized = new Uint8Array(7 * 1024 * 1024 + 1);
+    oversized.set(JPEG);
+    await assertFails(
+      uploadBytes(ref(storage, path(ALICE, 'photo', 'jpg')), oversized, { contentType: 'image/jpeg' })
+    );
+  });
+
+  it('accepts a file exactly at the 7 MB boundary', async () => {
+    const storage = testEnv.authenticatedContext(ALICE).storage();
+    const maxSized = new Uint8Array(7 * 1024 * 1024);
+    maxSized.set(JPEG);
+    await assertSucceeds(
+      uploadBytes(ref(storage, path(ALICE, 'photo', 'jpg')), maxSized, { contentType: 'image/jpeg' })
+    );
+  });
 });
 
 // ===========================================================================
@@ -231,5 +249,12 @@ describe('Storage — default deny', () => {
   it('blocks access to paths outside users/ prefix', async () => {
     const storage = testEnv.authenticatedContext(ALICE).storage();
     await assertFails(getDownloadURL(ref(storage, `admin/${ALICE}/photo/img.jpg`)));
+  });
+
+  it('blocks authenticated write to a top-level path', async () => {
+    const storage = testEnv.authenticatedContext(ALICE).storage();
+    await assertFails(
+      uploadBytes(ref(storage, 'top-level-file.jpg'), JPEG, { contentType: 'image/jpeg' })
+    );
   });
 });

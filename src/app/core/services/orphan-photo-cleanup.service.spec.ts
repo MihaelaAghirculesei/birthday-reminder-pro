@@ -252,6 +252,40 @@ describe('OrphanPhotoCleanupService', () => {
       );
     });
 
+    it('scans files nested under photo/ and rememberPhoto/ subfolders', async () => {
+      setup({ firebase: VALID_FIREBASE_OPTIONS });
+      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+
+      const photoPrefix = { name: 'photo' };
+      const rememberPrefix = { name: 'rememberPhoto' };
+      const orphanRef = { fullPath: 'users/uid/photo/orphan.jpg' };
+      const usedRef = { fullPath: 'users/uid/rememberPhoto/used.jpg' };
+      const usedUrl =
+        'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2FrememberPhoto%2Fused.jpg?alt=media';
+
+      offlineStorageMock.getBirthdays.and.resolveTo([
+        { id: '1', rememberPhoto: usedUrl } as never,
+      ]);
+
+      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
+      stMock.ref.and.returnValue({});
+      stMock.listAll.and.callFake((ref: unknown) => {
+        if (ref === photoPrefix) return Promise.resolve({ items: [orphanRef] });
+        if (ref === rememberPrefix) return Promise.resolve({ items: [usedRef] });
+        return Promise.resolve({ prefixes: [photoPrefix, rememberPrefix], items: [] });
+      });
+      stMock.deleteObject.and.resolveTo();
+
+      spyOn(storageGetters, 'initFirebase').and.resolveTo();
+      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
+      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+
+      await service.cleanupOrphans('uid');
+
+      expect(stMock.deleteObject).toHaveBeenCalledOnceWith(orphanRef);
+      expect(stMock.deleteObject).not.toHaveBeenCalledWith(usedRef);
+    });
+
     it('logs a summary with counts after a mixed delete run', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
       spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);

@@ -10,7 +10,7 @@ import { interval,type Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 
 import { type Birthday, type ScheduledMessage } from '../../shared/models';
-import { parseLocalDate } from '../../shared/utils/date.utils';
+import { calculateAgeOrNull, parseLocalDate } from '../../shared/utils/date';
 import { getAvailableWishLinks } from '../../shared/utils/wish-links.util';
 import {
   NOTIFICATION_FIRE_WINDOW_MS,
@@ -448,7 +448,7 @@ export class PushNotificationService {
   }
 
   private formatMessage(template: string, birthday: Birthday): string {
-    const age = this.calculateAge(birthday.birthDate);
+    const age = calculateAgeOrNull(birthday.birthDate);
 
     return template
       .replace(/\{name\}/g, birthday.name)
@@ -456,19 +456,6 @@ export class PushNotificationService {
       .replace(/\{zodiac\}/g, birthday.zodiacSign || '')
       .replace(/\{sender\}/g, this.senderSettings.getSenderName())
       .replace(/\{senderFull\}/g, this.senderSettings.getSenderFullName() || this.senderSettings.getSenderName());
-  }
-
-  private calculateAge(birthDate: string): number | null {
-    const today = new Date();
-    const birth = parseLocalDate(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-
-    return age >= 0 ? age : null;
   }
 
   getScheduledNotificationsCount(): number {

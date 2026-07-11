@@ -21,9 +21,18 @@ export default defineConfig({
       on('task', {
         log(message: string) {
           if (!message.includes('ws://') && !message.includes('WebSocket')) {
-            console.log(message);
+            console.info(message);
           }
           return null;
+        }
+      });
+
+      // Copy README screenshots to docs/screenshots/ so they resolve on GitHub
+      on('after:screenshot', (details: Cypress.ScreenshotDetails) => {
+        if (details.specName?.includes('readme-screenshots')) {
+          const docsDir = path.join(__dirname, 'docs', 'screenshots');
+          const dest = path.join(docsDir, path.basename(details.path));
+          fs.copyFileSync(details.path, dest);
         }
       });
     },

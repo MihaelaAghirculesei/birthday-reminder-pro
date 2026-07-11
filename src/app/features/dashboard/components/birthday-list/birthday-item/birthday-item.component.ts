@@ -9,7 +9,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 import { type Birthday, calculateAge,CategoryIconComponent, MessageIndicatorComponent, ZodiacIconComponent } from '../../../../../shared';
 import { LocaleDatePipe } from '../../../../../shared/pipes/locale-date.pipe';
-import { parseLocalDate } from '../../../../../shared/utils/date.utils';
+import { parseLocalDate } from '../../../../../shared/utils/date';
 import { RememberPhotoComponent } from '../../remember-photo/remember-photo.component';
 
 @Component({
