@@ -122,4 +122,18 @@ export class CategoryStorageService {
       this.logger.error('Failed to restore category:', error);
     }
   }
+
+  clearAll(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(this.CUSTOM_CATEGORIES_KEY);
+      localStorage.removeItem(this.MODIFIED_CATEGORIES_KEY);
+      localStorage.removeItem(this.DELETED_IDS_KEY);
+    } catch (error) {
+      this.logger.error('Failed to clear categories:', error);
+    }
+  }
 }

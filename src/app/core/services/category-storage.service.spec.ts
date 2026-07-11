@@ -332,4 +332,40 @@ describe('CategoryStorageService', () => {
       expect(localStorage.setItem).not.toHaveBeenCalled();
     });
   });
+
+  describe('clearAll', () => {
+    it('should remove all category localStorage keys', () => {
+      localStorageMock['customCategories'] = JSON.stringify([mockCategory]);
+      localStorageMock['modifiedCategories'] = JSON.stringify([mockCategory2]);
+      localStorageMock['deletedCategoryIds'] = JSON.stringify(['id1']);
+
+      service.clearAll();
+
+      expect(localStorage.removeItem).toHaveBeenCalledWith('customCategories');
+      expect(localStorage.removeItem).toHaveBeenCalledWith('modifiedCategories');
+      expect(localStorage.removeItem).toHaveBeenCalledWith('deletedCategoryIds');
+      expect(service.getCustomCategories()).toEqual([]);
+      expect(service.getModifiedCategories()).toEqual([]);
+      expect(service.getDeletedIds()).toEqual([]);
+    });
+
+    it('should not crash when localStorage.removeItem throws error', () => {
+      (localStorage.removeItem as jasmine.Spy).and.throwError('Storage error');
+      expect(() => service.clearAll()).not.toThrow();
+    });
+
+    it('should do nothing when not in browser', () => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          CategoryStorageService,
+          { provide: PLATFORM_ID, useValue: 'server' },
+          SILENT_LOGGER_PROVIDER
+        ]
+      });
+      const serverService = TestBed.inject(CategoryStorageService);
+      serverService.clearAll();
+      expect(localStorage.removeItem).not.toHaveBeenCalled();
+    });
+  });
 });
