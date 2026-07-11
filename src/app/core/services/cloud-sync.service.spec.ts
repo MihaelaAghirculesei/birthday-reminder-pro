@@ -7,6 +7,7 @@ import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
 import { BirthdayMergeService, type MergeResult } from './birthday-merge.service';
 import { CloudSyncService } from './cloud-sync.service';
+import { FeatureFlagsService } from './feature-flags.service';
 import { type AuthUser,FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
@@ -24,6 +25,7 @@ describe('CloudSyncService', () => {
   let loggerMock: jasmine.SpyObj<LoggerService>;
   let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
   let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
+  let featureFlagsMock: jasmine.SpyObj<FeatureFlagsService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -71,6 +73,8 @@ describe('CloudSyncService', () => {
     photoStorageMock = jasmine.createSpyObj<PhotoStorageService>('PhotoStorageService', ['isBase64', 'migrateBase64', 'deletePhotoByUrl', 'uploadPhoto', 'isStorageUrl', 'fileToBase64']);
     photoStorageMock.isBase64.and.returnValue(false);
     photoStorageMock.migrateBase64.and.callFake((val: string) => Promise.resolve(val));
+    featureFlagsMock = jasmine.createSpyObj('FeatureFlagsService', ['isCloudSyncEnabled']);
+    featureFlagsMock.isCloudSyncEnabled.and.returnValue(true);
 
     offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
     offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
@@ -87,6 +91,7 @@ describe('CloudSyncService', () => {
         { provide: LoggerService, useValue: loggerMock },
         { provide: BirthdayMergeService, useValue: mergeServiceMock },
         { provide: PhotoStorageService, useValue: photoStorageMock },
+        { provide: FeatureFlagsService, useValue: featureFlagsMock },
         provideTranslateTesting()
       ]
     });
@@ -101,6 +106,28 @@ describe('CloudSyncService', () => {
 
   it('should create', () => {
     expect(service).toBeTruthy();
+  });
+
+  describe('feature flag kill-switch', () => {
+    beforeEach(() => {
+      featureFlagsMock.isCloudSyncEnabled.and.returnValue(false);
+    });
+
+    it('setupListeners should not subscribe to Firestore when cloud sync is disabled', () => {
+      service.setupListeners('user-123');
+      expect(firestoreServiceMock.subscribeToBirthdays).not.toHaveBeenCalled();
+    });
+
+    it('checkForMigration should not query Firestore when cloud sync is disabled', async () => {
+      await service.checkForMigration('user-123');
+      expect(firestoreServiceMock.getBirthdays).not.toHaveBeenCalled();
+    });
+
+    it('migrateLocalToCloud should return 0 without touching storage when cloud sync is disabled', async () => {
+      const count = await service.migrateLocalToCloud();
+      expect(count).toBe(0);
+      expect(offlineStorageMock.getBirthdays).not.toHaveBeenCalled();
+    });
   });
 
   describe('setupListeners / teardownListeners', () => {

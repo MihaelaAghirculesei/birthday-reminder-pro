@@ -8,6 +8,7 @@ import { firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { type Birthday } from '../../shared/models/birthday.model';
 import * as SyncActions from '../store/sync/sync.actions';
 import { BirthdayMergeService } from './birthday-merge.service';
+import { FeatureFlagsService } from './feature-flags.service';
 import { FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
@@ -25,6 +26,7 @@ import { PhotoStorageService } from './photo-storage.service';
 export class CloudSyncService {
   private readonly store = inject(Store);
   private readonly authService = inject(FirebaseAuthService);
+  private readonly featureFlags = inject(FeatureFlagsService);
   private readonly firestoreService = inject(FirestoreService);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly networkService = inject(NetworkService);
@@ -42,6 +44,11 @@ export class CloudSyncService {
   }
 
   setupListeners(userId: string): void {
+    if (!this.featureFlags.isCloudSyncEnabled()) {
+      this.logger.info('[CloudSync] Cloud sync disabled by feature flag, skipping setupListeners');
+      return;
+    }
+
     // Tear down any listeners from a previous session before setting up new ones
     this.listenersDestroy$.next();
 
@@ -74,6 +81,11 @@ export class CloudSyncService {
   }
 
   async checkForMigration(userId: string): Promise<void> {
+    if (!this.featureFlags.isCloudSyncEnabled()) {
+      this.logger.info('[CloudSync] Cloud sync disabled by feature flag, skipping checkForMigration');
+      return;
+    }
+
     try {
       const cloudBirthdays = await firstValueFrom(this.firestoreService.getBirthdays(userId));
 
@@ -96,6 +108,11 @@ export class CloudSyncService {
   }
 
   async migrateLocalToCloud(): Promise<number> {
+    if (!this.featureFlags.isCloudSyncEnabled()) {
+      this.logger.info('[CloudSync] Cloud sync disabled by feature flag, skipping migrateLocalToCloud');
+      return 0;
+    }
+
     const userId = this.authService.currentUser?.uid;
     if (!userId) {
       throw new Error('User not authenticated');
