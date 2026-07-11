@@ -97,8 +97,14 @@ export class OrphanPhotoCleanupService {
         if (rememberPath) usedPaths.add(rememberPath);
       }
 
-      const folderRef = ref(storage, `users/${userId}/photos`);
-      const { items } = await listAll(folderRef);
+      // Photos live under per-type subfolders (users/{userId}/photo/,
+      // users/{userId}/rememberPhoto/ — see storage.rules), not directly
+      // under users/{userId}/. listAll() is non-recursive, so the subfolders
+      // ("prefixes") must be listed individually to reach their files.
+      const folderRef = ref(storage, `users/${userId}`);
+      const { prefixes, items: rootItems } = await listAll(folderRef);
+      const nested = await Promise.all((prefixes ?? []).map(prefix => listAll(prefix).then(r => r.items)));
+      const items = [...rootItems, ...nested.flat()];
 
       let deleted = 0;
       let failed = 0;
