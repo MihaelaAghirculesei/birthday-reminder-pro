@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, type OnChanges, type SimpleC
 
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { ZODIAC_SIGNS } from '../utils/date/zodiac.util';
+import { ZODIAC_SIGNS } from '../utils/date';
 
 const ZODIAC_KEY_MAP: Record<string, string> = {
   'Aquarius': 'ZODIAC.AQUARIUS', 'Pisces': 'ZODIAC.PISCES', 'Aries': 'ZODIAC.ARIES',
