@@ -21,6 +21,7 @@ A birthday management application built with Angular 19. Never forget a birthday
 - [Build & Deployment](#build--deployment)
 - [Testing](#testing)
 - [Roadmap](#roadmap)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -226,15 +227,15 @@ src/app/
 
 3. **Configure Environment Files**
 
-   The app requires environment configuration for Google Calendar API integration:
+   Credentials live in a single gitignored `.env.local` file — `npm run env:init` (runs automatically before `npm start`/`npm run build`) reads it and generates `src/environments/environment.ts` / `environment.prod.ts`. Never edit those two generated files directly; they're overwritten on every `env:init` run.
 
    ```bash
-   # Copy example files to create your local environment configs
-   cp src/environments/environment.example.ts src/environments/environment.ts
-   cp src/environments/environment.prod.example.ts src/environments/environment.prod.ts
+   cp .env.local.example .env.local
    ```
 
-   > ⚠️ **Security Note**: `environment.ts` and `environment.prod.ts` are in `.gitignore` and should NEVER be committed to version control.
+   Leave `.env.local` with placeholder values and the app runs fully offline — no Google or Firebase account needed. Fill in the variables below to enable the optional integrations.
+
+   > ⚠️ **Security Note**: `.env.local`, `environment.ts` and `environment.prod.ts` are all in `.gitignore` and should NEVER be committed.
 
 4. **Configure Google Calendar API** (Optional)
 
@@ -250,46 +251,31 @@ src/app/
    - Click **Create Credentials** > **OAuth client ID**
    - Application type: **Web application**
    - Add authorized JavaScript origins:
-     - Development: `http://localhost:4200`
+     - Development: `http://localhost:4203`
      - Production: `https://your-domain.com`
    - Click **Create**
 
-   **c) Get API Key:**
-   - Click **Create Credentials** > **API key**
-   - Restrict the key to Google Calendar API (recommended)
-   - Copy the API key
+   **c) Set the client ID in `.env.local`:**
 
-   **d) Update Environment Files:**
-
-   Edit `src/environments/environment.ts`:
-   ```typescript
-   export const environment = {
-     production: false,
-     googleCalendar: {
-       clientId: 'YOUR_CLIENT_ID.apps.googleusercontent.com', // From step b
-       apiKey: 'YOUR_API_KEY'  // From step c
-     }
-   };
+   The same OAuth client ID is used for both Calendar sync and Firebase Google Sign-In:
+   ```bash
+   GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
    ```
 
-   For production, update `src/environments/environment.prod.ts` with separate credentials.
-
-   > **Tip**: Use different OAuth credentials for development and production environments.
+   Re-run `npm run env:init` (or just restart `npm start`, which runs it via `prestart`) to regenerate the environment files.
 
 5. **Configure Firebase** (Optional — for cloud sync and photo storage)
 
-   Edit `src/app/firebase.config.ts` and replace the placeholder values with your Firebase project credentials:
-   ```typescript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "YOUR_PROJECT.firebaseapp.com",
-     projectId: "YOUR_PROJECT_ID",
-     storageBucket: "YOUR_PROJECT.appspot.com",
-     messagingSenderId: "YOUR_SENDER_ID",
-     appId: "YOUR_APP_ID"
-   };
+   Set the Firebase variables in `.env.local` (values from Firebase Console → Project settings → Your apps → Web app → Config):
+   ```bash
+   FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
+   FIREBASE_AUTH_DOMAIN=YOUR_PROJECT_ID.web.app
+   FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+   FIREBASE_STORAGE_BUCKET=YOUR_PROJECT_ID.firebasestorage.app
+   FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
+   FIREBASE_APP_ID=YOUR_APP_ID
    ```
-   > **Tip**: If you leave the placeholder values, the app auto-detects them and runs in offline-only mode — no Firebase account needed to run the app locally.
+   > **Tip**: Leave these unset and the app auto-detects the missing config and runs in offline-only mode — no Firebase account needed to run the app locally. All six `FIREBASE_*` variables are required together for `env:init` to wire up Firebase; partial config falls back to offline mode.
 
 ### Development Server
 
@@ -409,16 +395,31 @@ ng test --code-coverage
 ```bash
 npm run e2e          # standard E2E suite
 npm run e2e:visual   # visual regression snapshots
-npm run ci:local     # full CI suite (unit + E2E)
 ```
 
 The E2E suite covers: IndexedDB as source of truth, network error handling, and accessibility (axe-core, zero critical/serious violations).
+
+### Running the full CI pipeline locally
+
+`npm run ci:local` chains every check the GitHub Actions workflow runs, in the same order, so a red pipeline is never a surprise:
+
+```bash
+npm run ci:local
+# = validate:ci   → sanity-checks the CI workflow config itself
+#   ci:security   → npm audit --omit=dev --audit-level=high
+#   ci:quality    → lint + typecheck (app and specs)
+#   test:ci       → unit tests with coverage thresholds
+#   e2e:ci        → boots the app on the ci config, runs the Cypress suite headlessly
+#   ci:build      → production build + ci:bundle (fails if the main bundle exceeds 500 KB)
+```
+
+Each step can also be run standalone (`npm run ci:quality`, `npm run ci:build`, etc.) when iterating on a single failure instead of the whole chain. `npm run analyze` builds with `--stats-json` and prints the largest output chunks with their top contributing source modules (`scripts/analyze-bundle.js`) — it reads esbuild's own metafile directly rather than `webpack-bundle-analyzer`, which doesn't understand it (Angular 17+ moved off Webpack for production builds).
 
 ---
 
 ## Contributing
 
-This is a personal learning project, but suggestions are welcome! Feel free to open an issue or PR.
+This is a personal learning project, but suggestions are welcome! Feel free to open an issue or PR — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the pre-PR checklist, and commit conventions.
 
 ---
 
