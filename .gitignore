@@ -44,6 +44,7 @@ bundle-report.html
 cypress/videos
 cypress/screenshots
 cypress/downloads
+cypress/snapdebug.txt
 
 .lighthouseci
 localhost_*.report.html
