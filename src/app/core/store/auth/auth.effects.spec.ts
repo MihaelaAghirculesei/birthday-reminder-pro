@@ -5,6 +5,7 @@ import { provideMockStore } from '@ngrx/store/testing';
 import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
+import { AccountDeletionService } from '../../services/account-deletion.service';
 import { type AuthUser, FirebaseAuthService } from '../../services/firebase-auth.service';
 import { FirestoreService } from '../../services/firestore.service';
 import { LoggerService } from '../../services/logger.service';
@@ -21,6 +22,7 @@ describe('AuthEffects', () => {
   let orphanCleanupMock: jasmine.SpyObj<OrphanPhotoCleanupService>;
   let firestoreMock: jasmine.SpyObj<FirestoreService>;
   let loggerMock: jasmine.SpyObj<LoggerService>;
+  let accountDeletionMock: jasmine.SpyObj<AccountDeletionService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -41,6 +43,8 @@ describe('AuthEffects', () => {
     firestoreMock = jasmine.createSpyObj('FirestoreService', ['migrateCapabilityUrls']);
     firestoreMock.migrateCapabilityUrls.and.resolveTo();
     loggerMock = jasmine.createSpyObj('LoggerService', ['warn', 'info', 'error']);
+    accountDeletionMock = jasmine.createSpyObj('AccountDeletionService', ['deleteAccount']);
+    accountDeletionMock.deleteAccount.and.returnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -56,6 +60,7 @@ describe('AuthEffects', () => {
         { provide: OrphanPhotoCleanupService, useValue: orphanCleanupMock },
         { provide: FirestoreService, useValue: firestoreMock },
         { provide: LoggerService, useValue: loggerMock },
+        { provide: AccountDeletionService, useValue: accountDeletionMock },
         provideTranslateTesting()
       ]
     });
@@ -247,6 +252,87 @@ describe('AuthEffects', () => {
     });
   });
 
+  describe('deleteAccount$', () => {
+    it('should dispatch deleteAccountSuccess on successful deletion', (done) => {
+      accountDeletionMock.deleteAccount.and.returnValue(of(undefined));
+      actions$ = of(AuthActions.deleteAccount({ userId: 'user-123' }));
+
+      effects.deleteAccount$.subscribe(action => {
+        expect(action).toEqual(AuthActions.deleteAccountSuccess());
+        expect(accountDeletionMock.deleteAccount).toHaveBeenCalledWith('user-123');
+        done();
+      });
+    });
+
+    it('should dispatch deleteAccountFailure with error message on Error', (done) => {
+      accountDeletionMock.deleteAccount.and.returnValue(
+        throwError(() => new Error('requires-recent-login'))
+      );
+      actions$ = of(AuthActions.deleteAccount({ userId: 'user-123' }));
+
+      effects.deleteAccount$.subscribe(action => {
+        expect(action).toEqual(
+          AuthActions.deleteAccountFailure({ error: 'requires-recent-login' })
+        );
+        done();
+      });
+    });
+
+    it('should dispatch deleteAccountFailure with string conversion for non-Error throws', (done) => {
+      accountDeletionMock.deleteAccount.and.returnValue(
+        throwError(() => 'unexpected failure')
+      );
+      actions$ = of(AuthActions.deleteAccount({ userId: 'user-123' }));
+
+      effects.deleteAccount$.subscribe(action => {
+        expect(action).toEqual(
+          AuthActions.deleteAccountFailure({ error: 'unexpected failure' })
+        );
+        done();
+      });
+    });
+  });
+
+  describe('deleteAccountSuccess$', () => {
+    it('should show account-deleted notification', (done) => {
+      actions$ = of(AuthActions.deleteAccountSuccess());
+
+      effects.deleteAccountSuccess$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Account deleted. All your data has been permanently removed.',
+          'success'
+        );
+        done();
+      });
+    });
+  });
+
+  describe('deleteAccountFailure$', () => {
+    it('should show re-auth notification when error includes requires-recent-login', (done) => {
+      actions$ = of(AuthActions.deleteAccountFailure({ error: 'requires-recent-login' }));
+
+      effects.deleteAccountFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'For security, please sign out and sign in again before deleting your account.',
+          'error'
+        );
+        done();
+      });
+    });
+
+    it('should show generic failure notification for other errors', (done) => {
+      actions$ = of(AuthActions.deleteAccountFailure({ error: 'network-error' }));
+
+      effects.deleteAccountFailure$.subscribe(() => {
+        expect(notificationServiceMock.show).toHaveBeenCalledWith(
+          'Failed to delete account: network-error',
+          'error'
+        );
+        done();
+      });
+    });
+  });
+
   describe('scheduleOrphanCleanup$', () => {
     it('should trigger orphan cleanup when auth state changes to a signed-in user', (done) => {
       actions$ = of(AuthActions.authStateChanged({ user: mockUser }));
@@ -328,6 +414,7 @@ describe('AuthEffects - syncAuthState$ error recovery', () => {
         { provide: OrphanPhotoCleanupService, useValue: { cleanupOrphans: () => Promise.resolve() } },
         { provide: FirestoreService, useValue: { migrateCapabilityUrls: () => Promise.resolve() } },
         { provide: LoggerService, useValue: errorLoggerMock },
+        { provide: AccountDeletionService, useValue: { deleteAccount: () => of(undefined) } },
         provideTranslateTesting()
       ]
     });
