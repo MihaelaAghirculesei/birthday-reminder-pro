@@ -3,7 +3,7 @@ import { type Scope } from '@sentry/browser';
 
 import { environment } from '../../../environments/environment';
 import { type ErrorReport, ErrorReportingService } from './error-reporting.service';
-import { SENTRY_CLIENT, type SentryClient, SentryReporterService } from './sentry-reporter.service';
+import { type SentryClient, SentryClientHolder, SentryReporterService } from './sentry-reporter.service';
 
 describe('SentryReporterService', () => {
   let service: SentryReporterService;
@@ -31,7 +31,7 @@ describe('SentryReporterService', () => {
       providers: [
         SentryReporterService,
         { provide: ErrorReportingService, useValue: idbReporterMock },
-        { provide: SENTRY_CLIENT, useValue: sentryClientMock }
+        { provide: SentryClientHolder, useValue: { client: sentryClientMock } }
       ]
     });
 
@@ -55,7 +55,7 @@ describe('SentryReporterService', () => {
     expect(sentryClientMock.withScope).not.toHaveBeenCalled();
   });
 
-  it('should NOT call Sentry when SENTRY_CLIENT token is not provided', () => {
+  it('should NOT call Sentry when the SentryClientHolder has no client yet', () => {
     (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
 
     TestBed.resetTestingModule();
@@ -63,7 +63,8 @@ describe('SentryReporterService', () => {
       providers: [
         SentryReporterService,
         { provide: ErrorReportingService, useValue: idbReporterMock },
-        // SENTRY_CLIENT intentionally omitted — simulates non-production / SSR bootstrap
+        // SentryClientHolder intentionally omitted — defaults to `client: null`,
+        // simulating the window between bootstrap and the Sentry chunk loading.
       ]
     });
     const serviceWithoutSentry = TestBed.inject(SentryReporterService);
