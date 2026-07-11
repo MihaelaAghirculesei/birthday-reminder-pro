@@ -21,7 +21,7 @@ import { type AppState } from '../../../../core/store/app.state';
 import * as BirthdayActions from '../../../../core/store/birthday/birthday.actions';
 import * as BirthdaySelectors from '../../../../core/store/birthday/birthday.selectors';
 import { type Birthday, type BirthdayCategory, ConfirmDialogComponent } from '../../../../shared';
-import { getDaysUntilBirthday } from '../../../../shared/utils/date.utils';
+import { getDaysUntilBirthday } from '../../../../shared/utils/date';
 import type { BirthdayEditDialogData } from '../birthday-edit-dialog/birthday-edit-dialog.component';
 import { BirthdayItemComponent } from './birthday-item/birthday-item.component';
 import { BirthdayImportExportComponent } from './import-export/birthday-import-export.component';
