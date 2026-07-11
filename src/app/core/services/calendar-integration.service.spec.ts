@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { type Birthday } from '../../shared/models/birthday.model';
 import { CalendarIntegrationService } from './calendar-integration.service';
+import { FeatureFlagsService } from './feature-flags.service';
 import { GoogleCalendarService } from './google-calendar.service';
 import { LoggerService } from './logger.service';
 
@@ -12,6 +13,7 @@ describe('CalendarIntegrationService', () => {
   let service: CalendarIntegrationService;
   let googleCalendar: jasmine.SpyObj<GoogleCalendarService>;
   let logger: jasmine.SpyObj<LoggerService>;
+  let featureFlags: jasmine.SpyObj<FeatureFlagsService>;
 
   beforeEach(() => {
     googleCalendar = jasmine.createSpyObj('GoogleCalendarService', [
@@ -21,12 +23,15 @@ describe('CalendarIntegrationService', () => {
       'deleteBirthdayFromCalendar'
     ]);
     logger = jasmine.createSpyObj('LoggerService', ['error']);
+    featureFlags = jasmine.createSpyObj('FeatureFlagsService', ['isCalendarSyncEnabled']);
+    featureFlags.isCalendarSyncEnabled.and.returnValue(true);
 
     TestBed.configureTestingModule({
       providers: [
         CalendarIntegrationService,
         { provide: GoogleCalendarService, useValue: googleCalendar },
-        { provide: LoggerService, useValue: logger }
+        { provide: LoggerService, useValue: logger },
+        { provide: FeatureFlagsService, useValue: featureFlags }
       ]
     });
 
@@ -101,6 +106,28 @@ describe('CalendarIntegrationService', () => {
       googleCalendar.deleteBirthdayFromCalendar.and.rejectWith(new Error('forbidden'));
       await expectAsync(service.deleteFromCalendar('evt-123')).toBeResolved();
       expect(logger.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('feature flag kill-switch', () => {
+    beforeEach(() => {
+      googleCalendar.isEnabled.and.returnValue(true);
+      featureFlags.isCalendarSyncEnabled.and.returnValue(false);
+    });
+
+    it('syncToCalendar returns null without calling GoogleCalendarService', async () => {
+      expect(await service.syncToCalendar(BIRTHDAY)).toBeNull();
+      expect(googleCalendar.syncBirthdayToCalendar).not.toHaveBeenCalled();
+    });
+
+    it('updateInCalendar skips GoogleCalendarService', async () => {
+      await service.updateInCalendar(BIRTHDAY_WITH_EVENT);
+      expect(googleCalendar.updateBirthdayInCalendar).not.toHaveBeenCalled();
+    });
+
+    it('deleteFromCalendar skips GoogleCalendarService', async () => {
+      await service.deleteFromCalendar('evt-123');
+      expect(googleCalendar.deleteBirthdayFromCalendar).not.toHaveBeenCalled();
     });
   });
 });
