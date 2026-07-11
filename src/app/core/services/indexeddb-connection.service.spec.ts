@@ -136,4 +136,47 @@ describe('IndexedDBConnectionService', () => {
     // Update this number whenever you add a new migration entry.
     expect(service.dbVersion).toBe(4);
   });
+
+  // -------------------------------------------------------------------------
+  // clearAllStores — full local data wipe (used by GDPR account deletion)
+  // -------------------------------------------------------------------------
+
+  describe('clearAllStores', () => {
+    async function put(db: IDBDatabase, storeName: string, value: unknown): Promise<void> {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(value);
+      await new Promise<void>((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function count(db: IDBDatabase, storeName: string): Promise<number> {
+      const tx = db.transaction(storeName, 'readonly');
+      const request = tx.objectStore(storeName).count();
+      return new Promise<number>((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    it('empties every object store, not just birthdays', async () => {
+      const db = await service.getDB();
+      await put(db, 'birthdays', { id: 'b1', name: 'Alice' });
+      await put(db, 'scheduledMessages', { id: 'm1', birthdayId: 'b1' });
+      await put(db, 'pendingChanges', { id: 'p1', entityType: 'birthday' });
+      await put(db, 'errorReports', { type: 'test', technicalMessage: 'x', timestamp: 1 });
+
+      await service.clearAllStores();
+
+      expect(await count(db, 'birthdays')).toBe(0);
+      expect(await count(db, 'scheduledMessages')).toBe(0);
+      expect(await count(db, 'pendingChanges')).toBe(0);
+      expect(await count(db, 'errorReports')).toBe(0);
+    });
+
+    it('resolves without error when all stores are already empty', async () => {
+      await expectAsync(service.clearAllStores()).toBeResolved();
+    });
+  });
 });

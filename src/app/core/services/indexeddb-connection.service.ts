@@ -129,6 +129,25 @@ export class IndexedDBConnectionService {
     }
   }
 
+  /**
+   * Clears every object store in the database in a single transaction.
+   * Schema-agnostic on purpose: new stores added by future migrations are
+   * wiped automatically, so this stays the single source of truth for a
+   * full local data erasure (e.g. GDPR account deletion).
+   */
+  async clearAllStores(): Promise<void> {
+    const db = await this.getDB();
+    const storeNames = Array.from(db.objectStoreNames);
+    if (storeNames.length === 0) return;
+
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(storeNames, 'readwrite');
+      storeNames.forEach((name) => transaction.objectStore(name).clear());
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   private openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
