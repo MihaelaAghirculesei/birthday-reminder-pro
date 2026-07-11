@@ -112,6 +112,10 @@ export function app(): express.Express {
   server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
 
   // ── Rate limiter for SSR routes ──────────────────────────────────────────────
+  // App is single-user/family scale, not enterprise: a handful of people share a
+  // household IP, so the limit must tolerate several devices reloading at once.
+  // 100 SSR renders / 15 min per IP (~1 every 9s sustained) comfortably covers
+  // that while still bounding the cost of the expensive Angular Universal render.
   const ssrLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 100,
