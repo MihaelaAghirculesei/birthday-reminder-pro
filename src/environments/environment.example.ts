@@ -19,6 +19,11 @@ export const environment = {
   googleAuthClientId: '',
   // Sentry DSN — leave empty in dev so local errors never reach the prod project.
   sentryDsn: '',
+  // Kill-switches: flip to false + redeploy to stop a sync path during an incident.
+  featureFlags: {
+    cloudSyncEnabled: true,
+    calendarSyncEnabled: true
+  },
   firebase: {
     apiKey: 'YOUR_FIREBASE_API_KEY',
     authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',

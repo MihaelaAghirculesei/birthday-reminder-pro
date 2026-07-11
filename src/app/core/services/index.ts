@@ -1,5 +1,6 @@
 // ─── Infrastructure ───────────────────────────────────────────────────────────
 export { ERROR_REPORTER,ErrorReport, ErrorReporter, ErrorReportingService, SerializedErrorReport } from './error-reporting.service';
+export { FeatureFlagsService } from './feature-flags.service';
 export { GlobalErrorHandler } from './global-error-handler.service';
 export { IdGeneratorService } from './id-generator.service';
 export { AppLocale,LocaleService } from './locale.service';
