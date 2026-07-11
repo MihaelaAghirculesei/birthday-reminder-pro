@@ -6,7 +6,7 @@ import { BehaviorSubject, from, type Observable, of } from 'rxjs';
 
 import { checkFirebaseOptions, FIREBASE_OPTIONS, firebaseGetters } from '../../firebase.config';
 import { type Birthday, type Category } from '../../shared/models/birthday.model';
-import { toDateString } from '../../shared/utils/date.utils';
+import { toDateString } from '../../shared/utils/date';
 import { LoggerService } from './logger.service';
 import { PhotoStorageService } from './photo-storage.service';
 
