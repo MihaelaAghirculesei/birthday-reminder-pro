@@ -11,7 +11,7 @@ import * as BirthdayActions from '../../../core/store/birthday/birthday.actions'
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 import { type Birthday, type BirthdayCategory } from '../../../shared';
 import { safeParseBirthday } from '../../../shared/schemas/birthday.schema';
-import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date.utils';
+import { getDaysUntilBirthday, parseLocalDate } from '../../../shared/utils/date';
 import { type CategoryStats } from '../components/category-filter/category-filter.component';
 import { BirthdayStatsService, type ChartDataItem } from './birthday-stats.service';
 
