@@ -44,6 +44,15 @@ declare namespace Cypress {
     seedVisualTestData(): Chainable<void>;
 
     /**
+     * Writes `count` synthetic birthdays directly into IndexedDB, then
+     * reloads the page so Angular picks them up on boot. Used to exercise
+     * virtual-scroll performance with large lists without going through the
+     * add-birthday form `count` times.
+     * Call AFTER cy.waitForAngular() so the DB is already open.
+     */
+    seedManyBirthdays(count: number): Chainable<void>;
+
+    /**
      * Applies the dark-theme class instantly (no transition) and sets
      * localStorage so the theme persists after a reload.
      */
@@ -271,6 +280,45 @@ Cypress.Commands.add('seedVisualTestData', () => {
   });
 
   // Reload so Angular reads the freshly seeded data during store initialization
+  cy.reload();
+  cy.waitForAngular();
+});
+
+Cypress.Commands.add('seedManyBirthdays', (count: number) => {
+  cy.window().then((win) => {
+    return new Cypress.Promise<void>((resolve, reject) => {
+      const req = win.indexedDB.open('BirthdayReminderDB', 4);
+
+      req.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        const tx = db.transaction('birthdays', 'readwrite');
+        const store = tx.objectStore('birthdays');
+
+        for (let i = 0; i < count; i++) {
+          const month = String((i % 12) + 1).padStart(2, '0');
+          const day = String((i % 28) + 1).padStart(2, '0');
+          const year = 1960 + (i % 60);
+          store.put({
+            id: `perf-${i}`,
+            name: `Test Person ${i}`,
+            birthDate: `${year}-${month}-${day}`,
+            category: ['family', 'friends', 'colleagues'][i % 3],
+            syncStatus: 'local-only',
+            updatedAt: Date.now(),
+          });
+        }
+
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      };
+
+      req.onerror = () => reject(req.error);
+    });
+  });
+
   cy.reload();
   cy.waitForAngular();
 });
