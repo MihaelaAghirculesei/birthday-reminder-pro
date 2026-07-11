@@ -18,7 +18,7 @@ import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors
 import { type Birthday, ConfirmDialogComponent,getAvailableWishLinks, type ScheduledMessage, type WishLink } from '../../shared';
 import { LocalDatePipe } from '../../shared/pipes/local-date.pipe';
 import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
-import { getDaysUntilBirthday } from '../../shared/utils/date.utils';
+import { getDaysUntilBirthday } from '../../shared/utils/date';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog/message-schedule-dialog.component';
 
 interface ScheduledMessageView extends ScheduledMessage {
