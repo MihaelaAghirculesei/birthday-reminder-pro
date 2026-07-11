@@ -10,7 +10,7 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "build:stats": "ng build --configuration production --stats-json",
-    "analyze": "npm run build:stats && webpack-bundle-analyzer dist/birthday-reminder-pro/browser/stats.json",
+    "analyze": "npm run build:stats && node scripts/analyze-bundle.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:coverage": "ng test --no-watch --code-coverage",
