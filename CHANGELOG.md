@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.0...v1.0.1) (2026-07-12)
+
+
+### Bug Fixes
+
+* **android:** bump CI JDK to 21 to match Capacitor Gradle source/target compatibility ([5313303](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/53133034e2b446022cb70772dc4e08a43ae8f1c0))
+* **sw:** switch api-data group from performance to freshness strategy ([f65fc75](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/f65fc75a5a8bfe5aeb1e5a034d3c12237164ca8d))
+
 # 1.0.0 (2026-07-12)
 
 
