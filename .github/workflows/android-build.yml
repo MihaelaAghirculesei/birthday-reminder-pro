@@ -41,7 +41,9 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          # capacitor.build.gradle and capacitor-cordova-android-plugins pin
+          # sourceCompatibility/targetCompatibility to 21 — must match.
+          java-version: '21'
 
       - uses: android-actions/setup-android@v3
 
