@@ -197,8 +197,7 @@ Before deploying to production:
    - Invalidate all cloned repositories
 
 **Emergency Contacts:**
-- Project Maintainer: [Add contact information]
-- Security Team: [Add contact information]
+- Maintainer: [@MihaelaAghirculesei](https://github.com/MihaelaAghirculesei) — report via [GitHub private security advisory](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/security/advisories/new) (see "Reporting a Vulnerability" above)
 
 ---
 

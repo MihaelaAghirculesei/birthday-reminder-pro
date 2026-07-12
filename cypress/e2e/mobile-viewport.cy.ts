@@ -99,3 +99,47 @@ describe('Mobile viewport — birthday CRUD', () => {
     cy.contains('Before Edit Mobile').should('not.exist');
   });
 });
+
+describe('Mobile viewport — 320px layout integrity (iPhone SE)', () => {
+  // CRUD mechanics are already covered at 375px above; this suite guards the
+  // narrowest realistic width against horizontal-overflow regressions only.
+  beforeEach(() => {
+    cy.viewport(320, 700);
+    cy.clearLocalStorage();
+    cy.clearCookies();
+    cy.clearIndexedDB();
+    cy.visit('/');
+    cy.waitForAngular();
+    cy.disableAnimations();
+  });
+
+  function assertNoHorizontalOverflow(): void {
+    cy.document().then((doc) => {
+      expect(doc.documentElement.scrollWidth).to.be.at.most(320);
+    });
+  }
+
+  it('empty dashboard has no horizontal overflow', () => {
+    assertNoHorizontalOverflow();
+  });
+
+  it('hamburger nav menu has no horizontal overflow', () => {
+    cy.get('.menu-btn').click();
+    cy.get('.nav-menu-main').should('be.visible');
+    assertNoHorizontalOverflow();
+  });
+
+  it('expanded add-birthday form has no horizontal overflow', () => {
+    cy.expandBirthdayForm();
+    assertNoHorizontalOverflow();
+  });
+
+  it('dashboard with a birthday card has no horizontal overflow', () => {
+    cy.expandBirthdayForm();
+    cy.get('[data-testid="birthday-name-input"]').type('Narrow Viewport');
+    cy.get('[data-testid="birthday-date-input"]').type('01/01/2000');
+    cy.get('[data-testid="save-birthday-button"]').click();
+    cy.contains('Narrow Viewport').should('be.visible');
+    assertNoHorizontalOverflow();
+  });
+});
