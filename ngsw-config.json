@@ -63,15 +63,15 @@
       }
     },
     {
-      "name": "api-performance",
+      "name": "api-data",
       "urls": [
         "/api/**"
       ],
       "cacheConfig": {
         "maxSize": 50,
         "maxAge": "1h",
-        "timeout": "5s",
-        "strategy": "performance"
+        "timeout": "3s",
+        "strategy": "freshness"
       }
     }
   ]
