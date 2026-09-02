@@ -2,7 +2,7 @@
 
 A birthday management application built with Angular 19. Never forget a birthday again with calendar sync, notifications, and offline support.
 
-[![CI](https://github.com/MihaelaAghirculesei/birthday-reminder-app/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaelaAghirculesei/birthday-reminder-app/actions/workflows/ci.yml)
+[![CI](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml)
 [![Angular](https://img.shields.io/badge/Angular-19-red?logo=angular)](https://angular.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue?logo=capacitor)](https://capacitorjs.com/)
@@ -216,8 +216,8 @@ src/app/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/MihaelaAghirculesei/birthday-reminder-app.git
-   cd birthday-reminder-app
+   git clone https://github.com/MihaelaAghirculesei/birthday-reminder-pro.git
+   cd birthday-reminder-pro
    ```
 
 2. **Install dependencies**
@@ -334,7 +334,7 @@ For production on Cloudflare Pages, the pre-rendered static files are served dir
 ## Project Structure
 
 ```
-birthday-reminder-app/
+birthday-reminder-pro/
 ├── src/app/
 │   ├── core/               # Singleton services, NgRx store slices
 │   │   ├── services/       # Facades, storage, auth, sync, notifications
