@@ -1,4 +1,4 @@
-# Birthday Reminder App
+# Birthday Memories
 
 A birthday management application built with Angular 19. Never forget a birthday again with calendar sync, notifications, and offline support.
 
@@ -28,9 +28,9 @@ A birthday management application built with Angular 19. Never forget a birthday
 
 ## About
 
-I built this app to practice NgRx state management and learn how to build offline-first applications. It's a personal project where I wanted to explore cross-platform development with Capacitor and Firebase.
+A cross-platform birthday manager with an offline-first architecture: IndexedDB is the source of truth, Firebase Firestore is an optional cloud replica, and a pending-changes queue reconciles the two. Built with Angular 19 and NgRx, packaged for Android with Capacitor.
 
-The app manages birthdays with features like:
+Core capabilities:
 - Works offline using IndexedDB
 - Optional cloud sync via Firebase Firestore (auth users only)
 - Syncs with Google Calendar (one-way or two-way)
@@ -419,7 +419,7 @@ Each step can also be run standalone (`npm run ci:quality`, `npm run ci:build`, 
 
 ## Contributing
 
-This is a personal learning project, but suggestions are welcome! Feel free to open an issue or PR — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the pre-PR checklist, and commit conventions.
+Suggestions and issues are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the pre-PR checklist, and commit conventions.
 
 ---
 
@@ -463,7 +463,3 @@ Cannot establish a connection with the server ws://localhost:4203/
 ```
 
 These errors are **normal and expected** - they occur because the dev server is terminated after the tests, but the browser keeps trying to maintain the WebSocket connection. The tests have still passed successfully.
-
----
-
-**Note:** This is a learning project I built to practice NgRx and offline-first architecture. Feel free to check out the code!
