@@ -186,6 +186,31 @@ h2[mat-dialog-title] {
   }
 }
 
+.save-blocked-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: 0.9rem;
+  border-top: 2px solid var(--error-color);
+
+  mat-icon {
+    color: var(--error-color);
+    flex-shrink: 0;
+  }
+
+  ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+  }
+
+  li {
+    font-weight: 500;
+  }
+}
+
 .dialog-actions {
   padding: 16px 24px !important;
   border-top: 1px solid var(--border-light);

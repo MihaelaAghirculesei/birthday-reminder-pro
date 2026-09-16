@@ -120,6 +120,13 @@ export const en = {
     REMEMBER_PHOTO: 'Remember Photo',
     REMEMBER_PHOTO_HINT: '(For social sharing/messages)',
     CONTACT_WARNING: 'No contact info provided. Add Email, Phone, or Telegram to enable sending wishes.',
+    SAVE_BLOCKED_TITLE: 'To save, you still need to:',
+    SAVE_BLOCKED_NAME: 'Enter a name',
+    SAVE_BLOCKED_BIRTH_DATE: 'Enter the birth date',
+    SAVE_BLOCKED_UNSAVED_MESSAGE: 'Save or cancel the scheduled message you are editing below',
+    SAVE_BLOCKED_EMAIL: 'Fix the email address',
+    SAVE_BLOCKED_PHONE: 'Fix the phone number',
+    SAVE_BLOCKED_TELEGRAM: 'Fix the Telegram username',
     SAVE_BTN: 'Save Changes',
     CANCEL: 'Cancel'
   },

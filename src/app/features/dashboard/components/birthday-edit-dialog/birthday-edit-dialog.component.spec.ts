@@ -327,6 +327,63 @@ describe('BirthdayEditDialogComponent', () => {
     });
   });
 
+  describe('Save blocked reasons', () => {
+    it('should have no blocked reasons and allow saving with valid data', () => {
+      expect(component.saveBlockedReasons).toEqual([]);
+      expect(component.canSave).toBeTrue();
+    });
+
+    it('should block saving and report missing name', () => {
+      component.editingData.name = '   ';
+
+      expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_NAME');
+      expect(component.canSave).toBeFalse();
+
+      component.onSave();
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+
+    it('should block saving and report missing birth date', () => {
+      component.editingData.birthDate = '';
+
+      expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_BIRTH_DATE');
+      expect(component.canSave).toBeFalse();
+
+      component.onSave();
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+
+    it('should block saving and report an unsaved scheduled message', () => {
+      component.onMessageUnsavedChanges(true);
+
+      expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_UNSAVED_MESSAGE');
+      expect(component.canSave).toBeFalse();
+
+      component.onSave();
+      expect(dialogRefSpy.close).not.toHaveBeenCalled();
+    });
+
+    it('should report invalid contact fields by key', () => {
+      component.contactForm.get('email')!.setValue('invalid');
+      component.contactForm.get('phone')!.setValue('invalid');
+      component.contactForm.get('telegramUsername')!.setValue('1');
+
+      expect(component.saveBlockedReasons).toEqual(jasmine.arrayContaining([
+        'EDIT_DIALOG.SAVE_BLOCKED_EMAIL',
+        'EDIT_DIALOG.SAVE_BLOCKED_PHONE',
+        'EDIT_DIALOG.SAVE_BLOCKED_TELEGRAM',
+      ]));
+    });
+
+    it('should unblock once the unsaved message is cleared', () => {
+      component.onMessageUnsavedChanges(true);
+      expect(component.canSave).toBeFalse();
+
+      component.onMessageUnsavedChanges(false);
+      expect(component.canSave).toBeTrue();
+    });
+  });
+
   describe('Data mutations', () => {
     it('should not mutate original birthday data', () => {
       const originalBirthday = { ...mockBirthday };

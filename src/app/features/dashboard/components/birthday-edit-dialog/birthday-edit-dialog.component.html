@@ -159,12 +159,26 @@
     </div>
   }
 
+  @if (saveBlockedReasons.length > 0 && !isSaving) {
+    <div class="save-blocked-warning" role="alert" data-testid="save-blocked-warning">
+      <mat-icon>info</mat-icon>
+      <div>
+        <strong>{{ 'EDIT_DIALOG.SAVE_BLOCKED_TITLE' | translate }}</strong>
+        <ul>
+          @for (reasonKey of saveBlockedReasons; track reasonKey) {
+            <li>{{ reasonKey | translate }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+
   <mat-dialog-actions align="end" class="dialog-actions">
     <button mat-button (click)="onCancel()" color="warn">
       <mat-icon>close</mat-icon>
       {{ 'EDIT_DIALOG.CANCEL' | translate }}
     </button>
-    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="hasUnsavedMessages || !isContactValid() || isSaving">
+    <button mat-raised-button (click)="onSave()" color="primary" data-testid="save-birthday-button" [disabled]="!canSave">
       <mat-icon>check</mat-icon>
       {{ 'EDIT_DIALOG.SAVE_BTN' | translate }}
     </button>
