@@ -262,6 +262,23 @@ describe('GoogleCalendarAuthService', () => {
 
       expect(mockClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' });
     });
+
+    it('flips isSignedIn to false and clears the stored token when the refresh fails', async () => {
+      await service.saveToken('dead-token', TOKEN_FUTURE);
+      (service as unknown as { isSignedInSubject: { next: (v: boolean) => void } })
+        .isSignedInSubject.next(true);
+
+      const mockClient = jasmine.createSpyObj<TokenClient>('TokenClient', ['requestAccessToken']);
+      mockClient.requestAccessToken.and.callFake(() => {
+        service.pendingTokenPromise?.reject(new Error('interaction_required'));
+      });
+      service.tokenClient = mockClient;
+
+      await service.refreshTokenSilently();
+
+      expect(service.isSignedIn).toBeFalse();
+      expect(await service.getStoredToken()).toBeNull();
+    });
   });
 
   // ──────────────────────────────────────────────

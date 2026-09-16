@@ -165,5 +165,5 @@ export const calendarEventIdSet = createAction(
 
 export const calendarSyncFailed = createAction(
   '[Birthday/Calendar] Sync Failed',
-  props<{ operation: 'add' | 'update' | 'delete'; error: string }>()
+  props<{ operation: 'add' | 'update' | 'delete'; error: string; isAuthError: boolean }>()
 );

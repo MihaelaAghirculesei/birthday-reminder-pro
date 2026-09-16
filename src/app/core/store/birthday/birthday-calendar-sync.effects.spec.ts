@@ -116,7 +116,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
       effects.syncToCalendar$.subscribe({
         next: action => {
-          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'DB error' }));
+          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'DB error', isAuthError: false }));
           done();
         },
         error: () => fail('should not error')
@@ -130,7 +130,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
       effects.syncToCalendar$.subscribe({
         next: action => {
-          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'Network error' }));
+          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'Network error', isAuthError: false }));
           done();
         },
         error: () => fail('should not error')
@@ -169,7 +169,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
       effects.updateInCalendar$.subscribe({
         next: action => {
-          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'Calendar error' }));
+          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'Calendar error', isAuthError: false }));
           done();
         },
         error: () => fail('should not error')
@@ -242,7 +242,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
       effects.deleteFromCalendar$.subscribe({
         next: action => {
-          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'Delete error' }));
+          expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'Delete error', isAuthError: false }));
           done();
         },
         error: () => fail('should not error')
@@ -252,7 +252,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
   describe('notifyCalendarSyncFailed$', () => {
     it('should show a warning notification for operation "add"', (done) => {
-      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'err' }));
+      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
         expect(notificationMock.show).toHaveBeenCalledWith(
@@ -264,7 +264,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should show a warning notification for operation "update"', (done) => {
-      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'err' }));
+      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
         expect(notificationMock.show).toHaveBeenCalledWith(
@@ -276,7 +276,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should show a warning notification for operation "delete"', (done) => {
-      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'err' }));
+      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
         expect(notificationMock.show).toHaveBeenCalledWith(
@@ -284,6 +284,59 @@ describe('BirthdayCalendarSyncEffects', () => {
           'warning'
         );
         done();
+      });
+    });
+
+    it('should show a distinct reconnect notification when the failure is an auth error, regardless of operation', (done) => {
+      actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'Authentication expired. Please sign in again.', isAuthError: true }));
+
+      effects.notifyCalendarSyncFailed$.subscribe(() => {
+        expect(notificationMock.show).toHaveBeenCalledWith(
+          'Google Calendar connection expired. Reconnect in Settings to resume syncing.',
+          'error',
+          8000
+        );
+        done();
+      });
+    });
+  });
+
+  describe('isAuthError classification', () => {
+    it('dispatches isAuthError: true when the thrown error carries a 401 googleApiDetails code', (done) => {
+      const authError = Object.assign(new Error('Authentication expired. Please sign in again.'), {
+        googleApiDetails: { code: 401 }
+      });
+      calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(authError));
+
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
+
+      effects.updateInCalendar$.subscribe({
+        next: action => {
+          expect(action).toEqual(BirthdayActions.calendarSyncFailed({
+            operation: 'update',
+            error: 'Authentication expired. Please sign in again.',
+            isAuthError: true
+          }));
+          done();
+        },
+        error: () => fail('should not error')
+      });
+    });
+
+    it('dispatches isAuthError: false for a non-auth error even if it happens to carry a googleApiDetails code', (done) => {
+      const rateLimitError = Object.assign(new Error('Too many requests.'), {
+        googleApiDetails: { code: 429 }
+      });
+      calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(rateLimitError));
+
+      actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
+
+      effects.updateInCalendar$.subscribe({
+        next: action => {
+          expect(action.isAuthError).toBeFalse();
+          done();
+        },
+        error: () => fail('should not error')
       });
     });
   });

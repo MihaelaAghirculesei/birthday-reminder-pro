@@ -158,7 +158,12 @@ export class GoogleCalendarAuthService {
       this.pendingTokenPromise = {
         resolve: () => resolve(),
         reject: () => {
-          this.logger.warn('[GoogleCalendar] Silent refresh failed, will require interactive sign-in');
+          this.logger.warn('[GoogleCalendar] Silent refresh failed, requires interactive sign-in');
+          // The stored token is dead and unrefreshable — clear it and flip isSignedIn so the
+          // "Connect Google Calendar" UI reappears instead of silently staying in a broken
+          // "connected" state that keeps retrying every sync forever.
+          void this.clearStoredToken();
+          this.isSignedInSubject.next(false);
           resolve();
         }
       };
