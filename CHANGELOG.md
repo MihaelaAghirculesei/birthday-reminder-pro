@@ -1,3 +1,16 @@
+## [1.0.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.1...v1.0.2) (2026-09-16)
+
+
+### Bug Fixes
+
+* **calendar:** recover from dead Google Calendar tokens ([1aa329f](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/1aa329f9776de2e7a3a0081bc8ab61b7c29a0997))
+* **dialog:** explain why the birthday save button is disabled ([b2052ef](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/b2052ef7f0367b34c87845ab3461a65df276e06b))
+
+
+### Performance Improvements
+
+* **build:** re-enable critical CSS inlining, fix LCP preload target ([9e13ab0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/9e13ab03415698e4262263fa141ceb68aa783bc9))
+
 ## [1.0.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.0...v1.0.1) (2026-07-12)
 
 
