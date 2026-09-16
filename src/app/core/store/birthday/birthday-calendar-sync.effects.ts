@@ -7,6 +7,7 @@ import { EMPTY, from, of } from 'rxjs';
 import { catchError, filter, ignoreElements, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 
 import { CalendarIntegrationService } from '../../services/calendar-integration.service';
+import { GoogleApiErrorService } from '../../services/google-api-error.service';
 import { NotificationService } from '../../services/notification.service';
 import { IndexedDBStorageService } from '../../services/offline-storage.service';
 import * as BirthdayActions from './birthday.actions';
@@ -31,6 +32,13 @@ export class BirthdayCalendarSyncEffects {
   private readonly calendarIntegration = inject(CalendarIntegrationService);
   private readonly offlineStorage = inject(IndexedDBStorageService);
   private readonly notification = inject(NotificationService);
+  private readonly errorService = inject(GoogleApiErrorService);
+
+  /** 401/403 surface as `googleApiDetails.code` on errors thrown by GoogleCalendarService (see google-api-error.service.ts). */
+  private isAuthError(err: unknown): boolean {
+    const code = (err as { googleApiDetails?: { code: number } } | undefined)?.googleApiDetails?.code;
+    return code !== undefined && this.errorService.isAuthError(code);
+  }
 
   /**
    * After a birthday is persisted to IndexedDB, attempt to create a Google Calendar event.
@@ -51,7 +59,8 @@ export class BirthdayCalendarSyncEffects {
           }),
           catchError((err: unknown) => of(BirthdayActions.calendarSyncFailed({
             operation: 'add',
-            error: err instanceof Error ? err.message : 'Calendar sync failed'
+            error: err instanceof Error ? err.message : 'Calendar sync failed',
+            isAuthError: this.isAuthError(err)
           })))
         )
       )
@@ -70,7 +79,8 @@ export class BirthdayCalendarSyncEffects {
           ignoreElements(),
           catchError((err: unknown) => of(BirthdayActions.calendarSyncFailed({
             operation: 'update',
-            error: err instanceof Error ? err.message : 'Calendar update failed'
+            error: err instanceof Error ? err.message : 'Calendar update failed',
+            isAuthError: this.isAuthError(err)
           })))
         )
       )
@@ -95,7 +105,8 @@ export class BirthdayCalendarSyncEffects {
           ignoreElements(),
           catchError((err: unknown) => of(BirthdayActions.calendarSyncFailed({
             operation: 'delete',
-            error: err instanceof Error ? err.message : 'Calendar delete failed'
+            error: err instanceof Error ? err.message : 'Calendar delete failed',
+            isAuthError: this.isAuthError(err)
           })))
         );
       })
@@ -108,7 +119,19 @@ export class BirthdayCalendarSyncEffects {
   notifyCalendarSyncFailed$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.calendarSyncFailed),
-      tap(({ operation }) => {
+      tap(({ operation, isAuthError }) => {
+        if (isAuthError) {
+          // Token refresh already failed in GoogleCalendarAuthService, which flips isSignedIn
+          // to false — the "Connect Google Calendar" UI in Settings reappears on its own. This
+          // toast just tells the user why sync stopped instead of implying a silent retry.
+          this.notification.show(
+            'Google Calendar connection expired. Reconnect in Settings to resume syncing.',
+            'error',
+            8000
+          );
+          return;
+        }
+
         const messages: Record<string, string> = {
           add: 'Google Calendar event could not be created. Birthday saved locally.',
           update: 'Google Calendar event could not be updated. Changes saved locally.',

@@ -114,7 +114,7 @@ Core capabilities:
 - Reassign categories in bulk
 - Test data generator (40+ entries)
 - Material Design UI
-- Responsive design (still working on this)
+- Responsive design
 
 ---
 
@@ -370,9 +370,7 @@ birthday-reminder-pro/
 - E2E tests (Cypress, CI-ready)
 - Visual regression snapshots
 - Accessibility (NVDA, axe-core)
-
-**Working on**
-- Responsive design
+- Responsive design (mobile-first, 320px+)
 
 **Future ideas**
 - i18n support

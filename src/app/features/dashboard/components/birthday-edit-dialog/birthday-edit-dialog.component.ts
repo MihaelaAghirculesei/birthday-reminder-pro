@@ -179,12 +179,28 @@ export class BirthdayEditDialogComponent {
     this.contactWarning = !this.hasAnyContact();
   }
 
+  /** i18n keys for every reason `onSave` is currently blocked, shown to the user near the Save button. */
+  get saveBlockedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingData.name.trim()) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_NAME');
+    if (!this.editingData.birthDate) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_BIRTH_DATE');
+    if (this.hasUnsavedMessages) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_UNSAVED_MESSAGE');
+    if (!this.isEmailValid()) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_EMAIL');
+    if (!this.isPhoneValid()) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_PHONE');
+    if (!this.isTelegramValid()) reasons.push('EDIT_DIALOG.SAVE_BLOCKED_TELEGRAM');
+    return reasons;
+  }
+
+  get canSave(): boolean {
+    return this.saveBlockedReasons.length === 0 && !this.isSaving;
+  }
+
   onCancel(): void {
     this.dialogRef.close();
   }
 
   async onSave(): Promise<void> {
-    if (!this.contactForm.valid || this.isSaving) return;
+    if (!this.canSave) return;
 
     this.isSaving = true;
 

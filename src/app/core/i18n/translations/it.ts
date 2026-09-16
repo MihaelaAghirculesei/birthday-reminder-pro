@@ -120,6 +120,13 @@ export const it = {
     REMEMBER_PHOTO: 'Foto Ricordo',
     REMEMBER_PHOTO_HINT: '(Per condivisione social/messaggi)',
     CONTACT_WARNING: 'Nessun contatto inserito. Aggiungi Email, Telefono o Telegram per abilitare l\'invio degli auguri.',
+    SAVE_BLOCKED_TITLE: 'Per salvare devi ancora:',
+    SAVE_BLOCKED_NAME: 'Inserire il nome',
+    SAVE_BLOCKED_BIRTH_DATE: 'Inserire la data di nascita',
+    SAVE_BLOCKED_UNSAVED_MESSAGE: 'Salvare o annullare il messaggio programmato che stai modificando, più in basso',
+    SAVE_BLOCKED_EMAIL: 'Correggere l\'indirizzo email',
+    SAVE_BLOCKED_PHONE: 'Correggere il numero di telefono',
+    SAVE_BLOCKED_TELEGRAM: 'Correggere lo username Telegram',
     SAVE_BTN: 'Salva Modifiche',
     CANCEL: 'Annulla'
   },
