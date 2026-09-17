@@ -1,3 +1,17 @@
+# [1.1.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.2...v1.1.0) (2026-09-17)
+
+
+### Bug Fixes
+
+* **html:** use absolute social preview URLs, localize noscript fallback ([c4620a3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/c4620a35e1b009b502ed165e13d2d45429dc4d6d))
+
+
+### Features
+
+* **e2e:** add real visual regression diffing against committed baselines ([24c04b1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/24c04b14cc86e7ce3d32b0fe622bb55cef362848))
+* **pwa:** use real app screenshots in the manifest ([c9e8d87](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/c9e8d8754d123affbf15d17c0f56b6d795ba8d7f))
+* **routing:** add a custom 404 page ([a8890cd](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a8890cd9f09d93e2e2b602a5236f1e921591de3e))
+
 ## [1.0.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.1...v1.0.2) (2026-09-16)
 
 
