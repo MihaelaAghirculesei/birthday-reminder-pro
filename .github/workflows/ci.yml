@@ -211,6 +211,52 @@ jobs:
           path: cypress/videos
           retention-days: 7
 
+  visual-regression:
+    name: Visual Regression (informational, non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [lint-and-typecheck]
+    # Compares screenshots against committed baselines in cypress/screenshots-baseline/
+    # via pixelmatch (see cypress/nodeHelpers/visualDiff.ts). Intentionally not part of
+    # the `needs:` gate in the release-gate job below — known source of occasional flakes
+    # (e.g. an intermittent app error banner during seeded-data screenshots, see plan.md
+    # #11/#38) that shouldn't block merges. continue-on-error keeps the job status green
+    # while still surfacing failures and diff images for review.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Initialize environment files
+        run: npm run env:init
+
+      - name: Run visual regression suite
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm run start:ci
+          wait-on: 'http://localhost:4300'
+          wait-on-timeout: 180
+          command: npm run e2e:visual:ci:run
+          browser: chrome
+          record: false
+
+      - name: Upload visual diff images
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-regression-diffs
+          path: |
+            cypress/visual-diffs
+            cypress/screenshots
+          retention-days: 7
+
   security-rules:
     name: Firebase Security Rules Tests
     runs-on: ubuntu-latest

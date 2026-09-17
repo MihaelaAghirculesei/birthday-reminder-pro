@@ -43,6 +43,7 @@ bundle-report.html
 
 cypress/videos
 cypress/screenshots
+cypress/visual-diffs
 cypress/downloads
 cypress/snapdebug.txt
 

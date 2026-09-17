@@ -404,7 +404,28 @@ Cypress.Commands.add('visualSnapshot', (name: string) => {
   // calls never fire and the zone stays dirty, causing flaky screenshots.
   cy.tick(1000);
   cy.waitForAngular();
-  cy.screenshot(name, { overwrite: true });
+  // capture:'viewport' takes a single frame instead of Cypress's default fullPage
+  // scroll-and-stitch, which duplicates position:sticky/fixed elements (header,
+  // FABs) once per scroll segment on any page taller than the viewport — same
+  // pattern already used by readme-screenshots.cy.ts's snap().
+  cy.screenshot(name, { overwrite: true, capture: 'viewport' });
+  // Compares the screenshot just written against cypress/screenshots-baseline/.
+  // First run for a given name adopts it as the baseline (status 'new-baseline')
+  // instead of failing. Threshold and baseline-adoption logic live in
+  // cypress/nodeHelpers/visualDiff.ts.
+  cy.task('compareVisualScreenshot', { name, specDir: 'visual-regression.cy.ts' }).then((result) => {
+    const diff = result as { status: string; diffPercentage?: number; name: string };
+    if (diff.status === 'diff') {
+      throw new Error(
+        `Visual regression in "${diff.name}": ${diff.diffPercentage?.toFixed(3)}% of pixels differ ` +
+        `from the baseline (threshold 0.1%). See cypress/visual-diffs/${diff.name}.diff.png. ` +
+        `If this change is intentional, run "npm run e2e:visual:update-baseline" to accept it.`
+      );
+    }
+    if (diff.status === 'size-mismatch') {
+      throw new Error(`Visual regression in "${diff.name}": screenshot dimensions no longer match the baseline.`);
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
