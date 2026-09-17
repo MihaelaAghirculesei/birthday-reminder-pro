@@ -2,6 +2,11 @@ import { defineConfig } from 'cypress';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { compareScreenshotToBaseline, type VisualDiffResult } from './cypress/nodeHelpers/visualDiff';
+
+const baselineDir = path.join(__dirname, 'cypress', 'screenshots-baseline');
+const diffDir = path.join(__dirname, 'cypress', 'visual-diffs');
+
 export default defineConfig({
   trashAssetsBeforeRuns: false,
   e2e: {
@@ -16,6 +21,9 @@ export default defineConfig({
         if (fs.existsSync(screenshotsDir)) {
           fs.rmSync(screenshotsDir, { recursive: true, force: true });
         }
+        if (fs.existsSync(diffDir)) {
+          fs.rmSync(diffDir, { recursive: true, force: true });
+        }
       });
 
       on('task', {
@@ -24,6 +32,10 @@ export default defineConfig({
             console.info(message);
           }
           return null;
+        },
+        compareVisualScreenshot({ name, specDir }: { name: string; specDir: string }): VisualDiffResult {
+          const screenshotPath = path.join(__dirname, 'cypress', 'screenshots', specDir, `${name}.png`);
+          return compareScreenshotToBaseline(screenshotPath, baselineDir, diffDir);
         }
       });
 
