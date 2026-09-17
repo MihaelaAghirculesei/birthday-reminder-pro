@@ -468,5 +468,10 @@ export const en = {
     SAVE_SETTINGS_BTN: 'Save Settings',
     LAST_SYNC: 'Last sync: {{success}} successful, {{failed}} failed',
     DISCONNECT_BTN: 'Disconnect Google Calendar'
+  },
+  NOT_FOUND: {
+    TITLE: 'Page not found',
+    MESSAGE: "The page you're looking for doesn't exist or has been moved.",
+    BACK_HOME: 'Back to home'
   }
 };

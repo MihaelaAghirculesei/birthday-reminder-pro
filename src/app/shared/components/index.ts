@@ -5,6 +5,7 @@ export { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog/conf
 export { MessageIndicatorComponent } from './message-indicator/message-indicator.component';
 export { MessageSchedulerComponent } from './message-scheduler/message-scheduler.component';
 export { NetworkStatusComponent } from './network-status.component';
+export { NotFoundComponent } from './not-found/not-found.component';
 export { NotificationComponent } from './notification.component';
 export { NotificationPermissionBannerComponent } from './notification-permission-banner.component';
 export { PhotoUploadComponent } from './photo-upload.component';
