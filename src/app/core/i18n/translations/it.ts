@@ -468,5 +468,10 @@ export const it = {
     SAVE_SETTINGS_BTN: 'Salva Impostazioni',
     LAST_SYNC: 'Ultima sincronizzazione: {{success}} riuscite, {{failed}} fallite',
     DISCONNECT_BTN: 'Disconnetti Google Calendar'
+  },
+  NOT_FOUND: {
+    TITLE: 'Pagina non trovata',
+    MESSAGE: 'La pagina che stai cercando non esiste o è stata spostata.',
+    BACK_HOME: 'Torna alla home'
   }
 };

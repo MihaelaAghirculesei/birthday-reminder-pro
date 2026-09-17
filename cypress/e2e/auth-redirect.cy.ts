@@ -42,8 +42,9 @@ describe('Auth guard — unauthenticated redirect', () => {
     cy.get('app-auth-button button').contains('Sign in').should('be.visible');
   });
 
-  it('unknown routes redirect to /', () => {
+  it('unknown routes show the not-found page', () => {
     cy.visit('/nonexistent-route');
-    cy.location('pathname', { timeout: 5000 }).should('eq', '/');
+    cy.location('pathname', { timeout: 5000 }).should('eq', '/nonexistent-route');
+    cy.get('.not-found-container', { timeout: 5000 }).should('be.visible');
   });
 });
