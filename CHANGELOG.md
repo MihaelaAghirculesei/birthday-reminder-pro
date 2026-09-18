@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.1.0...v1.2.0) (2026-09-18)
+
+
+### Features
+
+* **seo:** add sitemap.xml and reference it from robots.txt ([f86d9bd](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/f86d9bd2262c39873f83f88e42d71755133c41f0))
+
 # [1.1.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.0.2...v1.1.0) (2026-09-17)
 
 
