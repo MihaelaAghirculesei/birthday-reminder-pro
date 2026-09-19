@@ -428,7 +428,16 @@ export const en = {
     SYNCED: 'Synced'
   },
   NOTIFICATION_BANNER: {
-    ARIA: 'Notification permission request'
+    ARIA: 'Notification permission request',
+    TITLE: 'Enable Birthday Notifications',
+    MESSAGE: 'Get reminded when it\'s someone\'s birthday! We\'ll send you notifications at the scheduled time.',
+    ENABLE_BTN: 'Enable Notifications',
+    DISMISS_BTN: 'Maybe Later',
+    DENIED_ARIA: 'Notifications blocked warning',
+    DENIED_TITLE: 'Notifications are blocked',
+    DENIED_MESSAGE: 'Scheduled birthday messages won\'t remind you until you allow notifications for this site.',
+    DENIED_INSTRUCTIONS: 'Click the lock icon next to the address bar → Site settings → Notifications → Allow.',
+    GOT_IT_BTN: 'Got it'
   },
   FOOTER: {
     TAGLINE: 'Made with ❤️ to never forget special moments',

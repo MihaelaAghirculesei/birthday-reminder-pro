@@ -428,7 +428,16 @@ export const it = {
     SYNCED: 'Sincronizzato'
   },
   NOTIFICATION_BANNER: {
-    ARIA: 'Richiesta permesso notifiche'
+    ARIA: 'Richiesta permesso notifiche',
+    TITLE: 'Abilita le notifiche dei compleanni',
+    MESSAGE: 'Ricevi un promemoria quando è il compleanno di qualcuno! Ti invieremo una notifica all\'orario programmato.',
+    ENABLE_BTN: 'Abilita Notifiche',
+    DISMISS_BTN: 'Più tardi',
+    DENIED_ARIA: 'Avviso notifiche bloccate',
+    DENIED_TITLE: 'Le notifiche sono bloccate',
+    DENIED_MESSAGE: 'I messaggi di compleanno programmati non ti avviseranno finché non consenti le notifiche per questo sito.',
+    DENIED_INSTRUCTIONS: 'Clicca sull\'icona del lucchetto vicino alla barra degli indirizzi → Impostazioni sito → Notifiche → Consenti.',
+    GOT_IT_BTN: 'Ho capito'
   },
   FOOTER: {
     TAGLINE: 'Fatto con ❤️ per non dimenticare mai i momenti speciali',
