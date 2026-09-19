@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.0...v1.2.1) (2026-09-19)
+
+
+### Bug Fixes
+
+* **notifications:** surface a clear message when notifications are blocked ([600818b](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/600818baa10dfaa56621203113b42aef3da32574))
+
 # [1.2.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.1.0...v1.2.0) (2026-09-18)
 
 
