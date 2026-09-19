@@ -21,34 +21,42 @@ import { SecureStorageService } from '../../core/services/secure-storage.service
       <div class="notification-banner"
         data-testid="notification-banner"
         role="region"
-        [attr.aria-label]="'NOTIFICATION_BANNER.ARIA' | translate">
-        <mat-card class="permission-card">
+        [attr.aria-label]="(isDenied() ? 'NOTIFICATION_BANNER.DENIED_ARIA' : 'NOTIFICATION_BANNER.ARIA') | translate">
+        <mat-card class="permission-card" [class.denied]="isDenied()">
           <mat-card-content>
             <div class="banner-content">
               <div class="icon-section">
-                <mat-icon class="notification-icon">notifications_active</mat-icon>
+                <mat-icon class="notification-icon">{{ isDenied() ? 'notifications_off' : 'notifications_active' }}</mat-icon>
               </div>
               <div class="text-section">
-                <h3>Enable Birthday Notifications</h3>
-                <p>Get reminded when it's someone's birthday! We'll send you notifications at the scheduled time.</p>
+                @if (isDenied()) {
+                  <h3>{{ 'NOTIFICATION_BANNER.DENIED_TITLE' | translate }}</h3>
+                  <p>{{ 'NOTIFICATION_BANNER.DENIED_MESSAGE' | translate }}</p>
+                  <p class="denied-instructions">{{ 'NOTIFICATION_BANNER.DENIED_INSTRUCTIONS' | translate }}</p>
+                } @else {
+                  <h3>{{ 'NOTIFICATION_BANNER.TITLE' | translate }}</h3>
+                  <p>{{ 'NOTIFICATION_BANNER.MESSAGE' | translate }}</p>
+                }
               </div>
               <div class="action-section">
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="requestPermission()"
-                  [disabled]="isRequesting()"
-                  >
-                  <mat-icon>check</mat-icon>
-                  Enable Notifications
-                </button>
+                @if (!isDenied()) {
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="requestPermission()"
+                    [disabled]="isRequesting()"
+                    >
+                    <mat-icon>check</mat-icon>
+                    {{ 'NOTIFICATION_BANNER.ENABLE_BTN' | translate }}
+                  </button>
+                }
                 <button
                   mat-button
                   (click)="dismiss()"
                   [disabled]="isRequesting()"
                   data-testid="dismiss-notification-banner"
                   >
-                  Maybe Later
+                  {{ (isDenied() ? 'NOTIFICATION_BANNER.GOT_IT_BTN' : 'NOTIFICATION_BANNER.DISMISS_BTN') | translate }}
                 </button>
               </div>
             </div>
@@ -78,6 +86,16 @@ import { SecureStorageService } from '../../core/services/secure-storage.service
     .permission-card {
       background: var(--primary);
       color: white;
+    }
+
+    .permission-card.denied {
+      background: var(--error-color);
+    }
+
+    .denied-instructions {
+      margin-top: 8px !important;
+      font-size: 13px !important;
+      opacity: 0.85;
     }
 
     .banner-content {
@@ -170,6 +188,7 @@ export class NotificationPermissionBannerComponent implements OnInit {
   private readonly DISMISSED_KEY = 'notificationBannerDismissed';
 
   shouldShow = signal(false);
+  isDenied = signal(false);
   isRequesting = signal(false);
   private dismissed = false;
 
@@ -197,7 +216,8 @@ export class NotificationPermissionBannerComponent implements OnInit {
   private updateShouldShow(): void {
     const supported = this.permissionService.isSupported();
     const permission = this.permissionService.getCurrentPermission();
-    this.shouldShow.set(supported && permission === 'default' && !this.dismissed);
+    this.isDenied.set(permission === 'denied');
+    this.shouldShow.set(supported && (permission === 'default' || permission === 'denied') && !this.dismissed);
   }
 
   async requestPermission(): Promise<void> {

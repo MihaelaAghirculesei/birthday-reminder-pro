@@ -72,11 +72,18 @@ describe('NotificationPermissionBannerComponent', () => {
       expect(component.shouldShow()).toBe(false);
     });
 
-    it('should not show banner when permission is denied', async () => {
+    it('should still show banner (denied variant) when permission is denied', async () => {
       mockPermissionService.getCurrentPermission.and.returnValue('denied');
       fixture.detectChanges();
       await fixture.whenStable();
-      expect(component.shouldShow()).toBe(false);
+      expect(component.shouldShow()).toBe(true);
+      expect(component.isDenied()).toBe(true);
+    });
+
+    it('should not mark isDenied when permission is default', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(component.isDenied()).toBe(false);
     });
 
     it('should not show banner when dismissed recently', async () => {
@@ -190,6 +197,37 @@ describe('NotificationPermissionBannerComponent', () => {
       component['dismissed'] = false;
       component.dismiss();
       expect(component['dismissed']).toBe(true);
+      expect(component.shouldShow()).toBe(false);
+    });
+  });
+
+  describe('denied permission variant', () => {
+    beforeEach(async () => {
+      mockPermissionService.getCurrentPermission.and.returnValue('denied');
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    });
+
+    it('should not render the Enable Notifications button', () => {
+      const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('button');
+      const labels = Array.from(buttons).map(b => b.textContent?.trim());
+      expect(labels.some(l => l?.includes('Enable Notifications'))).toBe(false);
+    });
+
+    it('should render the "Got it" dismiss button instead of "Maybe Later"', () => {
+      const dismissBtn: HTMLElement = fixture.nativeElement.querySelector('[data-testid="dismiss-notification-banner"]');
+      expect(dismissBtn.textContent?.trim()).toContain('Got it');
+    });
+
+    it('should apply the denied styling class to the card', () => {
+      const card: HTMLElement = fixture.nativeElement.querySelector('.permission-card');
+      expect(card.classList.contains('denied')).toBe(true);
+    });
+
+    it('dismiss() should still work and hide the banner', () => {
+      component.dismiss();
+      fixture.detectChanges();
       expect(component.shouldShow()).toBe(false);
     });
   });
