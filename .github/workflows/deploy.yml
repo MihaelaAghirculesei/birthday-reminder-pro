@@ -37,12 +37,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        # cloudflare/pages-action was removed from GitHub (repo deleted) — migrated
+        # to the actively maintained wrangler-action, Cloudflare's replacement.
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: birthday-reminder-aghirculesei
           # Angular SSR with prerender outputs static files to the browser/ subdir.
-          directory: dist/birthday-reminder-pro/browser
+          command: pages deploy dist/birthday-reminder-pro/browser --project-name=birthday-reminder-aghirculesei
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          wranglerVersion: '3'
