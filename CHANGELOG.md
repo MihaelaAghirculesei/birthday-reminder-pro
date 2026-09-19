@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.1...v1.2.2) (2026-09-19)
+
+
+### Bug Fixes
+
+* **cd:** migrate to wrangler-action, cloudflare/pages-action was removed ([a2c088e](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a2c088e73745dc402adacd11ca4b521d5a75e59c))
+
 ## [1.2.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.0...v1.2.1) (2026-09-19)
 
 
