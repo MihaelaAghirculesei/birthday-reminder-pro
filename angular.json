@@ -38,7 +38,8 @@
               "src/manifest.webmanifest",
               "src/robots.txt",
               "src/sitemap.xml",
-              "src/_headers"
+              "src/_headers",
+              "src/.well-known"
             ],
             "styles": [
               "src/theme.scss",
