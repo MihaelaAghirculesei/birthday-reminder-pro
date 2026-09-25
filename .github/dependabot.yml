@@ -1,0 +1,47 @@
+version: 2
+
+updates:
+  # npm dependencies (Angular, Firebase, Cypress, etc.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    groups:
+      # Patch/minor bumps are extremely unlikely to break anything under semver
+      # and are bundled into a single low-noise PR, auto-merged once CI is green
+      # (see .github/workflows/dependabot-auto-merge.yml).
+      npm-patch-and-minor:
+        update-types:
+          - "minor"
+          - "patch"
+    # Major bumps (e.g. a future Angular 21) are intentionally left out of the
+    # group above, so each lands as its own PR for manual review — see
+    # SECURITY.md / plan.md #49 for why the Angular major bump specifically is
+    # a deliberate, isolated migration and not something to auto-merge.
+
+  # GitHub Actions versions used in workflows (actions/checkout, setup-node, ...)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Rome"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

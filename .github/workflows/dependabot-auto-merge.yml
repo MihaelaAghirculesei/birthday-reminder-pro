@@ -1,0 +1,59 @@
+name: Dependabot auto-merge
+
+# Deliberately does NOT use GitHub's native "auto-merge" (gh pr merge --auto):
+# that only waits for checks marked *required* in branch protection, and this
+# repo intentionally has none on main (a required status check rejects direct
+# pushes too — GitHub can't have a passing check for a commit that doesn't
+# exist yet — which would break pushing straight to main outside a PR).
+#
+# Instead this job watches the PR's own checks to completion (gh pr checks
+# --watch) and only merges once CI has genuinely gone green — an equivalent
+# safety gate that never touches branch protection.
+#
+# pull_request_target (not workflow_run): dependabot/fetch-metadata needs a
+# real `pull_request` event payload to read the update metadata from — it
+# does not work against workflow_run (see dependabot/fetch-metadata#490).
+# Safe here because this job never checks out or executes the PR's code, it
+# only reads Dependabot's metadata and drives the GitHub API via `gh`.
+on:
+  pull_request_target:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  dependabot:
+    name: Auto-merge patch/minor updates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # Patch and minor bumps only. Major bumps (e.g. a future Angular 21) are
+      # deliberately left for manual review — see .github/dependabot.yml.
+      - name: Wait for CI, then merge patch/minor updates
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: |
+          gh pr checks "$PR_URL" --watch --interval 30 --fail-fast
+          gh pr merge --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Flag major updates for manual review
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: gh pr comment "$PR_URL" --body "Major version update — needs manual review before merge (auto-merge skipped)."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
