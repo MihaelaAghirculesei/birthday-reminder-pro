@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.4...v1.2.5) (2026-09-28)
+
+
+### Bug Fixes
+
+* **ci:** treat unclassified dependabot update-type as non-major ([4bac8eb](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/4bac8ebb050b25c847b53a2990eeebc3c93ff22f))
+
 ## [1.2.4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.3...v1.2.4) (2026-09-28)
 
 
