@@ -419,7 +419,7 @@ Cypress.Commands.add('visualSnapshot', (name: string) => {
       throw new Error(
         `Visual regression in "${diff.name}": ${diff.diffPercentage?.toFixed(3)}% of pixels differ ` +
         `from the baseline (threshold 0.1%). See cypress/visual-diffs/${diff.name}.diff.png. ` +
-        `If this change is intentional, run "npm run e2e:visual:update-baseline" to accept it.`
+        `If this change is intentional, run the "Update Visual Baselines" workflow and commit its artifact.`
       );
     }
     if (diff.status === 'size-mismatch') {

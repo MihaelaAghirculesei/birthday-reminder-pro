@@ -1,0 +1,54 @@
+name: Update Visual Baselines
+
+# Baselines must be captured on the same runner image, browser and fonts as the
+# "Visual Regression" job in ci.yml. Screenshots taken locally (Windows/macOS)
+# differ by ~0.5-1.5% in anti-aliasing and font rendering, which exceeds the
+# 0.1% threshold on every screen and makes the check permanently red.
+#
+# Run manually, download the artifact, review the images, and commit them to
+# cypress/screenshots-baseline/ in a PR.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Capture baselines
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Initialize environment files
+        run: npm run env:init
+
+      - name: Drop committed baselines
+        # visualDiff.ts adopts any screenshot without a baseline as the new one.
+        run: rm -rf cypress/screenshots-baseline
+
+      - name: Capture screenshots
+        uses: cypress-io/github-action@v6
+        with:
+          start: npm run start:ci
+          wait-on: 'http://localhost:4300'
+          wait-on-timeout: 180
+          command: npm run e2e:visual:ci:run
+          record: false
+
+      - name: Upload baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: cypress/screenshots-baseline
+          if-no-files-found: error
+          retention-days: 7
