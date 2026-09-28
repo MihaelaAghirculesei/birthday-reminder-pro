@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.5...v1.2.6) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** override postcss to 8.5.28 to resolve security advisories ([#38](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/38)) ([df1b208](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/df1b20837c3a6edb02c8e3421e6eedbb4360517d))
+
 ## [1.2.5](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.4...v1.2.5) (2026-09-28)
 
 
