@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.6...v1.2.7) (2026-09-28)
+
+
+### Bug Fixes
+
+* **deps:** use caret ranges for security overrides ([#39](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/39)) ([d4a399a](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/d4a399a6c6c734aa76322993ea936194a4b96430))
+
 ## [1.2.6](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.5...v1.2.6) (2026-09-28)
 
 
