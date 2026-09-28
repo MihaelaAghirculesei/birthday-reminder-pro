@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.3...v1.2.4) (2026-09-28)
+
+
+### Bug Fixes
+
+* **ci:** don't fail-fast on non-blocking checks in dependabot auto-merge ([ad051fe](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/ad051feb07c0593d8a7b3df658388808b35c2265))
+
 ## [1.2.3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.2...v1.2.3) (2026-09-23)
 
 
