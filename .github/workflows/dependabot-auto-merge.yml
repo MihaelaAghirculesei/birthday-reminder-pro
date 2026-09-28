@@ -6,9 +6,14 @@ name: Dependabot auto-merge
 # pushes too — GitHub can't have a passing check for a commit that doesn't
 # exist yet — which would break pushing straight to main outside a PR).
 #
-# Instead this job watches the PR's own checks to completion (gh pr checks
-# --watch) and only merges once CI has genuinely gone green — an equivalent
-# safety gate that never touches branch protection.
+# Instead this job polls the PR's own "All Checks Passed" status — the same
+# aggregator ci.yml's status-check job computes from lint/security/unit/e2e/
+# security-rules/build/bundle-size — and merges once THAT specifically is
+# green. Deliberately not `gh pr checks --fail-fast`: that aborts on ANY
+# failing check, including ones the repo itself treats as non-blocking (e.g.
+# "Visual Regression (informational, non-blocking)", which fails on most
+# dependency bumps because baseline screenshots shift — that's expected, not
+# a real problem, and used to make every PR here look "failed").
 #
 # pull_request_target (not workflow_run): dependabot/fetch-metadata needs a
 # real `pull_request` event payload to read the update metadata from — it
@@ -40,12 +45,28 @@ jobs:
 
       # Patch and minor bumps only. Major bumps (e.g. a future Angular 21) are
       # deliberately left for manual review — see .github/dependabot.yml.
-      - name: Wait for CI, then merge patch/minor updates
+      - name: Wait for "All Checks Passed", then merge patch/minor updates
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
           steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: |
-          gh pr checks "$PR_URL" --watch --interval 30 --fail-fast
+          for i in $(seq 1 40); do
+            RESULT=$(gh pr view "$PR_URL" --json statusCheckRollup \
+              --jq '[.statusCheckRollup[]? | select(.name=="All Checks Passed")][0] // {}')
+            STATUS=$(echo "$RESULT" | jq -r '.status // "PENDING"')
+            CONCLUSION=$(echo "$RESULT" | jq -r '.conclusion // ""')
+            echo "All Checks Passed: status=$STATUS conclusion=$CONCLUSION (attempt $i/40)"
+            if [ "$STATUS" = "COMPLETED" ]; then
+              break
+            fi
+            sleep 30
+          done
+
+          if [ "$CONCLUSION" != "SUCCESS" ]; then
+            echo "All Checks Passed did not succeed (status=$STATUS, conclusion=$CONCLUSION) — not merging."
+            exit 1
+          fi
+
           gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
