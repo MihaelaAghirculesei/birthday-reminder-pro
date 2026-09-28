@@ -43,12 +43,15 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      # Patch and minor bumps only. Major bumps (e.g. a future Angular 21) are
-      # deliberately left for manual review — see .github/dependabot.yml.
-      - name: Wait for "All Checks Passed", then merge patch/minor updates
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      # Block only on an explicit major (e.g. a future Angular 21 — see
+      # .github/dependabot.yml). Everything else proceeds to the CI gate below,
+      # including grouped security-update PRs, where fetch-metadata reports
+      # update-type as empty/null (seen with a grouped `undici` fix touching
+      # the same package at multiple lockfile locations) rather than a real
+      # semver-patch/minor value. "All Checks Passed" — the full test/build
+      # suite — is the actual safety net, not this classification.
+      - name: Wait for "All Checks Passed", then merge non-major updates
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
         run: |
           for i in $(seq 1 40); do
             RESULT=$(gh pr view "$PR_URL" --json statusCheckRollup \
