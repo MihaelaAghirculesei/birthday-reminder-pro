@@ -1,3 +1,10 @@
+## [1.2.9](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.8...v1.2.9) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** bump bundled npm to 11.20.0 ([#42](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/42)) ([e14ab02](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/e14ab025eaba6a8a51aaef77f940fb2b0ce5af06))
+
 ## [1.2.8](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.7...v1.2.8) (2026-09-29)
 
 
