@@ -145,6 +145,9 @@
     "webpack-dev-server": ">=5.2.4",
     "@grpc/grpc-js": "^1.9.16",
     "protobufjs": "^7.6.5",
-    "postcss": "^8.5.28"
+    "postcss": "^8.5.28",
+    "vite@6": "^6.4.3",
+    "piscina@4": "^4.9.3",
+    "http-proxy-middleware@3": "^3.0.7"
   }
 }
