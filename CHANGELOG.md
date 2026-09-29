@@ -1,3 +1,10 @@
+## [1.2.10](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.9...v1.2.10) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** patch vite, piscina and http-proxy-middleware in the angular toolchain ([#45](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/45)) ([e4c2159](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/e4c2159a85324fb70d39d79f2986e8aab6301cf7))
+
 ## [1.2.9](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.8...v1.2.9) (2026-09-29)
 
 
