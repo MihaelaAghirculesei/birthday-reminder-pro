@@ -1,3 +1,10 @@
+## [1.2.11](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.10...v1.2.11) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** upgrade angular to 20.3 to resolve framework advisories ([#49](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/49)) ([df07371](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/df07371e1c1ccd432acd7aeac474c77c38ec1e7d))
+
 ## [1.2.10](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.9...v1.2.10) (2026-09-29)
 
 
