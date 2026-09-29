@@ -321,6 +321,9 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
 
+      - name: Check CSP allows inline handlers
+        run: node scripts/check-csp-handlers.js
+
       - name: Upload source maps to Sentry
         # angular.json builds hidden source maps (no sourceMappingURL comment, so
         # browsers never fetch them) purely so this step can ship them to Sentry —
