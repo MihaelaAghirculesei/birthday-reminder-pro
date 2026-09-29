@@ -56,8 +56,5 @@ firestore-debug.log
 storage.rules.debug.log
 ui-debug.log
 
-# Claude Code internal directory
-/claude
-
 # Note e piani locali — non pushare
 PLAN.md
