@@ -54,13 +54,9 @@ jobs:
       - run: npm ci
 
       - name: Run npm audit (production dependencies)
-        # `--audit-level=high` fails the step on ANY high/critical finding, which is
-        # stricter than this repo's actual policy (see "Check vulnerability thresholds"
-        # below: block on critical, or >5 high). As of 2026-07-09, 3 high + 1 moderate
-        # findings in @angular/* <=19.2.25 are a tracked, accepted risk — the only fix
-        # is a major version bump (Angular 21), planned as an isolated migration (see
-        # SECURITY.md). This step stays informational; the threshold step is the gate.
-        run: npm audit --omit=dev --audit-level=high || true
+        # Runtime dependencies ship to users, so any high or critical finding blocks.
+        # Dev-only findings are covered by the threshold step below.
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Check vulnerability thresholds
         run: |

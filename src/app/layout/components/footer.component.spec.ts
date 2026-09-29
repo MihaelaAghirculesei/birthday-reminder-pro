@@ -1,5 +1,5 @@
-import { DOCUMENT } from '@angular/common';
-import { PLATFORM_ID } from '@angular/core';
+
+import { DOCUMENT,PLATFORM_ID } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
