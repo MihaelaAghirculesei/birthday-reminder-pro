@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.7...v1.2.8) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** bump express to 4.22.3 to pull in patched qs ([#41](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/41)) ([6868a77](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/6868a773718ca62d107ae983e9a0bd93158e2b6f))
+
 ## [1.2.7](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.6...v1.2.7) (2026-09-28)
 
 
