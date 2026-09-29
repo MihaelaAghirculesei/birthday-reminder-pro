@@ -65,9 +65,18 @@ jobs:
             sleep 30
           done
 
-          if [ "$CONCLUSION" != "SUCCESS" ]; then
-            echo "All Checks Passed did not succeed (status=$STATUS, conclusion=$CONCLUSION) — not merging."
+          # A timeout means CI never reported back, which needs a human to look at.
+          if [ "$STATUS" != "COMPLETED" ]; then
+            echo "::error::All Checks Passed still $STATUS after 20 minutes — not merging."
             exit 1
+          fi
+
+          # A red CI is already reported by CI itself. Declining to merge is this
+          # job doing its work, so it must not add a second red X to the same PR.
+          if [ "$CONCLUSION" != "SUCCESS" ]; then
+            echo "::notice::All Checks Passed concluded $CONCLUSION — not merging."
+            gh pr comment "$PR_URL" --body "CI did not pass (All Checks Passed: $CONCLUSION) — auto-merge skipped, needs manual review."
+            exit 0
           fi
 
           gh pr merge --squash "$PR_URL"
