@@ -1,3 +1,10 @@
+## [1.2.12](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.11...v1.2.12) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** update brace-expansion to patched releases ([#50](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/50)) ([ad22f3f](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/ad22f3fe1d0f02f9ae3ff248c5c0deea99ee937f))
+
 ## [1.2.11](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.10...v1.2.11) (2026-09-29)
 
 

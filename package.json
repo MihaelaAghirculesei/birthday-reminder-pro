@@ -1,6 +1,6 @@
 {
   "name": "birthday-reminder-pro",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "scripts": {
     "ng": "ng",
     "env:init": "node scripts/env-init.js",
