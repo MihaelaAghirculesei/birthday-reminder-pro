@@ -1,6 +1,6 @@
 # Birthday Memories
 
-A birthday management application built with Angular 19. Never forget a birthday again with calendar sync, notifications, and offline support.
+A birthday management application built with Angular 20. Never forget a birthday again with calendar sync, notifications, and offline support.
 
 [![CI](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml)
 [![Angular](https://img.shields.io/badge/Angular-19-red?logo=angular)](https://angular.io/)
@@ -28,7 +28,7 @@ A birthday management application built with Angular 19. Never forget a birthday
 
 ## About
 
-A cross-platform birthday manager with an offline-first architecture: IndexedDB is the source of truth, Firebase Firestore is an optional cloud replica, and a pending-changes queue reconciles the two. Built with Angular 19 and NgRx, packaged for Android with Capacitor.
+A cross-platform birthday manager with an offline-first architecture: IndexedDB is the source of truth, Firebase Firestore is an optional cloud replica, and a pending-changes queue reconciles the two. Built with Angular 20 and NgRx, packaged for Android with Capacitor.
 
 Core capabilities:
 - Works offline using IndexedDB
@@ -121,7 +121,7 @@ Core capabilities:
 ## Tech Stack
 
 **Frontend**
-- Angular 19 (standalone components, Signals, SSR)
+- Angular 20 (standalone components, Signals, SSR)
 - TypeScript 5.8
 - Angular Material 19
 - RxJS 7.8.0

@@ -69,24 +69,14 @@ only after confirming that all dependents have upgraded past the pinned version.
 
 | Package | Pinned to | Vulnerability | Advisory |
 |---------|-----------|---------------|----------|
-| `tar` | `≥ 7.5.11` | Path-traversal / arbitrary-file-write in tar entry extraction | [GHSA-x565-32qp-m3vf](https://github.com/advisories/GHSA-x565-32qp-m3vf) |
+| `tar` | `≥ 7.5.19` | Path-traversal / arbitrary-file-write in tar entry extraction | [GHSA-x565-32qp-m3vf](https://github.com/advisories/GHSA-x565-32qp-m3vf) |
 | `serialize-javascript` | `≥ 7.0.4` | ReDoS in serialisation regex (CVE-2024-11831) | [GHSA-76p7-773f-r4q5](https://github.com/advisories/GHSA-76p7-773f-r4q5) |
 | `file-type` | `≥ 21.3.3` | ReDoS via crafted binary input (CVE-2024-4067) | [GHSA-mwqq-9qge-5fj3](https://github.com/advisories/GHSA-mwqq-9qge-5fj3) |
 
-**Latest Audit** (2026-07-09):
-- **Status**: 4 vulnerabilities (3 high, 1 moderate), all in `@angular/common|compiler|core|service-worker <=19.2.25`
-- **Fix available**: only via `npm audit fix --force`, which installs Angular 21 (major, breaking) — no minor/patch fix exists upstream
-- **Decision**: accepted as a temporary, tracked risk rather than mixing a major Angular upgrade into unrelated feature branches. The Angular 21 migration is planned as its own isolated piece of work (dedicated branch, full regression pass — this app has 2000+ unit tests, 100 e2e specs, SSR and a service worker to re-validate).
-- **CI gate impact**: the `security-audit` job's raw `npm audit --audit-level=high` step is informational only (`|| true`) since it fails on any high finding regardless of count; the actual gate is the "Check vulnerability thresholds" step, which blocks on any critical or >5 high — these 4 findings pass that policy.
-- **Production Risk**: MEDIUM — advisories below; re-evaluate at next audit review or once Angular 21 migration lands.
-
-**Vulnerability Breakdown:**
-| Component | Severity | Advisory |
-|-----------|----------|----------|
-| `@angular/core` | High | [GHSA-rgjc-h3x7-9mwg](https://github.com/advisories/GHSA-rgjc-h3x7-9mwg) — hydration DOM clobbering & response-cache poisoning |
-| `@angular/service-worker` | High | [GHSA-qxh6-94w6-9r5p](https://github.com/advisories/GHSA-qxh6-94w6-9r5p) — sensitive header leakage on cross-origin redirects |
-| `@angular/common` | High | [GHSA-39pv-4j6c-2g6v](https://github.com/advisories/GHSA-39pv-4j6c-2g6v) — weak 32-bit cache key hashing in `HttpTransferCache` |
-| `@angular/compiler` | Moderate | [GHSA-58w9-8g37-x9v5](https://github.com/advisories/GHSA-58w9-8g37-x9v5) — two-way binding sanitization bypass (XSS) |
+**Latest Audit** (2026-09-29):
+- **Production dependencies**: 0 vulnerabilities after the upgrade to Angular 20.3.32, which resolves all 14 advisories affecting `@angular/*` <=19.2.25 (no patch exists on the 19.x line).
+- **CI gate**: `npm audit --omit=dev --audit-level=high` blocks on any high or critical runtime finding. Dev-only findings are gated by the "Check vulnerability thresholds" step (any critical, or more than 5 high).
+- **Dev-only findings bundled inside `npm`** (pulled in by `@semantic-release/npm`, used only by the release job) cannot be replaced via `overrides`; they are dismissed with a rationale in the Dependabot alerts view and revisited on each npm release.
 
 **Risk Assessment:**
 - ✅ Production runtime is secure
@@ -203,9 +193,10 @@ Before deploying to production:
 
 ## Security Updates
 
-This document is reviewed and updated regularly. Last review: 2026-05-12
+This document is reviewed and updated regularly. Last review: 2026-09-29
 
 **Recent Updates:**
+- 2026-09-29: Upgraded to Angular 20.3.32, resolving all `@angular/*` advisories; production audit is a blocking CI gate again
 - 2026-07-09: Refreshed audit — 3 high + 1 moderate in `@angular/*` <=19.2.25, accepted as tracked risk pending isolated Angular 21 migration; CI `npm audit` step relaxed to informational, threshold check remains the real gate
 - 2026-05-12: Documented package.json security overrides (tar, serialize-javascript, file-type) in dedicated table
 - 2026-01-11: Implemented CSP headers, security headers, input sanitization utilities, npm audit automation in CI/CD

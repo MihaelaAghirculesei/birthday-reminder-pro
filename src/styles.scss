@@ -71,9 +71,9 @@
   --dialog-accent: #764ba2;
   --overlay-gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 
-  --mdc-outlined-text-field-outline-color: #94a3b8;
-  --mdc-outlined-text-field-hover-outline-color: #64748b;
-  --mdc-outlined-text-field-focus-outline-color: #667eea;
+  --mat-form-field-outlined-outline-color: #94a3b8;
+  --mat-form-field-outlined-hover-outline-color: #64748b;
+  --mat-form-field-outlined-focus-outline-color: #667eea;
 }
 
 body.dark-theme {
@@ -144,9 +144,9 @@ body.dark-theme {
   --dialog-accent: #9b6bc4;
   --overlay-gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 
-  --mdc-outlined-text-field-outline-color: #666666;
-  --mdc-outlined-text-field-hover-outline-color: #888888;
-  --mdc-outlined-text-field-focus-outline-color: #a855f7;
+  --mat-form-field-outlined-outline-color: #666666;
+  --mat-form-field-outlined-hover-outline-color: #888888;
+  --mat-form-field-outlined-focus-outline-color: #a855f7;
 }
 
 * {
