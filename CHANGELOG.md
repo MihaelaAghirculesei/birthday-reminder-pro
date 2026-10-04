@@ -1,3 +1,10 @@
+## [1.2.13](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.12...v1.2.13) (2026-10-04)
+
+
+### Bug Fixes
+
+* **demo:** write sample birthday notes in english ([#52](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/52)) ([50aa0ac](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/50aa0acd4910aff14fb0e3f5dff917b6ccfdc12e))
+
 ## [1.2.12](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.11...v1.2.12) (2026-09-29)
 
 
