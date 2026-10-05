@@ -1,3 +1,10 @@
+## [1.2.15](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.14...v1.2.15) (2026-10-05)
+
+
+### Bug Fixes
+
+* **csp:** allow the critical-css onload handler and demo avatar host ([#51](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/51)) ([d3d01aa](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/d3d01aa02a47e0a4e6891fc3ba76385eecf600cf)), closes [hi#severity](https://github.com/hi/issues/severity)
+
 ## [1.2.14](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.13...v1.2.14) (2026-10-05)
 
 
