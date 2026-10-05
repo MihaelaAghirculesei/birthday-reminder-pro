@@ -118,10 +118,15 @@ describe('HomeComponent', () => {
     });
 
     it('should load dashboard after birthdays become available', async () => {
+      // loadDashboard() is fired without being awaited and lazily imports the dashboard,
+      // so wait on the promise it returns rather than on Angular's stability.
+      const loadDashboard = spyOn(component as unknown as { loadDashboard(): Promise<void> }, 'loadDashboard')
+        .and.callThrough();
       store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [MOCK_BIRTHDAY]);
       store.refreshState();
       fixture.detectChanges();
       await fixture.whenStable();
+      await loadDashboard.calls.mostRecent().returnValue;
 
       // dashboard is loaded into the ViewContainerRef — verify via the private flag
       expect((component as unknown as { isDashboardLoaded: boolean }).isDashboardLoaded).toBeTrue();
