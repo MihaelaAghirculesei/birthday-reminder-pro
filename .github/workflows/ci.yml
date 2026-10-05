@@ -155,8 +155,11 @@ jobs:
             exit 1
           fi
 
+      # Reporting only: the threshold check above is the gate, so a Codecov outage
+      # must not fail the job. fail_ci_if_error does not cover crashes in the action itself.
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
+        continue-on-error: true
         with:
           files: ./coverage/birthday-reminder-pro/lcov.info
           flags: unittests
