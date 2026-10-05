@@ -34,16 +34,11 @@ updates:
       # @angular/build (vite/postcss/piscina/etc.). Bumping the build
       # toolchain alone to a major ahead of @angular/core produces a
       # guaranteed-broken toolchain (seen 2026-09-25: 6 PRs, 100% CI failure).
+      # Ignore rules cover both version and security updates.
       - dependency-name: "@angular/*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@angular-devkit/*"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "@angular/*"
-        update-types: ["version-update:semver-major"]
-        applies-to: security-updates
-      - dependency-name: "@angular-devkit/*"
-        update-types: ["version-update:semver-major"]
-        applies-to: security-updates
 
   # GitHub Actions versions used in workflows (actions/checkout, setup-node, ...)
   - package-ecosystem: "github-actions"
