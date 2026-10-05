@@ -90,7 +90,7 @@
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "@firebase/rules-unit-testing": "^3.0.4",
-    "@ngrx/store-devtools": "^20.1.0",
+    "@ngrx/store-devtools": "^22.0.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
