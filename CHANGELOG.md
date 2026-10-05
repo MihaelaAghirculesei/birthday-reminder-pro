@@ -1,3 +1,10 @@
+## [1.2.17](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.16...v1.2.17) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dependabot:** drop applies-to from ignore rules ([#58](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/58)) ([5b979e3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/5b979e3ed099dc62c554bfcdb695634c9f5a7d5d))
+
 ## [1.2.16](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.15...v1.2.16) (2026-10-05)
 
 
