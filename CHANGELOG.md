@@ -1,3 +1,10 @@
+## [1.2.14](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.13...v1.2.14) (2026-10-05)
+
+
+### Bug Fixes
+
+* **deps:** override grpc-js, piscina and webpack-dev-middleware to patched releases ([#55](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/55)) ([9812629](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/98126294f3902fe2a4539ed48c096437fd00850c))
+
 ## [1.2.13](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.12...v1.2.13) (2026-10-04)
 
 
