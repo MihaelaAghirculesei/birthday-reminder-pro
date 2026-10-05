@@ -79,7 +79,7 @@
     "zone.js": "~0.15.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^20.3.37",
+    "@angular/build": "^20.3.37",
     "@angular/cli": "^20.3.37",
     "@angular/compiler-cli": "^20.3.32",
     "@angular/language-service": "^20.3.32",
@@ -139,16 +139,12 @@
   },
   "overrides": {
     "tar": "^7.5.19",
-    "serialize-javascript": "^7.0.5",
     "file-type": "^21.3.3",
     "ws": ">=8.20.1",
-    "webpack-dev-server": ">=5.2.4",
     "@grpc/grpc-js": "^1.13.6",
     "protobufjs": "^7.6.5",
     "postcss": "^8.5.28",
     "piscina@5": "^5.3.2",
-    "webpack-dev-middleware@7": "^7.4.6",
-    "webpack-dev-middleware@8": "^8.3.0",
     "http-cache-semantics": "^4.3.0"
   }
 }

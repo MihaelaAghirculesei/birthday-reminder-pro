@@ -206,7 +206,9 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
-      await fixture.whenStable();
+      // The save path awaits the lazily imported schema module after the dialog closes.
+      // Its continuation was queued first, so it has dispatched once this await resolves.
+      await component['_schemas'];
 
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -231,7 +233,9 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
-      await fixture.whenStable();
+      // The save path awaits the lazily imported schema module after the dialog closes.
+      // Its continuation was queued first, so it has dispatched once this await resolves.
+      await component['_schemas'];
 
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -256,7 +260,9 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
-      await fixture.whenStable();
+      // The save path awaits the lazily imported schema module after the dialog closes.
+      // Its continuation was queued first, so it has dispatched once this await resolves.
+      await component['_schemas'];
 
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -268,7 +274,9 @@ describe('BirthdayListComponent', () => {
 
       spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
-      await fixture.whenStable();
+      // The save path awaits the lazily imported schema module after the dialog closes.
+      // Its continuation was queued first, so it has dispatched once this await resolves.
+      await component['_schemas'];
 
       expect(store.dispatch).not.toHaveBeenCalled();
     });

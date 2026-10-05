@@ -10,6 +10,7 @@ import { CategoryFacadeService } from '../../../core';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 import { type Birthday } from '../../../shared/models';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
+import { BirthdayEditDialogComponent } from '../../dashboard/components/birthday-edit-dialog/birthday-edit-dialog.component';
 import { MessageScheduleDialogComponent } from './message-schedule-dialog.component';
 
 // ---------------------------------------------------------------------------
@@ -281,8 +282,8 @@ describe('MessageScheduleDialogComponent', () => {
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
 
       expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
-      const [dialogComponent] = dialogOpenSpy.calls.mostRecent().args as [{ name: string }, ...unknown[]];
-      expect(dialogComponent.name).toContain('BirthdayEditDialog');
+      const [dialogComponent] = dialogOpenSpy.calls.mostRecent().args;
+      expect(dialogComponent).toBe(BirthdayEditDialogComponent);
     });
 
     it('should dispatch updateBirthday when the edit dialog returns a valid result', () => {
