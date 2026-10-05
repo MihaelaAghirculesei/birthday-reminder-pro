@@ -1,3 +1,10 @@
+## [1.2.16](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.15...v1.2.16) (2026-10-05)
+
+
+### Bug Fixes
+
+* **headers:** stop Pages from emitting relative modulepreload Link headers ([#56](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/56)) ([306caa8](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/306caa83fbf45dcdaf28aec17974f659eea96c26))
+
 ## [1.2.15](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.14...v1.2.15) (2026-10-05)
 
 
