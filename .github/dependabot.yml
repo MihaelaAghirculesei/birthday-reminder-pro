@@ -31,8 +31,8 @@ updates:
       # Angular's own major bumps must happen as one coordinated migration
       # across the whole stack (core, cli, devkit, ...), never piecemeal —
       # not even when framed as a security fix for a transitive dep inside
-      # @angular-devkit/build-angular (vite/postcss/piscina/etc.). Bumping
-      # devkit/cli alone to a major ahead of @angular/core produces a
+      # @angular/build (vite/postcss/piscina/etc.). Bumping the build
+      # toolchain alone to a major ahead of @angular/core produces a
       # guaranteed-broken toolchain (seen 2026-09-25: 6 PRs, 100% CI failure).
       - dependency-name: "@angular/*"
         update-types: ["version-update:semver-major"]
