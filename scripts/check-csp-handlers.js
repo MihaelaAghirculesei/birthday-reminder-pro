@@ -7,6 +7,9 @@
  * Critical-CSS inlining emits onload="this.media='all'" on the main stylesheet.
  * If the CSP does not allow that exact handler, the stylesheet never applies and
  * the app renders with critical CSS only — with no error beyond a console line.
+ *
+ * Only src/_headers is checked: these static files are what Cloudflare Pages serves.
+ * The SSR server renders with a nonce, so Angular emits no inline handler there.
  */
 
 const crypto = require('crypto');
@@ -15,10 +18,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const BROWSER_DIR = path.join(ROOT, 'dist', 'birthday-reminder-pro', 'browser');
-const POLICIES = {
-  'src/_headers': fs.readFileSync(path.join(ROOT, 'src', '_headers'), 'utf8'),
-  'server.ts': fs.readFileSync(path.join(ROOT, 'server.ts'), 'utf8'),
-};
+const POLICY = fs.readFileSync(path.join(ROOT, 'src', '_headers'), 'utf8');
 
 if (!fs.existsSync(BROWSER_DIR)) {
   console.error('ERROR: dist/birthday-reminder-pro/browser not found — run "npm run build" first');
@@ -44,11 +44,9 @@ for (const file of htmlFiles(BROWSER_DIR)) {
 
 let failed = false;
 for (const [hash, code] of handlers) {
-  for (const [name, policy] of Object.entries(POLICIES)) {
-    if (!policy.includes(hash) || !policy.includes("'unsafe-hashes'")) {
-      console.error(`ERROR: inline handler "${code}" (${hash}) is not allowed by ${name}`);
-      failed = true;
-    }
+  if (!POLICY.includes(hash) || !POLICY.includes("'unsafe-hashes'")) {
+    console.error(`ERROR: inline handler "${code}" (${hash}) is not allowed by src/_headers`);
+    failed = true;
   }
 }
 
