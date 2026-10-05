@@ -15,9 +15,6 @@ import { checkFirebaseOptions } from './src/app/firebase.config';
 import { environment } from './src/environments/environment';
 import bootstrap from './src/main.server';
 
-// sha256 of "this.media='all'", verified against the build by scripts/check-csp-handlers.js.
-const CRITICAL_CSS_ONLOAD_HASH = 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=';
-
 // Build CSP directives once per request using the per-request nonce.
 function buildCsp(nonce: string): string {
   const firebaseConfigured = checkFirebaseOptions(environment.firebase);
@@ -37,10 +34,9 @@ function buildCsp(nonce: string): string {
     // is present (CSP3). Lighthouse recommends keeping them as backward-compat
     // fallbacks; removing them adds a medium-severity finding to the csp-xss audit.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https: http:`,
-    // Critical-CSS inlining loads the full stylesheet as media="print" and flips it
-    // with onload="this.media='all'". Without this exact hash the handler is blocked
-    // and the stylesheet never applies. The hash matches only that handler.
-    `script-src-attr 'unsafe-hashes' '${CRITICAL_CSS_ONLOAD_HASH}'`,
+    // No script-src-attr hash here, unlike src/_headers: with ngCspNonce on <app-root>
+    // the SSR critical-CSS inliner swaps onload="this.media='all'" for an ngCspMedia
+    // attribute plus a nonced loader script, so no inline handler reaches the page.
     `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
     `style-src-elem 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
     // Angular Material sets inline style="" attributes that cannot carry a nonce.
