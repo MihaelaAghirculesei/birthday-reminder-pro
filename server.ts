@@ -116,7 +116,9 @@ export function app(): express.Express {
   // Redirect /index.html → / so SSR (with correct nonce injection) always serves HTML.
   server.get('/index.html', (_req, res) => res.redirect(301, '/'));
 
-  server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
+  // Express 5 (path-to-regexp v8) no longer accepts bare '*' wildcards in route
+  // strings: a regex keeps the old '*.*' meaning (any path containing a dot).
+  server.get(/\./, express.static(browserDistFolder, { maxAge: '1y' }));
 
   // ── Rate limiter for SSR routes ──────────────────────────────────────────────
   // App is single-user/family scale, not enterprise: a handful of people share a
@@ -132,7 +134,8 @@ export function app(): express.Express {
   });
 
   // ── SSR route ────────────────────────────────────────────────────────────────
-  server.get('*', ssrLimiter, (req, res, next) => {
+  // '/{*splat}' is Express 5's catch-all; the braces make it match '/' as well.
+  server.get('/{*splat}', ssrLimiter, (req, res, next) => {
     const { protocol, originalUrl, baseUrl, headers } = req;
     // Reuse the nonce that the CSP middleware already stamped into the header.
     const nonce = res.locals['cspNonce'] as string;
