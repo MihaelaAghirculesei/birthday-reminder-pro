@@ -104,7 +104,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.20.4",
     "@types/pngjs": "^6.0.5",
-    "angular-eslint": "21.0.1",
+    "angular-eslint": "22.5.0",
     "axe-core": "^4.13.0",
     "cypress": "^15.8.2",
     "cypress-axe": "^1.7.0",
