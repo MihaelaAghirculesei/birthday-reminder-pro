@@ -83,7 +83,7 @@
     "@angular/cli": "^20.3.39",
     "@angular/compiler-cli": "^20.3.33",
     "@angular/language-service": "^20.3.33",
-    "@capacitor/android": "^7.4.4",
+    "@capacitor/android": "^8.5.2",
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^7.4.4",
     "@capacitor/local-notifications": "^7.0.3",
