@@ -85,7 +85,7 @@
     "@angular/language-service": "^20.3.33",
     "@capacitor/android": "^7.4.4",
     "@capacitor/cli": "^8.5.2",
-    "@capacitor/core": "^7.4.4",
+    "@capacitor/core": "^8.5.2",
     "@capacitor/local-notifications": "^7.0.3",
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
