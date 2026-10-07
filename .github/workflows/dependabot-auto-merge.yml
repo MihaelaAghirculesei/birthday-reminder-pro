@@ -68,6 +68,7 @@ jobs:
           # A timeout means CI never reported back, which needs a human to look at.
           if [ "$STATUS" != "COMPLETED" ]; then
             echo "::error::All Checks Passed still $STATUS after 20 minutes — not merging."
+            gh api -X POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" -f "reviewers[]=$OWNER"
             exit 1
           fi
 
@@ -76,17 +77,29 @@ jobs:
           if [ "$CONCLUSION" != "SUCCESS" ]; then
             echo "::notice::All Checks Passed concluded $CONCLUSION — not merging."
             gh pr comment "$PR_URL" --body "CI did not pass (All Checks Passed: $CONCLUSION) — auto-merge skipped, needs manual review."
+            gh api -X POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" -f "reviewers[]=$OWNER"
             exit 0
           fi
 
           gh pr merge --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OWNER: ${{ github.repository_owner }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Whenever the PR is left for a human (major, red CI, timeout), the
+      # owner is requested as reviewer: that sends a direct notification, so
+      # the PR does not sit unnoticed among routine Dependabot traffic.
       - name: Flag major updates for manual review
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
-        run: gh pr comment "$PR_URL" --body "Major version update — needs manual review before merge (auto-merge skipped)."
+        run: |
+          gh pr comment "$PR_URL" --body "Major version update — needs manual review before merge (auto-merge skipped)."
+          gh api -X POST "repos/$REPO/pulls/$PR_NUMBER/requested_reviewers" -f "reviewers[]=$OWNER"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OWNER: ${{ github.repository_owner }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
