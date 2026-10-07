@@ -1,3 +1,10 @@
+## [1.2.18](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.17...v1.2.18) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** patch capacitor/android and override uuid for security alerts ([#75](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/75)) ([db1e329](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/db1e3296539acaf72ce3ee2d179764601650be7b))
+
 ## [1.2.17](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.16...v1.2.17) (2026-10-05)
 
 
