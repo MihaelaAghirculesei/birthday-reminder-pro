@@ -16,6 +16,12 @@ updates:
       prefix: "chore"
       include: "scope"
     groups:
+      # Capacitor's CLI, core and platform packages must share a major version;
+      # bumped one at a time, each PR leaves the native build broken. Listed first
+      # so it takes precedence over the patch/minor group.
+      capacitor:
+        patterns:
+          - "@capacitor/*"
       # Patch/minor bumps are extremely unlikely to break anything under semver
       # and are bundled into a single low-noise PR, auto-merged once CI is green
       # (see .github/workflows/dependabot-auto-merge.yml).
@@ -38,6 +44,24 @@ updates:
       - dependency-name: "@angular/*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@angular-devkit/*"
+        update-types: ["version-update:semver-major"]
+      # These majors track Angular's and land with the Angular migration.
+      - dependency-name: "@ngrx/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "angular-eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@angular-eslint/*"
+        update-types: ["version-update:semver-major"]
+      # Must match the Node major the workflows run on (node-version: '22').
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Karma's jasmine stack moves with the test runner migration, not on its own.
+      - dependency-name: "jasmine-core"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/jasmine"
+        update-types: ["version-update:semver-major"]
+      # v16 → v18 changes the provider API; planned as a dedicated migration.
+      - dependency-name: "@ngx-translate/*"
         update-types: ["version-update:semver-major"]
 
   # GitHub Actions versions used in workflows (actions/checkout, setup-node, ...)
