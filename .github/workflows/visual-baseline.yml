@@ -20,9 +20,9 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
@@ -37,7 +37,7 @@ jobs:
         run: rm -rf cypress/screenshots-baseline
 
       - name: Capture screenshots
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           start: npm run start:ci
           wait-on: 'http://localhost:4300'
@@ -46,7 +46,7 @@ jobs:
           record: false
 
       - name: Upload baselines
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: visual-baselines
           path: cypress/screenshots-baseline
