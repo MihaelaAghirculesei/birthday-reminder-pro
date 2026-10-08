@@ -89,6 +89,7 @@
     "@capacitor/local-notifications": "^7.0.3",
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
+    "@eslint/js": "^10.0.1",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@ngrx/store-devtools": "^20.1.0",
     "@semantic-release/changelog": "^6.0.3",
