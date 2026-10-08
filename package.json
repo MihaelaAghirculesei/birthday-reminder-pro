@@ -87,7 +87,7 @@
     "@capacitor/cli": "^8.5.2",
     "@capacitor/core": "^7.4.4",
     "@capacitor/local-notifications": "^7.0.3",
-    "@commitlint/cli": "^20.4.2",
+    "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^20.4.2",
     "@firebase/rules-unit-testing": "^3.0.4",
     "@ngrx/store-devtools": "^20.1.0",
