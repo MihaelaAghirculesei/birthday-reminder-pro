@@ -1,6 +1,11 @@
 import { z } from 'zod';
 export { z };
 
+// zod 4 probes `new Function` to JIT-compile parsers; our CSP has no
+// 'unsafe-eval', so the probe logs a violation (Lighthouse inspector-issues).
+// The interpreted parser is fast enough for these schemas.
+z.config({ jitless: true });
+
 export const SyncStatusSchema = z.enum(['synced', 'pending', 'conflict', 'local-only']);
 
 export const SyncMetadataSchema = z.object({
