@@ -69,7 +69,7 @@ export class BackupService {
       parsedData = JSON.parse(text);
     } catch (error) {
       this.logger.error('Failed to parse JSON backup file:', error);
-      throw new Error('Invalid JSON file. Please select a valid backup file.');
+      throw new Error('Invalid JSON file. Please select a valid backup file.', { cause: error });
     }
 
     const { z, BirthdaySchema, safeParseBirthday } = await import('../../shared/schemas/birthday.schema');
@@ -83,9 +83,9 @@ export class BackupService {
       this.logger.error('Backup validation failed:', error);
       if (error instanceof z.ZodError) {
         const firstError = error.issues[0];
-        throw new Error(`Invalid backup format: ${firstError.path.join('.')} - ${firstError.message}`);
+        throw new Error(`Invalid backup format: ${firstError.path.join('.')} - ${firstError.message}`, { cause: error });
       }
-      throw new Error('Invalid backup file format');
+      throw new Error('Invalid backup file format', { cause: error });
     }
 
     const valid: Birthday[] = [];
