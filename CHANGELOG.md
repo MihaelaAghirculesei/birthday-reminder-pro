@@ -1,3 +1,10 @@
+## [1.2.19](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.18...v1.2.19) (2026-10-08)
+
+
+### Bug Fixes
+
+* **schemas:** run zod 4 in jitless mode under the strict CSP ([3a01082](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/3a0108218074540ec96b84e0d8f9c064ccdfaff6))
+
 ## [1.2.18](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.17...v1.2.18) (2026-10-07)
 
 
