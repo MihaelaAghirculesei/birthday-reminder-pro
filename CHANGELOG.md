@@ -1,3 +1,10 @@
+## [1.2.20](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.19...v1.2.20) (2026-10-09)
+
+
+### Bug Fixes
+
+* **ssr:** use Express 5 route syntax for static assets and catch-all ([db27fb8](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/db27fb8d3f734cea8fddefa2dcb6c427ecd4f5bb))
+
 ## [1.2.19](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.18...v1.2.19) (2026-10-08)
 
 
