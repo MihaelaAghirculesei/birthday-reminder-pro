@@ -290,34 +290,26 @@ describe('PhotoUploadComponent', () => {
       expect(preview.getAttribute('tabindex')).toBe('0');
     });
 
-    it('should have an aria-label when no photo is set', () => {
+    // WCAG 2.5.3 (Label in Name): the button is named by its visible text,
+    // so an aria-label would only risk diverging from what users see.
+    it('should not override the visible text with an aria-label', () => {
+      const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
+      expect(preview.hasAttribute('aria-label')).toBeFalse();
+    });
+
+    it('should expose the add-photo text when no photo is set', () => {
       fixture.componentRef.setInput('currentPhoto', null);
       fixture.detectChanges();
       const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
-      const label = preview.getAttribute('aria-label');
-      expect(label).toBeTruthy();
-      expect(label!.length).toBeGreaterThan(0);
+      expect(preview.textContent).toContain('Add Remember Photo');
     });
 
-    it('should have an aria-label when a photo is set', () => {
+    it('should expose the change-photo text when a photo is set', () => {
       fixture.componentRef.setInput('currentPhoto', 'data:image/png;base64,test');
       fixture.detectChanges();
       const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
-      const label = preview.getAttribute('aria-label');
-      expect(label).toBeTruthy();
-      expect(label!.length).toBeGreaterThan(0);
-    });
-
-    it('should use a different aria-label for add vs change photo', () => {
-      fixture.componentRef.setInput('currentPhoto', null);
-      fixture.detectChanges();
-      const addLabel = fixture.nativeElement.querySelector('.photo-preview').getAttribute('aria-label');
-
-      fixture.componentRef.setInput('currentPhoto', 'data:image/png;base64,test');
-      fixture.detectChanges();
-      const changeLabel = fixture.nativeElement.querySelector('.photo-preview').getAttribute('aria-label');
-
-      expect(addLabel).not.toBe(changeLabel);
+      expect(preview.textContent).toContain('Change Photo');
+      expect(preview.hasAttribute('aria-label')).toBeFalse();
     });
   });
 

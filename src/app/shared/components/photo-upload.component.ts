@@ -21,9 +21,8 @@ import { NotificationService } from '../../core/services/notification.service';
         (keydown.space)="$event.preventDefault(); triggerFileInput()"
         [attr.tabindex]="disabled ? -1 : 0"
         role="button"
-        [attr.aria-disabled]="disabled || null"
-        [attr.aria-label]="(currentPhoto ? 'PHOTO_UPLOAD.ARIA_CHANGE_PHOTO' : 'PHOTO_UPLOAD.ARIA_ADD_PHOTO') | translate">
-    
+        [attr.aria-disabled]="disabled || null">
+
         @if (currentPhoto) {
           <div class="photo-display">
             <img [src]="currentPhoto" alt="Contact photo" class="contact-photo" width="120" height="120" loading="lazy" decoding="async">
