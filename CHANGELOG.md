@@ -1,3 +1,10 @@
+## [1.2.21](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.20...v1.2.21) (2026-10-14)
+
+
+### Bug Fixes
+
+* **a11y:** name buttons by their visible text ([#100](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/100)) ([7414dac](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/7414dac25d4bb4228a4d2c49e3ead21ab7d155d8))
+
 ## [1.2.20](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.19...v1.2.20) (2026-10-09)
 
 
