@@ -394,7 +394,6 @@ export const en = {
     EDIT_ARIA: 'Edit {{name}} category',
     DELETE_TOOLTIP: 'Delete category',
     DELETE_ARIA: 'Delete {{name}} category',
-    ADD_ARIA: 'Add new category',
     NEW_CATEGORY: 'New Category',
     CLICK_TO_ADD: 'Click to add',
     ALL_CATEGORIES: 'All Birthdays',

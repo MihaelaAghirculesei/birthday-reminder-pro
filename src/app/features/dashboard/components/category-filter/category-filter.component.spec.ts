@@ -97,6 +97,15 @@ describe('CategoryFilterComponent', () => {
 
       expect(component.addCategoryClicked.emit).toHaveBeenCalled();
     });
+
+    // WCAG 2.5.3 (Label in Name): the card is named by its visible text.
+    it('should name the add card by its visible text, not an aria-label', () => {
+      fixture.componentRef.setInput('categoriesStats', mockCategoryStats);
+      fixture.detectChanges();
+      const card: HTMLElement = fixture.nativeElement.querySelector('.add-category-card');
+      expect(card.hasAttribute('aria-label')).toBeFalse();
+      expect(card.textContent).toContain('New Category');
+    });
   });
 
   describe('editCategory', () => {
