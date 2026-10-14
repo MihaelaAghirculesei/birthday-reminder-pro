@@ -52,8 +52,14 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@angular-eslint/*"
         update-types: ["version-update:semver-major"]
+      # The supported TypeScript range is pinned by @angular/compiler-cli.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
       # Must match the Node major the workflows run on (node-version: '22').
       - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # v6 requires Node >= 24; lands with the Node 24 migration.
+      - dependency-name: "@firebase/rules-unit-testing"
         update-types: ["version-update:semver-major"]
       # Karma's jasmine stack moves with the test runner migration, not on its own.
       - dependency-name: "jasmine-core"
