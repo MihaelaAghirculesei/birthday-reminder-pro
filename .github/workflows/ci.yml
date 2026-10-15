@@ -95,7 +95,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload OWASP report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: owasp-dependency-check-report
@@ -191,7 +191,7 @@ jobs:
           record: false
 
       - name: Upload Cypress screenshots on failure
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: cypress-screenshots
@@ -199,7 +199,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Cypress videos
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: cypress-videos
@@ -243,7 +243,7 @@ jobs:
           record: false
 
       - name: Upload visual diff images
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: visual-regression-diffs
@@ -343,7 +343,7 @@ jobs:
         run: find dist/birthday-reminder-pro -name '*.map' -delete
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: production-build
           path: dist/birthday-reminder-pro
@@ -364,7 +364,7 @@ jobs:
           cache: 'npm'
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: production-build
           path: dist/birthday-reminder-pro
@@ -454,7 +454,7 @@ jobs:
       - run: npm ci
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: production-build
           path: dist/birthday-reminder-pro
@@ -465,7 +465,7 @@ jobs:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
       - name: Upload Lighthouse results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lighthouse-results
