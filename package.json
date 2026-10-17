@@ -7,7 +7,7 @@
     "prestart": "npm run env:init",
     "start": "ng serve --port=4203",
     "prebuild": "npm run env:init",
-    "build": "ng build",
+    "build": "ng build && node scripts/create-404-page.js",
     "build:prod": "ng build --configuration production",
     "build:stats": "ng build --configuration production --stats-json",
     "analyze": "npm run build:stats && node scripts/analyze-bundle.js",
