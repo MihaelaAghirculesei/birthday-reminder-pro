@@ -31,7 +31,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const STALE_PR_DAYS = 7;
 const EOL_WARNING_DAYS = 60;
 const MAIN_WORKFLOWS = ['CI', 'Release', 'CD', 'Android Build (Debug)'];
-const LIVE_ROUTES = ['/', '/settings', '/privacy', '/terms'];
+// Prerendered pages plus one client-only route (served via src/_redirects).
+const LIVE_ROUTES = ['/', '/privacy-policy', '/terms', '/scheduled-messages'];
 const VIEWPORTS = [
   { width: 1350, mobile: false },
   { width: 375, mobile: true },
@@ -185,11 +186,16 @@ async function auditLiveSite() {
 
 async function checkLiveSite() {
   if (!LIVE_URL) return [];
+  const findings = [];
+  const missing = await fetch(`${LIVE_URL}/health-check-missing-page`);
+  if (missing.status !== 404) {
+    findings.push(`Live site: unknown URLs answer ${missing.status} instead of 404 (is 404.html deployed?)`);
+  }
   // Third-party hiccups (fonts, avatars) fail one run, not two; report only what repeats.
   const first = await auditLiveSite();
-  if (first.length === 0) return [];
+  if (first.length === 0) return findings;
   const second = new Set(await auditLiveSite());
-  return first.filter((problem) => second.has(problem)).map((problem) => `Live site: ${problem}`);
+  return findings.concat(first.filter((problem) => second.has(problem)).map((problem) => `Live site: ${problem}`));
 }
 
 async function main() {
