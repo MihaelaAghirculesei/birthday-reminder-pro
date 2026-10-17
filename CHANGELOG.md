@@ -1,3 +1,10 @@
+## [1.2.22](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.21...v1.2.22) (2026-10-17)
+
+
+### Bug Fixes
+
+* **ssr:** allow Google Fonts in the server CSP connect-src ([c45ce40](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/c45ce40b3c0a44dd14107f4d204f9be5e6b7de28))
+
 ## [1.2.21](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.20...v1.2.21) (2026-10-14)
 
 
