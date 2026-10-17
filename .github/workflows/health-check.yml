@@ -1,0 +1,70 @@
+name: Health Check
+
+# Weekly check of everything that otherwise needs a manual look: workflows on
+# main, Dependabot jobs, production audit, stale PRs, Angular/Node end of life
+# and the live site (see scripts/health-check.js). Opens a single
+# "health-check" issue only when something needs action, and closes it once
+# a later run is clean.
+
+on:
+  schedule:
+    # Tuesday 05:00 UTC: after Monday's Dependabot run and its auto-merges.
+    - cron: '0 5 * * 2'
+  workflow_dispatch:
+
+concurrency:
+  group: health-check
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  health-check:
+    name: Weekly Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Node 22 ships fetch and WebSocket; the script needs no npm install.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Run checks
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIVE_URL: https://birthday-reminder-aghirculesei.pages.dev
+          REPORT_PATH: health-report.md
+        run: |
+          node scripts/health-check.js
+          cat health-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open, update or close the health-check issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEEDS_ACTION: ${{ steps.check.outputs.needs_action }}
+        run: |
+          LABEL=health-check
+          gh label create "$LABEL" --color D93F0B \
+            --description "Opened by the weekly health check" --force > /dev/null
+          ISSUE=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number // empty')
+          TODAY=$(date -u +%F)
+
+          if [ "$NEEDS_ACTION" = "true" ]; then
+            if [ -n "$ISSUE" ]; then
+              gh issue edit "$ISSUE" --body-file health-report.md
+              gh issue comment "$ISSUE" --body "Still open on $TODAY; report updated above."
+            else
+              gh issue create --title "Health check: action needed" --label "$LABEL" \
+                --assignee "$GITHUB_REPOSITORY_OWNER" --body-file health-report.md
+            fi
+          elif [ -n "$ISSUE" ]; then
+            gh issue close "$ISSUE" --comment "All checks passed on $TODAY."
+          fi
