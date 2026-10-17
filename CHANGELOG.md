@@ -1,3 +1,11 @@
+## [1.2.23](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.22...v1.2.23) (2026-10-17)
+
+
+### Bug Fixes
+
+* answer unknown URLs with a real 404 status ([1c1c350](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/1c1c35053be3f9e5789abd69fb890ec75cac8332))
+* rewrite client-only routes to the extensionless shell ([a4caf51](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a4caf51c523e25ef9cb040959b79047d6c16d916))
+
 ## [1.2.22](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.21...v1.2.22) (2026-10-17)
 
 
