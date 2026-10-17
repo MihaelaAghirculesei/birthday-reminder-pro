@@ -1,0 +1,5 @@
+# Client-only routes (RenderMode.Client in app.routes.server.ts) have no
+# prerendered page. Serve the client shell with 200 so the top-level 404.html
+# (scripts/create-404-page.js) does not answer them.
+/scheduled-messages /index.csr.html 200
+/calendar-sync /index.csr.html 200
