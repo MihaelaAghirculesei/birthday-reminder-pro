@@ -329,6 +329,11 @@ npm run serve:ssr:birthday-reminder-pro
 
 For production on Cloudflare Pages, the pre-rendered static files are served directly — no Node.js server required.
 
+### Maintenance
+
+- **Dependabot** opens weekly update PRs; patch and minor bumps are merged automatically once CI is green, majors wait for review.
+- **Health Check** (`.github/workflows/health-check.yml`) runs every Tuesday and checks the workflows on main, failing Dependabot jobs, production vulnerabilities, stale PRs, Angular/Node end of life, and the live site in headless Chrome. When something needs action it opens a single `health-check` issue, and closes it after the next clean run. Run it locally with `GITHUB_REPOSITORY=owner/repo LIVE_URL=<url> node scripts/health-check.js`.
+
 ---
 
 ## Project Structure
