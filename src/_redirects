@@ -1,5 +1,8 @@
 # Client-only routes (RenderMode.Client in app.routes.server.ts) have no
 # prerendered page. Serve the client shell with 200 so the top-level 404.html
-# (scripts/create-404-page.js) does not answer them.
-/scheduled-messages /index.csr.html 200
-/calendar-sync /index.csr.html 200
+# (scripts/create-404-page.js) does not answer them. The target has no .html
+# extension: Pages turns rewrites to .html files into a redirect.
+/scheduled-messages /index.csr 200
+/scheduled-messages/ /index.csr 200
+/calendar-sync /index.csr 200
+/calendar-sync/ /index.csr 200
