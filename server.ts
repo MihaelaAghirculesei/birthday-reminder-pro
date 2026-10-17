@@ -58,9 +58,12 @@ function buildCsp(nonce: string): string {
       `https://securetoken.googleapis.com`,
       `https://firestore.googleapis.com`,
       `https://lh3.googleusercontent.com`,
-      // The service worker fetches demo avatars, so their hosts need connect-src too.
+      // The service worker fetches demo avatars and Google Fonts (ngsw-config
+      // dataGroups), so their hosts need connect-src too.
       `https://i.pravatar.cc`,
       `https://ui-avatars.com`,
+      `https://fonts.googleapis.com`,
+      `https://fonts.gstatic.com`,
       ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
       ...(sentryIngestUrl ? [sentryIngestUrl] : []),
     ].join(' '),
