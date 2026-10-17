@@ -67,15 +67,22 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
+@function important-flag($important) {
+  @if $important {
+    @return ' !important';
+  }
+  @return '';
+}
+
 @mixin icon-size($size, $important: false) {
-  $flag: if($important, ' !important', '');
+  $flag: important-flag($important);
   font-size: #{$size}#{$flag};
   width: #{$size}#{$flag};
   height: #{$size}#{$flag};
 }
 
 @mixin square-size($size, $important: false) {
-  $flag: if($important, ' !important', '');
+  $flag: important-flag($important);
   width: #{$size}#{$flag};
   height: #{$size}#{$flag};
   min-width: #{$size}#{$flag};
