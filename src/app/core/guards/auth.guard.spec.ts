@@ -3,19 +3,22 @@ import { type ActivatedRouteSnapshot, Router, type RouterStateSnapshot, type Url
 import { type MemoizedSelector } from '@ngrx/store';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { type of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { selectAuthInitialized, selectIsAuthenticated } from '../store/auth/auth.selectors';
 import { authGuard } from './auth.guard';
 
 describe('authGuard', () => {
   let store: MockStore;
-  let router: jasmine.SpyObj<Router>;
+  let router: MockedObject<Router>;
   let mockInitialized: MemoizedSelector<object, boolean>;
   let mockAuthenticated: MemoizedSelector<object, boolean>;
 
   beforeEach(() => {
-    router = jasmine.createSpyObj('Router', ['createUrlTree']);
-    router.createUrlTree.and.returnValue({ toString: () => '/' } as unknown as UrlTree);
+    router = {
+      createUrlTree: vi.fn().mockName('Router.createUrlTree')
+    } as unknown as MockedObject<Router>;
+    router.createUrlTree.mockReturnValue({ toString: () => '/' } as unknown as UrlTree);
 
     TestBed.configureTestingModule({
       providers: [
@@ -35,28 +38,26 @@ describe('authGuard', () => {
     return TestBed.runInInjectionContext(() => authGuard({} as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot));
   }
 
-  it('allows navigation when authenticated', (done) => {
+  it('allows navigation when authenticated', async () => {
     mockAuthenticated.setResult(true);
     store.refreshState();
 
     (runGuard() as ReturnType<typeof of>).subscribe((result) => {
-      expect(result).toBeTrue();
-      done();
+      expect(result).toBe(true);
     });
   });
 
-  it('redirects to "/" when not authenticated', (done) => {
+  it('redirects to "/" when not authenticated', async () => {
     mockAuthenticated.setResult(false);
     store.refreshState();
 
     (runGuard() as ReturnType<typeof of>).subscribe((result) => {
       expect(router.createUrlTree).toHaveBeenCalledWith(['/']);
       expect(result).toBeTruthy();
-      done();
     });
   });
 
-  it('waits for auth to initialize before resolving', (done) => {
+  it('waits for auth to initialize before resolving', async () => {
     mockInitialized.setResult(false);
     mockAuthenticated.setResult(true);
     store.refreshState();
@@ -64,14 +65,13 @@ describe('authGuard', () => {
     let emitted = false;
     (runGuard() as ReturnType<typeof of>).subscribe(() => (emitted = true));
 
-    expect(emitted).toBeFalse();
+    expect(emitted).toBe(false);
 
     mockInitialized.setResult(true);
     store.refreshState();
 
     setTimeout(() => {
-      expect(emitted).toBeTrue();
-      done();
+      expect(emitted).toBe(true);
     });
   });
 });

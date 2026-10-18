@@ -1,5 +1,5 @@
 
-import { DOCUMENT,PLATFORM_ID } from '@angular/core';
+import { DOCUMENT, PLATFORM_ID } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
@@ -42,8 +42,8 @@ describe('FooterComponent', () => {
       await setup('browser');
       const document = TestBed.inject(DOCUMENT);
       const mockContainer = document.createElement('div');
-      spyOn(mockContainer, 'scrollIntoView');
-      spyOn(document, 'querySelector').and.returnValue(mockContainer);
+      vi.spyOn(mockContainer, 'scrollIntoView');
+      vi.spyOn(document, 'querySelector').mockReturnValue(mockContainer);
 
       component.scrollToTop();
 
@@ -54,7 +54,7 @@ describe('FooterComponent', () => {
     it('should not throw when .app-container is not found (optional chaining)', async () => {
       await setup('browser');
       const document = TestBed.inject(DOCUMENT);
-      spyOn(document, 'querySelector').and.returnValue(null);
+      vi.spyOn(document, 'querySelector').mockReturnValue(null);
 
       expect(() => component.scrollToTop()).not.toThrow();
     });
@@ -62,7 +62,7 @@ describe('FooterComponent', () => {
     it('should return early and not query DOM on server platform', async () => {
       await setup('server');
       const document = TestBed.inject(DOCUMENT);
-      spyOn(document, 'querySelector');
+      vi.spyOn(document, 'querySelector');
 
       component.scrollToTop();
 

@@ -1,7 +1,8 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { LocaleService } from '../../../../core/services/locale.service';
@@ -10,9 +11,12 @@ import { CategoryDialogComponent } from './category-dialog.component';
 describe('CategoryDialogComponent', () => {
   let component: CategoryDialogComponent;
   let fixture: ComponentFixture<CategoryDialogComponent>;
-  let mockDialogRef: jasmine.SpyObj<MatDialogRef<CategoryDialogComponent>>;
+  let mockDialogRef: MockedObject<MatDialogRef<CategoryDialogComponent>>;
 
-  const createComponent = (data: { mode: 'add' | 'edit'; category?: unknown } = { mode: 'add' }) => {
+  const createComponent = (data: {
+    mode: 'add' | 'edit';
+    category?: unknown;
+  } = { mode: 'add' }) => {
     TestBed.configureTestingModule({
       imports: [CategoryDialogComponent, ReactiveFormsModule, BrowserAnimationsModule],
       providers: [
@@ -30,7 +34,9 @@ describe('CategoryDialogComponent', () => {
   };
 
   beforeEach(() => {
-    mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    mockDialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close')
+    } as unknown as MockedObject<MatDialogRef<CategoryDialogComponent>>;
   });
 
   describe('Component Creation', () => {

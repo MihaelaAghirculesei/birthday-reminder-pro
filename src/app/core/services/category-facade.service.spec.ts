@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type BirthdayCategory } from '../../shared';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -10,7 +11,7 @@ import { CategoryFacadeService } from './category-facade.service';
 
 describe('CategoryFacadeService', () => {
   let service: CategoryFacadeService;
-  let storeSpy: jasmine.SpyObj<Store>;
+  let storeSpy: MockedObject<Store>;
 
   const mockCategories: BirthdayCategory[] = [
     { id: 'friends', name: 'Friends', icon: 'group', color: '#4CAF50' },
@@ -28,9 +29,12 @@ describe('CategoryFacadeService', () => {
   ];
 
   beforeEach(() => {
-    const storeSpyObj = jasmine.createSpyObj('Store', ['dispatch', 'select']);
+    const storeSpyObj = {
+      dispatch: vi.fn().mockName('Store.dispatch'),
+      select: vi.fn().mockName('Store.select')
+    };
 
-    storeSpyObj.select.and.callFake((selector: unknown) => {
+    storeSpyObj.select.mockImplementation((selector: unknown) => {
       if (selector === CategorySelectors.selectAllCategories) {
         return of(mockCategories);
       }
@@ -61,7 +65,7 @@ describe('CategoryFacadeService', () => {
     });
 
     service = TestBed.inject(CategoryFacadeService);
-    storeSpy = TestBed.inject(Store) as jasmine.SpyObj<Store>;
+    storeSpy = TestBed.inject(Store) as MockedObject<Store>;
   });
 
   it('should be created', () => {
@@ -138,13 +142,19 @@ describe('CategoryFacadeService', () => {
         { id: 'custom2', name: 'No Translations', icon: 'star', color: '#FF0000' }
       ];
 
-      storeSpy.select.and.callFake((selector: unknown) => {
-        if (selector === CategorySelectors.selectAllCategories) return of(categoriesWithTranslations);
-        if (selector === CategorySelectors.selectCategoriesLoaded) return of(true);
-        if (selector === CategorySelectors.selectCategoriesLoading) return of(false);
-        if (selector === CategorySelectors.selectCategoriesError) return of(null);
-        if (selector === CategorySelectors.selectDefaultCategories) return of([]);
-        if (selector === CategorySelectors.selectCustomCategories) return of([]);
+      storeSpy.select.mockImplementation((selector: unknown) => {
+        if (selector === CategorySelectors.selectAllCategories)
+          return of(categoriesWithTranslations);
+        if (selector === CategorySelectors.selectCategoriesLoaded)
+          return of(true);
+        if (selector === CategorySelectors.selectCategoriesLoading)
+          return of(false);
+        if (selector === CategorySelectors.selectCategoriesError)
+          return of(null);
+        if (selector === CategorySelectors.selectDefaultCategories)
+          return of([]);
+        if (selector === CategorySelectors.selectCustomCategories)
+          return of([]);
         return of(undefined);
       });
 
@@ -167,23 +177,21 @@ describe('CategoryFacadeService', () => {
   });
 
   describe('getCategoryById', () => {
-    it('should return category by id', (done) => {
+    it('should return category by id', async () => {
       const mockCategory = mockCategories[0];
-      storeSpy.select.and.returnValue(of(mockCategory));
+      storeSpy.select.mockReturnValue(of(mockCategory));
 
       service.getCategoryById('friends').subscribe(category => {
         expect(category).toEqual(mockCategory);
         expect(storeSpy.select).toHaveBeenCalled();
-        done();
       });
     });
 
-    it('should return undefined for non-existent category', (done) => {
-      storeSpy.select.and.returnValue(of(undefined));
+    it('should return undefined for non-existent category', async () => {
+      storeSpy.select.mockReturnValue(of(undefined));
 
       service.getCategoryById('non-existent').subscribe(category => {
         expect(category).toBeUndefined();
-        done();
       });
     });
   });

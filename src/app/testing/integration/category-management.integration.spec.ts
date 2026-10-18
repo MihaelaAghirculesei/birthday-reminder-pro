@@ -2,19 +2,20 @@ import { PLATFORM_ID } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore, Store } from '@ngrx/store';
+import type { MockedObject } from 'vitest';
 
 import { CategoryFacadeService } from '../../core/services/category-facade.service';
 import { CategoryStorageService } from '../../core/services/category-storage.service';
 import { CategoryEffects } from '../../core/store/category/category.effects';
 import { categoryReducer } from '../../core/store/category/category.reducer';
 import * as CategorySelectors from '../../core/store/category/category.selectors';
-import { BIRTHDAY_CATEGORIES,type BirthdayCategory } from '../../shared';
+import { BIRTHDAY_CATEGORIES, type BirthdayCategory } from '../../shared';
 import { provideTranslateTesting } from '../translate-testing';
 
 describe('Category Management Integration', () => {
   let facade: CategoryFacadeService;
   let store: Store;
-  let mockStorage: jasmine.SpyObj<CategoryStorageService>;
+  let mockStorage: MockedObject<CategoryStorageService>;
   let customCategories: BirthdayCategory[] = [];
   let modifiedCategories: BirthdayCategory[] = [];
   let deletedIds: string[] = [];
@@ -24,42 +25,44 @@ describe('Category Management Integration', () => {
     modifiedCategories = [];
     deletedIds = [];
 
-    mockStorage = jasmine.createSpyObj('CategoryStorageService', [
-      'getCustomCategories',
-      'getModifiedCategories',
-      'getDeletedIds',
-      'addCustomCategory',
-      'updateCategory',
-      'deleteCategory',
-      'restoreCategory'
-    ]);
+    mockStorage = {
+      getCustomCategories: vi.fn().mockName('CategoryStorageService.getCustomCategories'),
+      getModifiedCategories: vi.fn().mockName('CategoryStorageService.getModifiedCategories'),
+      getDeletedIds: vi.fn().mockName('CategoryStorageService.getDeletedIds'),
+      addCustomCategory: vi.fn().mockName('CategoryStorageService.addCustomCategory'),
+      updateCategory: vi.fn().mockName('CategoryStorageService.updateCategory'),
+      deleteCategory: vi.fn().mockName('CategoryStorageService.deleteCategory'),
+      restoreCategory: vi.fn().mockName('CategoryStorageService.restoreCategory')
+    } as unknown as MockedObject<CategoryStorageService>;
 
-    mockStorage.getCustomCategories.and.callFake(() => [...customCategories]);
-    mockStorage.getModifiedCategories.and.callFake(() => [...modifiedCategories]);
-    mockStorage.getDeletedIds.and.callFake(() => [...deletedIds]);
-    mockStorage.addCustomCategory.and.callFake((cat: BirthdayCategory) => {
+    mockStorage.getCustomCategories.mockImplementation(() => [...customCategories]);
+    mockStorage.getModifiedCategories.mockImplementation(() => [...modifiedCategories]);
+    mockStorage.getDeletedIds.mockImplementation(() => [...deletedIds]);
+    mockStorage.addCustomCategory.mockImplementation((cat: BirthdayCategory) => {
       customCategories.push(cat);
     });
-    mockStorage.updateCategory.and.callFake((cat: BirthdayCategory) => {
+    mockStorage.updateCategory.mockImplementation((cat: BirthdayCategory) => {
       const customIndex = customCategories.findIndex(c => c.id === cat.id);
       if (customIndex >= 0) {
         customCategories[customIndex] = cat;
-      } else {
+      }
+      else {
         const modIndex = modifiedCategories.findIndex(c => c.id === cat.id);
         if (modIndex >= 0) {
           modifiedCategories[modIndex] = cat;
-        } else {
+        }
+        else {
           modifiedCategories.push(cat);
         }
       }
     });
-    mockStorage.deleteCategory.and.callFake((id: string) => {
+    mockStorage.deleteCategory.mockImplementation((id: string) => {
       customCategories = customCategories.filter(c => c.id !== id);
       if (!deletedIds.includes(id)) {
         deletedIds.push(id);
       }
     });
-    mockStorage.restoreCategory.and.callFake((id: string) => {
+    mockStorage.restoreCategory.mockImplementation((id: string) => {
       deletedIds = deletedIds.filter(d => d !== id);
     });
 

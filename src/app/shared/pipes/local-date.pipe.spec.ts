@@ -9,7 +9,7 @@ describe('LocalDatePipe', () => {
 
   it('should parse a YYYY-MM-DD string to a local Date', () => {
     const result = pipe.transform('2024-06-15');
-    expect(result instanceof Date).toBeTrue();
+    expect(result instanceof Date).toBe(true);
     expect(result.getFullYear()).toBe(2024);
     expect(result.getMonth()).toBe(5); // June = 5
     expect(result.getDate()).toBe(15);

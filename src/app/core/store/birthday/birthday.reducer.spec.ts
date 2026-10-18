@@ -54,10 +54,7 @@ describe('Birthday Reducer', () => {
 
   describe('Update Actions (Optimistic)', () => {
     it('should optimistically apply update immediately and push backup entry', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       const updated = { ...mockBirthday, name: 'Jane Doe' };
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
@@ -69,10 +66,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should remove only the matching entry on updateBirthdaySuccess', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       const updated = { ...mockBirthday, name: 'Jane Doe' };
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
       state = birthdayReducer(state, BirthdayActions.updateBirthdaySuccess({ birthday: updated, operationId: 'op-1' }));
@@ -82,10 +76,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should rollback on updateBirthdayFailure using operationId', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       const updated = { ...mockBirthday, name: 'Jane Doe' };
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
       expect(state.entities['1']?.name).toBe('Jane Doe');
@@ -96,10 +87,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should not create backup when entity does not exist', () => {
-      const state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' })
-      );
+      const state = birthdayReducer(initialBirthdayState, BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
       expect(state.optimisticBackup.length).toBe(0);
     });
@@ -118,10 +106,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should warn user when operationId has no matching backup (eviction)', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' }, operationId: 'op-1' }));
       // Simulate eviction by manually clearing the log
       state = { ...state, optimisticBackup: [] };
@@ -155,10 +140,7 @@ describe('Birthday Reducer', () => {
 
   describe('Delete Actions (Optimistic)', () => {
     it('should optimistically remove birthday on deleteBirthday action', () => {
-      const initialState = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      const initialState = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       const action = BirthdayActions.deleteBirthday({ id: '1' });
       const state = birthdayReducer(initialState, action);
@@ -169,10 +151,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should clear backup on deleteBirthdaySuccess', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
 
@@ -180,10 +159,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should rollback on deleteBirthdayFailure', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
       expect(state.entities['1']).toBeUndefined();
 
@@ -200,10 +176,7 @@ describe('Birthday Reducer', () => {
 
     it('should warn user when delete failure carries id but backup is missing (race/eviction)', () => {
       // Entity was optimistically removed but backup was evicted before failure arrived
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
       // Manually clear backup to simulate eviction/race
       state = { ...state, optimisticBackup: [] };
@@ -263,10 +236,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should store separate entries for concurrent updates on the same entity', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       // Two in-flight updates on the same entity each get their own snapshot
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: { ...mockBirthday, name: 'Jane Doe' }, operationId: 'op-1' }));
@@ -322,7 +292,7 @@ describe('Birthday Reducer', () => {
       expect(state.filters.selectedCategory).toBe('family');
     });
 
-});
+  });
 
   it('should clear all birthdays', () => {
     let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
@@ -379,10 +349,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should optimistically apply update on updateBirthday and set saving', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       const updated = { ...mockBirthday, name: 'Updated Name' };
       state = birthdayReducer(state, BirthdayActions.updateBirthday({ birthday: updated, operationId: 'op-1' }));
 
@@ -392,10 +359,7 @@ describe('Birthday Reducer', () => {
     });
 
     it('should optimistically remove on deleteBirthday and set deleting', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
       state = birthdayReducer(state, BirthdayActions.deleteBirthday({ id: '1' }));
 
       expect(state.deleting).toBe(true);
@@ -425,10 +389,7 @@ describe('Birthday Reducer', () => {
     };
 
     it('should add message to birthday', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       const action = BirthdayActions.addMessageToBirthdaySuccess({
         birthdayId: '1',
@@ -451,15 +412,9 @@ describe('Birthday Reducer', () => {
     });
 
     it('should update message in birthday', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
-      state = birthdayReducer(
-        state,
-        BirthdayActions.addMessageToBirthdaySuccess({ birthdayId: '1', message: mockMessage })
-      );
+      state = birthdayReducer(state, BirthdayActions.addMessageToBirthdaySuccess({ birthdayId: '1', message: mockMessage }));
 
       const action = BirthdayActions.updateMessageInBirthdaySuccess({
         birthdayId: '1',
@@ -484,15 +439,9 @@ describe('Birthday Reducer', () => {
     });
 
     it('should delete message from birthday', () => {
-      let state = birthdayReducer(
-        initialBirthdayState,
-        BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-      );
+      let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
-      state = birthdayReducer(
-        state,
-        BirthdayActions.addMessageToBirthdaySuccess({ birthdayId: '1', message: mockMessage })
-      );
+      state = birthdayReducer(state, BirthdayActions.addMessageToBirthdaySuccess({ birthdayId: '1', message: mockMessage }));
 
       const action = BirthdayActions.deleteMessageFromBirthdaySuccess({
         birthdayId: '1',
@@ -541,14 +490,8 @@ describe('Birthday Reducer', () => {
   });
 
   it('should set googleCalendarEventId on calendarEventIdSet', () => {
-    let state = birthdayReducer(
-      initialBirthdayState,
-      BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday })
-    );
-    state = birthdayReducer(
-      state,
-      BirthdayActions.calendarEventIdSet({ id: '1', calendarEventId: 'cal-event-123' })
-    );
+    let state = birthdayReducer(initialBirthdayState, BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
+    state = birthdayReducer(state, BirthdayActions.calendarEventIdSet({ id: '1', calendarEventId: 'cal-event-123' }));
 
     expect(state.entities['1']?.googleCalendarEventId).toBe('cal-event-123');
   });

@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { type Action } from '@ngrx/store';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { type Observable, of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../../shared/models/birthday.model';
 import { CalendarIntegrationService } from '../../services/calendar-integration.service';
@@ -15,9 +16,9 @@ describe('BirthdayCalendarSyncEffects', () => {
   let actions$: Observable<Action>;
   let effects: BirthdayCalendarSyncEffects;
   let store: MockStore;
-  let calendarIntegrationMock: jasmine.SpyObj<CalendarIntegrationService>;
-  let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
-  let notificationMock: jasmine.SpyObj<NotificationService>;
+  let calendarIntegrationMock: MockedObject<CalendarIntegrationService>;
+  let offlineStorageMock: MockedObject<IndexedDBStorageService>;
+  let notificationMock: MockedObject<NotificationService>;
 
   const mockBirthday: Birthday = {
     id: 'b1',
@@ -44,20 +45,22 @@ describe('BirthdayCalendarSyncEffects', () => {
   };
 
   beforeEach(() => {
-    calendarIntegrationMock = jasmine.createSpyObj('CalendarIntegrationService', [
-      'syncToCalendar',
-      'updateInCalendar',
-      'deleteFromCalendar'
-    ]);
-    offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
-      'updateBirthday'
-    ]);
-    notificationMock = jasmine.createSpyObj('NotificationService', ['show']);
+    calendarIntegrationMock = {
+      syncToCalendar: vi.fn().mockName('CalendarIntegrationService.syncToCalendar'),
+      updateInCalendar: vi.fn().mockName('CalendarIntegrationService.updateInCalendar'),
+      deleteFromCalendar: vi.fn().mockName('CalendarIntegrationService.deleteFromCalendar')
+    } as unknown as MockedObject<CalendarIntegrationService>;
+    offlineStorageMock = {
+      updateBirthday: vi.fn().mockName('IndexedDBStorageService.updateBirthday')
+    } as unknown as MockedObject<IndexedDBStorageService>;
+    notificationMock = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
 
-    calendarIntegrationMock.syncToCalendar.and.returnValue(Promise.resolve(null));
-    calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.resolve());
-    calendarIntegrationMock.deleteFromCalendar.and.returnValue(Promise.resolve());
-    offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
+    calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.resolve(null));
+    calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.resolve());
+    calendarIntegrationMock.deleteFromCalendar.mockReturnValue(Promise.resolve());
+    offlineStorageMock.updateBirthday.mockReturnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
       providers: [
@@ -79,106 +82,94 @@ describe('BirthdayCalendarSyncEffects', () => {
   });
 
   describe('syncToCalendar$', () => {
-    it('should dispatch calendarEventIdSet and update IndexedDB when event ID is returned', (done) => {
-      calendarIntegrationMock.syncToCalendar.and.returnValue(Promise.resolve('event-123'));
+    it('should dispatch calendarEventIdSet and update IndexedDB when event ID is returned', async () => {
+      calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.resolve('event-123'));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       effects.syncToCalendar$.subscribe(action => {
         expect(action).toEqual(BirthdayActions.calendarEventIdSet({ id: 'b1', calendarEventId: 'event-123' }));
-        expect(offlineStorageMock.updateBirthday).toHaveBeenCalledWith(
-          jasmine.objectContaining({ id: 'b1', googleCalendarEventId: 'event-123' })
-        );
-        done();
+        expect(offlineStorageMock.updateBirthday).toHaveBeenCalledWith(expect.objectContaining({ id: 'b1', googleCalendarEventId: 'event-123' }));
       });
     });
 
-    it('should emit nothing when calendar sync returns null (not enabled)', (done) => {
-      calendarIntegrationMock.syncToCalendar.and.returnValue(Promise.resolve(null));
+    it('should emit nothing when calendar sync returns null (not enabled)', async () => {
+      calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.resolve(null));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       let emitted = false;
       effects.syncToCalendar$.subscribe(() => { emitted = true; });
 
-      setTimeout(() => {
-        expect(emitted).toBeFalse();
-        expect(offlineStorageMock.updateBirthday).not.toHaveBeenCalled();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(emitted).toBe(false);
+      expect(offlineStorageMock.updateBirthday).not.toHaveBeenCalled();
     });
 
-    it('should dispatch calendarSyncFailed when IndexedDB update fails', (done) => {
-      calendarIntegrationMock.syncToCalendar.and.returnValue(Promise.resolve('event-x'));
-      offlineStorageMock.updateBirthday.and.returnValue(Promise.reject(new Error('DB error')));
+    it('should dispatch calendarSyncFailed when IndexedDB update fails', async () => {
+      calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.resolve('event-x'));
+      offlineStorageMock.updateBirthday.mockReturnValue(Promise.reject(new Error('DB error')));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       effects.syncToCalendar$.subscribe({
         next: action => {
           expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'DB error', isAuthError: false }));
-          done();
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
 
-    it('should dispatch calendarSyncFailed when syncToCalendar throws', (done) => {
-      calendarIntegrationMock.syncToCalendar.and.returnValue(Promise.reject(new Error('Network error')));
+    it('should dispatch calendarSyncFailed when syncToCalendar throws', async () => {
+      calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.reject(new Error('Network error')));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
       effects.syncToCalendar$.subscribe({
         next: action => {
           expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'Network error', isAuthError: false }));
-          done();
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
   });
 
   describe('updateInCalendar$', () => {
-    it('should call updateInCalendar when updateBirthday is dispatched', (done) => {
+    it('should call updateInCalendar when updateBirthday is dispatched', async () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       effects.updateInCalendar$.subscribe();
 
-      setTimeout(() => {
-        expect(calendarIntegrationMock.updateInCalendar).toHaveBeenCalledWith(birthdayWithEvent);
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(calendarIntegrationMock.updateInCalendar).toHaveBeenCalledWith(birthdayWithEvent);
     });
 
-    it('should not emit on success', (done) => {
+    it('should not emit on success', async () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       let emitted = false;
       effects.updateInCalendar$.subscribe(() => { emitted = true; });
 
-      setTimeout(() => {
-        expect(emitted).toBeFalse();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(emitted).toBe(false);
     });
 
-    it('should dispatch calendarSyncFailed when updateInCalendar fails', (done) => {
-      calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(new Error('Calendar error')));
+    it('should dispatch calendarSyncFailed when updateInCalendar fails', async () => {
+      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(new Error('Calendar error')));
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       effects.updateInCalendar$.subscribe({
         next: action => {
           expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'Calendar error', isAuthError: false }));
-          done();
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
   });
 
   describe('deleteFromCalendar$', () => {
-    it('should call deleteFromCalendar when birthday has a calendarEventId in optimisticBackup', (done) => {
+    it('should call deleteFromCalendar when birthday has a calendarEventId in optimisticBackup', async () => {
       store.setState({
         birthdays: {
           ...initialState.birthdays,
@@ -190,13 +181,11 @@ describe('BirthdayCalendarSyncEffects', () => {
 
       effects.deleteFromCalendar$.subscribe();
 
-      setTimeout(() => {
-        expect(calendarIntegrationMock.deleteFromCalendar).toHaveBeenCalledWith('cal-event-99');
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(calendarIntegrationMock.deleteFromCalendar).toHaveBeenCalledWith('cal-event-99');
     });
 
-    it('should not call deleteFromCalendar when birthday has no calendarEventId', (done) => {
+    it('should not call deleteFromCalendar when birthday has no calendarEventId', async () => {
       store.setState({
         birthdays: {
           ...initialState.birthdays,
@@ -209,28 +198,24 @@ describe('BirthdayCalendarSyncEffects', () => {
       let emitted = false;
       effects.deleteFromCalendar$.subscribe(() => { emitted = true; });
 
-      setTimeout(() => {
-        expect(emitted).toBeFalse();
-        expect(calendarIntegrationMock.deleteFromCalendar).not.toHaveBeenCalled();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(emitted).toBe(false);
+      expect(calendarIntegrationMock.deleteFromCalendar).not.toHaveBeenCalled();
     });
 
-    it('should not call deleteFromCalendar when birthday is not in optimisticBackup', (done) => {
+    it('should not call deleteFromCalendar when birthday is not in optimisticBackup', async () => {
       actions$ = of(BirthdayActions.deleteBirthday({ id: 'b1' }));
 
       let emitted = false;
       effects.deleteFromCalendar$.subscribe(() => { emitted = true; });
 
-      setTimeout(() => {
-        expect(emitted).toBeFalse();
-        expect(calendarIntegrationMock.deleteFromCalendar).not.toHaveBeenCalled();
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(emitted).toBe(false);
+      expect(calendarIntegrationMock.deleteFromCalendar).not.toHaveBeenCalled();
     });
 
-    it('should dispatch calendarSyncFailed when deleteFromCalendar fails', (done) => {
-      calendarIntegrationMock.deleteFromCalendar.and.returnValue(Promise.reject(new Error('Delete error')));
+    it('should dispatch calendarSyncFailed when deleteFromCalendar fails', async () => {
+      calendarIntegrationMock.deleteFromCalendar.mockReturnValue(Promise.reject(new Error('Delete error')));
       store.setState({
         birthdays: {
           ...initialState.birthdays,
@@ -243,70 +228,52 @@ describe('BirthdayCalendarSyncEffects', () => {
       effects.deleteFromCalendar$.subscribe({
         next: action => {
           expect(action).toEqual(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'Delete error', isAuthError: false }));
-          done();
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
   });
 
   describe('notifyCalendarSyncFailed$', () => {
-    it('should show a warning notification for operation "add"', (done) => {
+    it('should show a warning notification for operation "add"', async () => {
       actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'add', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
-        expect(notificationMock.show).toHaveBeenCalledWith(
-          'Google Calendar event could not be created. Birthday saved locally.',
-          'warning'
-        );
-        done();
+        expect(notificationMock.show).toHaveBeenCalledWith('Google Calendar event could not be created. Birthday saved locally.', 'warning');
       });
     });
 
-    it('should show a warning notification for operation "update"', (done) => {
+    it('should show a warning notification for operation "update"', async () => {
       actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
-        expect(notificationMock.show).toHaveBeenCalledWith(
-          'Google Calendar event could not be updated. Changes saved locally.',
-          'warning'
-        );
-        done();
+        expect(notificationMock.show).toHaveBeenCalledWith('Google Calendar event could not be updated. Changes saved locally.', 'warning');
       });
     });
 
-    it('should show a warning notification for operation "delete"', (done) => {
+    it('should show a warning notification for operation "delete"', async () => {
       actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'delete', error: 'err', isAuthError: false }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
-        expect(notificationMock.show).toHaveBeenCalledWith(
-          'Google Calendar event could not be deleted.',
-          'warning'
-        );
-        done();
+        expect(notificationMock.show).toHaveBeenCalledWith('Google Calendar event could not be deleted.', 'warning');
       });
     });
 
-    it('should show a distinct reconnect notification when the failure is an auth error, regardless of operation', (done) => {
+    it('should show a distinct reconnect notification when the failure is an auth error, regardless of operation', async () => {
       actions$ = of(BirthdayActions.calendarSyncFailed({ operation: 'update', error: 'Authentication expired. Please sign in again.', isAuthError: true }));
 
       effects.notifyCalendarSyncFailed$.subscribe(() => {
-        expect(notificationMock.show).toHaveBeenCalledWith(
-          'Google Calendar connection expired. Reconnect in Settings to resume syncing.',
-          'error',
-          8000
-        );
-        done();
+        expect(notificationMock.show).toHaveBeenCalledWith('Google Calendar connection expired. Reconnect in Settings to resume syncing.', 'error', 8000);
       });
     });
   });
 
   describe('isAuthError classification', () => {
-    it('dispatches isAuthError: true when the thrown error carries a 401 googleApiDetails code', (done) => {
+    it('dispatches isAuthError: true when the thrown error carries a 401 googleApiDetails code', async () => {
       const authError = Object.assign(new Error('Authentication expired. Please sign in again.'), {
         googleApiDetails: { code: 401 }
       });
-      calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(authError));
+      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(authError));
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
@@ -317,26 +284,24 @@ describe('BirthdayCalendarSyncEffects', () => {
             error: 'Authentication expired. Please sign in again.',
             isAuthError: true
           }));
-          done();
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
 
-    it('dispatches isAuthError: false for a non-auth error even if it happens to carry a googleApiDetails code', (done) => {
+    it('dispatches isAuthError: false for a non-auth error even if it happens to carry a googleApiDetails code', async () => {
       const rateLimitError = Object.assign(new Error('Too many requests.'), {
         googleApiDetails: { code: 429 }
       });
-      calendarIntegrationMock.updateInCalendar.and.returnValue(Promise.reject(rateLimitError));
+      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(rateLimitError));
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
       effects.updateInCalendar$.subscribe({
         next: action => {
-          expect(action.isAuthError).toBeFalse();
-          done();
+          expect(action.isAuthError).toBe(false);
         },
-        error: () => fail('should not error')
+        error: () => expect.unreachable('should not error')
       });
     });
   });

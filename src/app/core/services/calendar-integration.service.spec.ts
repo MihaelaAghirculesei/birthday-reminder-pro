@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../shared/models/birthday.model';
 import { CalendarIntegrationService } from './calendar-integration.service';
@@ -11,20 +12,24 @@ const BIRTHDAY_WITH_EVENT: Birthday = { ...BIRTHDAY, googleCalendarEventId: 'evt
 
 describe('CalendarIntegrationService', () => {
   let service: CalendarIntegrationService;
-  let googleCalendar: jasmine.SpyObj<GoogleCalendarService>;
-  let logger: jasmine.SpyObj<LoggerService>;
-  let featureFlags: jasmine.SpyObj<FeatureFlagsService>;
+  let googleCalendar: MockedObject<GoogleCalendarService>;
+  let logger: MockedObject<LoggerService>;
+  let featureFlags: MockedObject<FeatureFlagsService>;
 
   beforeEach(() => {
-    googleCalendar = jasmine.createSpyObj('GoogleCalendarService', [
-      'isEnabled',
-      'syncBirthdayToCalendar',
-      'updateBirthdayInCalendar',
-      'deleteBirthdayFromCalendar'
-    ]);
-    logger = jasmine.createSpyObj('LoggerService', ['error']);
-    featureFlags = jasmine.createSpyObj('FeatureFlagsService', ['isCalendarSyncEnabled']);
-    featureFlags.isCalendarSyncEnabled.and.returnValue(true);
+    googleCalendar = {
+      isEnabled: vi.fn().mockName('GoogleCalendarService.isEnabled'),
+      syncBirthdayToCalendar: vi.fn().mockName('GoogleCalendarService.syncBirthdayToCalendar'),
+      updateBirthdayInCalendar: vi.fn().mockName('GoogleCalendarService.updateBirthdayInCalendar'),
+      deleteBirthdayFromCalendar: vi.fn().mockName('GoogleCalendarService.deleteBirthdayFromCalendar')
+    } as unknown as MockedObject<GoogleCalendarService>;
+    logger = {
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
+    featureFlags = {
+      isCalendarSyncEnabled: vi.fn().mockName('FeatureFlagsService.isCalendarSyncEnabled')
+    } as unknown as MockedObject<FeatureFlagsService>;
+    featureFlags.isCalendarSyncEnabled.mockReturnValue(true);
 
     TestBed.configureTestingModule({
       providers: [
@@ -40,20 +45,20 @@ describe('CalendarIntegrationService', () => {
 
   describe('syncToCalendar', () => {
     it('returns null immediately when calendar is disabled', async () => {
-      googleCalendar.isEnabled.and.returnValue(false);
+      googleCalendar.isEnabled.mockReturnValue(false);
       expect(await service.syncToCalendar(BIRTHDAY)).toBeNull();
       expect(googleCalendar.syncBirthdayToCalendar).not.toHaveBeenCalled();
     });
 
     it('returns event id on success', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.syncBirthdayToCalendar.and.resolveTo('evt-123');
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.syncBirthdayToCalendar.mockResolvedValue('evt-123');
       expect(await service.syncToCalendar(BIRTHDAY)).toBe('evt-123');
     });
 
     it('returns null and logs on error', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.syncBirthdayToCalendar.and.rejectWith(new Error('network'));
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.syncBirthdayToCalendar.mockRejectedValue(new Error('network'));
       expect(await service.syncToCalendar(BIRTHDAY)).toBeNull();
       expect(logger.error).toHaveBeenCalled();
     });
@@ -61,58 +66,58 @@ describe('CalendarIntegrationService', () => {
 
   describe('updateInCalendar', () => {
     it('skips when birthday has no googleCalendarEventId', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
+      googleCalendar.isEnabled.mockReturnValue(true);
       await service.updateInCalendar(BIRTHDAY);
       expect(googleCalendar.updateBirthdayInCalendar).not.toHaveBeenCalled();
     });
 
     it('skips when calendar is disabled', async () => {
-      googleCalendar.isEnabled.and.returnValue(false);
+      googleCalendar.isEnabled.mockReturnValue(false);
       await service.updateInCalendar(BIRTHDAY_WITH_EVENT);
       expect(googleCalendar.updateBirthdayInCalendar).not.toHaveBeenCalled();
     });
 
     it('delegates to GoogleCalendarService with correct eventId', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.updateBirthdayInCalendar.and.resolveTo();
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.updateBirthdayInCalendar.mockResolvedValue(undefined);
       await service.updateInCalendar(BIRTHDAY_WITH_EVENT);
       expect(googleCalendar.updateBirthdayInCalendar).toHaveBeenCalledWith(BIRTHDAY_WITH_EVENT, 'evt-123');
     });
 
     it('logs on error without rethrowing', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.updateBirthdayInCalendar.and.rejectWith(new Error('timeout'));
-      await expectAsync(service.updateInCalendar(BIRTHDAY_WITH_EVENT)).toBeResolved();
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.updateBirthdayInCalendar.mockRejectedValue(new Error('timeout'));
+      await expect(service.updateInCalendar(BIRTHDAY_WITH_EVENT)).resolves.not.toThrow();
       expect(logger.error).toHaveBeenCalled();
     });
   });
 
   describe('deleteFromCalendar', () => {
     it('skips when calendar is disabled', async () => {
-      googleCalendar.isEnabled.and.returnValue(false);
+      googleCalendar.isEnabled.mockReturnValue(false);
       await service.deleteFromCalendar('evt-123');
       expect(googleCalendar.deleteBirthdayFromCalendar).not.toHaveBeenCalled();
     });
 
     it('delegates to GoogleCalendarService', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.deleteBirthdayFromCalendar.and.resolveTo();
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.deleteBirthdayFromCalendar.mockResolvedValue(undefined);
       await service.deleteFromCalendar('evt-123');
       expect(googleCalendar.deleteBirthdayFromCalendar).toHaveBeenCalledWith('evt-123');
     });
 
     it('logs on error without rethrowing', async () => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      googleCalendar.deleteBirthdayFromCalendar.and.rejectWith(new Error('forbidden'));
-      await expectAsync(service.deleteFromCalendar('evt-123')).toBeResolved();
+      googleCalendar.isEnabled.mockReturnValue(true);
+      googleCalendar.deleteBirthdayFromCalendar.mockRejectedValue(new Error('forbidden'));
+      await expect(service.deleteFromCalendar('evt-123')).resolves.not.toThrow();
       expect(logger.error).toHaveBeenCalled();
     });
   });
 
   describe('feature flag kill-switch', () => {
     beforeEach(() => {
-      googleCalendar.isEnabled.and.returnValue(true);
-      featureFlags.isCalendarSyncEnabled.and.returnValue(false);
+      googleCalendar.isEnabled.mockReturnValue(true);
+      featureFlags.isCalendarSyncEnabled.mockReturnValue(false);
     });
 
     it('syncToCalendar returns null without calling GoogleCalendarService', async () => {

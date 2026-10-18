@@ -3,11 +3,12 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject, EMPTY } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { BackupService } from '../../core/services/backup.service';
-import { type AuthUser,FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { type AuthUser, FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -23,14 +24,17 @@ const INITIAL_STATE = {
 function mockPermissionService() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svc: any = {
-    ...jasmine.createSpyObj('NotificationPermissionService', [
-      'getCurrentPermission', 'requestPermission', 'isNotificationsEnabled', 'setNotificationsEnabled'
-    ]),
+    ...{
+      getCurrentPermission: vi.fn().mockName('NotificationPermissionService.getCurrentPermission'),
+      requestPermission: vi.fn().mockName('NotificationPermissionService.requestPermission'),
+      isNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.isNotificationsEnabled'),
+      setNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.setNotificationsEnabled')
+    },
     permissionStatus: new BehaviorSubject<string>('default'),
     notificationsEnabled: new BehaviorSubject<boolean>(false)
   };
-  svc.getCurrentPermission.and.returnValue('default');
-  svc.isNotificationsEnabled.and.returnValue(false);
+  svc.getCurrentPermission.mockReturnValue('default');
+  svc.isNotificationsEnabled.mockReturnValue(false);
   return svc;
 }
 
@@ -39,11 +43,23 @@ function buildProviders(platformId: unknown = 'browser') {
     provideMockStore({ initialState: INITIAL_STATE }),
     { provide: PLATFORM_ID, useValue: platformId },
     { provide: NotificationPermissionService, useValue: mockPermissionService() },
-    { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
-    { provide: MatDialog, useValue: { open: jasmine.createSpy(), afterOpened: EMPTY, afterAllClosed: EMPTY } },
-    { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: jasmine.createSpy().and.returnValue(Promise.resolve(null)) } },
-    { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
-    { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy() } },
+    {
+      provide: NotificationService, useValue: {
+        show: vi.fn().mockName('NotificationService.show')
+      }
+    },
+    { provide: MatDialog, useValue: { open: vi.fn(), afterOpened: EMPTY, afterAllClosed: EMPTY } },
+    { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: vi.fn().mockReturnValue(Promise.resolve(null)) } },
+    {
+      provide: BackupService, useValue: {
+        exportToJSON: vi.fn().mockName('BackupService.exportToJSON'),
+        exportToCSV: vi.fn().mockName('BackupService.exportToCSV'),
+        importFromFile: vi.fn().mockName('BackupService.importFromFile'),
+        importFromCSV: vi.fn().mockName('BackupService.importFromCSV'),
+        importFromVCard: vi.fn().mockName('BackupService.importFromVCard')
+      }
+    },
+    { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: vi.fn() } },
     provideTranslateTesting()
   ];
 }
@@ -70,13 +86,13 @@ describe('HeaderComponent', () => {
   });
 
   it('dispatches signOut action', () => {
-    spyOn(store, 'dispatch');
+    vi.spyOn(store, 'dispatch');
     component.signOut();
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signOut());
   });
 
   it('dispatches signInWithGoogle and closes menu on signInDirect', () => {
-    spyOn(store, 'dispatch');
+    vi.spyOn(store, 'dispatch');
     component.signInDirect();
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInWithGoogle());
   });
@@ -84,8 +100,8 @@ describe('HeaderComponent', () => {
   it('dispatches signInSuccess when performGoogleSignInDirect resolves', async () => {
     const mockUser: AuthUser = { uid: 'u1', email: 'a@b.com', displayName: 'A', photoURL: null };
     const authService = TestBed.inject(FirebaseAuthService);
-    (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.resolve(mockUser));
-    spyOn(store, 'dispatch');
+    (authService.performGoogleSignInDirect as Mock).mockReturnValue(Promise.resolve(mockUser));
+    vi.spyOn(store, 'dispatch');
 
     await component.signInDirect();
 
@@ -94,8 +110,8 @@ describe('HeaderComponent', () => {
 
   it('dispatches signInFailure when performGoogleSignInDirect rejects', async () => {
     const authService = TestBed.inject(FirebaseAuthService);
-    (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.reject(new Error('popup closed')));
-    spyOn(store, 'dispatch');
+    (authService.performGoogleSignInDirect as Mock).mockReturnValue(Promise.reject(new Error('popup closed')));
+    vi.spyOn(store, 'dispatch');
 
     await component.signInDirect();
 
@@ -105,7 +121,7 @@ describe('HeaderComponent', () => {
   describe('scroll cleanup on destroy', () => {
     it('stops calling onScroll after component is destroyed', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const onScrollSpy = spyOn<any>(component, 'onScroll');
+      const onScrollSpy = vi.spyOn(component as any, 'onScroll');
       fixture.destroy();
       window.dispatchEvent(new Event('scroll'));
       document.body.dispatchEvent(new Event('scroll'));
@@ -121,39 +137,39 @@ describe('HeaderComponent', () => {
     beforeEach(() => {
       comp = component;
       nativeEl = comp.el.nativeElement;
-      spyOn(comp, 'getScrollY');
+      vi.spyOn(comp, 'getScrollY');
       comp.lastScrollY = 100;
     });
 
     it('removes header-hidden when at top (currentY <= 0)', () => {
       nativeEl.classList.add('header-hidden');
-      comp.getScrollY.and.returnValue(0);
+      comp.getScrollY.mockReturnValue(0);
       comp.onScroll();
-      expect(nativeEl.classList.contains('header-hidden')).toBeFalse();
+      expect(nativeEl.classList.contains('header-hidden')).toBe(false);
     });
 
     it('adds header-hidden when scrolling down past threshold', () => {
-      comp.getScrollY.and.returnValue(115); // > lastScrollY(100) + threshold(10)
+      comp.getScrollY.mockReturnValue(115); // > lastScrollY(100) + threshold(10)
       comp.onScroll();
-      expect(nativeEl.classList.contains('header-hidden')).toBeTrue();
+      expect(nativeEl.classList.contains('header-hidden')).toBe(true);
     });
 
     it('removes header-hidden when scrolling up past threshold', () => {
       nativeEl.classList.add('header-hidden');
-      comp.getScrollY.and.returnValue(85); // < lastScrollY(100) - threshold(10)
+      comp.getScrollY.mockReturnValue(85); // < lastScrollY(100) - threshold(10)
       comp.onScroll();
-      expect(nativeEl.classList.contains('header-hidden')).toBeFalse();
+      expect(nativeEl.classList.contains('header-hidden')).toBe(false);
     });
 
     it('does not change state when scroll delta is within threshold', () => {
       nativeEl.classList.add('header-hidden');
-      comp.getScrollY.and.returnValue(105); // within ±10
+      comp.getScrollY.mockReturnValue(105); // within ±10
       comp.onScroll();
-      expect(nativeEl.classList.contains('header-hidden')).toBeTrue();
+      expect(nativeEl.classList.contains('header-hidden')).toBe(true);
     });
 
     it('updates lastScrollY after state change', () => {
-      comp.getScrollY.and.returnValue(115);
+      comp.getScrollY.mockReturnValue(115);
       comp.onScroll();
       expect(comp.lastScrollY).toBe(115);
     });
@@ -167,7 +183,7 @@ describe('HeaderComponent – server platform', () => {
       providers: buildProviders('server')
     }).compileComponents();
 
-    spyOn(window, 'addEventListener');
+    vi.spyOn(window, 'addEventListener');
     TestBed.createComponent(HeaderComponent).detectChanges();
 
     expect(window.addEventListener).not.toHaveBeenCalled();

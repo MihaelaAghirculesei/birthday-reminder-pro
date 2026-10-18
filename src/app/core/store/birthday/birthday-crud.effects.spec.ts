@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { type Action } from '@ngrx/store';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
-import { type Observable, of } from 'rxjs';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import { firstValueFrom,type Observable, of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../../shared/models/birthday.model';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
@@ -22,12 +23,12 @@ describe('BirthdayCrudEffects', () => {
   let actions$: Observable<Action>;
   let effects: BirthdayCrudEffects;
   let store: MockStore;
-  let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
-  let pushNotificationMock: jasmine.SpyObj<PushNotificationService>;
-  let idGeneratorMock: jasmine.SpyObj<IdGeneratorService>;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
-  let syncCoordinatorMock: jasmine.SpyObj<SyncCoordinatorService>;
-  let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
+  let offlineStorageMock: MockedObject<IndexedDBStorageService>;
+  let pushNotificationMock: MockedObject<PushNotificationService>;
+  let idGeneratorMock: MockedObject<IdGeneratorService>;
+  let loggerMock: MockedObject<LoggerService>;
+  let syncCoordinatorMock: MockedObject<SyncCoordinatorService>;
+  let photoStorageMock: MockedObject<PhotoStorageService>;
 
   const mockBirthday = createMockBirthday({ id: '1', name: 'John Doe', category: 'Family' });
 
@@ -56,32 +57,43 @@ describe('BirthdayCrudEffects', () => {
   };
 
   beforeEach(() => {
-    offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays',
-      'addBirthday',
-      'addBirthdays',
-      'updateBirthday',
-      'deleteBirthday',
-      'clear',
-      'saveBirthdays'
-    ]);
-    pushNotificationMock = jasmine.createSpyObj('PushNotificationService', [
-      'cancelAllNotificationsForBirthday'
-    ]);
-    idGeneratorMock = jasmine.createSpyObj('IdGeneratorService', ['generateId']);
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
-    syncCoordinatorMock = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange']);
-    photoStorageMock = jasmine.createSpyObj('PhotoStorageService', ['deletePhotoByUrl']);
-    photoStorageMock.deletePhotoByUrl.and.resolveTo();
+    offlineStorageMock = {
+      getBirthdays: vi.fn().mockName('IndexedDBStorageService.getBirthdays'),
+      addBirthday: vi.fn().mockName('IndexedDBStorageService.addBirthday'),
+      addBirthdays: vi.fn().mockName('IndexedDBStorageService.addBirthdays'),
+      updateBirthday: vi.fn().mockName('IndexedDBStorageService.updateBirthday'),
+      deleteBirthday: vi.fn().mockName('IndexedDBStorageService.deleteBirthday'),
+      clear: vi.fn().mockName('IndexedDBStorageService.clear'),
+      saveBirthdays: vi.fn().mockName('IndexedDBStorageService.saveBirthdays')
+    } as unknown as MockedObject<IndexedDBStorageService>;
+    pushNotificationMock = {
+      cancelAllNotificationsForBirthday: vi.fn().mockName('PushNotificationService.cancelAllNotificationsForBirthday')
+    } as unknown as MockedObject<PushNotificationService>;
+    idGeneratorMock = {
+      generateId: vi.fn().mockName('IdGeneratorService.generateId')
+    } as unknown as MockedObject<IdGeneratorService>;
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
+    syncCoordinatorMock = {
+      queueChange: vi.fn().mockName('SyncCoordinatorService.queueChange')
+    } as unknown as MockedObject<SyncCoordinatorService>;
+    photoStorageMock = {
+      deletePhotoByUrl: vi.fn().mockName('PhotoStorageService.deletePhotoByUrl')
+    } as unknown as MockedObject<PhotoStorageService>;
+    photoStorageMock.deletePhotoByUrl.mockResolvedValue(undefined);
 
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-    offlineStorageMock.addBirthday.and.returnValue(Promise.resolve());
-    offlineStorageMock.addBirthdays.and.returnValue(Promise.resolve());
-    offlineStorageMock.updateBirthday.and.returnValue(Promise.resolve());
-    offlineStorageMock.deleteBirthday.and.returnValue(Promise.resolve());
-    offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-    idGeneratorMock.generateId.and.returnValue('new-id');
-    syncCoordinatorMock.queueChange.and.returnValue(Promise.resolve());
+    offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
+    offlineStorageMock.addBirthday.mockReturnValue(Promise.resolve());
+    offlineStorageMock.addBirthdays.mockReturnValue(Promise.resolve());
+    offlineStorageMock.updateBirthday.mockReturnValue(Promise.resolve());
+    offlineStorageMock.deleteBirthday.mockReturnValue(Promise.resolve());
+    offlineStorageMock.saveBirthdays.mockReturnValue(Promise.resolve());
+    idGeneratorMock.generateId.mockReturnValue('new-id');
+    syncCoordinatorMock.queueChange.mockReturnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
       providers: [
@@ -107,233 +119,196 @@ describe('BirthdayCrudEffects', () => {
   });
 
   describe('loadBirthdays$', () => {
-    it('should load birthdays successfully', (done) => {
+    it('should load birthdays successfully', async () => {
       const birthdays = [mockBirthday];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(birthdays));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve(birthdays));
 
       actions$ = of(BirthdayActions.loadBirthdays());
 
-      effects.loadBirthdays$.subscribe(action => {
-        const expectedBirthdays = [{ ...mockBirthday, category: 'family' }];
-        expect(action).toEqual(BirthdayActions.loadBirthdaysSuccess({ birthdays: expectedBirthdays }));
-        expect(offlineStorageMock.getBirthdays).toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.loadBirthdays$);
+      const expectedBirthdays = [{ ...mockBirthday, category: 'family' }];
+      expect(action).toEqual(BirthdayActions.loadBirthdaysSuccess({ birthdays: expectedBirthdays }));
+      expect(offlineStorageMock.getBirthdays).toHaveBeenCalled();
     });
 
-    it('should handle load birthdays failure', (done) => {
+    it('should handle load birthdays failure', async () => {
       const error = new Error('Load failed');
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.reject(error));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.loadBirthdays());
 
-      effects.loadBirthdays$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.loadBirthdaysFailure({ error: 'Load failed' }));
-        done();
-      });
+      const action = await firstValueFrom(effects.loadBirthdays$);
+      expect(action).toEqual(BirthdayActions.loadBirthdaysFailure({ error: 'Load failed' }));
     });
 
-    it('should normalize category and add zodiac sign', (done) => {
+    it('should normalize category and add zodiac sign', async () => {
       const birthdayWithoutZodiac = { ...mockBirthday, zodiacSign: undefined };
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([birthdayWithoutZodiac as Birthday]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([birthdayWithoutZodiac as Birthday]));
 
       actions$ = of(BirthdayActions.loadBirthdays());
 
-      effects.loadBirthdays$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.loadBirthdaysSuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.loadBirthdaysSuccess>;
-        const loadedBirthday = successAction.birthdays[0];
-        expect(loadedBirthday.zodiacSign).toBe('Capricorn');
-        done();
-      });
+      const action = await firstValueFrom(effects.loadBirthdays$);
+      expect(action.type).toBe(BirthdayActions.loadBirthdaysSuccess.type);
+      const successAction = action as ReturnType<typeof BirthdayActions.loadBirthdaysSuccess>;
+      const loadedBirthday = successAction.birthdays[0];
+      expect(loadedBirthday.zodiacSign).toBe('Capricorn');
     });
   });
 
   describe('addBirthday$', () => {
-    it('should add birthday successfully without calendar sync', (done) => {
+    it('should add birthday successfully without calendar sync', async () => {
       const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
-      effects.addBirthday$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.addBirthdaySuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.addBirthdaySuccess>;
-        expect(successAction.birthday.id).toBe('new-id');
-        expect(successAction.birthday.name).toBe('Jane Doe');
-        expect(offlineStorageMock.addBirthday).toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.addBirthday$);
+      expect(action.type).toBe(BirthdayActions.addBirthdaySuccess.type);
+      const successAction = action as ReturnType<typeof BirthdayActions.addBirthdaySuccess>;
+      expect(successAction.birthday.id).toBe('new-id');
+      expect(successAction.birthday.name).toBe('Jane Doe');
+      expect(offlineStorageMock.addBirthday).toHaveBeenCalled();
     });
 
-    it('should handle add birthday failure', (done) => {
+    it('should handle add birthday failure', async () => {
       const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
       const error = new Error('Add failed');
-      offlineStorageMock.addBirthday.and.returnValue(Promise.reject(error));
+      offlineStorageMock.addBirthday.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
-      effects.addBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.addBirthdayFailure({ error: 'Add failed', birthday: newBirthday as Birthday }));
-        done();
-      });
+      const action = await firstValueFrom(effects.addBirthday$);
+      expect(action).toEqual(BirthdayActions.addBirthdayFailure({ error: 'Add failed', birthday: newBirthday as Birthday }));
     });
 
-    it('should queue sync change when user is authenticated', (done) => {
+    it('should queue sync change when user is authenticated', async () => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
       store.refreshState();
       const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
-      effects.addBirthday$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.addBirthdaySuccess.type);
-        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', jasmine.any(String), 'create', jasmine.any(Object));
-        done();
-      });
+      const action = await firstValueFrom(effects.addBirthday$);
+      expect(action.type).toBe(BirthdayActions.addBirthdaySuccess.type);
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', expect.any(String), 'create', expect.any(Object));
     });
   });
 
   describe('updateBirthday$', () => {
-    it('should update birthday successfully', (done) => {
+    it('should update birthday successfully', async () => {
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
-      effects.updateBirthday$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.updateBirthdaySuccess>;
-        expect(successAction.birthday.category).toBe('family');
-        expect(successAction.operationId).toBe('op-1');
-        expect(offlineStorageMock.updateBirthday).toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.updateBirthday$);
+      expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
+      const successAction = action as ReturnType<typeof BirthdayActions.updateBirthdaySuccess>;
+      expect(successAction.birthday.category).toBe('family');
+      expect(successAction.operationId).toBe('op-1');
+      expect(offlineStorageMock.updateBirthday).toHaveBeenCalled();
     });
 
-    it('should handle update birthday failure', (done) => {
+    it('should handle update birthday failure', async () => {
       const error = new Error('Update failed');
-      offlineStorageMock.updateBirthday.and.returnValue(Promise.reject(error));
+      offlineStorageMock.updateBirthday.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
-      effects.updateBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-1', id: '1', birthday: mockBirthday }));
-        done();
-      });
+      const action = await firstValueFrom(effects.updateBirthday$);
+      expect(action).toEqual(BirthdayActions.updateBirthdayFailure({ error: 'Update failed', operationId: 'op-1', id: '1', birthday: mockBirthday }));
     });
 
-    it('should queue sync change when user is authenticated', (done) => {
+    it('should queue sync change when user is authenticated', async () => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
       store.refreshState();
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
-      effects.updateBirthday$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
-        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'update', jasmine.any(Object));
-        done();
-      });
+      const action = await firstValueFrom(effects.updateBirthday$);
+      expect(action.type).toBe(BirthdayActions.updateBirthdaySuccess.type);
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'update', expect.any(Object));
     });
   });
 
   describe('deleteBirthday$', () => {
-    it('should delete birthday successfully and cancel notifications', (done) => {
+    it('should delete birthday successfully and cancel notifications', async () => {
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
-        expect(offlineStorageMock.deleteBirthday).toHaveBeenCalledWith('1');
-        expect(pushNotificationMock.cancelAllNotificationsForBirthday).toHaveBeenCalledWith('1');
-        done();
-      });
+      const action = await firstValueFrom(effects.deleteBirthday$);
+      expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
+      expect(offlineStorageMock.deleteBirthday).toHaveBeenCalledWith('1');
+      expect(pushNotificationMock.cancelAllNotificationsForBirthday).toHaveBeenCalledWith('1');
     });
 
-    it('should dispatch deleteBirthdayFailure when birthday is not in optimistic backup', (done) => {
+    it('should dispatch deleteBirthdayFailure when birthday is not in optimistic backup', async () => {
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, []);
       store.refreshState();
       actions$ = of(BirthdayActions.deleteBirthday({ id: 'missing-id' }));
 
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Birthday not found', id: 'missing-id' }));
-        expect(offlineStorageMock.deleteBirthday).not.toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.deleteBirthday$);
+      expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Birthday not found', id: 'missing-id' }));
+      expect(offlineStorageMock.deleteBirthday).not.toHaveBeenCalled();
     });
 
-    it('should handle delete birthday failure', (done) => {
+    it('should handle delete birthday failure', async () => {
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
       const error = new Error('Delete failed');
-      offlineStorageMock.deleteBirthday.and.returnValue(Promise.reject(error));
+      offlineStorageMock.deleteBirthday.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed', id: '1' }));
-        done();
-      });
+      const action = await firstValueFrom(effects.deleteBirthday$);
+      expect(action).toEqual(BirthdayActions.deleteBirthdayFailure({ error: 'Delete failed', id: '1' }));
     });
 
-    it('should queue sync change when user is authenticated', (done) => {
+    it('should queue sync change when user is authenticated', async () => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
-        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete');
-        done();
-      });
+      const action = await firstValueFrom(effects.deleteBirthday$);
+      expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: mockBirthday }));
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', '1', 'delete');
     });
 
-    it('should log a warning and still succeed when photo Storage cleanup rejects', (done) => {
+    it('should log a warning and still succeed when photo Storage cleanup rejects', async () => {
       const birthdayWithPhoto = createMockBirthday({
         id: '1',
         photo: 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media',
       });
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: birthdayWithPhoto }]);
       store.refreshState();
-      photoStorageMock.deletePhotoByUrl.and.rejectWith(new Error('Storage error'));
+      photoStorageMock.deletePhotoByUrl.mockRejectedValue(new Error('Storage error'));
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
-      effects.deleteBirthday$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: birthdayWithPhoto }));
-        expect(loggerMock.warn).toHaveBeenCalledWith(
-          jasmine.stringContaining('[BirthdayCrudEffects]'),
-          '1',
-          jasmine.any(String),
-          jasmine.any(Error)
-        );
-        done();
-      });
+      const action = await firstValueFrom(effects.deleteBirthday$);
+      expect(action).toEqual(BirthdayActions.deleteBirthdaySuccess({ id: '1', birthday: birthdayWithPhoto }));
+      expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('[BirthdayCrudEffects]'), '1', expect.any(String), expect.any(Error));
     });
   });
 
   describe('clearAllBirthdays$', () => {
-    it('should clear all birthdays successfully', (done) => {
-      offlineStorageMock.clear.and.returnValue(Promise.resolve());
+    it('should clear all birthdays successfully', async () => {
+      offlineStorageMock.clear.mockReturnValue(Promise.resolve());
 
       actions$ = of(BirthdayActions.clearAllBirthdays());
 
-      effects.clearAllBirthdays$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.clearAllBirthdaysSuccess());
-        expect(offlineStorageMock.clear).toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.clearAllBirthdays$);
+      expect(action).toEqual(BirthdayActions.clearAllBirthdaysSuccess());
+      expect(offlineStorageMock.clear).toHaveBeenCalled();
     });
 
-    it('should handle clear all birthdays failure', (done) => {
+    it('should handle clear all birthdays failure', async () => {
       const error = new Error('Clear failed');
-      offlineStorageMock.clear.and.returnValue(Promise.reject(error));
+      offlineStorageMock.clear.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.clearAllBirthdays());
 
-      effects.clearAllBirthdays$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.clearAllBirthdaysFailure({ error: 'Clear failed' }));
-        done();
-      });
+      const action = await firstValueFrom(effects.clearAllBirthdays$);
+      expect(action).toEqual(BirthdayActions.clearAllBirthdaysFailure({ error: 'Clear failed' }));
     });
   });
 
@@ -343,70 +318,58 @@ describe('BirthdayCrudEffects', () => {
       { name: 'Bob', birthDate: '1985-07-22', category: 'Work' } as Birthday,
     ];
 
-    it('should import birthdays successfully without sync (anonymous user)', (done) => {
+    it('should import birthdays successfully without sync (anonymous user)', async () => {
       actions$ = of(BirthdayActions.importBirthdays({ birthdays: birthdaysToImport }));
 
-      effects.importBirthdays$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.importBirthdaysSuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.importBirthdaysSuccess>;
-        expect(successAction.birthdays.length).toBe(2);
-        expect(offlineStorageMock.addBirthdays).toHaveBeenCalled();
-        expect(syncCoordinatorMock.queueChange).not.toHaveBeenCalled();
-        done();
-      });
+      const action = await firstValueFrom(effects.importBirthdays$);
+      expect(action.type).toBe(BirthdayActions.importBirthdaysSuccess.type);
+      const successAction = action as ReturnType<typeof BirthdayActions.importBirthdaysSuccess>;
+      expect(successAction.birthdays.length).toBe(2);
+      expect(offlineStorageMock.addBirthdays).toHaveBeenCalled();
+      expect(syncCoordinatorMock.queueChange).not.toHaveBeenCalled();
     });
 
-    it('should queue a sync change per birthday when authenticated', (done) => {
+    it('should queue a sync change per birthday when authenticated', async () => {
       store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
       store.refreshState();
 
       actions$ = of(BirthdayActions.importBirthdays({ birthdays: birthdaysToImport }));
 
-      effects.importBirthdays$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.importBirthdaysSuccess.type);
-        expect(syncCoordinatorMock.queueChange).toHaveBeenCalledTimes(2);
-        birthdaysToImport.forEach((_, i) =>
-          expect(syncCoordinatorMock.queueChange.calls.argsFor(i)[2]).toBe('create')
-        );
-        done();
-      });
+      const action = await firstValueFrom(effects.importBirthdays$);
+      expect(action.type).toBe(BirthdayActions.importBirthdaysSuccess.type);
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledTimes(2);
+      birthdaysToImport.forEach((_, i) => expect(vi.mocked(syncCoordinatorMock.queueChange).mock.calls[i][2]).toBe('create'));
     });
 
-    it('should dispatch importBirthdaysFailure on storage error', (done) => {
+    it('should dispatch importBirthdaysFailure on storage error', async () => {
       const error = new Error('Import failed');
-      offlineStorageMock.addBirthdays.and.returnValue(Promise.reject(error));
+      offlineStorageMock.addBirthdays.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.importBirthdays({ birthdays: birthdaysToImport }));
 
-      effects.importBirthdays$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.importBirthdaysFailure({ error: 'Import failed' }));
-        done();
-      });
+      const action = await firstValueFrom(effects.importBirthdays$);
+      expect(action).toEqual(BirthdayActions.importBirthdaysFailure({ error: 'Import failed' }));
     });
   });
 
   describe('loadTestData$', () => {
-    it('should load test data successfully', (done) => {
+    it('should load test data successfully', async () => {
       actions$ = of(BirthdayActions.loadTestData());
 
-      effects.loadTestData$.subscribe(action => {
-        expect(action.type).toBe(BirthdayActions.loadTestDataSuccess.type);
-        const successAction = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
-        expect(successAction.birthdays.length).toBeGreaterThan(0);
-        done();
-      });
+      const action = await firstValueFrom(effects.loadTestData$);
+      expect(action.type).toBe(BirthdayActions.loadTestDataSuccess.type);
+      const successAction = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
+      expect(successAction.birthdays.length).toBeGreaterThan(0);
     });
 
-    it('should dispatch loadTestDataFailure on storage error', (done) => {
+    it('should dispatch loadTestDataFailure on storage error', async () => {
       const error = new Error('Save failed');
-      offlineStorageMock.saveBirthdays.and.returnValue(Promise.reject(error));
+      offlineStorageMock.saveBirthdays.mockReturnValue(Promise.reject(error));
 
       actions$ = of(BirthdayActions.loadTestData());
 
-      effects.loadTestData$.subscribe(action => {
-        expect(action).toEqual(BirthdayActions.loadTestDataFailure({ error: 'Save failed' }));
-        done();
-      });
+      const action = await firstValueFrom(effects.loadTestData$);
+      expect(action).toEqual(BirthdayActions.loadTestDataFailure({ error: 'Save failed' }));
     });
   });
 });

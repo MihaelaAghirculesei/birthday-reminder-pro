@@ -1,6 +1,7 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import type { MockedObject } from 'vitest';
 
 import { BackupService } from '../../core/services/backup.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -13,15 +14,21 @@ import { HeaderImportExportComponent } from './header-import-export.component';
 describe('HeaderImportExportComponent', () => {
   let component: HeaderImportExportComponent;
   let fixture: ComponentFixture<HeaderImportExportComponent>;
-  let mockNotificationService: jasmine.SpyObj<NotificationService>;
-  let mockBackupService: jasmine.SpyObj<BackupService>;
+  let mockNotificationService: MockedObject<NotificationService>;
+  let mockBackupService: MockedObject<BackupService>;
   let store: MockStore;
 
   beforeEach(async () => {
-    mockNotificationService = jasmine.createSpyObj('NotificationService', ['show']);
-    mockBackupService = jasmine.createSpyObj('BackupService', [
-      'exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard'
-    ]);
+    mockNotificationService = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
+    mockBackupService = {
+      exportToJSON: vi.fn().mockName('BackupService.exportToJSON'),
+      exportToCSV: vi.fn().mockName('BackupService.exportToCSV'),
+      importFromFile: vi.fn().mockName('BackupService.importFromFile'),
+      importFromCSV: vi.fn().mockName('BackupService.importFromCSV'),
+      importFromVCard: vi.fn().mockName('BackupService.importFromVCard')
+    } as unknown as MockedObject<BackupService>;
 
     await TestBed.configureTestingModule({
       imports: [
@@ -101,10 +108,8 @@ describe('HeaderImportExportComponent', () => {
 
     it('should dispatch addBirthday and show success when all birthdays are valid', async () => {
       const mockBirthday = createMockBirthday({ id: '1', name: 'John', birthDate: '1990-05-15' });
-      mockBackupService.importFromFile.and.returnValue(
-        Promise.resolve({ valid: [mockBirthday], invalid: [] })
-      );
-      spyOn(store, 'dispatch');
+      mockBackupService.importFromFile.mockReturnValue(Promise.resolve({ valid: [mockBirthday], invalid: [] }));
+      vi.spyOn(store, 'dispatch');
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
@@ -114,25 +119,18 @@ describe('HeaderImportExportComponent', () => {
 
     it('should dispatch valid birthdays and show warning when some are skipped', async () => {
       const mockBirthday = createMockBirthday({ id: '1', name: 'John', birthDate: '1990-05-15' });
-      mockBackupService.importFromFile.and.returnValue(
-        Promise.resolve({ valid: [mockBirthday], invalid: [{ name: 'Bad', error: 'Invalid date' }] })
-      );
-      spyOn(store, 'dispatch');
+      mockBackupService.importFromFile.mockReturnValue(Promise.resolve({ valid: [mockBirthday], invalid: [{ name: 'Bad', error: 'Invalid date' }] }));
+      vi.spyOn(store, 'dispatch');
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
       expect(store.dispatch).toHaveBeenCalledWith(BirthdayActions.importBirthdays({ birthdays: [mockBirthday] }));
-      expect(mockNotificationService.show).toHaveBeenCalledWith(
-        'Imported 1 birthdays (1 skipped)',
-        'warning'
-      );
+      expect(mockNotificationService.show).toHaveBeenCalledWith('Imported 1 birthdays (1 skipped)', 'warning');
     });
 
     it('should show error when all imported birthdays are invalid', async () => {
-      mockBackupService.importFromFile.and.returnValue(
-        Promise.resolve({ valid: [], invalid: [{ name: 'Bad', error: 'Invalid date' }] })
-      );
-      spyOn(store, 'dispatch');
+      mockBackupService.importFromFile.mockReturnValue(Promise.resolve({ valid: [], invalid: [{ name: 'Bad', error: 'Invalid date' }] }));
+      vi.spyOn(store, 'dispatch');
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
@@ -141,7 +139,7 @@ describe('HeaderImportExportComponent', () => {
     });
 
     it('should show error when import throws', async () => {
-      mockBackupService.importFromFile.and.returnValue(Promise.reject(new Error('Parse error')));
+      mockBackupService.importFromFile.mockReturnValue(Promise.reject(new Error('Parse error')));
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 
@@ -159,10 +157,8 @@ describe('HeaderImportExportComponent', () => {
 
     it('should dispatch addBirthday and show success on CSV import', async () => {
       const mockBirthday = createMockBirthday({ id: '1', name: 'John', birthDate: '1990-05-15' });
-      mockBackupService.importFromCSV.and.returnValue(
-        Promise.resolve({ valid: [mockBirthday], invalid: [] })
-      );
-      spyOn(store, 'dispatch');
+      mockBackupService.importFromCSV.mockReturnValue(Promise.resolve({ valid: [mockBirthday], invalid: [] }));
+      vi.spyOn(store, 'dispatch');
 
       await component.onImportCSV({ target: mockInput } as unknown as Event);
 
@@ -172,10 +168,8 @@ describe('HeaderImportExportComponent', () => {
 
     it('should dispatch addBirthday and show success on vCard import', async () => {
       const mockBirthday = createMockBirthday({ id: '1', name: 'John', birthDate: '1990-05-15' });
-      mockBackupService.importFromVCard.and.returnValue(
-        Promise.resolve({ valid: [mockBirthday], invalid: [] })
-      );
-      spyOn(store, 'dispatch');
+      mockBackupService.importFromVCard.mockReturnValue(Promise.resolve({ valid: [mockBirthday], invalid: [] }));
+      vi.spyOn(store, 'dispatch');
 
       await component.onImportVCard({ target: mockInput } as unknown as Event);
 

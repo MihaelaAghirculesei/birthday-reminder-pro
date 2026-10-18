@@ -1,12 +1,13 @@
-import { NgZone,PLATFORM_ID } from '@angular/core';
+import { NgZone, PLATFORM_ID } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import type { Gapi, GapiTokenObject } from './google-api.types';
 import { GoogleApiLoaderService } from './google-api-loader.service';
 import { GoogleCalendarService } from './google-calendar.service';
 import { GoogleCalendarAuthService } from './google-calendar-auth.service';
-import type { GoogleAccountsOAuth2,TokenClient, TokenResponse } from './google-identity.types';
+import type { GoogleAccountsOAuth2, TokenClient, TokenResponse } from './google-identity.types';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import { SecureStorageService } from './secure-storage.service';
 
@@ -14,9 +15,9 @@ describe('GoogleCalendarService', () => {
   let service: GoogleCalendarService;
   let auth: GoogleCalendarAuthService;
   let loader: GoogleApiLoaderService;
-  let mockTokenClient: jasmine.SpyObj<TokenClient>;
-  let mockOauth2: jasmine.SpyObj<GoogleAccountsOAuth2>;
-  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
+  let mockTokenClient: MockedObject<TokenClient>;
+  let mockOauth2: MockedObject<GoogleAccountsOAuth2>;
+  let mockSecureStorage: MockedObject<SecureStorageService>;
   let tokenCallback: ((response: TokenResponse) => void) | null = null;
   let currentToken: GapiTokenObject | null = null;
   let storedData = new Map<string, unknown>();
@@ -25,48 +26,51 @@ describe('GoogleCalendarService', () => {
     client: {
       calendar: {
         calendarList: {
-          list: jasmine.createSpy('list').and.returnValue(Promise.resolve({ result: { items: [] } }))
+          list: vi.fn().mockReturnValue(Promise.resolve({ result: { items: [] } }))
         },
         events: {
-          insert: jasmine.createSpy('insert').and.returnValue(Promise.resolve({ result: { id: 'event123' } })),
-          update: jasmine.createSpy('update').and.returnValue(Promise.resolve({ result: {} })),
-          delete: jasmine.createSpy('delete').and.returnValue(Promise.resolve({ result: {} }))
+          insert: vi.fn().mockReturnValue(Promise.resolve({ result: { id: 'event123' } })),
+          update: vi.fn().mockReturnValue(Promise.resolve({ result: {} })),
+          delete: vi.fn().mockReturnValue(Promise.resolve({ result: {} }))
         }
       },
-      init: jasmine.createSpy('init').and.returnValue(Promise.resolve()),
-      load: jasmine.createSpy('load').and.returnValue(Promise.resolve()),
-      setToken: jasmine.createSpy('setToken').and.callFake((token: GapiTokenObject | null) => {
+      init: vi.fn().mockReturnValue(Promise.resolve()),
+      load: vi.fn().mockReturnValue(Promise.resolve()),
+      setToken: vi.fn().mockImplementation((token: GapiTokenObject | null) => {
         currentToken = token;
       }),
-      getToken: jasmine.createSpy('getToken').and.callFake(() => currentToken)
+      getToken: vi.fn().mockImplementation(() => currentToken)
     },
-    load: jasmine.createSpy('load').and.callFake((_libs: string, callback: () => void) => {
+    load: vi.fn().mockImplementation((_libs: string, callback: () => void) => {
       callback();
     })
   });
 
   const createMockGis = () => {
-    mockTokenClient = jasmine.createSpyObj<TokenClient>('TokenClient', ['requestAccessToken']);
+    mockTokenClient = {
+      requestAccessToken: vi.fn().mockName('TokenClient.requestAccessToken')
+    };
 
     mockOauth2 = {
-      initTokenClient: jasmine.createSpy('initTokenClient').and.callFake((config) => {
+      initTokenClient: vi.fn().mockImplementation((config) => {
         tokenCallback = config.callback;
         return mockTokenClient;
       }),
-      revoke: jasmine.createSpy('revoke').and.callFake((_token: string, callback?: () => void) => {
-        if (callback) callback();
+      revoke: vi.fn().mockImplementation((_token: string, callback?: () => void) => {
+        if (callback)
+          callback();
       }),
-      hasGrantedAllScopes: jasmine.createSpy('hasGrantedAllScopes').and.returnValue(true),
-      hasGrantedAnyScope: jasmine.createSpy('hasGrantedAnyScope').and.returnValue(true)
+      hasGrantedAllScopes: vi.fn().mockReturnValue(true),
+      hasGrantedAnyScope: vi.fn().mockReturnValue(true)
     };
 
     return {
       accounts: {
         id: {
-          initialize: jasmine.createSpy('initialize'),
-          prompt: jasmine.createSpy('prompt'),
-          renderButton: jasmine.createSpy('renderButton'),
-          disableAutoSelect: jasmine.createSpy('disableAutoSelect')
+          initialize: vi.fn(),
+          prompt: vi.fn(),
+          renderButton: vi.fn(),
+          disableAutoSelect: vi.fn()
         },
         oauth2: mockOauth2
       }
@@ -79,24 +83,24 @@ describe('GoogleCalendarService', () => {
     storedData = new Map();
 
     localStorage.clear();
-    spyOn(localStorage, 'setItem').and.callThrough();
-    spyOn(localStorage, 'getItem').and.callThrough();
+    vi.spyOn(localStorage, 'setItem');
+    vi.spyOn(localStorage, 'getItem');
 
-    mockSecureStorage = jasmine.createSpyObj<SecureStorageService>('SecureStorageService', [
-      'setItem',
-      'getItem',
-      'removeItem'
-    ]);
+    mockSecureStorage = {
+      setItem: vi.fn().mockName('SecureStorageService.setItem'),
+      getItem: vi.fn().mockName('SecureStorageService.getItem'),
+      removeItem: vi.fn().mockName('SecureStorageService.removeItem')
+    } as unknown as MockedObject<SecureStorageService>;
 
-    mockSecureStorage.setItem.and.callFake(async (key: string, value: unknown) => {
+    mockSecureStorage.setItem.mockImplementation(async (key: string, value: unknown) => {
       storedData.set(key, value);
     });
 
-    mockSecureStorage.getItem.and.callFake(async <T>(key: string): Promise<T | null> => {
+    mockSecureStorage.getItem.mockImplementation(async <T>(key: string): Promise<T | null> => {
       return (storedData.get(key) as T) ?? null;
     });
 
-    mockSecureStorage.removeItem.and.callFake(async (key: string) => {
+    mockSecureStorage.removeItem.mockImplementation(async (key: string) => {
       storedData.delete(key);
     });
 
@@ -206,17 +210,21 @@ describe('GoogleCalendarService', () => {
 
     it('should revoke token on sign out', async () => {
       currentToken = { access_token: 'test-token' };
-      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      (auth as unknown as {
+        isSignedInSubject: {
+          next: (v: boolean) => void;
+        };
+      }).isSignedInSubject.next(true);
 
       await service.signOut();
 
-      expect(mockOauth2.revoke).toHaveBeenCalledWith('test-token', jasmine.any(Function));
+      expect(mockOauth2.revoke).toHaveBeenCalledWith('test-token', expect.any(Function));
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith(null);
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
     });
 
     it('should request access token on sign in', fakeAsync(() => {
-      mockTokenClient.requestAccessToken.and.callFake(() => {
+      mockTokenClient.requestAccessToken.mockImplementation(() => {
         if (tokenCallback) {
           tokenCallback({
             access_token: 'new-token',
@@ -242,14 +250,18 @@ describe('GoogleCalendarService', () => {
       loader.isGapiLoaded = true;
       loader.isGisLoaded = true;
       auth.initTokenClient('test-client-id', 'test-scopes');
-      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      (auth as unknown as {
+        isSignedInSubject: {
+          next: (v: boolean) => void;
+        };
+      }).isSignedInSubject.next(true);
     });
 
     it('should refresh token when expiring soon', fakeAsync(() => {
       const expiresAt = Date.now() + 200000;
       storedData.set('googleCalendarToken', { access_token: 'old-token', expires_at: expiresAt });
 
-      mockTokenClient.requestAccessToken.and.callFake(() => {
+      mockTokenClient.requestAccessToken.mockImplementation(() => {
         if (tokenCallback) {
           tokenCallback({
             access_token: 'refreshed-token',
@@ -283,7 +295,7 @@ describe('GoogleCalendarService', () => {
       const error401 = { result: { error: { code: 401 } } };
       let callCount = 0;
 
-      const operation = jasmine.createSpy('operation').and.callFake(() => {
+      const operation = vi.fn().mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           return Promise.reject(error401);
@@ -291,7 +303,7 @@ describe('GoogleCalendarService', () => {
         return Promise.resolve({ result: { items: [] } });
       });
 
-      mockTokenClient.requestAccessToken.and.callFake(() => {
+      mockTokenClient.requestAccessToken.mockImplementation(() => {
         if (tokenCallback) {
           tokenCallback({
             access_token: 'refreshed-token',
@@ -302,7 +314,9 @@ describe('GoogleCalendarService', () => {
         }
       });
 
-      (service as unknown as { executeWithRetry: <T>(op: () => Promise<T>, ctx: string) => Promise<T> })
+      (service as unknown as {
+        executeWithRetry: <T>(op: () => Promise<T>, ctx: string) => Promise<T>;
+      })
         .executeWithRetry(operation, 'test');
       tick();
 
@@ -315,23 +329,25 @@ describe('GoogleCalendarService', () => {
       loader.isGapiLoaded = true;
       loader.isGisLoaded = true;
       auth.initTokenClient('test-client-id', 'test-scopes');
-      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(true);
+      (auth as unknown as {
+        isSignedInSubject: {
+          next: (v: boolean) => void;
+        };
+      }).isSignedInSubject.next(true);
       service.updateSettings({ enabled: true, calendarId: 'primary', reminderMinutes: 1440 });
 
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
 
       if (window.gapi) {
-        window.gapi.client.calendar.calendarList.list = jasmine.createSpy('list').and.returnValue(
-          Promise.resolve({
-            result: {
-              items: [
-                { id: 'primary', summary: 'Primary Calendar' },
-                { id: 'custom', summary: 'Custom Calendar' }
-              ]
-            }
-          })
-        );
+        window.gapi.client.calendar.calendarList.list = vi.fn().mockReturnValue(Promise.resolve({
+          result: {
+            items: [
+              { id: 'primary', summary: 'Primary Calendar' },
+              { id: 'custom', summary: 'Custom Calendar' }
+            ]
+          }
+        }));
       }
     });
 
@@ -343,11 +359,16 @@ describe('GoogleCalendarService', () => {
     });
 
     it('should throw error when getting calendars while not signed in', async () => {
-      (auth as unknown as { isSignedInSubject: { next: (v: boolean) => void } }).isSignedInSubject.next(false);
+      (auth as unknown as {
+        isSignedInSubject: {
+          next: (v: boolean) => void;
+        };
+      }).isSignedInSubject.next(false);
       try {
         await service.getCalendars();
-        fail('Should have thrown error');
-      } catch (error: unknown) {
+        throw new Error('Should have thrown error');
+      }
+      catch (error: unknown) {
         expect((error as Error).message).toContain('Not signed in');
       }
     });
@@ -379,8 +400,9 @@ describe('GoogleCalendarService', () => {
 
       try {
         await service.syncBirthdayToCalendar(birthday);
-        fail('Should have thrown error');
-      } catch (error: unknown) {
+        throw new Error('Should have thrown error');
+      }
+      catch (error: unknown) {
         expect((error as Error).message).toContain('not enabled');
       }
     });
@@ -399,7 +421,7 @@ describe('GoogleCalendarService', () => {
       expect(window.gapi?.client.calendar.events.update).toHaveBeenCalledWith({
         calendarId: 'primary',
         eventId: 'event456',
-        resource: jasmine.any(Object)
+        resource: expect.any(Object)
       });
     });
 
@@ -433,7 +455,7 @@ describe('GoogleCalendarService', () => {
 
     it('should handle errors during batch sync', async () => {
       if (window.gapi) {
-        window.gapi.client.calendar.events.insert = jasmine.createSpy('insert').and.callFake(() => {
+        window.gapi.client.calendar.events.insert = vi.fn().mockImplementation(() => {
           return Promise.reject(new Error('API error'));
         });
       }

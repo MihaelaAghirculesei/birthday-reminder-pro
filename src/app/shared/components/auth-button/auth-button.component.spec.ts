@@ -1,6 +1,7 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { type AuthUser, FirebaseAuthService } from '../../../core/services/firebase-auth.service';
@@ -12,7 +13,7 @@ describe('AuthButtonComponent', () => {
   let component: AuthButtonComponent;
   let fixture: ComponentFixture<AuthButtonComponent>;
   let store: MockStore;
-  let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
+  let authServiceMock: MockedObject<FirebaseAuthService>;
 
   const initialState = {
     auth: { user: null, loading: false, error: null, initialized: true },
@@ -20,9 +21,12 @@ describe('AuthButtonComponent', () => {
   };
 
   beforeEach(async () => {
-    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [
-      'signInWithGoogle', 'signOut', 'initAuthListener', 'performGoogleSignInDirect'
-    ]);
+    authServiceMock = {
+      signInWithGoogle: vi.fn().mockName('FirebaseAuthService.signInWithGoogle'),
+      signOut: vi.fn().mockName('FirebaseAuthService.signOut'),
+      initAuthListener: vi.fn().mockName('FirebaseAuthService.initAuthListener'),
+      performGoogleSignInDirect: vi.fn().mockName('FirebaseAuthService.performGoogleSignInDirect')
+    } as unknown as MockedObject<FirebaseAuthService>;
 
     await TestBed.configureTestingModule({
       imports: [AuthButtonComponent, NoopAnimationsModule],
@@ -101,8 +105,8 @@ describe('AuthButtonComponent', () => {
 
   it('should dispatch signInWithGoogle and signInSuccess on successful sign-in', async () => {
     const fakeUser: AuthUser = { uid: '123', displayName: 'Jane Doe', email: 'test@example.com', photoURL: null };
-    authServiceMock.performGoogleSignInDirect.and.returnValue(Promise.resolve(fakeUser));
-    const dispatchSpy = spyOn(store, 'dispatch');
+    authServiceMock.performGoogleSignInDirect.mockReturnValue(Promise.resolve(fakeUser));
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     await component.signIn();
 
@@ -111,8 +115,8 @@ describe('AuthButtonComponent', () => {
   });
 
   it('should dispatch signInFailure with error message when sign-in throws an Error', async () => {
-    authServiceMock.performGoogleSignInDirect.and.returnValue(Promise.reject(new Error('popup closed')));
-    const dispatchSpy = spyOn(store, 'dispatch');
+    authServiceMock.performGoogleSignInDirect.mockReturnValue(Promise.reject(new Error('popup closed')));
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     await component.signIn();
 
@@ -120,8 +124,8 @@ describe('AuthButtonComponent', () => {
   });
 
   it('should dispatch signInFailure with fallback message when sign-in throws a non-Error', async () => {
-    authServiceMock.performGoogleSignInDirect.and.returnValue(Promise.reject('unknown'));
-    const dispatchSpy = spyOn(store, 'dispatch');
+    authServiceMock.performGoogleSignInDirect.mockReturnValue(Promise.reject('unknown'));
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     await component.signIn();
 
@@ -131,7 +135,7 @@ describe('AuthButtonComponent', () => {
   // --- signOut() ---
 
   it('should dispatch signOut action', () => {
-    const dispatchSpy = spyOn(store, 'dispatch');
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
     component.signOut();
     expect(dispatchSpy).toHaveBeenCalledWith(AuthActions.signOut());
   });
@@ -142,7 +146,7 @@ describe('AuthButtonComponent', () => {
     store.refreshState();
     fixture.detectChanges();
 
-    const dispatchSpy = spyOn(store, 'dispatch');
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
     fixture.nativeElement.querySelector('button').click();
     expect(dispatchSpy).toHaveBeenCalledWith(AuthActions.signOut());
   });

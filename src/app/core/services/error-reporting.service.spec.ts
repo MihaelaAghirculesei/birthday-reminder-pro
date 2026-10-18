@@ -2,7 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { type ErrorReport,ErrorReportingService } from './error-reporting.service';
+import { type ErrorReport, ErrorReportingService } from './error-reporting.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
@@ -27,9 +27,7 @@ describe('ErrorReportingService', () => {
       // Race against a short timeout so a blocked IDB open never stalls the suite.
       const db = await Promise.race([
         dbConnection.getDB(),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('IDB open timeout')), 3000)
-        ),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('IDB open timeout')), 3000)),
       ]);
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction('errorReports', 'readwrite');
@@ -38,7 +36,8 @@ describe('ErrorReportingService', () => {
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
-    } catch {
+    }
+    catch {
       // Store may not exist yet, or IDB was temporarily unavailable
     }
   }
@@ -88,7 +87,11 @@ describe('ErrorReportingService', () => {
 
       const errors = await service.getRecentErrors();
       expect(errors.length).toBe(1);
-      const serialized = errors[0].serializedError as { message: string; name: string; stack?: string };
+      const serialized = errors[0].serializedError as {
+        message: string;
+        name: string;
+        stack?: string;
+      };
       expect(serialized.message).toBe('serialization test');
       expect(serialized.name).toBe('TestError');
       expect(serialized.stack).toBeDefined();
@@ -208,6 +211,6 @@ describe('ErrorReportingService SSR safety', () => {
   });
 
   it('should not throw when clearing errors on server', async () => {
-    await expectAsync(service.clearErrors()).toBeResolved();
+    await expect(service.clearErrors()).resolves.not.toThrow();
   });
 });

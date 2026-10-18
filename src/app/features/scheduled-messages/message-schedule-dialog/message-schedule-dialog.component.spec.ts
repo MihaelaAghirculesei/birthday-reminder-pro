@@ -1,9 +1,10 @@
 import { signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialog,MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
@@ -41,13 +42,17 @@ const mockBirthdays = [
 describe('MessageScheduleDialogComponent', () => {
   let component: MessageScheduleDialogComponent;
   let fixture: ComponentFixture<MessageScheduleDialogComponent>;
-  let mockDialogRef: jasmine.SpyObj<MatDialogRef<MessageScheduleDialogComponent>>;
-  let mockCategoryFacade: jasmine.SpyObj<CategoryFacadeService>;
-  let mockDialog: jasmine.SpyObj<MatDialog>;
+  let mockDialogRef: MockedObject<MatDialogRef<MessageScheduleDialogComponent>>;
+  let mockCategoryFacade: MockedObject<CategoryFacadeService>;
+  let mockDialog: MockedObject<MatDialog>;
   let store: MockStore;
 
   // Factory so individual tests can pass custom dialog data.
-  const createComponent = (data: { birthday?: Birthday; birthdayId?: string; message?: unknown } | null = {}) => {
+  const createComponent = (data: {
+    birthday?: Birthday;
+    birthdayId?: string;
+    message?: unknown;
+  } | null = {}) => {
     TestBed.configureTestingModule({
       imports: [MessageScheduleDialogComponent, BrowserAnimationsModule],
       providers: [
@@ -68,11 +73,15 @@ describe('MessageScheduleDialogComponent', () => {
   };
 
   beforeEach(() => {
-    mockDialogRef   = jasmine.createSpyObj('MatDialogRef', ['close']);
-    mockCategoryFacade = jasmine.createSpyObj('CategoryFacadeService', [], {
-      categories: signal([]),
-    });
-    mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
+    mockDialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close')
+    } as unknown as MockedObject<MatDialogRef<MessageScheduleDialogComponent>>;
+    mockCategoryFacade = {
+      categories: signal([])
+    } as unknown as MockedObject<CategoryFacadeService>;
+    mockDialog = {
+      open: vi.fn().mockName('MatDialog.open')
+    } as unknown as MockedObject<MatDialog>;
   });
 
   afterEach(() => store?.resetSelectors());
@@ -235,7 +244,7 @@ describe('MessageScheduleDialogComponent', () => {
   describe('onOptionClick', () => {
     // We spy on the *actual* injected MatDialog instance because the component's
     // own MatDialogModule import shadows the test-level MatDialog provider.
-    let dialogOpenSpy: jasmine.Spy;
+    let dialogOpenSpy: Mock;
 
     const noContactOption = (): BirthdayOptionView => ({
       birthday: mockBirthdays[0],
@@ -248,8 +257,7 @@ describe('MessageScheduleDialogComponent', () => {
       fixture.detectChanges();
       // Spy after component creation so we have the real injected instance.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dialogOpenSpy = spyOn((component as any)['dialog'], 'open')
-        .and.returnValue({ afterClosed: () => of(null) });
+      dialogOpenSpy = vi.spyOn((component as any)['dialog'], 'open').mockReturnValue({ afterClosed: () => of(null) }) as unknown as Mock;
     });
 
     it('should return early without opening dialog when the option already has contact info', () => {
@@ -259,7 +267,7 @@ describe('MessageScheduleDialogComponent', () => {
         contactInfo: 'test@example.com',
       };
       const event = new MouseEvent('click');
-      spyOn(event, 'stopPropagation');
+      vi.spyOn(event, 'stopPropagation');
 
       component.onOptionClick(event, option as never);
 
@@ -269,7 +277,7 @@ describe('MessageScheduleDialogComponent', () => {
 
     it('should stop propagation and reset selectedBirthdayId when the option has no contact', () => {
       const event = new MouseEvent('click');
-      spyOn(event, 'stopPropagation');
+      vi.spyOn(event, 'stopPropagation');
 
       component.selectedBirthdayId = '1';
       component.onOptionClick(event, noContactOption() as never);
@@ -282,33 +290,32 @@ describe('MessageScheduleDialogComponent', () => {
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
 
       expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
-      const [dialogComponent] = dialogOpenSpy.calls.mostRecent().args;
+      const [dialogComponent] = vi.mocked(dialogOpenSpy).mock.lastCall!;
       expect(dialogComponent).toBe(BirthdayEditDialogComponent);
     });
 
     it('should dispatch updateBirthday when the edit dialog returns a valid result', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       const dialogResult = {
         birthday: mockBirthdays[0],
         editedData: {
-          name:             'John Updated',
-          notes:            'Some notes',
-          birthDate:        '1990-01-15',
-          category:         'friends',
-          photo:            null,
-          rememberPhoto:    null,
-          email:            'john@example.com',
-          phone:            '+1234567890',
+          name: 'John Updated',
+          notes: 'Some notes',
+          birthDate: '1990-01-15',
+          category: 'friends',
+          photo: null,
+          rememberPhoto: null,
+          email: 'john@example.com',
+          phone: '+1234567890',
           telegramUsername: 'johnupdated',
         },
       };
-      dialogOpenSpy.and.returnValue({ afterClosed: () => of(dialogResult) });
+      dialogOpenSpy.mockReturnValue({ afterClosed: () => of(dialogResult) });
 
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
 
-      const dispatchedBirthday: Birthday =
-        (store.dispatch as jasmine.Spy).calls.mostRecent().args[0].birthday;
+      const dispatchedBirthday: Birthday = vi.mocked((store.dispatch as Mock)).mock.lastCall![0].birthday;
       expect(dispatchedBirthday.id).toBe(mockBirthdays[0].id);
       expect(dispatchedBirthday.name).toBe('John Updated');
       expect(dispatchedBirthday.email).toBe('john@example.com');
@@ -317,33 +324,32 @@ describe('MessageScheduleDialogComponent', () => {
     });
 
     it('should fall back to original name when editedData.name is blank', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       const dialogResult = {
         birthday: mockBirthdays[0],
         editedData: {
-          name:             '   ',   // blank → should keep original
-          notes:            '',
-          birthDate:        '1990-01-15',
-          category:         'friends',
-          photo:            null,
-          rememberPhoto:    null,
-          email:            'john@example.com',
-          phone:            '',
+          name: '   ', // blank → should keep original
+          notes: '',
+          birthDate: '1990-01-15',
+          category: 'friends',
+          photo: null,
+          rememberPhoto: null,
+          email: 'john@example.com',
+          phone: '',
           telegramUsername: '',
         },
       };
-      dialogOpenSpy.and.returnValue({ afterClosed: () => of(dialogResult) });
+      dialogOpenSpy.mockReturnValue({ afterClosed: () => of(dialogResult) });
 
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
 
-      const dispatchedBirthday: Birthday =
-        (store.dispatch as jasmine.Spy).calls.mostRecent().args[0].birthday;
+      const dispatchedBirthday: Birthday = vi.mocked((store.dispatch as Mock)).mock.lastCall![0].birthday;
       expect(dispatchedBirthday.name).toBe(mockBirthdays[0].name);
     });
 
     it('should NOT dispatch when the edit dialog is cancelled (null result)', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       // dialogOpenSpy already returns { afterClosed: () => of(null) } by default
 
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
@@ -352,28 +358,27 @@ describe('MessageScheduleDialogComponent', () => {
     });
 
     it('should coerce blank contact fields to undefined in the dispatched birthday', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       const dialogResult = {
         birthday: mockBirthdays[0],
         editedData: {
-          name:             'John',
-          notes:            '',
-          birthDate:        '1990-01-15',
-          category:         'friends',
-          photo:            null,
-          rememberPhoto:    null,
-          email:            '   ',   // blank → undefined
-          phone:            '',      // blank → undefined
-          telegramUsername: '',      // blank → undefined
+          name: 'John',
+          notes: '',
+          birthDate: '1990-01-15',
+          category: 'friends',
+          photo: null,
+          rememberPhoto: null,
+          email: '   ', // blank → undefined
+          phone: '', // blank → undefined
+          telegramUsername: '', // blank → undefined
         },
       };
-      dialogOpenSpy.and.returnValue({ afterClosed: () => of(dialogResult) });
+      dialogOpenSpy.mockReturnValue({ afterClosed: () => of(dialogResult) });
 
       component.onOptionClick(new MouseEvent('click'), noContactOption() as never);
 
-      const dispatchedBirthday: Birthday =
-        (store.dispatch as jasmine.Spy).calls.mostRecent().args[0].birthday;
+      const dispatchedBirthday: Birthday = vi.mocked((store.dispatch as Mock)).mock.lastCall![0].birthday;
       expect(dispatchedBirthday.email).toBeUndefined();
       expect(dispatchedBirthday.phone).toBeUndefined();
       expect(dispatchedBirthday.telegramUsername).toBeUndefined();
@@ -409,7 +414,8 @@ describe('MessageScheduleDialogComponent', () => {
       fixture.detectChanges();
 
       const ids = component.allBirthdays().map(b => b.id);
-      expect(ids).toEqual(jasmine.arrayWithExactContents(['1', '2', '3']));
+      // Same ids in any order.
+      expect([...ids].sort()).toEqual(['1', '2', '3']);
     });
   });
 
@@ -422,7 +428,7 @@ describe('MessageScheduleDialogComponent', () => {
       createComponent();
       fixture.detectChanges();
 
-      expect(component.birthdayOptions().every(o => !o.hasContact)).toBeTrue();
+      expect(component.birthdayOptions().every(o => !o.hasContact)).toBe(true);
     });
 
     it('should mark hasContact as true when email is present', () => {
@@ -434,7 +440,7 @@ describe('MessageScheduleDialogComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.birthdayOptions()[0].hasContact).toBeTrue();
+      expect(component.birthdayOptions()[0].hasContact).toBe(true);
     });
 
     it('should mark hasContact as true when phone is present', () => {
@@ -446,7 +452,7 @@ describe('MessageScheduleDialogComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.birthdayOptions()[0].hasContact).toBeTrue();
+      expect(component.birthdayOptions()[0].hasContact).toBe(true);
     });
 
     it('should mark hasContact as true when telegramUsername is present', () => {
@@ -458,7 +464,7 @@ describe('MessageScheduleDialogComponent', () => {
       store.refreshState();
       fixture.detectChanges();
 
-      expect(component.birthdayOptions()[0].hasContact).toBeTrue();
+      expect(component.birthdayOptions()[0].hasContact).toBe(true);
     });
 
     it('should produce contactInfo with only email when only email is set', () => {
@@ -514,8 +520,8 @@ describe('MessageScheduleDialogComponent', () => {
       createComponent();
       store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [{
         ...mockBirthdays[0],
-        email:            'test@example.com',
-        phone:            '+1234567890',
+        email: 'test@example.com',
+        phone: '+1234567890',
         telegramUsername: 'testuser',
       }]);
       store.refreshState();

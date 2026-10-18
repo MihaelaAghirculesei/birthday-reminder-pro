@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
+import { CURRENT_DATA_VERSION, IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 
@@ -18,11 +18,7 @@ function putRaw(db: IDBDatabase, storeName: string, record: object): Promise<voi
   });
 }
 
-function getRaw(
-  db: IDBDatabase,
-  storeName: string,
-  id: string
-): Promise<Record<string, unknown> | undefined> {
+function getRaw(db: IDBDatabase, storeName: string, id: string): Promise<Record<string, unknown> | undefined> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction([storeName], 'readonly');
     const request = tx.objectStore(storeName).get(id);
@@ -60,7 +56,8 @@ describe('IdbDataMigrationService', () => {
     try {
       const db = await connection.getDB();
       await clearStore(db, 'birthdays');
-    } catch {
+    }
+    catch {
       // ignore cleanup errors
     }
     connection.close();
@@ -92,9 +89,7 @@ describe('IdbDataMigrationService', () => {
     });
 
     it('returns CURRENT_DATA_VERSION for a freshly written record', () => {
-      expect(
-        service.getRecordVersion({ id: '1', _dataVersion: CURRENT_DATA_VERSION })
-      ).toBe(CURRENT_DATA_VERSION);
+      expect(service.getRecordVersion({ id: '1', _dataVersion: CURRENT_DATA_VERSION })).toBe(CURRENT_DATA_VERSION);
     });
   });
 
@@ -180,7 +175,7 @@ describe('IdbDataMigrationService', () => {
       });
 
       it('treats an explicit _dataVersion: 0 identically to a missing version field', () => {
-        const withZero  = service.migrateRawBirthday({ id: 'dm-d', name: 'Carol', _dataVersion: 0 });
+        const withZero = service.migrateRawBirthday({ id: 'dm-d', name: 'Carol', _dataVersion: 0 });
         const withAbsent = service.migrateRawBirthday({ id: 'dm-d', name: 'Carol' });
         expect(withZero['_dataVersion']).toBe(withAbsent['_dataVersion']);
         expect(withZero['name']).toBe(withAbsent['name']);
@@ -198,9 +193,7 @@ describe('IdbDataMigrationService', () => {
     it('BIRTHDAY_DATA_MIGRATIONS has an entry for every step 0..CURRENT_DATA_VERSION-1', () => {
       for (let v = 0; v < CURRENT_DATA_VERSION; v++) {
         const raw = { id: `completeness-v${v}`, _dataVersion: v };
-        expect(() => service.migrateRawBirthday(raw))
-          .withContext(`migration step v${v} → v${v + 1} must be defined in BIRTHDAY_DATA_MIGRATIONS`)
-          .not.toThrow();
+        expect(() => service.migrateRawBirthday(raw), `migration step v${v} → v${v + 1} must be defined in BIRTHDAY_DATA_MIGRATIONS`).not.toThrow();
       }
     });
   });
@@ -265,7 +258,7 @@ describe('IdbDataMigrationService', () => {
       await putRaw(db, 'birthdays', { id: 'good-record', name: 'Iris' });
       await putRaw(db, 'birthdays', { id: 'bad-record', name: 'Jake' });
 
-      spyOn(service, 'migrateRawBirthday').and.callFake((raw) => {
+      vi.spyOn(service, 'migrateRawBirthday').mockImplementation((raw) => {
         if (raw['id'] === 'bad-record') {
           throw new Error('Simulated migration failure');
         }
@@ -279,7 +272,7 @@ describe('IdbDataMigrationService', () => {
     });
 
     it('handles DB errors gracefully and returns zero counts', async () => {
-      spyOn(connection, 'getDB').and.rejectWith(new Error('DB unavailable'));
+      vi.spyOn(connection, 'getDB').mockRejectedValue(new Error('DB unavailable'));
 
       const result = await service.runBirthdayMigrations();
 
@@ -308,7 +301,7 @@ describe('IdbDataMigrationService', () => {
   // -------------------------------------------------------------------------
 
   it('CURRENT_DATA_VERSION should be a positive integer', () => {
-    expect(Number.isInteger(CURRENT_DATA_VERSION)).toBeTrue();
+    expect(Number.isInteger(CURRENT_DATA_VERSION)).toBe(true);
     expect(CURRENT_DATA_VERSION).toBeGreaterThan(0);
   });
 });

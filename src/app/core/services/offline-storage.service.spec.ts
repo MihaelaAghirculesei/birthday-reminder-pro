@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { type Birthday, type ScheduledMessage } from '../../shared';
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { CURRENT_DATA_VERSION,IdbDataMigrationService } from './idb-data-migration.service';
+import { CURRENT_DATA_VERSION, IdbDataMigrationService } from './idb-data-migration.service';
 import { IndexedDBConnectionService } from './indexeddb-connection.service';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
 import { IndexedDBStorageService, RETRY_CONFIG } from './offline-storage.service';
@@ -52,7 +52,8 @@ describe('IndexedDBStorageService', () => {
       await service.deleteScheduledMessage('msg-1').catch(() => undefined);
       await service.deleteScheduledMessage('msg-2').catch(() => undefined);
       await service.clear().catch(() => undefined);
-    } catch {
+    }
+    catch {
       // Ignore cleanup errors - database may already be cleared
     }
   });
@@ -127,7 +128,7 @@ describe('IndexedDBStorageService', () => {
 
     it('should reject when adding a birthday with a duplicate id', async () => {
       await service.addBirthday(mockBirthday);
-      await expectAsync(service.addBirthday(mockBirthday)).toBeRejected();
+      await expect(service.addBirthday(mockBirthday)).rejects.toThrow();
     });
 
     it('should preserve birthDate as YYYY-MM-DD string after retrieval', async () => {
@@ -149,7 +150,7 @@ describe('IndexedDBStorageService', () => {
 
   describe('Scheduled Message Operations', () => {
     it('should save a scheduled message', async () => {
-      await expectAsync(service.saveScheduledMessage(mockMessage)).toBeResolved();
+      await expect(service.saveScheduledMessage(mockMessage)).resolves.not.toThrow();
     });
 
     it('should get scheduled messages by birthday id', async () => {
@@ -231,7 +232,7 @@ describe('IndexedDBStorageService', () => {
       const birthday: Birthday = { ...mockBirthday, id: 'retry-cfg-1' };
       await customService.addBirthday(birthday);
       const birthdays = await customService.getBirthdays();
-      expect(birthdays.some(b => b.id === 'retry-cfg-1')).toBeTrue();
+      expect(birthdays.some(b => b.id === 'retry-cfg-1')).toBe(true);
       await customService.deleteBirthday('retry-cfg-1');
     });
   });
@@ -315,10 +316,7 @@ describe('IndexedDBStorageService', () => {
       connection = TestBed.inject(IndexedDBConnectionService);
     });
 
-    function getRaw(
-      db: IDBDatabase,
-      id: string
-    ): Promise<Record<string, unknown> | undefined> {
+    function getRaw(db: IDBDatabase, id: string): Promise<Record<string, unknown> | undefined> {
       return new Promise((resolve, reject) => {
         const tx = db.transaction(['birthdays'], 'readonly');
         const request = tx.objectStore('birthdays').get(id);
@@ -407,7 +405,7 @@ describe('IndexedDBStorageService', () => {
         birthDate: 'invalid-date-string'
       });
 
-      spyOn(migrationService, 'migrateRawBirthday').and.callFake((raw) => ({
+      vi.spyOn(migrationService, 'migrateRawBirthday').mockImplementation((raw) => ({
         ...raw,
         birthDate: '1990-05-10',
         _dataVersion: CURRENT_DATA_VERSION
@@ -431,7 +429,7 @@ describe('IndexedDBStorageService', () => {
       });
 
       // Migration runs but birthDate remains invalid
-      spyOn(migrationService, 'migrateRawBirthday').and.callFake((raw) => ({
+      vi.spyOn(migrationService, 'migrateRawBirthday').mockImplementation((raw) => ({
         ...raw,
         _dataVersion: CURRENT_DATA_VERSION
         // birthDate is still 'invalid-date-string'
@@ -451,7 +449,9 @@ describe('IndexedDBStorageService', () => {
         birthDate: 'invalid-date-string'
       });
 
-      spyOn(migrationService, 'migrateRawBirthday').and.throwError('migration error');
+      vi.spyOn(migrationService, 'migrateRawBirthday').mockImplementation(() => {
+        throw new Error('migration error');
+      });
 
       const birthdays = await service.getBirthdays();
       expect(birthdays.find(b => b.id === 'migration-throws')).toBeUndefined();

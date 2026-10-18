@@ -1,22 +1,24 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
-import { type NotificationMessage,NotificationService } from '../../core/services/notification.service';
+import { type NotificationMessage, NotificationService } from '../../core/services/notification.service';
 import { NotificationComponent } from './notification.component';
 
 describe('NotificationComponent', () => {
   let component: NotificationComponent;
   let fixture: ComponentFixture<NotificationComponent>;
-  let mockNotificationService: jasmine.SpyObj<NotificationService>;
+  let mockNotificationService: MockedObject<NotificationService>;
   let notificationsSubject: BehaviorSubject<NotificationMessage[]>;
 
   beforeEach(async () => {
     notificationsSubject = new BehaviorSubject<NotificationMessage[]>([]);
-    mockNotificationService = jasmine.createSpyObj('NotificationService', ['remove'], {
+    mockNotificationService = {
+      remove: vi.fn().mockName('NotificationService.remove'),
       notifications: notificationsSubject.asObservable()
-    });
+    } as unknown as MockedObject<NotificationService>;
 
     await TestBed.configureTestingModule({
       imports: [NotificationComponent, NoopAnimationsModule],
@@ -112,7 +114,7 @@ describe('NotificationComponent', () => {
 
   describe('handleAction', () => {
     it('should invoke action callback and remove notification', () => {
-      const callbackSpy = jasmine.createSpy('callback');
+      const callbackSpy = vi.fn();
       const notification: NotificationMessage = {
         id: 'action-id',
         message: 'Test',
@@ -132,7 +134,7 @@ describe('NotificationComponent', () => {
       expect(component.notifications$).toBeDefined();
     });
 
-    it('should receive notifications from service', (done) => {
+    it('should receive notifications from service', async () => {
       const testNotifications: NotificationMessage[] = [
         { id: '1', message: 'Test 1', type: 'success' },
         { id: '2', message: 'Test 2', type: 'error' }
@@ -141,7 +143,6 @@ describe('NotificationComponent', () => {
       component.notifications$.subscribe(notifications => {
         if (notifications.length > 0) {
           expect(notifications).toEqual(testNotifications);
-          done();
         }
       });
 

@@ -4,15 +4,17 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import type { Mock } from 'vitest';
 
 @Component({ selector: 'app-msg-stub', template: '', standalone: true })
-class MsgStubComponent {}
+class MsgStubComponent {
+}
 import { MatDialog } from '@angular/material/dialog';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject, EMPTY } from 'rxjs';
 
 import { BackupService } from '../../core/services/backup.service';
-import { type AuthUser,FirebaseAuthService } from '../../core/services/firebase-auth.service';
+import { type AuthUser, FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -30,19 +32,19 @@ describe('HeaderNavStripComponent', () => {
     const notificationsEnabled$ = new BehaviorSubject<boolean>(false);
 
     const mockPermissionService = {
-      ...jasmine.createSpyObj('NotificationPermissionService', [
-        'getCurrentPermission',
-        'requestPermission',
-        'isNotificationsEnabled',
-        'setNotificationsEnabled'
-      ]),
+      ...{
+        getCurrentPermission: vi.fn().mockName('NotificationPermissionService.getCurrentPermission'),
+        requestPermission: vi.fn().mockName('NotificationPermissionService.requestPermission'),
+        isNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.isNotificationsEnabled'),
+        setNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.setNotificationsEnabled')
+      },
       permissionStatus: permissionStatus$,
       notificationsEnabled: notificationsEnabled$
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
-    mockPermissionService.getCurrentPermission.and.returnValue('default');
-    mockPermissionService.isNotificationsEnabled.and.returnValue(false);
+    mockPermissionService.getCurrentPermission.mockReturnValue('default');
+    mockPermissionService.isNotificationsEnabled.mockReturnValue(false);
 
     await TestBed.configureTestingModule({
       imports: [
@@ -61,11 +63,23 @@ describe('HeaderNavStripComponent', () => {
         }),
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: NotificationPermissionService, useValue: mockPermissionService },
-        { provide: NotificationService, useValue: jasmine.createSpyObj('NotificationService', ['show']) },
-        { provide: MatDialog, useValue: { open: jasmine.createSpy('open'), afterOpened: EMPTY, afterAllClosed: EMPTY } },
-        { provide: BackupService, useValue: jasmine.createSpyObj('BackupService', ['exportToJSON', 'exportToCSV', 'importFromFile', 'importFromCSV', 'importFromVCard']) },
-        { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: jasmine.createSpy('performGoogleSignInDirect').and.returnValue(Promise.resolve(null)) } },
-        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } },
+        {
+          provide: NotificationService, useValue: {
+            show: vi.fn().mockName('NotificationService.show')
+          }
+        },
+        { provide: MatDialog, useValue: { open: vi.fn(), afterOpened: EMPTY, afterAllClosed: EMPTY } },
+        {
+          provide: BackupService, useValue: {
+            exportToJSON: vi.fn().mockName('BackupService.exportToJSON'),
+            exportToCSV: vi.fn().mockName('BackupService.exportToCSV'),
+            importFromFile: vi.fn().mockName('BackupService.importFromFile'),
+            importFromCSV: vi.fn().mockName('BackupService.importFromCSV'),
+            importFromVCard: vi.fn().mockName('BackupService.importFromVCard')
+          }
+        },
+        { provide: FirebaseAuthService, useValue: { performGoogleSignInDirect: vi.fn().mockReturnValue(Promise.resolve(null)) } },
+        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: vi.fn() } },
         provideTranslateTesting()
       ]
     }).compileComponents();
@@ -81,7 +95,7 @@ describe('HeaderNavStripComponent', () => {
   });
 
   it('should emit signOutClicked', () => {
-    spyOn(component.signOutClicked, 'emit');
+    vi.spyOn(component.signOutClicked, 'emit');
     component.signOutClicked.emit();
     expect(component.signOutClicked.emit).toHaveBeenCalled();
   });
@@ -92,7 +106,7 @@ describe('HeaderNavStripComponent', () => {
     });
 
     it('dispatches signInWithGoogle when signInForMessages is called', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       component.signInForMessages();
       expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signInWithGoogle());
     });
@@ -100,8 +114,8 @@ describe('HeaderNavStripComponent', () => {
     it('dispatches signInSuccess when performGoogleSignInDirect resolves', async () => {
       const mockUser: AuthUser = { uid: 'u1', email: 'a@b.com', displayName: 'A', photoURL: null };
       const authService = TestBed.inject(FirebaseAuthService);
-      (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.resolve(mockUser));
-      spyOn(store, 'dispatch');
+      (authService.performGoogleSignInDirect as Mock).mockReturnValue(Promise.resolve(mockUser));
+      vi.spyOn(store, 'dispatch');
 
       await component.signInForMessages();
 
@@ -110,8 +124,8 @@ describe('HeaderNavStripComponent', () => {
 
     it('dispatches signInFailure when performGoogleSignInDirect rejects', async () => {
       const authService = TestBed.inject(FirebaseAuthService);
-      (authService.performGoogleSignInDirect as jasmine.Spy).and.returnValue(Promise.reject(new Error('popup closed')));
-      spyOn(store, 'dispatch');
+      (authService.performGoogleSignInDirect as Mock).mockReturnValue(Promise.reject(new Error('popup closed')));
+      vi.spyOn(store, 'dispatch');
 
       await component.signInForMessages();
 

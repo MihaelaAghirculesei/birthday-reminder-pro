@@ -2,12 +2,13 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { of, throwError } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
 import { NetworkService } from '../../core/services/network.service';
-import { type PendingChange,PendingChangesService } from '../../core/services/pending-changes.service';
+import { type PendingChange, PendingChangesService } from '../../core/services/pending-changes.service';
 import { SyncQueueProcessorService } from '../../core/services/sync-queue-processor.service';
 import { type Birthday } from '../../shared/models/birthday.model';
 
@@ -21,9 +22,7 @@ function makeBirthday(id: string, name = 'Test'): Birthday {
 }
 
 /** Build a PendingChange with sensible defaults for test use. */
-function makeChange(
-  overrides: Partial<PendingChange> & Pick<PendingChange, 'id' | 'entityType' | 'entityId' | 'changeType' | 'data'>
-): PendingChange {
+function makeChange(overrides: Partial<PendingChange> & Pick<PendingChange, 'id' | 'entityType' | 'entityId' | 'changeType' | 'data'>): PendingChange {
   return { timestamp: Date.now(), retryCount: 0, sequenceNumber: 0, ...overrides };
 }
 
@@ -33,10 +32,10 @@ function makeChange(
 
 describe('Offline→Online Sync Integration', () => {
   let service: SyncQueueProcessorService;
-  let pendingChangesSpy: jasmine.SpyObj<PendingChangesService>;
-  let firestoreSpy: jasmine.SpyObj<FirestoreService>;
-  let authSpy: jasmine.SpyObj<FirebaseAuthService>;
-  let networkSpy: jasmine.SpyObj<NetworkService>;
+  let pendingChangesSpy: MockedObject<PendingChangesService>;
+  let firestoreSpy: MockedObject<FirestoreService>;
+  let authSpy: MockedObject<FirebaseAuthService>;
+  let networkSpy: MockedObject<NetworkService>;
 
   /** In-memory queue backed by the pendingChangesSpy. */
   let queue: PendingChange[];
@@ -45,37 +44,43 @@ describe('Offline→Online Sync Integration', () => {
     queue = [];
 
     // --- PendingChangesService: in-memory stand-in ---
-    pendingChangesSpy = jasmine.createSpyObj<PendingChangesService>('PendingChangesService', [
-      'addChange', 'removeChange', 'markRetry', 'getChangesForEntity'
-    ]);
+    pendingChangesSpy = {
+      addChange: vi.fn().mockName('PendingChangesService.addChange'),
+      removeChange: vi.fn().mockName('PendingChangesService.removeChange'),
+      markRetry: vi.fn().mockName('PendingChangesService.markRetry'),
+      getChangesForEntity: vi.fn().mockName('PendingChangesService.getChangesForEntity')
+    } as unknown as MockedObject<PendingChangesService>;
     Object.defineProperty(pendingChangesSpy, 'pendingCount', { get: () => queue.length, configurable: true });
 
-    pendingChangesSpy.getChangesForEntity.and.callFake((entityType: string) =>
-      queue.filter(c => c.entityType === entityType)
-    );
-    pendingChangesSpy.removeChange.and.callFake(async (id: string) => {
+    pendingChangesSpy.getChangesForEntity.mockImplementation((entityType: string) => queue.filter(c => c.entityType === entityType));
+    pendingChangesSpy.removeChange.mockImplementation(async (id: string) => {
       queue = queue.filter(c => c.id !== id);
     });
-    pendingChangesSpy.markRetry.and.callFake(async (id: string) => {
+    pendingChangesSpy.markRetry.mockImplementation(async (id: string) => {
       queue = queue.map(c => c.id === id ? { ...c, retryCount: c.retryCount + 1 } : c);
     });
-    pendingChangesSpy.addChange.and.returnValue(Promise.resolve());
+    pendingChangesSpy.addChange.mockReturnValue(Promise.resolve());
 
     // --- FirestoreService ---
-    firestoreSpy = jasmine.createSpyObj<FirestoreService>('FirestoreService', [
-      'saveBirthday', 'deleteBirthday', 'saveCategory', 'deleteCategory'
-    ]);
-    firestoreSpy.saveBirthday.and.returnValue(of(undefined as unknown as void));
-    firestoreSpy.deleteBirthday.and.returnValue(of(undefined as unknown as void));
+    firestoreSpy = {
+      saveBirthday: vi.fn().mockName('FirestoreService.saveBirthday'),
+      deleteBirthday: vi.fn().mockName('FirestoreService.deleteBirthday'),
+      saveCategory: vi.fn().mockName('FirestoreService.saveCategory'),
+      deleteCategory: vi.fn().mockName('FirestoreService.deleteCategory')
+    } as unknown as MockedObject<FirestoreService>;
+    firestoreSpy.saveBirthday.mockReturnValue(of(undefined as unknown as void));
+    firestoreSpy.deleteBirthday.mockReturnValue(of(undefined as unknown as void));
 
     // --- FirebaseAuthService: authenticated user ---
-    authSpy = jasmine.createSpyObj<FirebaseAuthService>('FirebaseAuthService', [], {
+    authSpy = {
       currentUser: { uid: 'user-123' } as FirebaseAuthService['currentUser'],
       isAuthenticated: true
-    });
+    } as unknown as MockedObject<FirebaseAuthService>;
 
     // --- NetworkService: online ---
-    networkSpy = jasmine.createSpyObj<NetworkService>('NetworkService', [], { isOnline: true });
+    networkSpy = {
+      isOnline: true
+    } as unknown as MockedObject<NetworkService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -109,8 +114,8 @@ describe('Offline→Online Sync Integration', () => {
 
     expect(syncedCount).toBe(2);
     expect(firestoreSpy.saveBirthday).toHaveBeenCalledTimes(2);
-    expect(firestoreSpy.saveBirthday).toHaveBeenCalledWith('user-123', jasmine.objectContaining({ id: 'bday-a' }));
-    expect(firestoreSpy.saveBirthday).toHaveBeenCalledWith('user-123', jasmine.objectContaining({ id: 'bday-b' }));
+    expect(firestoreSpy.saveBirthday).toHaveBeenCalledWith('user-123', expect.objectContaining({ id: 'bday-a' }));
+    expect(firestoreSpy.saveBirthday).toHaveBeenCalledWith('user-123', expect.objectContaining({ id: 'bday-b' }));
     expect(pendingChangesSpy.removeChange).toHaveBeenCalledWith('c1');
     expect(pendingChangesSpy.removeChange).toHaveBeenCalledWith('c2');
     expect(queue.length).toBe(0);
@@ -125,18 +130,17 @@ describe('Offline→Online Sync Integration', () => {
     const birthday = makeBirthday('bday-x', 'Xavier');
     queue = [
       makeChange({ id: 'c-create', entityType: 'birthday', entityId: 'bday-x', changeType: 'create', data: birthday, sequenceNumber: 1 }),
-      makeChange({ id: 'c-delete', entityType: 'birthday', entityId: 'bday-x', changeType: 'delete', data: null,    sequenceNumber: 0 })
+      makeChange({ id: 'c-delete', entityType: 'birthday', entityId: 'bday-x', changeType: 'delete', data: null, sequenceNumber: 0 })
     ];
 
     const callOrder: string[] = [];
-    firestoreSpy.deleteBirthday.and.callFake(() => { callOrder.push('delete'); return of(undefined as unknown as void); });
-    firestoreSpy.saveBirthday.and.callFake(()  => { callOrder.push('create'); return of(undefined as unknown as void); });
+    firestoreSpy.deleteBirthday.mockImplementation(() => { callOrder.push('delete'); return of(undefined as unknown as void); });
+    firestoreSpy.saveBirthday.mockImplementation(() => { callOrder.push('create'); return of(undefined as unknown as void); });
 
     const syncedCount = await service.processPendingChanges();
 
     expect(syncedCount).toBe(2);
-    expect(callOrder).toEqual(['delete', 'create'],
-      'A stale delete retry after a re-create would silently wipe the new entity — causal order is critical');
+    expect(callOrder, 'A stale delete retry after a re-create would silently wipe the new entity — causal order is critical').toEqual(['delete', 'create']);
   });
 
   // -------------------------------------------------------------------------
@@ -147,14 +151,14 @@ describe('Offline→Online Sync Integration', () => {
     const birthdayB = makeBirthday('bday-b', 'Bob');
     queue = [
       makeChange({ id: 'c-a1', entityType: 'birthday', entityId: 'bday-a', changeType: 'update', data: birthdayA, sequenceNumber: 0 }),
-      makeChange({ id: 'c-a2', entityType: 'birthday', entityId: 'bday-a', changeType: 'delete', data: null,     sequenceNumber: 1 }),
+      makeChange({ id: 'c-a2', entityType: 'birthday', entityId: 'bday-a', changeType: 'delete', data: null, sequenceNumber: 1 }),
       makeChange({ id: 'c-b1', entityType: 'birthday', entityId: 'bday-b', changeType: 'create', data: birthdayB, sequenceNumber: 2 })
     ];
 
     // First saveBirthday call (bday-a update) simulates a transient network error;
     // subsequent calls (bday-b create) succeed.
     let saveCallCount = 0;
-    firestoreSpy.saveBirthday.and.callFake(() => {
+    firestoreSpy.saveBirthday.mockImplementation(() => {
       saveCallCount++;
       return saveCallCount === 1
         ? throwError(() => new Error('Network timeout'))
@@ -183,7 +187,7 @@ describe('Offline→Online Sync Integration', () => {
     const birthday = makeBirthday('bday-x', 'Xavier');
     queue = [
       makeChange({ id: 'c1', entityType: 'birthday', entityId: 'bday-x', changeType: 'update', data: birthday, sequenceNumber: 0, retryCount: 3 }),
-      makeChange({ id: 'c2', entityType: 'birthday', entityId: 'bday-x', changeType: 'delete', data: null,     sequenceNumber: 1, retryCount: 0 })
+      makeChange({ id: 'c2', entityType: 'birthday', entityId: 'bday-x', changeType: 'delete', data: null, sequenceNumber: 1, retryCount: 0 })
     ];
 
     const syncedCount = await service.processPendingChanges();

@@ -3,12 +3,13 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideMockStore } from '@ngrx/store/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
 import { type Birthday, type BirthdayCategory } from '../../../shared';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
-import { BirthdayEditService, CategoryManagerService, type ChartDataItem,DashboardFacadeService } from '../services';
+import { BirthdayEditService, CategoryManagerService, type ChartDataItem, DashboardFacadeService } from '../services';
 import { BirthdayStatsService } from '../services/birthday-stats.service';
 import { type CategoryStats } from './category-filter/category-filter.component';
 import { DashboardComponent } from './dashboard.component';
@@ -16,10 +17,10 @@ import { DashboardComponent } from './dashboard.component';
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
-  let facadeSpy: jasmine.SpyObj<DashboardFacadeService>;
-  let editServiceSpy: jasmine.SpyObj<BirthdayEditService>;
-  let dialogSpy: jasmine.SpyObj<MatDialog>;
-  let categoryManagerSpy: jasmine.SpyObj<CategoryManagerService>;
+  let facadeSpy: MockedObject<DashboardFacadeService>;
+  let editServiceSpy: MockedObject<BirthdayEditService>;
+  let dialogSpy: MockedObject<MatDialog>;
+  let categoryManagerSpy: MockedObject<CategoryManagerService>;
 
   const mockBirthdays = [
     createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'friends', notes: '' }),
@@ -44,22 +45,24 @@ describe('DashboardComponent', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
 
-    const facadeSpyObj = jasmine.createSpyObj('DashboardFacadeService', [
-      'selectCategory',
-      'clearCategoryFilter',
-      'setSearchTerm',
-      'clearSearch',
-      'addBirthday',
-      'deleteBirthday',
-      'undoLastAction',
-      'loadTestData',
-      'clearAllData',
-      'importBirthdays',
-      'isCategorySelected'
-    ], {
+    const facadeSpyObj = {
+      selectCategory: vi.fn().mockName('DashboardFacadeService.selectCategory'),
+      clearCategoryFilter: vi.fn().mockName('DashboardFacadeService.clearCategoryFilter'),
+      setSearchTerm: vi.fn().mockName('DashboardFacadeService.setSearchTerm'),
+      clearSearch: vi.fn().mockName('DashboardFacadeService.clearSearch'),
+      addBirthday: vi.fn().mockName('DashboardFacadeService.addBirthday'),
+      deleteBirthday: vi.fn().mockName('DashboardFacadeService.deleteBirthday'),
+      undoLastAction: vi.fn().mockName('DashboardFacadeService.undoLastAction'),
+      loadTestData: vi.fn().mockName('DashboardFacadeService.loadTestData'),
+      clearAllData: vi.fn().mockName('DashboardFacadeService.clearAllData'),
+      importBirthdays: vi.fn().mockName('DashboardFacadeService.importBirthdays'),
+      isCategorySelected: vi.fn().mockName('DashboardFacadeService.isCategorySelected'),
       selectedCategory: signal<string | null>(null),
       searchTerm: signal(''),
-      lastAction: signal<{ type: string; data: Birthday | BirthdayCategory } | null>(null),
+      lastAction: signal<{
+        type: string;
+        data: Birthday | BirthdayCategory;
+      } | null>(null),
       totalBirthdays: signal(2),
       birthdaysThisMonth: signal(1),
       averageAge: signal(30),
@@ -70,29 +73,34 @@ describe('DashboardComponent', () => {
       categoriesStats: signal(mockCategoryStats),
       filteredBirthdays: signal(mockBirthdays),
       categories: signal(mockCategories)
-    });
+    };
 
-    const editServiceSpyObj = jasmine.createSpyObj('BirthdayEditService', ['cancelEdit'], {
+    const editServiceSpyObj = {
+      cancelEdit: vi.fn().mockName('BirthdayEditService.cancelEdit'),
       currentEditingId: null
-    });
+    };
 
-    const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
+    const dialogSpyObj = {
+      open: vi.fn().mockName('MatDialog.open')
+    };
 
-    const categoryManagerSpyObj = jasmine.createSpyObj('CategoryManagerService', [
-      'addCategory',
-      'editCategory',
-      'deleteCategory'
-    ]);
+    const categoryManagerSpyObj = {
+      addCategory: vi.fn().mockName('CategoryManagerService.addCategory'),
+      editCategory: vi.fn().mockName('CategoryManagerService.editCategory'),
+      deleteCategory: vi.fn().mockName('CategoryManagerService.deleteCategory')
+    };
 
-    const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [], {
+    const categoryFacadeSpyObj = {
       categories: signal(mockCategories)
-    });
+    };
 
-    const statsServiceSpyObj = jasmine.createSpyObj('BirthdayStatsService', [
-      'getChartData', 'getMaxCount', 'getCategoriesStats'
-    ]);
+    const statsServiceSpyObj = {
+      getChartData: vi.fn().mockName('BirthdayStatsService.getChartData'),
+      getMaxCount: vi.fn().mockName('BirthdayStatsService.getMaxCount'),
+      getCategoriesStats: vi.fn().mockName('BirthdayStatsService.getCategoriesStats')
+    };
 
-    facadeSpyObj.isCategorySelected.and.callFake(() => false);
+    facadeSpyObj.isCategorySelected.mockImplementation(() => false);
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent, NoopAnimationsModule],
@@ -112,15 +120,15 @@ describe('DashboardComponent', () => {
         provideTranslateTesting()
       ]
     })
-    .overrideComponent(DashboardComponent, {
-      set: { providers: [{ provide: DashboardFacadeService, useValue: facadeSpyObj }] }
-    })
-    .compileComponents();
+      .overrideComponent(DashboardComponent, {
+        set: { providers: [{ provide: DashboardFacadeService, useValue: facadeSpyObj }] }
+      })
+      .compileComponents();
 
-    facadeSpy = TestBed.inject(DashboardFacadeService) as jasmine.SpyObj<DashboardFacadeService>;
-    editServiceSpy = TestBed.inject(BirthdayEditService) as jasmine.SpyObj<BirthdayEditService>;
-    dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    categoryManagerSpy = TestBed.inject(CategoryManagerService) as jasmine.SpyObj<CategoryManagerService>;
+    facadeSpy = TestBed.inject(DashboardFacadeService) as MockedObject<DashboardFacadeService>;
+    editServiceSpy = TestBed.inject(BirthdayEditService) as MockedObject<BirthdayEditService>;
+    dialogSpy = TestBed.inject(MatDialog) as MockedObject<MatDialog>;
+    categoryManagerSpy = TestBed.inject(CategoryManagerService) as MockedObject<CategoryManagerService>;
 
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
@@ -260,21 +268,18 @@ describe('DashboardComponent', () => {
 
     it('should open dialog with correct configuration', () => {
       component.onOpenMessageDialog();
-      expect(dialogSpy.open).toHaveBeenCalledWith(
-        jasmine.any(Function),
-        jasmine.objectContaining({
-          width: '800px',
-          maxWidth: '95vw',
-          maxHeight: '90vh',
-          autoFocus: 'dialog',
-          restoreFocus: true,
-        })
-      );
+      expect(dialogSpy.open).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({
+        width: '800px',
+        maxWidth: '95vw',
+        maxHeight: '90vh',
+        autoFocus: 'dialog',
+        restoreFocus: true,
+      }));
     });
 
     it('should blur button when event target is the button itself', () => {
       const button = document.createElement('button');
-      spyOn(button, 'blur');
+      vi.spyOn(button, 'blur');
       const event = new MouseEvent('click');
       Object.defineProperty(event, 'target', { value: button, enumerable: true });
 
@@ -287,7 +292,7 @@ describe('DashboardComponent', () => {
       const icon = document.createElement('mat-icon');
       button.appendChild(icon);
       document.body.appendChild(button);
-      spyOn(button, 'blur');
+      vi.spyOn(button, 'blur');
       const event = new MouseEvent('click');
       Object.defineProperty(event, 'target', { value: icon, enumerable: true });
 

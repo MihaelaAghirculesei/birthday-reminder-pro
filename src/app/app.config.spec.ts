@@ -1,5 +1,6 @@
 import { type SwUpdate, type UnrecoverableStateEvent } from '@angular/service-worker';
-import { NEVER, type Observable,Subject } from 'rxjs';
+import { NEVER, type Observable, Subject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { initSwErrorLogging } from './app.config';
 import { type LoggerService } from './core/services/logger.service';
@@ -9,11 +10,13 @@ function makeSwUpdate(unrecoverable: Observable<UnrecoverableStateEvent>): SwUpd
 }
 
 describe('initSwErrorLogging', () => {
-  let logger: jasmine.SpyObj<LoggerService>;
+  let logger: MockedObject<LoggerService>;
   let unrecoverableSubject: Subject<UnrecoverableStateEvent>;
 
   beforeEach(() => {
-    logger = jasmine.createSpyObj<LoggerService>('LoggerService', ['error']);
+    logger = {
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
     unrecoverableSubject = new Subject<UnrecoverableStateEvent>();
   });
 
@@ -29,10 +32,7 @@ describe('initSwErrorLogging', () => {
 
       unrecoverableSubject.next({ type: 'UNRECOVERABLE_STATE', reason: 'hash mismatch' } as UnrecoverableStateEvent);
 
-      expect(logger.error).toHaveBeenCalledWith(
-        '[SW] Unrecoverable state — reload required:',
-        'hash mismatch'
-      );
+      expect(logger.error).toHaveBeenCalledWith('[SW] Unrecoverable state — reload required:', 'hash mismatch');
     });
 
     it('should log each unrecoverable event independently', () => {
@@ -53,7 +53,9 @@ describe('initSwErrorLogging', () => {
     let originalServiceWorker: ServiceWorkerContainer | undefined;
 
     beforeEach(() => {
-      originalServiceWorker = (navigator as Navigator & { serviceWorker?: ServiceWorkerContainer }).serviceWorker;
+      originalServiceWorker = (navigator as Navigator & {
+        serviceWorker?: ServiceWorkerContainer;
+      }).serviceWorker;
     });
 
     afterEach(() => {
@@ -67,7 +69,7 @@ describe('initSwErrorLogging', () => {
     it('should log registration failures', async () => {
       const registrationError = new Error('SW script not found');
       const swMock = {
-        register: jasmine.createSpy('register').and.returnValue(Promise.reject(registrationError))
+        register: vi.fn().mockReturnValue(Promise.reject(registrationError))
       };
       Object.defineProperty(navigator, 'serviceWorker', {
         value: swMock,
@@ -87,7 +89,7 @@ describe('initSwErrorLogging', () => {
 
     it('should not log when registration succeeds', async () => {
       const swMock = {
-        register: jasmine.createSpy('register').and.returnValue(Promise.resolve({} as ServiceWorkerRegistration))
+        register: vi.fn().mockReturnValue(Promise.resolve({} as ServiceWorkerRegistration))
       };
       Object.defineProperty(navigator, 'serviceWorker', {
         value: swMock,
@@ -118,7 +120,9 @@ describe('initSwErrorLogging', () => {
     let originalServiceWorker: ServiceWorkerContainer | undefined;
 
     beforeEach(() => {
-      originalServiceWorker = (navigator as Navigator & { serviceWorker?: ServiceWorkerContainer }).serviceWorker;
+      originalServiceWorker = (navigator as Navigator & {
+        serviceWorker?: ServiceWorkerContainer;
+      }).serviceWorker;
       Object.defineProperty(navigator, 'serviceWorker', {
         value: undefined,
         configurable: true,

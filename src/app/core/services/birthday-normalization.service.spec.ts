@@ -15,33 +15,29 @@ describe('BirthdayNormalizationService', () => {
   });
 
   describe('normalizeCategoryId', () => {
-    it('returns DEFAULT_CATEGORY when undefined', () =>
-      expect(service.normalizeCategoryId(undefined)).toBe(DEFAULT_CATEGORY));
+    it('returns DEFAULT_CATEGORY when undefined', () => expect(service.normalizeCategoryId(undefined)).toBe(DEFAULT_CATEGORY));
 
-    it('returns DEFAULT_CATEGORY when empty string', () =>
-      expect(service.normalizeCategoryId('')).toBe(DEFAULT_CATEGORY));
+    it('returns DEFAULT_CATEGORY when empty string', () => expect(service.normalizeCategoryId('')).toBe(DEFAULT_CATEGORY));
 
-    it('passes through already-lowercase values unchanged', () =>
-      expect(service.normalizeCategoryId('friends')).toBe('friends'));
+    it('passes through already-lowercase values unchanged', () => expect(service.normalizeCategoryId('friends')).toBe('friends'));
 
-    const mappings: [string, string][] = [
-      ['Family',        'family'],
-      ['Friends',       'friends'],
-      ['Work',          'colleagues'],
-      ['Colleagues',    'colleagues'],
-      ['Other',         'other'],
-      ['Partner/Ex',    'romantic'],
-      ['Romantic',      'romantic'],
-      ['Acquaintances', 'acquaintances'],
-    ];
+    const mappings: [
+      string,
+      string
+    ][] = [
+        ['Family', 'family'],
+        ['Friends', 'friends'],
+        ['Work', 'colleagues'],
+        ['Colleagues', 'colleagues'],
+        ['Other', 'other'],
+        ['Partner/Ex', 'romantic'],
+        ['Romantic', 'romantic'],
+        ['Acquaintances', 'acquaintances'],
+      ];
 
-    mappings.forEach(([input, expected]) =>
-      it(`maps legacy "${input}" → "${expected}"`, () =>
-        expect(service.normalizeCategoryId(input)).toBe(expected))
-    );
+    mappings.forEach(([input, expected]) => it(`maps legacy "${input}" → "${expected}"`, () => expect(service.normalizeCategoryId(input)).toBe(expected)));
 
-    it('lowercases unknown capitalized values', () =>
-      expect(service.normalizeCategoryId('Custom')).toBe('custom'));
+    it('lowercases unknown capitalized values', () => expect(service.normalizeCategoryId('Custom')).toBe('custom'));
   });
 
   describe('normalize', () => {

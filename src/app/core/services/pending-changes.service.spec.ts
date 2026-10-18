@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom, skip } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { LoggerService } from './logger.service';
@@ -12,10 +14,15 @@ function bd(data: Record<string, unknown>): SyncPayloadData {
 
 describe('PendingChangesService', () => {
   let service: PendingChangesService;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let loggerMock: MockedObject<LoggerService>;
 
   beforeEach(async () => {
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -30,7 +37,8 @@ describe('PendingChangesService', () => {
     try {
       await service.initialize();
       await service.clearAll();
-    } catch {
+    }
+    catch {
       // Ignore init errors - might not have IndexedDB store yet
     }
   });
@@ -38,7 +46,8 @@ describe('PendingChangesService', () => {
   afterEach(async () => {
     try {
       await service.clearAll();
-    } catch {
+    }
+    catch {
       // Ignore cleanup errors
     }
   });
@@ -52,13 +61,13 @@ describe('PendingChangesService', () => {
   });
 
   it('should have no pending changes after clear', () => {
-    expect(service.hasPendingChanges).toBeFalse();
+    expect(service.hasPendingChanges).toBe(false);
   });
 
   it('should add a pending change', async () => {
     await service.addChange('birthday', 'b-1', 'create', bd({ name: 'Test' }));
     expect(service.pendingCount).toBe(1);
-    expect(service.hasPendingChanges).toBeTrue();
+    expect(service.hasPendingChanges).toBe(true);
   });
 
   it('should deduplicate changes by entityType+entityId', async () => {
@@ -102,7 +111,9 @@ describe('PendingChangesService', () => {
     expect(ops.find(c => c.changeType === 'delete')).toBeTruthy();
     const create = ops.find(c => c.changeType === 'create');
     expect(create).toBeTruthy();
-    expect((create!.data as { name: string }).name).toBe('v2');
+    expect((create!.data as {
+      name: string;
+    }).name).toBe('v2');
   });
 
   it('should collapse delete→create→delete to a single delete', async () => {
@@ -121,9 +132,7 @@ describe('PendingChangesService', () => {
     await service.addChange('birthday', 'b-s2', 'create', bd({}));
     await service.addChange('birthday', 'b-s3', 'create', bd({}));
 
-    const all = service.getChangesForEntity('birthday').filter(
-      c => ['b-s1', 'b-s2', 'b-s3'].includes(c.entityId)
-    );
+    const all = service.getChangesForEntity('birthday').filter(c => ['b-s1', 'b-s2', 'b-s3'].includes(c.entityId));
     const seqs = all.map(c => c.sequenceNumber);
     const unique = new Set(seqs);
     expect(unique.size).toBe(seqs.length);
@@ -168,7 +177,7 @@ describe('PendingChangesService', () => {
 
     await service.clearAll();
     expect(service.pendingCount).toBe(0);
-    expect(service.hasPendingChanges).toBeFalse();
+    expect(service.hasPendingChanges).toBe(false);
   });
 
   it('should filter changes by entity type', async () => {
@@ -179,22 +188,17 @@ describe('PendingChangesService', () => {
     const birthdayChanges = service.getChangesForEntity('birthday');
     const categoryChanges = service.getChangesForEntity('category');
 
-    expect(birthdayChanges.some(c => c.entityId === 'b-filter')).toBeTrue();
-    expect(categoryChanges.some(c => c.entityId === 'c-filter')).toBeTrue();
+    expect(birthdayChanges.some(c => c.entityId === 'b-filter')).toBe(true);
+    expect(categoryChanges.some(c => c.entityId === 'c-filter')).toBe(true);
   });
 
-  it('should emit on changes$', (done) => {
-    let emitCount = 0;
-    const sub = service.changes$.subscribe((changes) => {
-      emitCount++;
-      if (emitCount >= 2) {
-        expect(changes.length).toBeGreaterThanOrEqual(1);
-        sub.unsubscribe();
-        done();
-      }
-    });
+  it('should emit on changes$', async () => {
+    // changes$ replays the current list first; the change arrives with the next emission.
+    const next = firstValueFrom(service.changes$.pipe(skip(1)));
 
     service.addChange('birthday', 'b-emit', 'create', bd({ name: 'Emit' }));
+
+    expect((await next).length).toBeGreaterThanOrEqual(1);
   });
 
   it('changes$ should be an observable', () => {
@@ -204,6 +208,6 @@ describe('PendingChangesService', () => {
 
   it('getChangesForEntity should return empty array for untracked type', () => {
     const changes = service.getChangesForEntity('category');
-    expect(Array.isArray(changes)).toBeTrue();
+    expect(Array.isArray(changes)).toBe(true);
   });
 });

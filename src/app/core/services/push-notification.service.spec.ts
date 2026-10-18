@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideMockStore } from '@ngrx/store/testing';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -11,8 +12,8 @@ import { PushNotificationService } from './push-notification.service';
 
 describe('PushNotificationService', () => {
   let service: PushNotificationService;
-  let mockStorage: jasmine.SpyObj<IndexedDBStorageService>;
-  let mockPermissionService: jasmine.SpyObj<NotificationPermissionService>;
+  let mockStorage: MockedObject<IndexedDBStorageService>;
+  let mockPermissionService: MockedObject<NotificationPermissionService>;
 
   const mockBirthday: Birthday = {
     id: 'b1',
@@ -47,17 +48,17 @@ describe('PushNotificationService', () => {
   };
 
   beforeEach(() => {
-    mockStorage = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays',
-      'updateBirthday'
-    ]);
+    mockStorage = {
+      getBirthdays: vi.fn().mockName('IndexedDBStorageService.getBirthdays'),
+      updateBirthday: vi.fn().mockName('IndexedDBStorageService.updateBirthday')
+    } as unknown as MockedObject<IndexedDBStorageService>;
 
-    mockPermissionService = jasmine.createSpyObj('NotificationPermissionService', [
-      'isNotificationsEnabled'
-    ]);
-    mockPermissionService.isNotificationsEnabled.and.returnValue(true);
+    mockPermissionService = {
+      isNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.isNotificationsEnabled')
+    } as unknown as MockedObject<NotificationPermissionService>;
+    mockPermissionService.isNotificationsEnabled.mockReturnValue(true);
 
-    mockStorage.getBirthdays.and.returnValue(Promise.resolve([]));
+    mockStorage.getBirthdays.mockReturnValue(Promise.resolve([]));
 
     TestBed.configureTestingModule({
       providers: [
@@ -81,7 +82,9 @@ describe('PushNotificationService', () => {
   function setCache(birthdays: Birthday[]): void {
     // Directly assign the internal cache rather than going through the store
     // observable chain, which avoids timing issues with async subscriptions.
-    (service as unknown as { birthdaysCache: Birthday[] }).birthdaysCache = birthdays;
+    (service as unknown as {
+      birthdaysCache: Birthday[];
+    }).birthdaysCache = birthdays;
   }
 
   it('should be created', () => {
@@ -216,22 +219,22 @@ describe('PushNotificationService', () => {
 
   describe('Async operations', () => {
     it('cancelNotification should not throw', async () => {
-      await expectAsync(service.cancelNotification('b1', 'm1')).toBeResolved();
+      await expect(service.cancelNotification('b1', 'm1')).resolves.not.toThrow();
     });
 
     it('cancelAllNotificationsForBirthday should not throw', async () => {
-      await expectAsync(service.cancelAllNotificationsForBirthday('b1')).toBeResolved();
+      await expect(service.cancelAllNotificationsForBirthday('b1')).resolves.not.toThrow();
     });
 
     it('rescheduleAllNotifications should not throw', async () => {
-      mockStorage.getBirthdays.and.returnValue(Promise.resolve([]));
-      await expectAsync(service.rescheduleAllNotifications()).toBeResolved();
+      mockStorage.getBirthdays.mockReturnValue(Promise.resolve([]));
+      await expect(service.rescheduleAllNotifications()).resolves.not.toThrow();
     });
 
     it('rescheduleAllNotifications should handle birthdays with messages', async () => {
       const birthdayWithMessages = { ...mockBirthday, scheduledMessages: [mockMessage] };
-      mockStorage.getBirthdays.and.returnValue(Promise.resolve([birthdayWithMessages]));
-      await expectAsync(service.rescheduleAllNotifications()).toBeResolved();
+      mockStorage.getBirthdays.mockReturnValue(Promise.resolve([birthdayWithMessages]));
+      await expect(service.rescheduleAllNotifications()).resolves.not.toThrow();
     });
 
     it('hasPermission should return boolean', async () => {
@@ -333,9 +336,7 @@ describe('PushNotificationService', () => {
       const notifications = await service.getPendingNotifications();
 
       if (notifications.length >= 2) {
-        expect(notifications[0].scheduledAt.getTime()).toBeLessThanOrEqual(
-          notifications[1].scheduledAt.getTime()
-        );
+        expect(notifications[0].scheduledAt.getTime()).toBeLessThanOrEqual(notifications[1].scheduledAt.getTime());
       }
     });
 
@@ -375,8 +376,8 @@ describe('PushNotificationService', () => {
     });
 
     it('should handle empty birthdays array in reschedule', async () => {
-      mockStorage.getBirthdays.and.returnValue(Promise.resolve([]));
-      await expectAsync(service.rescheduleAllNotifications()).toBeResolved();
+      mockStorage.getBirthdays.mockReturnValue(Promise.resolve([]));
+      await expect(service.rescheduleAllNotifications()).resolves.not.toThrow();
     });
   });
 
@@ -583,14 +584,14 @@ describe('PushNotificationService', () => {
 
   describe('Notification enabled guard', () => {
     it('should skip checkBrowserNotifications when notifications disabled', () => {
-      mockPermissionService.isNotificationsEnabled.and.returnValue(false);
+      mockPermissionService.isNotificationsEnabled.mockReturnValue(false);
       setCache([{ ...mockBirthday, scheduledMessages: [mockMessage] }]);
       const scheduler = TestBed.inject(BrowserNotificationSchedulerService);
       expect(() => scheduler.checkBrowserNotifications()).not.toThrow();
     });
 
     it('should run checkBrowserNotifications without errors when enabled', () => {
-      mockPermissionService.isNotificationsEnabled.and.returnValue(true);
+      mockPermissionService.isNotificationsEnabled.mockReturnValue(true);
       setCache([{ ...mockBirthday, scheduledMessages: [mockMessage] }]);
       const scheduler = TestBed.inject(BrowserNotificationSchedulerService);
       expect(() => scheduler.checkBrowserNotifications()).not.toThrow();

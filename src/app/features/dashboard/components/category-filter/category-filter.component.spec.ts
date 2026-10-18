@@ -50,7 +50,7 @@ describe('CategoryFilterComponent', () => {
 
   describe('selectCategory', () => {
     it('should emit categorySelected event with category id', () => {
-      spyOn(component.categorySelected, 'emit');
+      vi.spyOn(component.categorySelected, 'emit');
       const categoryId = 'cat-1';
 
       component.selectCategory(categoryId);
@@ -59,7 +59,7 @@ describe('CategoryFilterComponent', () => {
     });
 
     it('should emit categorySelected for different categories', () => {
-      spyOn(component.categorySelected, 'emit');
+      vi.spyOn(component.categorySelected, 'emit');
 
       component.selectCategory('cat-1');
       component.selectCategory('cat-2');
@@ -72,7 +72,7 @@ describe('CategoryFilterComponent', () => {
 
   describe('clearFilter', () => {
     it('should emit filterCleared event', () => {
-      spyOn(component.filterCleared, 'emit');
+      vi.spyOn(component.filterCleared, 'emit');
 
       component.clearFilter();
 
@@ -80,7 +80,7 @@ describe('CategoryFilterComponent', () => {
     });
 
     it('should emit filterCleared event multiple times', () => {
-      spyOn(component.filterCleared, 'emit');
+      vi.spyOn(component.filterCleared, 'emit');
 
       component.clearFilter();
       component.clearFilter();
@@ -91,7 +91,7 @@ describe('CategoryFilterComponent', () => {
 
   describe('addNewCategory', () => {
     it('should emit addCategoryClicked event', () => {
-      spyOn(component.addCategoryClicked, 'emit');
+      vi.spyOn(component.addCategoryClicked, 'emit');
 
       component.addNewCategory();
 
@@ -103,16 +103,16 @@ describe('CategoryFilterComponent', () => {
       fixture.componentRef.setInput('categoriesStats', mockCategoryStats);
       fixture.detectChanges();
       const card: HTMLElement = fixture.nativeElement.querySelector('.add-category-card');
-      expect(card.hasAttribute('aria-label')).toBeFalse();
+      expect(card.hasAttribute('aria-label')).toBe(false);
       expect(card.textContent).toContain('New Category');
     });
   });
 
   describe('editCategory', () => {
     it('should emit editCategoryClicked event with category id', () => {
-      spyOn(component.editCategoryClicked, 'emit');
+      vi.spyOn(component.editCategoryClicked, 'emit');
       const mockEvent = new Event('click');
-      spyOn(mockEvent, 'stopPropagation');
+      vi.spyOn(mockEvent, 'stopPropagation');
       const categoryId = 'cat-1';
 
       component.editCategory(mockEvent, categoryId);
@@ -123,7 +123,7 @@ describe('CategoryFilterComponent', () => {
 
     it('should stop event propagation', () => {
       const mockEvent = new Event('click');
-      spyOn(mockEvent, 'stopPropagation');
+      vi.spyOn(mockEvent, 'stopPropagation');
 
       component.editCategory(mockEvent, 'cat-1');
 
@@ -131,7 +131,7 @@ describe('CategoryFilterComponent', () => {
     });
 
     it('should emit editCategoryClicked for different categories', () => {
-      spyOn(component.editCategoryClicked, 'emit');
+      vi.spyOn(component.editCategoryClicked, 'emit');
       const mockEvent = new Event('click');
 
       component.editCategory(mockEvent, 'cat-1');
@@ -143,9 +143,9 @@ describe('CategoryFilterComponent', () => {
 
   describe('deleteCategory', () => {
     it('should emit deleteCategoryClicked event with category id', () => {
-      spyOn(component.deleteCategoryClicked, 'emit');
+      vi.spyOn(component.deleteCategoryClicked, 'emit');
       const mockEvent = new Event('click');
-      spyOn(mockEvent, 'stopPropagation');
+      vi.spyOn(mockEvent, 'stopPropagation');
       const categoryId = 'cat-1';
 
       component.deleteCategory(mockEvent, categoryId);
@@ -156,7 +156,7 @@ describe('CategoryFilterComponent', () => {
 
     it('should stop event propagation', () => {
       const mockEvent = new Event('click');
-      spyOn(mockEvent, 'stopPropagation');
+      vi.spyOn(mockEvent, 'stopPropagation');
 
       component.deleteCategory(mockEvent, 'cat-1');
 
@@ -164,7 +164,7 @@ describe('CategoryFilterComponent', () => {
     });
 
     it('should emit deleteCategoryClicked for different categories', () => {
-      spyOn(component.deleteCategoryClicked, 'emit');
+      vi.spyOn(component.deleteCategoryClicked, 'emit');
       const mockEvent = new Event('click');
 
       component.deleteCategory(mockEvent, 'cat-1');

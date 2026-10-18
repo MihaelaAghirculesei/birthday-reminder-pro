@@ -19,7 +19,9 @@ describe('Birthday Selectors', () => {
     ];
     selectors.forEach(s => {
       s.release();
-      (s as { clearResult?: () => void }).clearResult?.();
+      (s as {
+        clearResult?: () => void;
+      }).clearResult?.();
     });
   });
 

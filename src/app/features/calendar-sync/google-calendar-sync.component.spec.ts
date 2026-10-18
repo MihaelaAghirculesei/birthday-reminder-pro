@@ -1,8 +1,9 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormBuilder,ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { type GoogleCalendarItem, GoogleCalendarService, SILENT_LOGGER_PROVIDER } from '../../core';
@@ -19,7 +20,7 @@ interface GoogleCalendarSettings {
 describe('GoogleCalendarSyncComponent', () => {
   let component: GoogleCalendarSyncComponent;
   let fixture: ComponentFixture<GoogleCalendarSyncComponent>;
-  let googleCalendarServiceSpy: jasmine.SpyObj<GoogleCalendarService>;
+  let googleCalendarServiceSpy: MockedObject<GoogleCalendarService>;
   let store: MockStore;
   let isSignedInSubject: BehaviorSubject<boolean>;
   let settingsSubject: BehaviorSubject<GoogleCalendarSettings>;
@@ -52,23 +53,22 @@ describe('GoogleCalendarSyncComponent', () => {
     isSignedInSubject = new BehaviorSubject<boolean>(false);
     settingsSubject = new BehaviorSubject<GoogleCalendarSettings>(mockSettings);
 
-    const googleCalendarSpyObj = jasmine.createSpyObj('GoogleCalendarService', [
-      'initialize',
-      'signIn',
-      'signOut',
-      'getCalendars',
-      'syncAllBirthdays',
-      'updateSettings'
-    ], {
+    const googleCalendarSpyObj = {
+      initialize: vi.fn().mockName('GoogleCalendarService.initialize'),
+      signIn: vi.fn().mockName('GoogleCalendarService.signIn'),
+      signOut: vi.fn().mockName('GoogleCalendarService.signOut'),
+      getCalendars: vi.fn().mockName('GoogleCalendarService.getCalendars'),
+      syncAllBirthdays: vi.fn().mockName('GoogleCalendarService.syncAllBirthdays'),
+      updateSettings: vi.fn().mockName('GoogleCalendarService.updateSettings'),
       isSignedIn$: isSignedInSubject.asObservable(),
       settings$: settingsSubject.asObservable()
-    });
+    };
 
-    googleCalendarSpyObj.initialize.and.returnValue(Promise.resolve());
-    googleCalendarSpyObj.signIn.and.returnValue(Promise.resolve());
-    googleCalendarSpyObj.signOut.and.returnValue(Promise.resolve());
-    googleCalendarSpyObj.getCalendars.and.returnValue(Promise.resolve(mockCalendars));
-    googleCalendarSpyObj.syncAllBirthdays.and.returnValue(Promise.resolve({
+    googleCalendarSpyObj.initialize.mockReturnValue(Promise.resolve());
+    googleCalendarSpyObj.signIn.mockReturnValue(Promise.resolve());
+    googleCalendarSpyObj.signOut.mockReturnValue(Promise.resolve());
+    googleCalendarSpyObj.getCalendars.mockReturnValue(Promise.resolve(mockCalendars));
+    googleCalendarSpyObj.syncAllBirthdays.mockReturnValue(Promise.resolve({
       success: 1,
       failed: 0,
       errors: []
@@ -91,7 +91,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
     store = TestBed.inject(MockStore);
     store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
-    googleCalendarServiceSpy = TestBed.inject(GoogleCalendarService) as jasmine.SpyObj<GoogleCalendarService>;
+    googleCalendarServiceSpy = TestBed.inject(GoogleCalendarService) as MockedObject<GoogleCalendarService>;
     fixture = TestBed.createComponent(GoogleCalendarSyncComponent);
     component = fixture.componentInstance;
   });
@@ -144,15 +144,13 @@ describe('GoogleCalendarSyncComponent', () => {
       expect(component.settingsForm.value).toEqual(newSettings);
     });
 
-    it('should update settings when form changes', (done) => {
+    it('should update settings when form changes', async () => {
       fixture.detectChanges();
 
       component.settingsForm.patchValue({ enabled: true });
 
-      setTimeout(() => {
-        expect(googleCalendarServiceSpy.updateSettings).toHaveBeenCalled();
-        done();
-      }, 100);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(googleCalendarServiceSpy.updateSettings).toHaveBeenCalled();
     });
   });
 
@@ -176,7 +174,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign in error', async () => {
-      googleCalendarServiceSpy.signIn.and.returnValue(Promise.reject(new Error('Sign in failed')));
+      googleCalendarServiceSpy.signIn.mockReturnValue(Promise.reject(new Error('Sign in failed')));
 
       await component.signIn();
 
@@ -210,9 +208,9 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign out error', async () => {
-      googleCalendarServiceSpy.signOut.and.returnValue(Promise.reject(new Error('Sign out failed')));
+      googleCalendarServiceSpy.signOut.mockReturnValue(Promise.reject(new Error('Sign out failed')));
 
-      await expectAsync(component.signOut()).toBeResolved();
+      await expect(component.signOut()).resolves.not.toThrow();
     });
   });
 
@@ -229,9 +227,9 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle calendar loading error', async () => {
-      googleCalendarServiceSpy.getCalendars.and.returnValue(Promise.reject(new Error('Failed to load calendars')));
+      googleCalendarServiceSpy.getCalendars.mockReturnValue(Promise.reject(new Error('Failed to load calendars')));
 
-      await expectAsync(component.loadCalendars()).toBeResolved();
+      await expect(component.loadCalendars()).resolves.not.toThrow();
     });
   });
 
@@ -256,7 +254,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
     it('should update last sync result', async () => {
       const syncResult = { success: 5, failed: 2, errors: ['error1', 'error2'] };
-      googleCalendarServiceSpy.syncAllBirthdays.and.returnValue(Promise.resolve(syncResult));
+      googleCalendarServiceSpy.syncAllBirthdays.mockReturnValue(Promise.resolve(syncResult));
 
       await component.syncAllBirthdays();
 
@@ -264,7 +262,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sync error', async () => {
-      googleCalendarServiceSpy.syncAllBirthdays.and.returnValue(Promise.reject(new Error('Sync failed')));
+      googleCalendarServiceSpy.syncAllBirthdays.mockReturnValue(Promise.reject(new Error('Sync failed')));
 
       await component.syncAllBirthdays();
 
@@ -297,7 +295,7 @@ describe('GoogleCalendarSyncComponent', () => {
 
     it('should not save invalid form', () => {
       component.settingsForm.setErrors({ invalid: true });
-      googleCalendarServiceSpy.updateSettings.calls.reset();
+      googleCalendarServiceSpy.updateSettings.mockClear();
 
       component.saveSettings();
 

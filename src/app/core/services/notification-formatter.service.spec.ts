@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday, type ScheduledMessage } from '../../shared/models';
 import { NotificationFormatterService } from './notification-formatter.service';
@@ -6,7 +7,7 @@ import { SenderSettingsService } from './sender-settings.service';
 
 describe('NotificationFormatterService', () => {
   let service: NotificationFormatterService;
-  let senderSettings: jasmine.SpyObj<SenderSettingsService>;
+  let senderSettings: MockedObject<SenderSettingsService>;
 
   const makeBirthday = (overrides: Partial<Birthday> = {}): Birthday => ({
     id: 'b1', name: 'Alice', birthDate: '1990-06-15',
@@ -20,11 +21,12 @@ describe('NotificationFormatterService', () => {
   });
 
   beforeEach(() => {
-    senderSettings = jasmine.createSpyObj('SenderSettingsService', [
-      'getSenderName', 'getSenderFullName',
-    ]);
-    senderSettings.getSenderName.and.returnValue('Mario');
-    senderSettings.getSenderFullName.and.returnValue('Mario Rossi');
+    senderSettings = {
+      getSenderName: vi.fn().mockName('SenderSettingsService.getSenderName'),
+      getSenderFullName: vi.fn().mockName('SenderSettingsService.getSenderFullName')
+    } as unknown as MockedObject<SenderSettingsService>;
+    senderSettings.getSenderName.mockReturnValue('Mario');
+    senderSettings.getSenderFullName.mockReturnValue('Mario Rossi');
 
     TestBed.configureTestingModule({
       providers: [
@@ -52,24 +54,24 @@ describe('NotificationFormatterService', () => {
     });
 
     it('falls back to getSenderName when getSenderFullName returns empty string', () => {
-      senderSettings.getSenderFullName.and.returnValue('');
+      senderSettings.getSenderFullName.mockReturnValue('');
       expect(service.formatMessage('{senderFull}', makeBirthday())).toBe('Mario');
     });
 
     it('replaces {age} with computed age string', () => {
-      jasmine.clock().install();
-      jasmine.clock().mockDate(new Date('2026-06-15'));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-06-15'));
       const result = service.formatMessage('Turns {age}', makeBirthday({ birthDate: '1990-06-15' }));
       expect(result).toBe('Turns 36');
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     });
 
     it('replaces {age} with empty string when birthDate is future', () => {
-      jasmine.clock().install();
-      jasmine.clock().mockDate(new Date('2020-01-01'));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2020-01-01'));
       const result = service.formatMessage('{age}', makeBirthday({ birthDate: '2025-06-15' }));
       expect(result).toBe('');
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     });
 
     it('replaces all occurrences of a placeholder', () => {
@@ -80,26 +82,26 @@ describe('NotificationFormatterService', () => {
   // ── calculateAge ──────────────────────────────────────────────────────────
 
   describe('calculateAge', () => {
-    beforeEach(() => jasmine.clock().install());
-    afterEach(() => jasmine.clock().uninstall());
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
 
     it('returns correct age after birthday has passed this year', () => {
-      jasmine.clock().mockDate(new Date('2026-07-01'));
+      vi.setSystemTime(new Date('2026-07-01'));
       expect(service.calculateAge('1990-06-15')).toBe(36);
     });
 
     it('returns correct age on the birthday itself', () => {
-      jasmine.clock().mockDate(new Date('2026-06-15'));
+      vi.setSystemTime(new Date('2026-06-15'));
       expect(service.calculateAge('1990-06-15')).toBe(36);
     });
 
     it('returns age minus one before birthday this year', () => {
-      jasmine.clock().mockDate(new Date('2026-06-14'));
+      vi.setSystemTime(new Date('2026-06-14'));
       expect(service.calculateAge('1990-06-15')).toBe(35);
     });
 
     it('returns null for a future birthDate', () => {
-      jasmine.clock().mockDate(new Date('2020-01-01'));
+      vi.setSystemTime(new Date('2020-01-01'));
       expect(service.calculateAge('2025-06-15')).toBeNull();
     });
   });
@@ -132,15 +134,12 @@ describe('NotificationFormatterService', () => {
   // ── getNextNotificationDate ───────────────────────────────────────────────
 
   describe('getNextNotificationDate', () => {
-    beforeEach(() => jasmine.clock().install());
-    afterEach(() => jasmine.clock().uninstall());
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
 
     it('returns the next occurrence this year when birthday is still ahead', () => {
-      jasmine.clock().mockDate(new Date('2026-03-27T08:00:00'));
-      const result = service.getNextNotificationDate(
-        makeBirthday({ birthDate: '1990-06-15' }),
-        makeMessage({ scheduledTime: '09:00' }),
-      )!;
+      vi.setSystemTime(new Date('2026-03-27T08:00:00'));
+      const result = service.getNextNotificationDate(makeBirthday({ birthDate: '1990-06-15' }), makeMessage({ scheduledTime: '09:00' }))!;
       expect(result.getFullYear()).toBe(2026);
       expect(result.getMonth()).toBe(5); // June = 5
       expect(result.getDate()).toBe(15);
@@ -149,20 +148,14 @@ describe('NotificationFormatterService', () => {
     });
 
     it('rolls over to next year when birthday+time has already passed', () => {
-      jasmine.clock().mockDate(new Date('2026-06-15T10:00:00'));
-      const result = service.getNextNotificationDate(
-        makeBirthday({ birthDate: '1990-06-15' }),
-        makeMessage({ scheduledTime: '09:00' }),
-      )!;
+      vi.setSystemTime(new Date('2026-06-15T10:00:00'));
+      const result = service.getNextNotificationDate(makeBirthday({ birthDate: '1990-06-15' }), makeMessage({ scheduledTime: '09:00' }))!;
       expect(result.getFullYear()).toBe(2027);
     });
 
     it('does not roll over when birthday is today but time is later', () => {
-      jasmine.clock().mockDate(new Date('2026-06-15T08:00:00'));
-      const result = service.getNextNotificationDate(
-        makeBirthday({ birthDate: '1990-06-15' }),
-        makeMessage({ scheduledTime: '09:00' }),
-      )!;
+      vi.setSystemTime(new Date('2026-06-15T08:00:00'));
+      const result = service.getNextNotificationDate(makeBirthday({ birthDate: '1990-06-15' }), makeMessage({ scheduledTime: '09:00' }))!;
       expect(result.getFullYear()).toBe(2026);
     });
   });

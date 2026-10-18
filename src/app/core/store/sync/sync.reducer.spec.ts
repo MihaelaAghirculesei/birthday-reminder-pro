@@ -1,6 +1,6 @@
 import * as SyncActions from './sync.actions';
 import { syncReducer } from './sync.reducer';
-import { initialSyncStatus,type SyncStatus } from './sync.state';
+import { initialSyncStatus, type SyncStatus } from './sync.state';
 
 describe('Sync Reducer', () => {
   it('should return initial state', () => {
@@ -35,7 +35,7 @@ describe('Sync Reducer', () => {
     it('should set online status', () => {
       const action = SyncActions.setOnlineStatus({ isOnline: false });
       const state = syncReducer(initialSyncStatus, action);
-      expect(state.isOnline).toBeFalse();
+      expect(state.isOnline).toBe(false);
       expect(state.state).toBe('offline');
     });
 
@@ -43,7 +43,7 @@ describe('Sync Reducer', () => {
       const offlineState: SyncStatus = { ...initialSyncStatus, isOnline: false, state: 'offline', pendingChanges: 0 };
       const action = SyncActions.setOnlineStatus({ isOnline: true });
       const state = syncReducer(offlineState, action);
-      expect(state.isOnline).toBeTrue();
+      expect(state.isOnline).toBe(true);
       expect(state.state).toBe('idle');
     });
 
@@ -133,10 +133,7 @@ describe('Sync Reducer', () => {
     });
 
     it('should overwrite previous batchProgress on subsequent batches', () => {
-      const first = syncReducer(
-        { ...initialSyncStatus, state: 'syncing' },
-        SyncActions.batchSyncProgress({ completed: 100, total: 250 })
-      );
+      const first = syncReducer({ ...initialSyncStatus, state: 'syncing' }, SyncActions.batchSyncProgress({ completed: 100, total: 250 }));
       const second = syncReducer(first, SyncActions.batchSyncProgress({ completed: 200, total: 250 }));
       expect(second.batchProgress).toEqual({ completed: 200, total: 250 });
     });

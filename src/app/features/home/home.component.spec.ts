@@ -1,7 +1,8 @@
 import { signal } from '@angular/core';
 import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import type { MockedObject } from 'vitest';
 
 import { CategoryFacadeService } from '../../core/services/category-facade.service';
 import { FirebaseAuthService } from '../../core/services/firebase-auth.service';
@@ -32,12 +33,13 @@ describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
   let component: HomeComponent;
   let store: MockStore;
-  let categoryFacadeSpy: jasmine.SpyObj<CategoryFacadeService>;
+  let categoryFacadeSpy: MockedObject<CategoryFacadeService>;
 
   beforeEach(async () => {
-    categoryFacadeSpy = jasmine.createSpyObj('CategoryFacadeService', ['loadCategories'], {
-      categories: signal([]),
-    });
+    categoryFacadeSpy = {
+      loadCategories: vi.fn().mockName('CategoryFacadeService.loadCategories'),
+      categories: signal([])
+    } as unknown as MockedObject<CategoryFacadeService>;
 
     await TestBed.configureTestingModule({
       imports: [HomeComponent, NoopAnimationsModule],
@@ -46,7 +48,11 @@ describe('HomeComponent', () => {
         provideTranslateTesting(),
         provideMockStore({ initialState: INITIAL_STATE }),
         { provide: CategoryFacadeService, useValue: categoryFacadeSpy },
-        { provide: PhotoStorageService, useValue: jasmine.createSpyObj('PhotoStorageService', ['uploadPhoto']) },
+        {
+          provide: PhotoStorageService, useValue: {
+            uploadPhoto: vi.fn().mockName('PhotoStorageService.uploadPhoto')
+          }
+        },
         { provide: FirebaseAuthService, useValue: { currentUser: null } },
       ],
     }).compileComponents();
@@ -66,48 +72,52 @@ describe('HomeComponent', () => {
 
   describe('ngOnInit', () => {
     it('should call loadCategories on init', () => {
-      expect(categoryFacadeSpy.loadCategories).toHaveBeenCalledOnceWith();
+      expect(categoryFacadeSpy.loadCategories).toHaveBeenCalledTimes(1);
+      expect(categoryFacadeSpy.loadCategories).toHaveBeenCalledWith();
     });
   });
 
   describe('toggleAddBirthdaySection', () => {
     it('should expand the form on first toggle', () => {
-      expect(component.isAddBirthdayExpanded).toBeFalse();
+      expect(component.isAddBirthdayExpanded).toBe(false);
       component.toggleAddBirthdaySection();
-      expect(component.isAddBirthdayExpanded).toBeTrue();
+      expect(component.isAddBirthdayExpanded).toBe(true);
     });
 
     it('should collapse the form on second toggle', () => {
       component.toggleAddBirthdaySection();
       component.toggleAddBirthdaySection();
-      expect(component.isAddBirthdayExpanded).toBeFalse();
+      expect(component.isAddBirthdayExpanded).toBe(false);
     });
   });
 
   describe('onBirthdaySubmitted', () => {
     it('should dispatch addBirthday and collapse the form', () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
       component.isAddBirthdayExpanded = true;
       const { id: _id, ...payload } = MOCK_BIRTHDAY;
 
       component.onBirthdaySubmitted(payload);
 
-      expect(dispatchSpy).toHaveBeenCalledOnceWith(BirthdayActions.addBirthday({ birthday: payload }));
-      expect(component.isAddBirthdayExpanded).toBeFalse();
+      expect(dispatchSpy).toHaveBeenCalledTimes(1);
+
+      expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.addBirthday({ birthday: payload }));
+      expect(component.isAddBirthdayExpanded).toBe(false);
     });
   });
 
   describe('addTestData', () => {
     it('should dispatch loadTestData and set isAddingTestData to true then false', fakeAsync(() => {
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       component.addTestData();
 
-      expect(component.isAddingTestData()).toBeTrue();
-      expect(dispatchSpy).toHaveBeenCalledOnceWith(BirthdayActions.loadTestData());
+      expect(component.isAddingTestData()).toBe(true);
+      expect(dispatchSpy).toHaveBeenCalledTimes(1);
+      expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.loadTestData());
 
       tick(1000);
-      expect(component.isAddingTestData()).toBeFalse();
+      expect(component.isAddingTestData()).toBe(false);
     }));
   });
 
@@ -120,16 +130,19 @@ describe('HomeComponent', () => {
     it('should load dashboard after birthdays become available', async () => {
       // loadDashboard() is fired without being awaited and lazily imports the dashboard,
       // so wait on the promise it returns rather than on Angular's stability.
-      const loadDashboard = spyOn(component as unknown as { loadDashboard(): Promise<void> }, 'loadDashboard')
-        .and.callThrough();
+      const loadDashboard = vi.spyOn(component as unknown as {
+        loadDashboard(): Promise<void>;
+      }, 'loadDashboard');
       store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [MOCK_BIRTHDAY]);
       store.refreshState();
       fixture.detectChanges();
       await fixture.whenStable();
-      await loadDashboard.calls.mostRecent().returnValue;
+      await loadDashboard.mock.results.at(-1)!.value;
 
       // dashboard is loaded into the ViewContainerRef — verify via the private flag
-      expect((component as unknown as { isDashboardLoaded: boolean }).isDashboardLoaded).toBeTrue();
+      expect((component as unknown as {
+        isDashboardLoaded: boolean;
+      }).isDashboardLoaded).toBe(true);
     });
   });
 });

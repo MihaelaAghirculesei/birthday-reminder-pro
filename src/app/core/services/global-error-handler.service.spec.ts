@@ -1,20 +1,25 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { IdbError, IdbMigrationError, IdbUnavailableError } from '../errors/app-errors';
-import { ERROR_REPORTER,type ErrorReporter } from './error-reporting.service';
+import { ERROR_REPORTER, type ErrorReporter } from './error-reporting.service';
 import { GlobalErrorHandler } from './global-error-handler.service';
 import { LoggerService, SILENT_LOGGER_PROVIDER } from './logger.service';
 import { NotificationService } from './notification.service';
 
 describe('GlobalErrorHandler', () => {
   let errorHandler: GlobalErrorHandler;
-  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
-  let errorReporterSpy: jasmine.SpyObj<ErrorReporter>;
+  let notificationServiceSpy: MockedObject<NotificationService>;
+  let errorReporterSpy: MockedObject<ErrorReporter>;
 
   beforeEach(() => {
-    notificationServiceSpy = jasmine.createSpyObj('NotificationService', ['show']);
-    errorReporterSpy = jasmine.createSpyObj('ErrorReporter', ['captureError']);
+    notificationServiceSpy = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
+    errorReporterSpy = {
+      captureError: vi.fn().mockName('ErrorReporter.captureError')
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -40,11 +45,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
 
     it('should categorize InvalidStateError as IndexedDB error', () => {
@@ -53,11 +54,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
 
     it('should categorize IdbError instance as IndexedDB error', () => {
@@ -65,11 +62,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
   });
 
@@ -79,11 +72,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Google Calendar sync failed. Please try again.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Google Calendar sync failed. Please try again.', 'error', 5000);
     });
 
     it('should categorize errors with Google in message as GoogleAPI error', () => {
@@ -91,11 +80,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Google Calendar sync failed. Please try again.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Google Calendar sync failed. Please try again.', 'error', 5000);
     });
 
     it('should categorize errors with result.error.code as GoogleAPI error', () => {
@@ -106,11 +91,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Google Calendar sync failed. Please try again.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Google Calendar sync failed. Please try again.', 'error', 5000);
     });
 
     it('should produce structured technicalMessage for result-based Google API errors', () => {
@@ -118,7 +99,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.technicalMessage).toBe('Google API error 403: Forbidden');
     });
 
@@ -127,7 +108,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.technicalMessage).toBe('Google API error 401: No message');
     });
 
@@ -136,7 +117,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.technicalMessage).toBe('gapi is not defined');
     });
   });
@@ -147,11 +128,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Network connection lost. Changes will sync when online.',
-        'warning',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Network connection lost. Changes will sync when online.', 'warning', 5000);
     });
 
     it('should categorize NetworkError as network error', () => {
@@ -159,11 +136,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Network connection lost. Changes will sync when online.',
-        'warning',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Network connection lost. Changes will sync when online.', 'warning', 5000);
     });
 
     it('should categorize plain Error "Failed to fetch" (non-TypeError) as network error', () => {
@@ -172,11 +145,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Network connection lost. Changes will sync when online.',
-        'warning',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Network connection lost. Changes will sync when online.', 'warning', 5000);
     });
 
     it('should NOT categorize a non-errorLike object as network error', () => {
@@ -185,11 +154,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
   });
 
@@ -199,11 +164,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred. Please refresh the page.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred. Please refresh the page.', 'error', 5000);
     });
 
     it('should categorize Action errors as NgRx error', () => {
@@ -211,11 +172,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred. Please refresh the page.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred. Please refresh the page.', 'error', 5000);
     });
 
     it('should categorize Reducer errors as NgRx error', () => {
@@ -223,11 +180,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred. Please refresh the page.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred. Please refresh the page.', 'error', 5000);
     });
   });
 
@@ -237,37 +190,27 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
 
     it('should handle null error', () => {
       errorHandler.handleError(null);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
 
     it('should handle undefined error', () => {
       errorHandler.handleError(undefined);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
   });
 
   describe('Error notification fallback', () => {
     it('should handle notification service failure gracefully', () => {
-      notificationServiceSpy.show.and.throwError('Notification failed');
+      notificationServiceSpy.show.mockImplementation(() => {
+        throw new Error('Notification failed');
+      });
       const error = new Error('Test error');
 
       // Error is logged via LoggerService (silenced in tests), but should not throw
@@ -276,9 +219,13 @@ describe('GlobalErrorHandler', () => {
 
     it('should handle both reporter and notification failure gracefully', () => {
       // Simulates total pipeline failure: reporter throws, then notification also throws
-      const consoleErrorSpy = spyOn(console, 'error');
-      errorReporterSpy.captureError.and.throwError('Reporter failed');
-      notificationServiceSpy.show.and.throwError('Notification failed');
+      const consoleErrorSpy = vi.spyOn(console, 'error');
+      errorReporterSpy.captureError.mockImplementation(() => {
+        throw new Error('Reporter failed');
+      });
+      notificationServiceSpy.show.mockImplementation(() => {
+        throw new Error('Notification failed');
+      });
       const error = new Error('Test error');
 
       expect(() => errorHandler.handleError(error)).not.toThrow();
@@ -292,7 +239,7 @@ describe('GlobalErrorHandler', () => {
       errorHandler.handleError(error);
 
       expect(errorReporterSpy.captureError).toHaveBeenCalledTimes(1);
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.error).toBe(error);
       expect(report.type).toBe('Unknown');
       expect(report.technicalMessage).toBe('Test error');
@@ -301,8 +248,10 @@ describe('GlobalErrorHandler', () => {
 
     it('should handle missing ERROR_REPORTER gracefully and still notify user', () => {
       // Simulate captureError throwing (e.g. no provider / broken reporter)
-      errorReporterSpy.captureError.and.throwError('No provider for ERROR_REPORTER');
-      const consoleErrorSpy = spyOn(console, 'error');
+      errorReporterSpy.captureError.mockImplementation(() => {
+        throw new Error('No provider for ERROR_REPORTER');
+      });
+      const consoleErrorSpy = vi.spyOn(console, 'error');
 
       const error = new Error('Test error');
       expect(() => errorHandler.handleError(error)).not.toThrow();
@@ -314,13 +263,16 @@ describe('GlobalErrorHandler', () => {
   describe('logError – try-finally guarantees groupEnd()', () => {
     it('should call groupEnd even if logger.error throws', () => {
       const logger = TestBed.inject(LoggerService);
-      spyOn(logger, 'group');
-      spyOn(logger, 'groupEnd');
-      spyOn(logger, 'error').and.throwError('Logger failed');
+      vi.spyOn(logger, 'group');
+      vi.spyOn(logger, 'groupEnd');
+      vi.spyOn(logger, 'error').mockImplementation(() => {
+        throw new Error('Logger failed');
+      });
 
       try {
         errorHandler.handleError(new Error('test'));
-      } catch {
+      }
+      catch {
         // logger.error throws; only the groupEnd guarantee matters here
       }
 
@@ -338,11 +290,7 @@ describe('GlobalErrorHandler', () => {
     it('should handle string errors', () => {
       const error = 'String error message';
       expect(() => errorHandler.handleError(error)).not.toThrow();
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
   });
 
@@ -352,11 +300,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
 
     it('should categorize IdbMigrationError as IndexedDB error', () => {
@@ -364,11 +308,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
 
     it('should categorize error-like plain object with QuotaExceededError name as IndexedDB', () => {
@@ -377,11 +317,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Failed to save data locally. Please check storage permissions.',
-        'error',
-        7000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Failed to save data locally. Please check storage permissions.', 'error', 7000);
     });
   });
 
@@ -392,11 +328,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'An unexpected error occurred.',
-        'error',
-        5000
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('An unexpected error occurred.', 'error', 5000);
     });
   });
 
@@ -404,22 +336,24 @@ describe('GlobalErrorHandler', () => {
     it('should use "Unknown error" as technical message for numeric errors', () => {
       errorHandler.handleError(42);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.technicalMessage).toBe('Unknown error');
     });
 
     it('should use "Unknown error" as technical message for boolean errors', () => {
       errorHandler.handleError(false);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.technicalMessage).toBe('Unknown error');
     });
   });
 
   describe('reportError – captureError failure recovery', () => {
     it('should not throw and still notify user if captureError itself throws', () => {
-      const consoleErrorSpy = spyOn(console, 'error');
-      errorReporterSpy.captureError.and.throwError('Reporting pipeline failed');
+      const consoleErrorSpy = vi.spyOn(console, 'error');
+      errorReporterSpy.captureError.mockImplementation(() => {
+        throw new Error('Reporting pipeline failed');
+      });
       const error = new Error('Test error');
 
       expect(() => errorHandler.handleError(error)).not.toThrow();
@@ -429,15 +363,17 @@ describe('GlobalErrorHandler', () => {
 
     it('should log both reporter failure and original error to console.error', () => {
       const reporterFailure = new Error('Reporting pipeline failed');
-      errorReporterSpy.captureError.and.throwError(reporterFailure.message);
+      errorReporterSpy.captureError.mockImplementation(() => {
+        throw new Error(reporterFailure.message);
+      });
       const originalError = new Error('Original error');
 
-      const consoleErrorSpy = spyOn(console, 'error');
+      const consoleErrorSpy = vi.spyOn(console, 'error');
       errorHandler.handleError(originalError);
 
       // Two console.error calls: one for the reporter failure, one for the original error
       expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-      const [firstCall, secondCall] = consoleErrorSpy.calls.allArgs();
+      const [firstCall, secondCall] = vi.mocked(consoleErrorSpy).mock.calls;
       expect(firstCall[0]).toContain('[GlobalErrorHandler]');
       expect(firstCall[0]).toContain('reporter failed');
       expect(secondCall[0]).toContain('[GlobalErrorHandler]');
@@ -445,14 +381,16 @@ describe('GlobalErrorHandler', () => {
     });
 
     it('should emit console.error with original error even when reporter throws', () => {
-      errorReporterSpy.captureError.and.throwError('No provider for ERROR_REPORTER');
+      errorReporterSpy.captureError.mockImplementation(() => {
+        throw new Error('No provider for ERROR_REPORTER');
+      });
       const originalError = new Error('Original error');
 
-      const consoleErrorSpy = spyOn(console, 'error');
+      const consoleErrorSpy = vi.spyOn(console, 'error');
       errorHandler.handleError(originalError);
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-      const secondCall = consoleErrorSpy.calls.allArgs()[1];
+      const secondCall = vi.mocked(consoleErrorSpy).mock.calls[1];
       expect(secondCall[1]).toBe(originalError);
     });
   });
@@ -464,7 +402,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.type).toBe('IndexedDB');
     });
 
@@ -473,7 +411,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.type).toBe('GoogleAPI');
     });
 
@@ -482,7 +420,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.type).toBe('Network');
     });
 
@@ -491,7 +429,7 @@ describe('GlobalErrorHandler', () => {
 
       errorHandler.handleError(error);
 
-      const report = errorReporterSpy.captureError.calls.mostRecent().args[0];
+      const report = vi.mocked(errorReporterSpy.captureError).mock.lastCall![0];
       expect(report.type).toBe('NgRx');
     });
   });

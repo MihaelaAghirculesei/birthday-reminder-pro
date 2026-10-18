@@ -22,14 +22,14 @@ describe('Auth Reducer', () => {
       const action = AuthActions.authStateChanged({ user: mockUser });
       const state = authReducer({ ...initialAuthState, loading: true }, action);
       expect(state.user).toEqual(mockUser);
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
     });
 
     it('should set user to null on sign out', () => {
       const action = AuthActions.authStateChanged({ user: null });
       const state = authReducer({ ...initialAuthState, user: mockUser }, action);
       expect(state.user).toBeNull();
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
     });
   });
 
@@ -37,8 +37,8 @@ describe('Auth Reducer', () => {
     it('should set initialized to true', () => {
       const action = AuthActions.authInitialized();
       const state = authReducer(initialAuthState, action);
-      expect(state.initialized).toBeTrue();
-      expect(state.loading).toBeFalse();
+      expect(state.initialized).toBe(true);
+      expect(state.loading).toBe(false);
     });
   });
 
@@ -46,7 +46,7 @@ describe('Auth Reducer', () => {
     it('should set loading and clear error', () => {
       const action = AuthActions.signInWithGoogle();
       const state = authReducer({ ...initialAuthState, error: 'old error' }, action);
-      expect(state.loading).toBeTrue();
+      expect(state.loading).toBe(true);
       expect(state.error).toBeNull();
     });
   });
@@ -56,7 +56,7 @@ describe('Auth Reducer', () => {
       const action = AuthActions.signInSuccess({ user: mockUser });
       const state = authReducer({ ...initialAuthState, loading: true }, action);
       expect(state.user).toEqual(mockUser);
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
     });
   });
@@ -65,7 +65,7 @@ describe('Auth Reducer', () => {
     it('should set error and stop loading', () => {
       const action = AuthActions.signInFailure({ error: 'Sign-in failed' });
       const state = authReducer({ ...initialAuthState, loading: true }, action);
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
       expect(state.error).toBe('Sign-in failed');
     });
   });
@@ -74,7 +74,7 @@ describe('Auth Reducer', () => {
     it('should set loading and clear error', () => {
       const action = AuthActions.signOut();
       const state = authReducer({ ...initialAuthState, user: mockUser, error: 'old' }, action);
-      expect(state.loading).toBeTrue();
+      expect(state.loading).toBe(true);
       expect(state.error).toBeNull();
     });
   });
@@ -84,7 +84,7 @@ describe('Auth Reducer', () => {
       const action = AuthActions.signOutSuccess();
       const state = authReducer({ ...initialAuthState, user: mockUser, loading: true }, action);
       expect(state.user).toBeNull();
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
     });
   });
@@ -93,7 +93,7 @@ describe('Auth Reducer', () => {
     it('should set error and stop loading', () => {
       const action = AuthActions.signOutFailure({ error: 'Sign-out failed' });
       const state = authReducer({ ...initialAuthState, loading: true }, action);
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
       expect(state.error).toBe('Sign-out failed');
     });
   });
@@ -109,16 +109,11 @@ describe('Auth Reducer', () => {
   // ─── State Machine Transitions ───────────────────────────────────────────────
 
   describe('Transitions', () => {
-    const reduce = (...actions: Parameters<typeof authReducer>[1][]) =>
-      actions.reduce((s, a) => authReducer(s, a), initialAuthState);
+    const reduce = (...actions: Parameters<typeof authReducer>[1][]) => actions.reduce((s, a) => authReducer(s, a), initialAuthState);
 
     it('sign-in happy path: loading → authenticated', () => {
-      const state = reduce(
-        AuthActions.signInWithGoogle(),
-        AuthActions.signInSuccess({ user: mockUser }),
-        AuthActions.authStateChanged({ user: mockUser })
-      );
-      expect(state).toEqual(jasmine.objectContaining({
+      const state = reduce(AuthActions.signInWithGoogle(), AuthActions.signInSuccess({ user: mockUser }), AuthActions.authStateChanged({ user: mockUser }));
+      expect(state).toEqual(expect.objectContaining({
         user: mockUser,
         loading: false,
         error: null
@@ -126,21 +121,12 @@ describe('Auth Reducer', () => {
     });
 
     it('sign-in failure → error recovery → retry success', () => {
-      const afterFailure = reduce(
-        AuthActions.signInWithGoogle(),
-        AuthActions.signInFailure({ error: 'popup-closed' })
-      );
+      const afterFailure = reduce(AuthActions.signInWithGoogle(), AuthActions.signInFailure({ error: 'popup-closed' }));
       expect(afterFailure.error).toBe('popup-closed');
-      expect(afterFailure.loading).toBeFalse();
+      expect(afterFailure.loading).toBe(false);
 
-      const afterRecovery = reduce(
-        AuthActions.signInWithGoogle(),
-        AuthActions.signInFailure({ error: 'popup-closed' }),
-        AuthActions.clearAuthError(),
-        AuthActions.signInWithGoogle(),
-        AuthActions.signInSuccess({ user: mockUser })
-      );
-      expect(afterRecovery).toEqual(jasmine.objectContaining({
+      const afterRecovery = reduce(AuthActions.signInWithGoogle(), AuthActions.signInFailure({ error: 'popup-closed' }), AuthActions.clearAuthError(), AuthActions.signInWithGoogle(), AuthActions.signInSuccess({ user: mockUser }));
+      expect(afterRecovery).toEqual(expect.objectContaining({
         user: mockUser,
         loading: false,
         error: null
@@ -148,13 +134,8 @@ describe('Auth Reducer', () => {
     });
 
     it('sign-out happy path: authenticated → signed out', () => {
-      const state = reduce(
-        AuthActions.signInSuccess({ user: mockUser }),
-        AuthActions.signOut(),
-        AuthActions.signOutSuccess(),
-        AuthActions.authStateChanged({ user: null })
-      );
-      expect(state).toEqual(jasmine.objectContaining({
+      const state = reduce(AuthActions.signInSuccess({ user: mockUser }), AuthActions.signOut(), AuthActions.signOutSuccess(), AuthActions.authStateChanged({ user: null }));
+      expect(state).toEqual(expect.objectContaining({
         user: null,
         loading: false,
         error: null
@@ -162,21 +143,15 @@ describe('Auth Reducer', () => {
     });
 
     it('sign-out failure → retry → success', () => {
-      const state = reduce(
-        AuthActions.signInSuccess({ user: mockUser }),
-        AuthActions.signOut(),
-        AuthActions.signOutFailure({ error: 'network-error' }),
-        AuthActions.signOut(),
-        AuthActions.signOutSuccess()
-      );
+      const state = reduce(AuthActions.signInSuccess({ user: mockUser }), AuthActions.signOut(), AuthActions.signOutFailure({ error: 'network-error' }), AuthActions.signOut(), AuthActions.signOutSuccess());
       expect(state.user).toBeNull();
-      expect(state.loading).toBeFalse();
+      expect(state.loading).toBe(false);
       expect(state.error).toBeNull();
     });
 
     it('app boot: uninitialized → initialized → user arrives via listener', () => {
       const afterInit = authReducer(initialAuthState, AuthActions.authInitialized());
-      expect(afterInit.initialized).toBeTrue();
+      expect(afterInit.initialized).toBe(true);
       expect(afterInit.user).toBeNull();
 
       const afterListener = authReducer(afterInit, AuthActions.authStateChanged({ user: mockUser }));

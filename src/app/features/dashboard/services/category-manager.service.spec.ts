@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog, type MatDialogConfig } from '@angular/material/dialog';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService, NotificationService } from '../../../core';
@@ -20,11 +22,14 @@ interface DialogData {
 
 describe('CategoryManagerService', () => {
   let service: CategoryManagerService;
-  let dialogSpy: jasmine.SpyObj<MatDialog>;
+  let dialogSpy: MockedObject<MatDialog>;
   let store: MockStore;
-  let categoryFacadeSpy: jasmine.SpyObj<CategoryFacadeService>;
-  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
-  let localeServiceMock: { currentLang: string; setLanguage: (lang: string) => void };
+  let categoryFacadeSpy: MockedObject<CategoryFacadeService>;
+  let notificationServiceSpy: MockedObject<NotificationService>;
+  let localeServiceMock: {
+    currentLang: string;
+    setLanguage: (lang: string) => void;
+  };
 
   const mockCategories: BirthdayCategory[] = [
     { id: 'friends', name: 'Friends', icon: 'group', color: '#4CAF50' },
@@ -38,16 +43,19 @@ describe('CategoryManagerService', () => {
   ];
 
   beforeEach(() => {
-    const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
-    const notificationServiceSpyObj = jasmine.createSpyObj('NotificationService', ['show']);
-    const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [
-      'addCategory',
-      'updateCategory',
-      'deleteCategory'
-    ], {
+    const dialogSpyObj = {
+      open: vi.fn().mockName('MatDialog.open')
+    };
+    const notificationServiceSpyObj = {
+      show: vi.fn().mockName('NotificationService.show')
+    };
+    const categoryFacadeSpyObj = {
+      addCategory: vi.fn().mockName('CategoryFacadeService.addCategory'),
+      updateCategory: vi.fn().mockName('CategoryFacadeService.updateCategory'),
+      deleteCategory: vi.fn().mockName('CategoryFacadeService.deleteCategory'),
       categories$: of(mockCategories),
-      categories: jasmine.createSpy('categories').and.returnValue(mockCategories)
-    });
+      categories: vi.fn().mockReturnValue(mockCategories)
+    };
 
     localeServiceMock = { currentLang: 'en', setLanguage(lang: string) { this.currentLang = lang; } };
 
@@ -67,9 +75,9 @@ describe('CategoryManagerService', () => {
     store.overrideSelector(BirthdaySelectors.selectAllBirthdays, mockBirthdays);
 
     service = TestBed.inject(CategoryManagerService);
-    dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    categoryFacadeSpy = TestBed.inject(CategoryFacadeService) as jasmine.SpyObj<CategoryFacadeService>;
-    notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
+    dialogSpy = TestBed.inject(MatDialog) as MockedObject<MatDialog>;
+    categoryFacadeSpy = TestBed.inject(CategoryFacadeService) as MockedObject<CategoryFacadeService>;
+    notificationServiceSpy = TestBed.inject(NotificationService) as MockedObject<NotificationService>;
   });
 
   afterEach(() => store.resetSelectors());
@@ -80,14 +88,16 @@ describe('CategoryManagerService', () => {
 
   describe('addCategory', () => {
     it('should open dialog with correct configuration', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
       expect(dialogSpy.open).toHaveBeenCalled();
-      const callArgs = dialogSpy.open.calls.first().args;
+      const callArgs = vi.mocked(dialogSpy.open).mock.calls[0];
       expect(callArgs[1]?.width).toBe('min(600px, 90vw)');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('add');
     });
@@ -99,14 +109,16 @@ describe('CategoryManagerService', () => {
         color: '#FFC107'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
       expect(categoryFacadeSpy.addCategory).toHaveBeenCalled();
-      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      const addedCategory = vi.mocked(categoryFacadeSpy.addCategory).mock.calls[0][0];
       expect(addedCategory.name).toBe('New Category');
       expect(addedCategory.icon).toBe('star');
       expect(addedCategory.color).toBe('#FFC107');
@@ -114,9 +126,11 @@ describe('CategoryManagerService', () => {
     });
 
     it('should not add category when dialog is cancelled', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
@@ -130,13 +144,15 @@ describe('CategoryManagerService', () => {
         color: '#FFC107'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
-      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      const addedCategory = vi.mocked(categoryFacadeSpy.addCategory).mock.calls[0][0];
       expect(addedCategory.id).toContain('test-category');
       expect(addedCategory.id).toMatch(/test-category-\d+/);
     });
@@ -149,13 +165,15 @@ describe('CategoryManagerService', () => {
         color: '#2196F3'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
-      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      const addedCategory = vi.mocked(categoryFacadeSpy.addCategory).mock.calls[0][0];
       // nameTranslations should include the trimmed other-lang value
       expect(addedCategory.nameTranslations).toBeDefined();
       const translationValues = Object.values(addedCategory.nameTranslations!);
@@ -167,13 +185,15 @@ describe('CategoryManagerService', () => {
       localeService.setLanguage('it');
 
       const mockResult = { name: 'Famiglia', nameOtherLang: '', icon: 'family_restroom', color: '#4CAF50' };
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.addCategory();
 
-      const addedCategory = categoryFacadeSpy.addCategory.calls.first().args[0];
+      const addedCategory = vi.mocked(categoryFacadeSpy.addCategory).mock.calls[0][0];
       // currentLang is 'it', so nameTranslations should have 'it' key
       expect(addedCategory.nameTranslations?.['it']).toBe('Famiglia');
     });
@@ -192,9 +212,11 @@ describe('CategoryManagerService', () => {
       store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [orphaned]);
       store.refreshState();
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('__orphaned__');
 
@@ -206,10 +228,12 @@ describe('CategoryManagerService', () => {
       store.overrideSelector(BirthdaySelectors.selectAllBirthdays, [orphaned]);
       store.refreshState();
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of({ action: 'reassign', newCategoryId: 'friends' }));
-      dialogSpy.open.and.returnValue(mockDialogRef);
-      spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of({ action: 'reassign', newCategoryId: 'friends' }));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
+      vi.spyOn(store, 'dispatch');
 
       await service.editCategory('__orphaned__');
 
@@ -217,14 +241,16 @@ describe('CategoryManagerService', () => {
     });
 
     it('should open edit dialog for existing category', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('friends');
 
       expect(dialogSpy.open).toHaveBeenCalled();
-      const callArgs = dialogSpy.open.calls.first().args;
+      const callArgs = vi.mocked(dialogSpy.open).mock.calls[0];
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.mode).toBe('edit');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.category?.id).toBe('friends');
     });
@@ -236,14 +262,16 @@ describe('CategoryManagerService', () => {
         color: '#00FF00'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('friends');
 
       expect(categoryFacadeSpy.updateCategory).toHaveBeenCalled();
-      const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
+      const updatedCategory = vi.mocked(categoryFacadeSpy.updateCategory).mock.calls[0][0];
       expect(updatedCategory.id).toBe('friends');
       expect(updatedCategory.name).toBe('Updated Friends');
       expect(updatedCategory.icon).toBe('people');
@@ -251,9 +279,11 @@ describe('CategoryManagerService', () => {
     });
 
     it('should not update when dialog is cancelled', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('friends');
 
@@ -268,13 +298,15 @@ describe('CategoryManagerService', () => {
         color: '#2196F3'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('friends');
 
-      const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
+      const updatedCategory = vi.mocked(categoryFacadeSpy.updateCategory).mock.calls[0][0];
       expect(updatedCategory.nameTranslations).toBeDefined();
       const translationValues = Object.values(updatedCategory.nameTranslations!);
       expect(translationValues).toContain('Friends');
@@ -285,13 +317,15 @@ describe('CategoryManagerService', () => {
       localeService.setLanguage('it');
 
       const mockResult = { name: 'Amici', nameOtherLang: '', icon: 'people', color: '#2196F3' };
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await service.editCategory('friends');
 
-      const updatedCategory = categoryFacadeSpy.updateCategory.calls.first().args[0];
+      const updatedCategory = vi.mocked(categoryFacadeSpy.updateCategory).mock.calls[0][0];
       // currentLang is 'it', nameTranslations should contain 'it' key
       expect(updatedCategory.nameTranslations?.['it']).toBe('Amici');
     });
@@ -299,29 +333,31 @@ describe('CategoryManagerService', () => {
     it('should not open dialog for non-existent category', () => {
       service.editCategory('non-existent');
 
-      const dialogCallArgs = dialogSpy.open.calls.all();
-      const editDialogCalls = dialogCallArgs.filter(call =>
-        (call.args[1] as MatDialogConfig<DialogData>)?.data?.mode === 'edit'
-      );
+      const dialogCallArgs = vi.mocked(dialogSpy.open).mock.calls;
+      const editDialogCalls = dialogCallArgs.filter(call => (call[1] as MatDialogConfig<DialogData>)?.data?.mode === 'edit');
       expect(editDialogCalls.length).toBe(0);
     });
   });
 
   describe('deleteCategory', () => {
     it('should delete category without birthdays after confirmation', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      service.deleteCategory('family'); 
+      service.deleteCategory('family');
 
       expect(categoryFacadeSpy.deleteCategory).toHaveBeenCalledWith('family');
     });
 
     it('should not delete if user cancels confirmation', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       service.deleteCategory('family');
 
@@ -329,14 +365,16 @@ describe('CategoryManagerService', () => {
     });
 
     it('should open reassign dialog when category has birthdays', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      service.deleteCategory('work'); 
+      service.deleteCategory('work');
 
       expect(dialogSpy.open).toHaveBeenCalled();
-      const callArgs = dialogSpy.open.calls.first().args;
+      const callArgs = vi.mocked(dialogSpy.open).mock.calls[0];
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.categoryToDelete?.id).toBe('work');
       expect((callArgs[1] as MatDialogConfig<DialogData>)?.data?.affectedBirthdaysCount).toBe(1);
     });
@@ -347,10 +385,12 @@ describe('CategoryManagerService', () => {
         newCategoryId: 'family'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
-      spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
+      vi.spyOn(store, 'dispatch');
 
       service.deleteCategory('work');
 
@@ -363,10 +403,12 @@ describe('CategoryManagerService', () => {
         action: 'delete-orphan'
       };
 
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(mockResult));
-      dialogSpy.open.and.returnValue(mockDialogRef);
-      spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(mockResult));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
+      vi.spyOn(store, 'dispatch');
 
       service.deleteCategory('work');
 
@@ -375,9 +417,11 @@ describe('CategoryManagerService', () => {
     });
 
     it('should not delete when reassign dialog is cancelled', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(null));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(null));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       service.deleteCategory('work');
 

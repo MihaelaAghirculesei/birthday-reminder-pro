@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { NotificationService } from '../../core/services/notification.service';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
@@ -14,33 +15,35 @@ import { HeaderSettingsMenuComponent } from './header-settings-menu.component';
 describe('HeaderSettingsMenuComponent', () => {
   let component: HeaderSettingsMenuComponent;
   let fixture: ComponentFixture<HeaderSettingsMenuComponent>;
-  let mockPermissionService: jasmine.SpyObj<NotificationPermissionService> & {
+  let mockPermissionService: MockedObject<NotificationPermissionService> & {
     permissionStatus: BehaviorSubject<string>;
     notificationsEnabled: BehaviorSubject<boolean>;
   };
-  let mockNotificationService: jasmine.SpyObj<NotificationService>;
+  let mockNotificationService: MockedObject<NotificationService>;
 
   beforeEach(async () => {
     const permissionStatus$ = new BehaviorSubject<string>('default');
     const notificationsEnabled$ = new BehaviorSubject<boolean>(false);
 
     mockPermissionService = {
-      ...jasmine.createSpyObj('NotificationPermissionService', [
-        'getCurrentPermission',
-        'requestPermission',
-        'isNotificationsEnabled',
-        'setNotificationsEnabled'
-      ]),
+      ...{
+        getCurrentPermission: vi.fn().mockName('NotificationPermissionService.getCurrentPermission'),
+        requestPermission: vi.fn().mockName('NotificationPermissionService.requestPermission'),
+        isNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.isNotificationsEnabled'),
+        setNotificationsEnabled: vi.fn().mockName('NotificationPermissionService.setNotificationsEnabled')
+      },
       permissionStatus: permissionStatus$,
       notificationsEnabled: notificationsEnabled$
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
-    mockPermissionService.getCurrentPermission.and.returnValue('default');
-    mockPermissionService.isNotificationsEnabled.and.returnValue(false);
-    mockPermissionService.requestPermission.and.returnValue(Promise.resolve(false));
+    mockPermissionService.getCurrentPermission.mockReturnValue('default');
+    mockPermissionService.isNotificationsEnabled.mockReturnValue(false);
+    mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(false));
 
-    mockNotificationService = jasmine.createSpyObj('NotificationService', ['show']);
+    mockNotificationService = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
 
     await TestBed.configureTestingModule({
       imports: [
@@ -52,8 +55,12 @@ describe('HeaderSettingsMenuComponent', () => {
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: NotificationPermissionService, useValue: mockPermissionService },
         { provide: NotificationService, useValue: mockNotificationService },
-        { provide: MatDialog, useValue: jasmine.createSpyObj('MatDialog', ['open']) },
-        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: jasmine.createSpy('toggleDarkMode') } },
+        {
+          provide: MatDialog, useValue: {
+            open: vi.fn().mockName('MatDialog.open')
+          }
+        },
+        { provide: ThemeService, useValue: { darkMode: signal(false), toggleDarkMode: vi.fn() } },
         provideTranslateTesting()
       ]
     }).compileComponents();
@@ -74,7 +81,7 @@ describe('HeaderSettingsMenuComponent', () => {
   describe('toggleNotifications', () => {
     it('should request permission when not yet granted', async () => {
       component.notificationsGranted.set(false);
-      mockPermissionService.requestPermission.and.returnValue(Promise.resolve(true));
+      mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(true));
 
       await component.toggleNotifications();
 
@@ -84,7 +91,7 @@ describe('HeaderSettingsMenuComponent', () => {
 
     it('should not show success when permission request is denied', async () => {
       component.notificationsGranted.set(false);
-      mockPermissionService.requestPermission.and.returnValue(Promise.resolve(false));
+      mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(false));
 
       await component.toggleNotifications();
 

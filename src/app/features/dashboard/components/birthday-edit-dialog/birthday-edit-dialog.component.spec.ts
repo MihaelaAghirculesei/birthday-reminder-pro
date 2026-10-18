@@ -1,6 +1,7 @@
 import { createEnvironmentInjector, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import type { MockedObject } from 'vitest';
 
 import { FirebaseAuthService } from '../../../../core/services/firebase-auth.service';
 import { PhotoStorageService } from '../../../../core/services/photo-storage.service';
@@ -10,7 +11,7 @@ import { BirthdayEditDialogComponent, type BirthdayEditDialogData } from './birt
 
 describe('BirthdayEditDialogComponent', () => {
   let component: BirthdayEditDialogComponent;
-  let dialogRefSpy: jasmine.SpyObj<MatDialogRef<BirthdayEditDialogComponent>>;
+  let dialogRefSpy: MockedObject<MatDialogRef<BirthdayEditDialogComponent>>;
 
   const mockBirthday = createMockBirthday({
     id: '1',
@@ -36,23 +37,31 @@ describe('BirthdayEditDialogComponent', () => {
 
   /** Creates a component instance with its own child injector supplying dialog tokens. */
   function make(data: BirthdayEditDialogData): BirthdayEditDialogComponent {
-    const injector = createEnvironmentInjector(
-      [
-        { provide: MatDialogRef, useValue: dialogRefSpy },
-        { provide: MAT_DIALOG_DATA, useValue: data },
-      ],
-      TestBed.inject(EnvironmentInjector),
-    );
+    const injector = createEnvironmentInjector([
+      { provide: MatDialogRef, useValue: dialogRefSpy },
+      { provide: MAT_DIALOG_DATA, useValue: data },
+    ], TestBed.inject(EnvironmentInjector));
     return runInInjectionContext(injector, () => new BirthdayEditDialogComponent());
   }
 
   beforeEach(() => {
-    dialogRefSpy = jasmine.createSpyObj('MatDialogRef', ['close']);
+    dialogRefSpy = {
+      close: vi.fn().mockName('MatDialogRef.close')
+    } as unknown as MockedObject<MatDialogRef<BirthdayEditDialogComponent>>;
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: PhotoStorageService,  useValue: jasmine.createSpyObj('PhotoStorageService',  ['uploadPhoto', 'fileToBase64']) },
-        { provide: FirebaseAuthService,  useValue: jasmine.createSpyObj('FirebaseAuthService',  [], { currentUser: null }) },
+        {
+          provide: PhotoStorageService, useValue: {
+            uploadPhoto: vi.fn().mockName('PhotoStorageService.uploadPhoto'),
+            fileToBase64: vi.fn().mockName('PhotoStorageService.fileToBase64')
+          }
+        },
+        {
+          provide: FirebaseAuthService, useValue: {
+            currentUser: null
+          }
+        },
       ]
     });
 
@@ -173,7 +182,7 @@ describe('BirthdayEditDialogComponent', () => {
 
       component.onSave();
 
-      const callArgs = dialogRefSpy.close.calls.first().args[0];
+      const callArgs = vi.mocked(dialogRefSpy.close).mock.calls[0][0];
       expect(callArgs.editedData.name).toBe('Updated Name');
       expect(callArgs.editedData.notes).toBe('Updated notes');
       expect(callArgs.editedData.category).toBe('family');
@@ -182,54 +191,54 @@ describe('BirthdayEditDialogComponent', () => {
 
   describe('Contact warning', () => {
     it('should not show warning on init when contact info exists', () => {
-      expect(component.contactWarning).toBeFalse();
+      expect(component.contactWarning).toBe(false);
     });
 
     it('should show warning on init when no contact info exists', () => {
       const noContactBirthday = { ...mockBirthday, email: '', phone: '', telegramUsername: '' };
       const comp = make({ birthday: noContactBirthday, categories: mockCategories });
 
-      expect(comp.contactWarning).toBeTrue();
+      expect(comp.contactWarning).toBe(true);
     });
 
     it('should show warning when all contact fields are cleared', () => {
       component.contactForm.setValue({ email: '', phone: '', telegramUsername: '' });
 
-      expect(component.contactWarning).toBeTrue();
+      expect(component.contactWarning).toBe(true);
     });
 
     it('should hide warning when a contact field is filled', () => {
       component.contactForm.setValue({ email: '', phone: '', telegramUsername: '' });
-      expect(component.contactWarning).toBeTrue();
+      expect(component.contactWarning).toBe(true);
 
       component.contactForm.get('phone')!.setValue('+123');
-      expect(component.contactWarning).toBeFalse();
+      expect(component.contactWarning).toBe(false);
     });
   });
 
   describe('Email validation', () => {
     it('should accept valid emails', () => {
       component.contactForm.get('email')!.setValue('user@example.com');
-      expect(component.isEmailValid()).toBeTrue();
+      expect(component.isEmailValid()).toBe(true);
 
       component.contactForm.get('email')!.setValue('first.last+tag@domain.co.uk');
-      expect(component.isEmailValid()).toBeTrue();
+      expect(component.isEmailValid()).toBe(true);
     });
 
     it('should accept empty email', () => {
       component.contactForm.get('email')!.setValue('');
-      expect(component.isEmailValid()).toBeTrue();
+      expect(component.isEmailValid()).toBe(true);
     });
 
     it('should reject invalid emails', () => {
       component.contactForm.get('email')!.setValue('notanemail');
-      expect(component.isEmailValid()).toBeFalse();
+      expect(component.isEmailValid()).toBe(false);
 
       component.contactForm.get('email')!.setValue('missing@domain');
-      expect(component.isEmailValid()).toBeFalse();
+      expect(component.isEmailValid()).toBe(false);
 
       component.contactForm.get('email')!.setValue('@nodomain.com');
-      expect(component.isEmailValid()).toBeFalse();
+      expect(component.isEmailValid()).toBe(false);
     });
 
     it('should block saving when email is invalid', () => {
@@ -244,36 +253,36 @@ describe('BirthdayEditDialogComponent', () => {
   describe('Telegram validation', () => {
     it('should accept valid usernames', () => {
       component.contactForm.get('telegramUsername')!.setValue('johndoe');
-      expect(component.isTelegramValid()).toBeTrue();
+      expect(component.isTelegramValid()).toBe(true);
 
       component.contactForm.get('telegramUsername')!.setValue('user_123');
-      expect(component.isTelegramValid()).toBeTrue();
+      expect(component.isTelegramValid()).toBe(true);
     });
 
     it('should accept empty username', () => {
       component.contactForm.get('telegramUsername')!.setValue('');
-      expect(component.isTelegramValid()).toBeTrue();
+      expect(component.isTelegramValid()).toBe(true);
     });
 
     it('should reject username starting with a number', () => {
       component.contactForm.get('telegramUsername')!.setValue('12345');
-      expect(component.isTelegramValid()).toBeFalse();
+      expect(component.isTelegramValid()).toBe(false);
 
       component.contactForm.get('telegramUsername')!.setValue('1user');
-      expect(component.isTelegramValid()).toBeFalse();
+      expect(component.isTelegramValid()).toBe(false);
     });
 
     it('should reject username shorter than 5 characters', () => {
       component.contactForm.get('telegramUsername')!.setValue('abcd');
-      expect(component.isTelegramValid()).toBeFalse();
+      expect(component.isTelegramValid()).toBe(false);
     });
 
     it('should reject invalid usernames', () => {
       component.contactForm.get('telegramUsername')!.setValue('user name');
-      expect(component.isTelegramValid()).toBeFalse();
+      expect(component.isTelegramValid()).toBe(false);
 
       component.contactForm.get('telegramUsername')!.setValue('user@name');
-      expect(component.isTelegramValid()).toBeFalse();
+      expect(component.isTelegramValid()).toBe(false);
     });
 
     it('should block saving when telegram is invalid', () => {
@@ -288,26 +297,26 @@ describe('BirthdayEditDialogComponent', () => {
   describe('Phone validation', () => {
     it('should accept valid phone numbers', () => {
       component.contactForm.get('phone')!.setValue('+39 333 1234567');
-      expect(component.isPhoneValid()).toBeTrue();
+      expect(component.isPhoneValid()).toBe(true);
 
       component.contactForm.get('phone')!.setValue('(02) 1234-5678');
-      expect(component.isPhoneValid()).toBeTrue();
+      expect(component.isPhoneValid()).toBe(true);
 
       component.contactForm.get('phone')!.setValue('+1234567890');
-      expect(component.isPhoneValid()).toBeTrue();
+      expect(component.isPhoneValid()).toBe(true);
     });
 
     it('should accept empty phone', () => {
       component.contactForm.get('phone')!.setValue('');
-      expect(component.isPhoneValid()).toBeTrue();
+      expect(component.isPhoneValid()).toBe(true);
     });
 
     it('should reject phone with letters', () => {
       component.contactForm.get('phone')!.setValue('abc123');
-      expect(component.isPhoneValid()).toBeFalse();
+      expect(component.isPhoneValid()).toBe(false);
 
       component.contactForm.get('phone')!.setValue('+39 test');
-      expect(component.isPhoneValid()).toBeFalse();
+      expect(component.isPhoneValid()).toBe(false);
     });
 
     it('should block saving when phone is invalid', () => {
@@ -330,14 +339,14 @@ describe('BirthdayEditDialogComponent', () => {
   describe('Save blocked reasons', () => {
     it('should have no blocked reasons and allow saving with valid data', () => {
       expect(component.saveBlockedReasons).toEqual([]);
-      expect(component.canSave).toBeTrue();
+      expect(component.canSave).toBe(true);
     });
 
     it('should block saving and report missing name', () => {
       component.editingData.name = '   ';
 
       expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_NAME');
-      expect(component.canSave).toBeFalse();
+      expect(component.canSave).toBe(false);
 
       component.onSave();
       expect(dialogRefSpy.close).not.toHaveBeenCalled();
@@ -347,7 +356,7 @@ describe('BirthdayEditDialogComponent', () => {
       component.editingData.birthDate = '';
 
       expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_BIRTH_DATE');
-      expect(component.canSave).toBeFalse();
+      expect(component.canSave).toBe(false);
 
       component.onSave();
       expect(dialogRefSpy.close).not.toHaveBeenCalled();
@@ -357,7 +366,7 @@ describe('BirthdayEditDialogComponent', () => {
       component.onMessageUnsavedChanges(true);
 
       expect(component.saveBlockedReasons).toContain('EDIT_DIALOG.SAVE_BLOCKED_UNSAVED_MESSAGE');
-      expect(component.canSave).toBeFalse();
+      expect(component.canSave).toBe(false);
 
       component.onSave();
       expect(dialogRefSpy.close).not.toHaveBeenCalled();
@@ -368,7 +377,7 @@ describe('BirthdayEditDialogComponent', () => {
       component.contactForm.get('phone')!.setValue('invalid');
       component.contactForm.get('telegramUsername')!.setValue('1');
 
-      expect(component.saveBlockedReasons).toEqual(jasmine.arrayContaining([
+      expect(component.saveBlockedReasons).toEqual(expect.arrayContaining([
         'EDIT_DIALOG.SAVE_BLOCKED_EMAIL',
         'EDIT_DIALOG.SAVE_BLOCKED_PHONE',
         'EDIT_DIALOG.SAVE_BLOCKED_TELEGRAM',
@@ -377,10 +386,10 @@ describe('BirthdayEditDialogComponent', () => {
 
     it('should unblock once the unsaved message is cleared', () => {
       component.onMessageUnsavedChanges(true);
-      expect(component.canSave).toBeFalse();
+      expect(component.canSave).toBe(false);
 
       component.onMessageUnsavedChanges(false);
-      expect(component.canSave).toBeTrue();
+      expect(component.canSave).toBe(true);
     });
   });
 

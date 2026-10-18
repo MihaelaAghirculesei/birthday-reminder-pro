@@ -2,6 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
+import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as UIActions from '../store/ui/ui.actions';
@@ -9,7 +10,7 @@ import { ThemeService } from './theme.service';
 
 describe('ThemeService', () => {
   let service: ThemeService;
-  let storeSpy: jasmine.SpyObj<Store>;
+  let storeSpy: MockedObject<Store>;
   let darkModeSubject: BehaviorSubject<boolean>;
   let localStorageMock: Record<string, string>;
 
@@ -17,14 +18,17 @@ describe('ThemeService', () => {
     localStorageMock = {};
     darkModeSubject = new BehaviorSubject<boolean>(false);
 
-    const storeSpyObj = jasmine.createSpyObj('Store', ['dispatch', 'select']);
-    storeSpyObj.select.and.returnValue(darkModeSubject.asObservable());
+    const storeSpyObj = {
+      dispatch: vi.fn().mockName('Store.dispatch'),
+      select: vi.fn().mockName('Store.select')
+    };
+    storeSpyObj.select.mockReturnValue(darkModeSubject.asObservable());
 
-    spyOn(localStorage, 'getItem').and.callFake((key: string) => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
       return localStorageMock[key] || null;
     });
 
-    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
       localStorageMock[key] = value;
     });
 
@@ -37,7 +41,7 @@ describe('ThemeService', () => {
       ]
     });
 
-    storeSpy = TestBed.inject(Store) as jasmine.SpyObj<Store>;
+    storeSpy = TestBed.inject(Store) as MockedObject<Store>;
   });
 
   afterEach(() => {
@@ -53,18 +57,14 @@ describe('ThemeService', () => {
     it('should initialize with light theme when no saved preference', () => {
       service = TestBed.inject(ThemeService);
 
-      expect(storeSpy.dispatch).toHaveBeenCalledWith(
-        UIActions.setDarkMode({ enabled: false })
-      );
+      expect(storeSpy.dispatch).toHaveBeenCalledWith(UIActions.setDarkMode({ enabled: false }));
     });
 
     it('should initialize with dark theme when saved preference is true', () => {
       localStorageMock['birthday-app-dark-mode'] = 'true';
       service = TestBed.inject(ThemeService);
 
-      expect(storeSpy.dispatch).toHaveBeenCalledWith(
-        UIActions.setDarkMode({ enabled: true })
-      );
+      expect(storeSpy.dispatch).toHaveBeenCalledWith(UIActions.setDarkMode({ enabled: true }));
     });
 
     it('should apply dark theme class on initial load without transition', fakeAsync(() => {
@@ -155,14 +155,14 @@ describe('ThemeService', () => {
     });
 
     it('should not initialize theme on server', () => {
-      storeSpy.dispatch.calls.reset();
+      storeSpy.dispatch.mockClear();
       service = TestBed.inject(ThemeService);
 
       expect(storeSpy.dispatch).not.toHaveBeenCalled();
     });
 
     it('should not access localStorage on server', () => {
-      (localStorage.getItem as jasmine.Spy).calls.reset();
+      (localStorage.getItem as Mock).mockClear();
       service = TestBed.inject(ThemeService);
 
       expect(localStorage.getItem).not.toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe('ThemeService', () => {
   describe('toggleDarkMode', () => {
     beforeEach(() => {
       service = TestBed.inject(ThemeService);
-      storeSpy.dispatch.calls.reset();
+      storeSpy.dispatch.mockClear();
     });
 
     it('should dispatch toggleDarkMode action', () => {

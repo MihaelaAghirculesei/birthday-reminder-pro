@@ -49,8 +49,8 @@ describe('Auth Selectors', () => {
   });
 
   it('selectAuthLoading should return loading state', () => {
-    expect(AuthSelectors.selectAuthLoading.projector(loadingState)).toBeTrue();
-    expect(AuthSelectors.selectAuthLoading.projector(authenticatedState)).toBeFalse();
+    expect(AuthSelectors.selectAuthLoading.projector(loadingState)).toBe(true);
+    expect(AuthSelectors.selectAuthLoading.projector(authenticatedState)).toBe(false);
   });
 
   it('selectAuthError should return error', () => {
@@ -59,16 +59,16 @@ describe('Auth Selectors', () => {
   });
 
   it('selectAuthInitialized should return initialized', () => {
-    expect(AuthSelectors.selectAuthInitialized.projector(authenticatedState)).toBeTrue();
-    expect(AuthSelectors.selectAuthInitialized.projector(loadingState)).toBeFalse();
+    expect(AuthSelectors.selectAuthInitialized.projector(authenticatedState)).toBe(true);
+    expect(AuthSelectors.selectAuthInitialized.projector(loadingState)).toBe(false);
   });
 
   it('selectIsAuthenticated should return true when user exists', () => {
-    expect(AuthSelectors.selectIsAuthenticated.projector(mockUser)).toBeTrue();
+    expect(AuthSelectors.selectIsAuthenticated.projector(mockUser)).toBe(true);
   });
 
   it('selectIsAuthenticated should return false when user is null', () => {
-    expect(AuthSelectors.selectIsAuthenticated.projector(null)).toBeFalse();
+    expect(AuthSelectors.selectIsAuthenticated.projector(null)).toBe(false);
   });
 
   it('selectUserId should return uid', () => {

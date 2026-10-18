@@ -61,27 +61,27 @@ describe('Sync Selectors', () => {
   });
 
   it('selectIsOnline should return online status', () => {
-    expect(SyncSelectors.selectIsOnline.projector(idleStatus)).toBeTrue();
-    expect(SyncSelectors.selectIsOnline.projector(offlineStatus)).toBeFalse();
+    expect(SyncSelectors.selectIsOnline.projector(idleStatus)).toBe(true);
+    expect(SyncSelectors.selectIsOnline.projector(offlineStatus)).toBe(false);
   });
 
   it('selectIsSyncing should return true when syncing', () => {
-    expect(SyncSelectors.selectIsSyncing.projector('syncing')).toBeTrue();
-    expect(SyncSelectors.selectIsSyncing.projector('idle')).toBeFalse();
+    expect(SyncSelectors.selectIsSyncing.projector('syncing')).toBe(true);
+    expect(SyncSelectors.selectIsSyncing.projector('idle')).toBe(false);
   });
 
   it('selectHasPendingChanges should return true when count > 0', () => {
-    expect(SyncSelectors.selectHasPendingChanges.projector(3)).toBeTrue();
-    expect(SyncSelectors.selectHasPendingChanges.projector(0)).toBeFalse();
+    expect(SyncSelectors.selectHasPendingChanges.projector(3)).toBe(true);
+    expect(SyncSelectors.selectHasPendingChanges.projector(0)).toBe(false);
   });
 
   it('selectSyncSummary should return summary object', () => {
     const summary = SyncSelectors.selectSyncSummary.projector(idleStatus);
     expect(summary.state).toBe('idle');
-    expect(summary.isOnline).toBeTrue();
+    expect(summary.isOnline).toBe(true);
     expect(summary.pendingCount).toBe(0);
     expect(summary.lastSync).toEqual(new Date(1700000000000));
-    expect(summary.hasError).toBeFalse();
+    expect(summary.hasError).toBe(false);
   });
 
   it('selectSyncSummary should return null lastSync when no timestamp', () => {
@@ -91,7 +91,7 @@ describe('Sync Selectors', () => {
 
   it('selectSyncSummary should detect error', () => {
     const summary = SyncSelectors.selectSyncSummary.projector(errorStatus);
-    expect(summary.hasError).toBeTrue();
+    expect(summary.hasError).toBe(true);
   });
 
   it('selectBatchSyncProgress should return batchProgress when syncing in batches', () => {

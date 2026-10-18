@@ -14,10 +14,10 @@ describe('Birthday Mock Data', () => {
 
     it('should have required fields for each entry', () => {
       MOCK_BIRTHDAY_RAW_DATA.forEach((entry, index) => {
-        expect(entry.name).toBeTruthy(`Entry ${index} missing name`);
+        expect(entry.name, `Entry ${index} missing name`).toBeTruthy();
         expect(entry.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        expect(entry.category).toBeTruthy(`Entry ${index} missing category`);
-        expect(entry.notes).toBeTruthy(`Entry ${index} missing notes`);
+        expect(entry.category, `Entry ${index} missing category`).toBeTruthy();
+        expect(entry.notes, `Entry ${index} missing notes`).toBeTruthy();
       });
     });
 

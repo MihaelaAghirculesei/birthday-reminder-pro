@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import { type GoogleApiErrorDetails,GoogleApiErrorService } from './google-api-error.service';
+import { type GoogleApiErrorDetails, GoogleApiErrorService } from './google-api-error.service';
 import { LoggerService, SILENT_LOGGING } from './logger.service';
 
 describe('GoogleApiErrorService', () => {
@@ -66,13 +66,16 @@ describe('GoogleApiErrorService', () => {
     });
 
     it('should provide user-friendly messages for known error codes', () => {
-      const testCases: { code: number; expectedMessage: string }[] = [
-        { code: 401, expectedMessage: 'Authentication expired. Please sign in again.' },
-        { code: 403, expectedMessage: 'Access denied. Please check your permissions.' },
-        { code: 404, expectedMessage: 'Calendar or event not found.' },
-        { code: 429, expectedMessage: 'Too many requests. Please wait a moment and try again.' },
-        { code: 500, expectedMessage: 'Google Calendar service error. Please try again later.' }
-      ];
+      const testCases: {
+        code: number;
+        expectedMessage: string;
+      }[] = [
+          { code: 401, expectedMessage: 'Authentication expired. Please sign in again.' },
+          { code: 403, expectedMessage: 'Access denied. Please check your permissions.' },
+          { code: 404, expectedMessage: 'Calendar or event not found.' },
+          { code: 429, expectedMessage: 'Too many requests. Please wait a moment and try again.' },
+          { code: 500, expectedMessage: 'Google Calendar service error. Please try again later.' }
+        ];
 
       testCases.forEach(({ code, expectedMessage }) => {
         const error = { result: { error: { code, message: 'API error' } } };
@@ -141,7 +144,9 @@ describe('GoogleApiErrorService', () => {
       const error = service.createError(details, 'syncBirthday');
 
       expect(error.message).toBe('[syncBirthday] Access denied. Please check your permissions.');
-      expect((error as Error & { googleApiDetails: GoogleApiErrorDetails }).googleApiDetails).toBe(details);
+      expect((error as Error & {
+        googleApiDetails: GoogleApiErrorDetails;
+      }).googleApiDetails).toBe(details);
     });
 
     it('should create Error without context', () => {

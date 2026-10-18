@@ -50,17 +50,17 @@ describe('MessageIndicatorComponent', () => {
   describe('hasActiveMessages', () => {
     it('should be false when birthday is null', () => {
       setBirthday(null);
-      expect(component.hasActiveMessages()).toBeFalse();
+      expect(component.hasActiveMessages()).toBe(false);
     });
 
     it('should be false when birthday has no scheduledMessages', () => {
       setBirthday(createMockBirthday());
-      expect(component.hasActiveMessages()).toBeFalse();
+      expect(component.hasActiveMessages()).toBe(false);
     });
 
     it('should be false when birthday has empty scheduledMessages array', () => {
       setBirthday(createMockBirthday([]));
-      expect(component.hasActiveMessages()).toBeFalse();
+      expect(component.hasActiveMessages()).toBe(false);
     });
 
     it('should be false when all messages are inactive', () => {
@@ -68,7 +68,7 @@ describe('MessageIndicatorComponent', () => {
         createMockMessage('1', 'Msg1', '09:00', false),
         createMockMessage('2', 'Msg2', '12:00', false)
       ]));
-      expect(component.hasActiveMessages()).toBeFalse();
+      expect(component.hasActiveMessages()).toBe(false);
     });
 
     it('should be true when at least one message is active', () => {
@@ -76,7 +76,7 @@ describe('MessageIndicatorComponent', () => {
         createMockMessage('1', 'Msg1', '09:00', true),
         createMockMessage('2', 'Msg2', '12:00', false)
       ]));
-      expect(component.hasActiveMessages()).toBeTrue();
+      expect(component.hasActiveMessages()).toBe(true);
     });
   });
 

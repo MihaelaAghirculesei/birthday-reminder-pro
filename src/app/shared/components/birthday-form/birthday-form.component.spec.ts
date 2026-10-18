@@ -1,9 +1,10 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { LoggerService,SILENT_LOGGER_PROVIDER } from '../../../core';
+import { LoggerService, SILENT_LOGGER_PROVIDER } from '../../../core';
 import { FirebaseAuthService } from '../../../core/services/firebase-auth.service';
 import { PhotoStorageService } from '../../../core/services/photo-storage.service';
 import { BIRTHDAY_CATEGORIES, DEFAULT_CATEGORY } from '../../constants';
@@ -13,11 +14,17 @@ import { BirthdayFormComponent } from './birthday-form.component';
 describe('BirthdayFormComponent', () => {
   let component: BirthdayFormComponent;
   let fixture: ComponentFixture<BirthdayFormComponent>;
-  let photoStorageSpy: jasmine.SpyObj<PhotoStorageService>;
-  let authServiceStub: { currentUser: { uid: string } | null };
+  let photoStorageSpy: MockedObject<PhotoStorageService>;
+  let authServiceStub: {
+    currentUser: {
+      uid: string;
+    } | null;
+  };
 
   beforeEach(async () => {
-    photoStorageSpy = jasmine.createSpyObj('PhotoStorageService', ['uploadPhoto']);
+    photoStorageSpy = {
+      uploadPhoto: vi.fn().mockName('PhotoStorageService.uploadPhoto')
+    } as unknown as MockedObject<PhotoStorageService>;
     authServiceStub = { currentUser: null };
 
     await TestBed.configureTestingModule({
@@ -65,45 +72,45 @@ describe('BirthdayFormComponent', () => {
   describe('validation', () => {
     it('should require name', () => {
       component.birthdayForm.get('name')?.setValue('');
-      expect(component.birthdayForm.get('name')?.hasError('required')).toBeTrue();
+      expect(component.birthdayForm.get('name')?.hasError('required')).toBe(true);
     });
 
     it('should enforce name minLength of 2', () => {
       component.birthdayForm.get('name')?.setValue('A');
-      expect(component.birthdayForm.get('name')?.hasError('minlength')).toBeTrue();
+      expect(component.birthdayForm.get('name')?.hasError('minlength')).toBe(true);
     });
 
     it('should enforce name maxLength of 50', () => {
       component.birthdayForm.get('name')?.setValue('A'.repeat(51));
-      expect(component.birthdayForm.get('name')?.hasError('maxlength')).toBeTrue();
+      expect(component.birthdayForm.get('name')?.hasError('maxlength')).toBe(true);
     });
 
     it('should require birthDate', () => {
       component.birthdayForm.get('birthDate')?.setValue('');
-      expect(component.birthdayForm.get('birthDate')?.hasError('required')).toBeTrue();
+      expect(component.birthdayForm.get('birthDate')?.hasError('required')).toBe(true);
     });
 
     it('should reject future dates', () => {
       const futureDate = new Date();
       futureDate.setFullYear(futureDate.getFullYear() + 1);
       component.birthdayForm.get('birthDate')?.setValue(futureDate);
-      expect(component.birthdayForm.get('birthDate')?.hasError('futureDate')).toBeTrue();
+      expect(component.birthdayForm.get('birthDate')?.hasError('futureDate')).toBe(true);
     });
 
     it('should accept past dates', () => {
       const pastDate = new Date(2000, 0, 1);
       component.birthdayForm.get('birthDate')?.setValue(pastDate);
-      expect(component.birthdayForm.get('birthDate')?.hasError('futureDate')).toBeFalse();
+      expect(component.birthdayForm.get('birthDate')?.hasError('futureDate')).toBe(false);
     });
 
     it('should enforce reminderDays min of 1', () => {
       component.birthdayForm.get('reminderDays')?.setValue(0);
-      expect(component.birthdayForm.get('reminderDays')?.hasError('min')).toBeTrue();
+      expect(component.birthdayForm.get('reminderDays')?.hasError('min')).toBe(true);
     });
 
     it('should enforce reminderDays max of 365', () => {
       component.birthdayForm.get('reminderDays')?.setValue(366);
-      expect(component.birthdayForm.get('reminderDays')?.hasError('max')).toBeTrue();
+      expect(component.birthdayForm.get('reminderDays')?.hasError('max')).toBe(true);
     });
   });
 
@@ -149,19 +156,19 @@ describe('BirthdayFormComponent', () => {
 
     it('should emit birthdaySubmitted with valid form data', async () => {
       fillValidForm();
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
       expect(component.birthdaySubmitted.emit).toHaveBeenCalledTimes(1);
-      const emitted = (component.birthdaySubmitted.emit as jasmine.Spy).calls.first().args[0] as Omit<Birthday, 'id'>;
+      const emitted = vi.mocked((component.birthdaySubmitted.emit as Mock)).mock.calls[0][0] as Omit<Birthday, 'id'>;
       expect(emitted['name']).toBe('John Doe');
       expect(emitted['birthDate']).toBe('1990-06-15');
     });
 
     it('should reset form after successful submit', async () => {
       fillValidForm();
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
@@ -173,7 +180,7 @@ describe('BirthdayFormComponent', () => {
     it('should clear selectedPhoto after successful submit', async () => {
       fillValidForm();
       component.selectedPhoto = 'data:image/png;base64,abc';
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
@@ -181,7 +188,7 @@ describe('BirthdayFormComponent', () => {
     });
 
     it('should not emit when form is invalid', async () => {
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
@@ -190,7 +197,7 @@ describe('BirthdayFormComponent', () => {
 
     it('should not submit when isSubmitting is true', async () => {
       fillValidForm();
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
       component.isSubmitting.set(true);
 
       await component.onSubmit();
@@ -203,10 +210,10 @@ describe('BirthdayFormComponent', () => {
       const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
       const cdnUrl = 'https://cdn.example.com/photo.jpg';
       authServiceStub.currentUser = { uid: 'user-123' };
-      photoStorageSpy.uploadPhoto.and.returnValue(Promise.resolve(cdnUrl));
+      photoStorageSpy.uploadPhoto.mockReturnValue(Promise.resolve(cdnUrl));
       component.onFileSelected(mockFile);
       component.selectedPhoto = 'data:image/png;base64,abc';
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
@@ -220,7 +227,7 @@ describe('BirthdayFormComponent', () => {
       authServiceStub.currentUser = null;
       component.onFileSelected(mockFile);
       component.selectedPhoto = 'data:image/png;base64,abc';
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
 
       await component.onSubmit();
 
@@ -230,8 +237,8 @@ describe('BirthdayFormComponent', () => {
 
     it('should log error and not emit when Zod validation fails', async () => {
       const logger = TestBed.inject(LoggerService);
-      spyOn(logger, 'error');
-      spyOn(component.birthdaySubmitted, 'emit');
+      vi.spyOn(logger, 'error');
+      vi.spyOn(component.birthdaySubmitted, 'emit');
       // '  ' passes Angular validators (required + minLength(2)) but
       // fails Zod's trim().min(1) — triggering the !result.success branch.
       component.birthdayForm.patchValue({

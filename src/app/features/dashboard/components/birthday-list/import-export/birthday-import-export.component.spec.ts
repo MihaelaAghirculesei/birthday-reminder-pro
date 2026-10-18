@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { BackupService, NotificationService } from '../../../../../core';
@@ -7,14 +8,16 @@ import { createMockBirthday } from '../../../../../testing/mock-data/birthday-mo
 import { BirthdayImportExportComponent } from './birthday-import-export.component';
 
 interface MockFileInputEvent {
-  target: HTMLInputElement | { files: File[] };
+  target: HTMLInputElement | {
+    files: File[];
+  };
 }
 
 describe('BirthdayImportExportComponent', () => {
   let component: BirthdayImportExportComponent;
   let fixture: ComponentFixture<BirthdayImportExportComponent>;
-  let backupServiceSpy: jasmine.SpyObj<BackupService>;
-  let notificationServiceSpy: jasmine.SpyObj<NotificationService>;
+  let backupServiceSpy: MockedObject<BackupService>;
+  let notificationServiceSpy: MockedObject<NotificationService>;
 
   const mockBirthdays = [
     createMockBirthday({ id: '1', name: 'John Doe', birthDate: '1990-01-15', category: 'friends' }),
@@ -22,14 +25,16 @@ describe('BirthdayImportExportComponent', () => {
   ];
 
   beforeEach(async () => {
-    const backupSpy = jasmine.createSpyObj('BackupService', [
-      'exportToJSON',
-      'exportToCSV',
-      'importFromFile',
-      'importFromCSV',
-      'importFromVCard'
-    ]);
-    const notificationSpy = jasmine.createSpyObj('NotificationService', ['show']);
+    const backupSpy = {
+      exportToJSON: vi.fn().mockName('BackupService.exportToJSON'),
+      exportToCSV: vi.fn().mockName('BackupService.exportToCSV'),
+      importFromFile: vi.fn().mockName('BackupService.importFromFile'),
+      importFromCSV: vi.fn().mockName('BackupService.importFromCSV'),
+      importFromVCard: vi.fn().mockName('BackupService.importFromVCard')
+    };
+    const notificationSpy = {
+      show: vi.fn().mockName('NotificationService.show')
+    };
 
     await TestBed.configureTestingModule({
       imports: [BirthdayImportExportComponent],
@@ -42,8 +47,8 @@ describe('BirthdayImportExportComponent', () => {
 
     fixture = TestBed.createComponent(BirthdayImportExportComponent);
     component = fixture.componentInstance;
-    backupServiceSpy = TestBed.inject(BackupService) as jasmine.SpyObj<BackupService>;
-    notificationServiceSpy = TestBed.inject(NotificationService) as jasmine.SpyObj<NotificationService>;
+    backupServiceSpy = TestBed.inject(BackupService) as MockedObject<BackupService>;
+    notificationServiceSpy = TestBed.inject(NotificationService) as MockedObject<NotificationService>;
   });
 
   it('should create', () => {
@@ -56,10 +61,7 @@ describe('BirthdayImportExportComponent', () => {
       component.onExportJSON();
 
       expect(backupServiceSpy.exportToJSON).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Exported 2 birthdays to JSON',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Exported 2 birthdays to JSON', 'success');
     });
 
     it('should export birthdays to JSON using Signal input', () => {
@@ -67,10 +69,7 @@ describe('BirthdayImportExportComponent', () => {
       component.onExportJSON();
 
       expect(backupServiceSpy.exportToJSON).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Exported 2 birthdays to JSON',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Exported 2 birthdays to JSON', 'success');
     });
 
     it('should export birthdays to CSV using array input', () => {
@@ -78,10 +77,7 @@ describe('BirthdayImportExportComponent', () => {
       component.onExportCSV();
 
       expect(backupServiceSpy.exportToCSV).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Exported 2 birthdays to CSV',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Exported 2 birthdays to CSV', 'success');
     });
 
     it('should export birthdays to CSV using Signal input', () => {
@@ -89,10 +85,7 @@ describe('BirthdayImportExportComponent', () => {
       component.onExportCSV();
 
       expect(backupServiceSpy.exportToCSV).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Exported 2 birthdays to CSV',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Exported 2 birthdays to CSV', 'success');
     });
 
     it('should disable export buttons when importing', () => {
@@ -101,9 +94,7 @@ describe('BirthdayImportExportComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button');
-      const exportButtons = Array.from(buttons as NodeListOf<HTMLButtonElement>).filter((btn) =>
-        btn.textContent?.includes('JSON') || btn.textContent?.includes('CSV')
-      );
+      const exportButtons = Array.from(buttons as NodeListOf<HTMLButtonElement>).filter((btn) => btn.textContent?.includes('JSON') || btn.textContent?.includes('CSV'));
 
       exportButtons.forEach((btn) => {
         expect(btn.disabled).toBe(true);
@@ -128,74 +119,58 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should import birthdays from JSON and emit event', async () => {
-      backupServiceSpy.importFromFile.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
-      spyOn(component.birthdaysImported, 'emit');
+      backupServiceSpy.importFromFile.mockReturnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportBackup(mockEvent as unknown as Event);
 
       expect(backupServiceSpy.importFromFile).toHaveBeenCalledWith(mockFile);
       expect(component.birthdaysImported.emit).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Imported 2 birthdays',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Imported 2 birthdays', 'success');
       expect(component.isImporting()).toBe(false);
       expect(mockInput.value).toBe('');
     });
 
     it('should import birthdays from CSV and emit event', async () => {
-      backupServiceSpy.importFromCSV.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
-      spyOn(component.birthdaysImported, 'emit');
+      backupServiceSpy.importFromCSV.mockReturnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportCSV(mockEvent as unknown as Event);
 
       expect(backupServiceSpy.importFromCSV).toHaveBeenCalledWith(mockFile);
       expect(component.birthdaysImported.emit).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Imported 2 birthdays from CSV',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Imported 2 birthdays from CSV', 'success');
       expect(component.isImporting()).toBe(false);
       expect(mockInput.value).toBe('');
     });
 
     it('should import birthdays from vCard and emit event', async () => {
-      backupServiceSpy.importFromVCard.and.returnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
-      spyOn(component.birthdaysImported, 'emit');
+      backupServiceSpy.importFromVCard.mockReturnValue(Promise.resolve({ valid: mockBirthdays, invalid: [] }));
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportVCard(mockEvent as unknown as Event);
 
       expect(backupServiceSpy.importFromVCard).toHaveBeenCalledWith(mockFile);
       expect(component.birthdaysImported.emit).toHaveBeenCalledWith(mockBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Imported 2 birthdays from vCard',
-        'success'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Imported 2 birthdays from vCard', 'success');
       expect(component.isImporting()).toBe(false);
       expect(mockInput.value).toBe('');
     });
 
     it('should show warning and emit valid birthdays when some are skipped', async () => {
       const validBirthdays = [mockBirthdays[0]];
-      backupServiceSpy.importFromFile.and.returnValue(
-        Promise.resolve({ valid: validBirthdays, invalid: [{ name: 'Bad', error: 'Invalid date' }] })
-      );
-      spyOn(component.birthdaysImported, 'emit');
+      backupServiceSpy.importFromFile.mockReturnValue(Promise.resolve({ valid: validBirthdays, invalid: [{ name: 'Bad', error: 'Invalid date' }] }));
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportBackup(mockEvent as unknown as Event);
 
       expect(component.birthdaysImported.emit).toHaveBeenCalledWith(validBirthdays);
-      expect(notificationServiceSpy.show).toHaveBeenCalledWith(
-        'Imported 1 birthdays (1 skipped)',
-        'warning'
-      );
+      expect(notificationServiceSpy.show).toHaveBeenCalledWith('Imported 1 birthdays (1 skipped)', 'warning');
     });
 
     it('should show error and emit empty array when all birthdays are invalid', async () => {
-      backupServiceSpy.importFromFile.and.returnValue(
-        Promise.resolve({ valid: [], invalid: [{ name: 'Bad', error: 'Invalid date' }] })
-      );
-      spyOn(component.birthdaysImported, 'emit');
+      backupServiceSpy.importFromFile.mockReturnValue(Promise.resolve({ valid: [], invalid: [{ name: 'Bad', error: 'Invalid date' }] }));
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportBackup(mockEvent as unknown as Event);
 
@@ -204,9 +179,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should set isImporting to true during JSON import', async () => {
-      backupServiceSpy.importFromFile.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
-      );
+      backupServiceSpy.importFromFile.mockReturnValue(new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100)));
 
       const importPromise = component.onImportBackup(mockEvent as unknown as Event);
       expect(component.isImporting()).toBe(true);
@@ -216,9 +189,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should set isImporting to true during CSV import', async () => {
-      backupServiceSpy.importFromCSV.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
-      );
+      backupServiceSpy.importFromCSV.mockReturnValue(new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100)));
 
       const importPromise = component.onImportCSV(mockEvent as unknown as Event);
       expect(component.isImporting()).toBe(true);
@@ -228,9 +199,7 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should set isImporting to true during vCard import', async () => {
-      backupServiceSpy.importFromVCard.and.returnValue(
-        new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100))
-      );
+      backupServiceSpy.importFromVCard.mockReturnValue(new Promise(resolve => setTimeout(() => resolve({ valid: mockBirthdays, invalid: [] }), 100)));
 
       const importPromise = component.onImportVCard(mockEvent as unknown as Event);
       expect(component.isImporting()).toBe(true);
@@ -240,8 +209,8 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should handle JSON import error', async () => {
-      spyOn(console, 'error');
-      backupServiceSpy.importFromFile.and.returnValue(Promise.reject(new Error('Invalid file')));
+      vi.spyOn(console, 'error');
+      backupServiceSpy.importFromFile.mockReturnValue(Promise.reject(new Error('Invalid file')));
 
       await component.onImportBackup(mockEvent as unknown as Event);
 
@@ -251,8 +220,8 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should handle CSV import error', async () => {
-      spyOn(console, 'error');
-      backupServiceSpy.importFromCSV.and.returnValue(Promise.reject(new Error('Invalid file')));
+      vi.spyOn(console, 'error');
+      backupServiceSpy.importFromCSV.mockReturnValue(Promise.reject(new Error('Invalid file')));
 
       await component.onImportCSV(mockEvent as unknown as Event);
 
@@ -262,8 +231,8 @@ describe('BirthdayImportExportComponent', () => {
     });
 
     it('should handle vCard import error', async () => {
-      spyOn(console, 'error');
-      backupServiceSpy.importFromVCard.and.returnValue(Promise.reject(new Error('Invalid file')));
+      vi.spyOn(console, 'error');
+      backupServiceSpy.importFromVCard.mockReturnValue(Promise.reject(new Error('Invalid file')));
 
       await component.onImportVCard(mockEvent as unknown as Event);
 
@@ -274,7 +243,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should not import if no file is selected for JSON', async () => {
       const emptyEvent: MockFileInputEvent = { target: { files: [] } };
-      spyOn(component.birthdaysImported, 'emit');
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportBackup(emptyEvent as unknown as Event);
 
@@ -284,7 +253,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should not import if no file is selected for CSV', async () => {
       const emptyEvent: MockFileInputEvent = { target: { files: [] } };
-      spyOn(component.birthdaysImported, 'emit');
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportCSV(emptyEvent as unknown as Event);
 
@@ -294,7 +263,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should not import if no file is selected for vCard', async () => {
       const emptyEvent: MockFileInputEvent = { target: { files: [] } };
-      spyOn(component.birthdaysImported, 'emit');
+      vi.spyOn(component.birthdaysImported, 'emit');
 
       await component.onImportVCard(emptyEvent as unknown as Event);
 
@@ -326,9 +295,7 @@ describe('BirthdayImportExportComponent', () => {
       fixture.detectChanges();
 
       const buttons = fixture.nativeElement.querySelectorAll('button');
-      const importButtons = Array.from(buttons as NodeListOf<HTMLButtonElement>).filter((btn) =>
-        btn.textContent?.includes('Importing...')
-      );
+      const importButtons = Array.from(buttons as NodeListOf<HTMLButtonElement>).filter((btn) => btn.textContent?.includes('Importing...'));
 
       expect(importButtons.length).toBeGreaterThan(0);
     });

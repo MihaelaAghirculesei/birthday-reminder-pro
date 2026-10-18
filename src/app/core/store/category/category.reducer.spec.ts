@@ -62,10 +62,7 @@ describe('Category Reducer', () => {
     });
 
     it('should set error on addCategoryFailure and preserve existing entities', () => {
-      const withCategory = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      const withCategory = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
       const state = categoryReducer(withCategory, CategoryActions.addCategoryFailure({ error: 'Add failed' }));
 
       expect(state.error).toBe('Add failed');
@@ -75,10 +72,7 @@ describe('Category Reducer', () => {
 
   describe('Update Category', () => {
     it('should update category on success', () => {
-      const initialState = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      const initialState = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
 
       const updated = { ...mockCategory, name: 'Updated Work' };
       const action = CategoryActions.updateCategorySuccess({ category: updated });
@@ -89,10 +83,7 @@ describe('Category Reducer', () => {
     });
 
     it('should set error on updateCategoryFailure and leave entities unchanged', () => {
-      const withCategory = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      const withCategory = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
       const state = categoryReducer(withCategory, CategoryActions.updateCategoryFailure({ error: 'Update failed' }));
 
       expect(state.error).toBe('Update failed');
@@ -102,10 +93,7 @@ describe('Category Reducer', () => {
 
   describe('Delete Category', () => {
     it('should mark category as deleted', () => {
-      const initialState = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      const initialState = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
 
       const action = CategoryActions.deleteCategorySuccess({ categoryId: 'custom-1' });
       const state = categoryReducer(initialState, action);
@@ -115,10 +103,7 @@ describe('Category Reducer', () => {
     });
 
     it('should set error on deleteCategoryFailure and leave deletedCategoryIds unchanged', () => {
-      const state = categoryReducer(
-        initialCategoryState,
-        CategoryActions.deleteCategoryFailure({ error: 'Delete failed' })
-      );
+      const state = categoryReducer(initialCategoryState, CategoryActions.deleteCategoryFailure({ error: 'Delete failed' }));
 
       expect(state.error).toBe('Delete failed');
       expect(state.deletedCategoryIds).toEqual([]);
@@ -127,10 +112,7 @@ describe('Category Reducer', () => {
 
   describe('Restore Category', () => {
     it('should restore deleted category', () => {
-      let state = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      let state = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
       state = categoryReducer(state, CategoryActions.deleteCategorySuccess({ categoryId: 'custom-1' }));
 
       const action = CategoryActions.restoreCategorySuccess({ categoryId: 'custom-1' });
@@ -141,10 +123,7 @@ describe('Category Reducer', () => {
     });
 
     it('should set error on restoreCategoryFailure and leave deletedCategoryIds unchanged', () => {
-      let state = categoryReducer(
-        initialCategoryState,
-        CategoryActions.addCategorySuccess({ category: mockCategory })
-      );
+      let state = categoryReducer(initialCategoryState, CategoryActions.addCategorySuccess({ category: mockCategory }));
       state = categoryReducer(state, CategoryActions.deleteCategorySuccess({ categoryId: 'custom-1' }));
 
       const newState = categoryReducer(state, CategoryActions.restoreCategoryFailure({ error: 'Restore failed' }));

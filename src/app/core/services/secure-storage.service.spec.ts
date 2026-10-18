@@ -146,7 +146,7 @@ describe('SecureStorageService', () => {
     });
 
     it('should not throw when removing non-existent item', async () => {
-      await expectAsync(service.removeItem('nonExistent')).toBeResolved();
+      await expect(service.removeItem('nonExistent')).resolves.not.toThrow();
     });
   });
 
@@ -171,7 +171,7 @@ describe('SecureStorageService', () => {
       db.close();
 
       expect(key).toBeTruthy();
-      expect(key instanceof CryptoKey).toBeTrue();
+      expect(key instanceof CryptoKey).toBe(true);
     });
 
     it('should generate a non-extractable key', async () => {
@@ -193,7 +193,7 @@ describe('SecureStorageService', () => {
 
       db.close();
 
-      expect(key.extractable).toBeFalse();
+      expect(key.extractable).toBe(false);
     });
 
     it('should not store encryption key in sessionStorage', async () => {
@@ -296,10 +296,10 @@ describe('SecureStorageService (Server Platform)', () => {
   });
 
   it('should not throw on setItem in server platform', async () => {
-    await expectAsync(service.setItem('key', 'value')).toBeResolved();
+    await expect(service.setItem('key', 'value')).resolves.not.toThrow();
   });
 
   it('should not throw on removeItem in server platform', async () => {
-    await expectAsync(service.removeItem('key')).toBeResolved();
+    await expect(service.removeItem('key')).resolves.not.toThrow();
   });
 });

@@ -1,9 +1,9 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
-import { ONE_DAY_MS,ONE_HOUR_MS, ONE_MINUTE_MS } from '../../../core/constants/time.constants';
+import { ONE_DAY_MS, ONE_HOUR_MS, ONE_MINUTE_MS } from '../../../core/constants/time.constants';
 import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
 import { SyncStatusComponent } from './sync-status.component';
 

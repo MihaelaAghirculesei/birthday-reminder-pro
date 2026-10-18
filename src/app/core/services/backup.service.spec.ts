@@ -41,13 +41,13 @@ describe('BackupService', () => {
     it('should throw error for invalid JSON', async () => {
       const file = new File(['invalid json'], 'backup.json', { type: 'application/json' });
 
-      await expectAsync(service.importFromFile(file)).toBeRejectedWithError('Invalid JSON file. Please select a valid backup file.');
+      await expect(service.importFromFile(file)).rejects.toThrowError('Invalid JSON file. Please select a valid backup file.');
     });
 
     it('should throw error for missing birthdays array', async () => {
       const file = new File([JSON.stringify({ version: 1 })], 'backup.json', { type: 'application/json' });
 
-      await expectAsync(service.importFromFile(file)).toBeRejectedWithError(/Invalid backup format: exportDate/);
+      await expect(service.importFromFile(file)).rejects.toThrowError(/Invalid backup format: exportDate/);
     });
 
     it('should return invalid entry for invalid date instead of throwing', async () => {
@@ -151,15 +151,15 @@ describe('BackupService', () => {
     it('should throw error for empty CSV', async () => {
       const file = new File(['Name,Birth Date\n'], 'backup.csv', { type: 'text/csv' });
 
-      await expectAsync(service.importFromCSV(file)).toBeRejectedWithError('CSV file is empty or has no data rows');
+      await expect(service.importFromCSV(file)).rejects.toThrowError('CSV file is empty or has no data rows');
     });
 
     it('should throw error when CSV exceeds 10,000 rows', async () => {
-      const dataRows = Array.from({ length: 10_000 }, (_, i) => `Person${i},1990-05-15,friends`).join('\n');
+      const dataRows = Array.from({ length: 10000 }, (_, i) => `Person${i},1990-05-15,friends`).join('\n');
       const csv = `Name,Birth Date,Category\n${dataRows}`;
       const file = new File([csv], 'large.csv', { type: 'text/csv' });
 
-      await expectAsync(service.importFromCSV(file)).toBeRejectedWithError('CSV file exceeds the maximum limit of 10,000 rows');
+      await expect(service.importFromCSV(file)).rejects.toThrowError('CSV file exceeds the maximum limit of 10,000 rows');
     });
   });
 
@@ -227,7 +227,7 @@ describe('BackupService', () => {
         reminderDays: 7
       }];
 
-      spyOn(document, 'createElement').and.callThrough();
+      vi.spyOn(document, 'createElement');
 
       service.exportToJSON(birthdays);
 
@@ -247,7 +247,7 @@ describe('BackupService', () => {
         reminderDays: 7
       }];
 
-      spyOn(document, 'createElement').and.callThrough();
+      vi.spyOn(document, 'createElement');
 
       service.exportToCSV(birthdays);
 
@@ -265,7 +265,7 @@ describe('BackupService', () => {
         reminderDays: 7
       }];
 
-      spyOn(document, 'createElement').and.callThrough();
+      vi.spyOn(document, 'createElement');
 
       service.exportToCSV(birthdays);
 

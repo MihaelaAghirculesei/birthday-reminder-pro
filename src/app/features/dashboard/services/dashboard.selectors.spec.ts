@@ -1,6 +1,6 @@
 import { selectSortedBirthdays } from '../../../core/store/birthday/birthday.selectors';
 import { type BirthdayState, initialBirthdayFilters } from '../../../core/store/birthday/birthday.state';
-import { categoryAdapter,type CategoryState } from '../../../core/store/category/category.state';
+import { categoryAdapter, type CategoryState } from '../../../core/store/category/category.state';
 import { type BirthdayCategory } from '../../../shared';
 import { type Birthday } from '../../../shared/models/birthday.model';
 import { selectFilteredSortedBirthdays } from './dashboard.selectors';
@@ -9,11 +9,7 @@ import { selectFilteredSortedBirthdays } from './dashboard.selectors';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeState(
-  birthdays: Birthday[],
-  filters: Partial<typeof initialBirthdayFilters> = {},
-  categories: BirthdayCategory[] = []
-) {
+function makeState(birthdays: Birthday[], filters: Partial<typeof initialBirthdayFilters> = {}, categories: BirthdayCategory[] = []) {
   const birthdayState: BirthdayState = {
     ids: birthdays.map(b => b.id),
     entities: Object.fromEntries(birthdays.map(b => [b.id, b])),
@@ -114,7 +110,7 @@ describe('selectFilteredSortedBirthdays', () => {
   it('filters by category', () => {
     const state = makeState([alice, bob, charlie], { selectedCategory: 'friends' }, mockCategories);
     const result = selectFilteredSortedBirthdays(state);
-    expect(result.every(b => b.category === 'friends')).toBeTrue();
+    expect(result.every(b => b.category === 'friends')).toBe(true);
     expect(result.length).toBe(2);
   });
 
@@ -131,22 +127,14 @@ describe('selectFilteredSortedBirthdays', () => {
   });
 
   it('applies both category and search filters together', () => {
-    const state = makeState(
-      [alice, bob, charlie],
-      { selectedCategory: 'friends', searchTerm: 'ali' },
-      mockCategories
-    );
+    const state = makeState([alice, bob, charlie], { selectedCategory: 'friends', searchTerm: 'ali' }, mockCategories);
     const result = selectFilteredSortedBirthdays(state);
     expect(result.length).toBe(1);
     expect(result[0].name).toBe('Alice');
   });
 
   it('filters __orphaned__ category (birthday whose category is not in the category list)', () => {
-    const state = makeState(
-      [alice, bob, orphan],
-      { selectedCategory: '__orphaned__' },
-      mockCategories
-    );
+    const state = makeState([alice, bob, orphan], { selectedCategory: '__orphaned__' }, mockCategories);
     const result = selectFilteredSortedBirthdays(state);
     expect(result.length).toBe(1);
     expect(result[0].id).toBe('4');

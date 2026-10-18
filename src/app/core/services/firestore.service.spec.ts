@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
+import type { Mock, MockedObject } from 'vitest';
 
 import * as firebaseConfig from '../../firebase.config';
 import { FIREBASE_OPTIONS } from '../../firebase.config';
@@ -8,24 +10,32 @@ import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
 import { PhotoStorageService } from './photo-storage.service';
 
-function makePhotoStorageMock(): jasmine.SpyObj<PhotoStorageService> {
-  const mock = jasmine.createSpyObj<PhotoStorageService>('PhotoStorageService', [
-    'isStorageUrl', 'isBase64', 'extractPath', 'resolveUrl',
-  ]);
-  mock.isStorageUrl.and.returnValue(false);
-  mock.isBase64.and.returnValue(false);
-  mock.extractPath.and.returnValue(null);
-  mock.resolveUrl.and.resolveTo(null);
+function makePhotoStorageMock(): MockedObject<PhotoStorageService> {
+  const mock = {
+    isStorageUrl: vi.fn().mockName('PhotoStorageService.isStorageUrl'),
+    isBase64: vi.fn().mockName('PhotoStorageService.isBase64'),
+    extractPath: vi.fn().mockName('PhotoStorageService.extractPath'),
+    resolveUrl: vi.fn().mockName('PhotoStorageService.resolveUrl')
+  } as unknown as MockedObject<PhotoStorageService>;
+  mock.isStorageUrl.mockReturnValue(false);
+  mock.isBase64.mockReturnValue(false);
+  mock.extractPath.mockReturnValue(null);
+  mock.resolveUrl.mockResolvedValue(null);
   return mock;
 }
 
 describe('FirestoreService', () => {
   describe('basic tests', () => {
     let service: FirestoreService;
-    let loggerMock: jasmine.SpyObj<LoggerService>;
+    let loggerMock: MockedObject<LoggerService>;
 
     beforeEach(() => {
-      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+      loggerMock = {
+        log: vi.fn().mockName('LoggerService.log'),
+        info: vi.fn().mockName('LoggerService.info'),
+        warn: vi.fn().mockName('LoggerService.warn'),
+        error: vi.fn().mockName('LoggerService.error')
+      } as unknown as MockedObject<LoggerService>;
 
       TestBed.configureTestingModule({
         providers: [
@@ -48,23 +58,23 @@ describe('FirestoreService', () => {
       expect(service.birthdays$.subscribe).toBeDefined();
     });
 
-    it('birthdays$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', (done) => {
-      service.birthdays$.subscribe((value) => {
-        expect(value).toEqual([]);
-        done();
-      });
+    it('birthdays$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', async () => {
+      const value = await firstValueFrom(service.birthdays$);
+      expect(value).toEqual([]);
     });
 
-    it('birthdays$ replays last value to a late subscriber — no first-snapshot loss', (done) => {
+    it('birthdays$ replays last value to a late subscriber — no first-snapshot loss', async () => {
       const earlyBirthday = { id: 'b-early', name: 'Early', birthDate: '2000-01-01' } as Birthday;
-      (service as unknown as { birthdaysSubject: { next: (v: Birthday[]) => void } })
+      (service as unknown as {
+        birthdaysSubject: {
+          next: (v: Birthday[]) => void;
+        };
+      })
         .birthdaysSubject.next([earlyBirthday]);
 
       // Subscribe AFTER the emission — BehaviorSubject guarantees delivery
-      service.birthdays$.subscribe((value) => {
-        expect(value).toEqual([earlyBirthday]);
-        done();
-      });
+      const value = await firstValueFrom(service.birthdays$);
+      expect(value).toEqual([earlyBirthday]);
     });
 
     it('categories$ should be an observable', () => {
@@ -72,11 +82,9 @@ describe('FirestoreService', () => {
       expect(service.categories$.subscribe).toBeDefined();
     });
 
-    it('categories$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', (done) => {
-      service.categories$.subscribe((value) => {
-        expect(value).toEqual([]);
-        done();
-      });
+    it('categories$ emits [] immediately on subscribe — BehaviorSubject prevents race condition', async () => {
+      const value = await firstValueFrom(service.categories$);
+      expect(value).toEqual([]);
     });
 
     it('unsubscribeFromBirthdays should not throw when no listener', () => {
@@ -151,11 +159,20 @@ describe('FirestoreService', () => {
     const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
 
     let service: FirestoreService;
-    let loggerMock: jasmine.SpyObj<LoggerService>;
-    let mockBatch: { set: jasmine.Spy; delete: jasmine.Spy; commit: jasmine.Spy };
+    let loggerMock: MockedObject<LoggerService>;
+    let mockBatch: {
+      set: Mock;
+      delete: Mock;
+      commit: Mock;
+    };
 
     beforeEach(() => {
-      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+      loggerMock = {
+        log: vi.fn().mockName('LoggerService.log'),
+        info: vi.fn().mockName('LoggerService.info'),
+        warn: vi.fn().mockName('LoggerService.warn'),
+        error: vi.fn().mockName('LoggerService.error')
+      } as unknown as MockedObject<LoggerService>;
 
       TestBed.configureTestingModule({
         providers: [
@@ -169,135 +186,106 @@ describe('FirestoreService', () => {
       service = TestBed.inject(FirestoreService);
       // Disable real delays (non-retryable errors don't trigger delays anyway,
       // but guard against accidental retries slowing down the suite).
-      spyOn(service as unknown as { delayMs: (ms: number) => Promise<void> }, 'delayMs')
-        .and.returnValue(Promise.resolve());
+      vi.spyOn(service as unknown as {
+        delayMs: (ms: number) => Promise<void>;
+      }, 'delayMs').mockReturnValue(Promise.resolve());
 
       mockBatch = {
-        set: jasmine.createSpy('batch.set'),
-        delete: jasmine.createSpy('batch.delete'),
-        commit: jasmine.createSpy('batch.commit').and.rejectWith(networkError),
+        set: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockRejectedValue(networkError),
       };
 
       // firebaseGetters is a plain object, so its properties are writable —
       // no Object.defineProperty tricks needed. spyOn works out of the box.
-      spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
-        {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
-      );
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').mockReturnValue({} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>);
     });
 
-    it('getBirthdays should log and rethrow on getDocs failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.rejectWith(networkError),
+    it('getBirthdays should log and rethrow on getDocs failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockRejectedValue(networkError),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.getBirthdays('user-123').subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to fetch birthdays:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.getBirthdays('user-123')).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to fetch birthdays:', networkError);
     });
 
-    it('getCategories should log and rethrow on getDocs failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.rejectWith(networkError),
+    it('getCategories should log and rethrow on getDocs failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockRejectedValue(networkError),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.getCategories('user-123').subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to fetch categories:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.getCategories('user-123')).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to fetch categories:', networkError);
     });
 
-    it('saveBirthday should log and rethrow on commit failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+    it('saveBirthday should log and rethrow on commit failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-1', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.saveBirthday('user-123', birthday)).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', networkError);
     });
 
-    it('deleteBirthday should log and rethrow on commit failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+    it('deleteBirthday should log and rethrow on commit failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.deleteBirthday('user-123', 'b-1').subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to delete birthday:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.deleteBirthday('user-123', 'b-1')).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to delete birthday:', networkError);
     });
 
-    it('saveBirthdaysBatch should log and rethrow on commit failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+    it('saveBirthdaysBatch should log and rethrow on commit failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-1', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthdaysBatch('user-123', [birthday]).subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Batch save failed:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.saveBirthdaysBatch('user-123', [birthday])).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Batch save failed:', networkError);
     });
 
-    it('saveCategory should log and rethrow on commit failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+    it('saveCategory should log and rethrow on commit failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const category = { id: 'c-1', name: 'Test', icon: 'star', color: '#000' } as Category;
-      service.saveCategory('user-123', category).subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save category:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.saveCategory('user-123', category)).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save category:', networkError);
     });
 
-    it('deleteCategory should log and rethrow on commit failure', (done) => {
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+    it('deleteCategory should log and rethrow on commit failure', async () => {
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.deleteCategory('user-123', 'c-1').subscribe({
-        error: (err) => {
-          expect(err).toBe(networkError);
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to delete category:', networkError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.deleteCategory('user-123', 'c-1')).catch((e: unknown) => e);
+      expect(err).toBe(networkError);
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to delete category:', networkError);
     });
   });
 
@@ -313,7 +301,14 @@ describe('FirestoreService', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
         providers: [
-          { provide: LoggerService, useValue: jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']) },
+          {
+            provide: LoggerService, useValue: {
+              log: vi.fn().mockName('LoggerService.log'),
+              info: vi.fn().mockName('LoggerService.info'),
+              warn: vi.fn().mockName('LoggerService.warn'),
+              error: vi.fn().mockName('LoggerService.error')
+            }
+          },
           { provide: PhotoStorageService, useValue: makePhotoStorageMock() },
           { provide: FIREBASE_OPTIONS, useValue: VALID_OPTIONS },
           provideTranslateTesting()
@@ -382,7 +377,7 @@ describe('FirestoreService', () => {
     const VALID_OPTIONS = { apiKey: 'test-api-key', projectId: 'test-project' };
 
     let service: FirestoreService;
-    let loggerMock: jasmine.SpyObj<LoggerService>;
+    let loggerMock: MockedObject<LoggerService>;
 
     interface DelayableService {
       delayMs: (ms: number) => Promise<void>;
@@ -394,7 +389,12 @@ describe('FirestoreService', () => {
     }
 
     beforeEach(() => {
-      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+      loggerMock = {
+        log: vi.fn().mockName('LoggerService.log'),
+        info: vi.fn().mockName('LoggerService.info'),
+        warn: vi.fn().mockName('LoggerService.warn'),
+        error: vi.fn().mockName('LoggerService.error')
+      } as unknown as MockedObject<LoggerService>;
 
       TestBed.configureTestingModule({
         providers: [
@@ -407,289 +407,239 @@ describe('FirestoreService', () => {
 
       service = TestBed.inject(FirestoreService);
       // Replace delay with a no-op so retry tests complete without real waits
-      spyOn(service as unknown as DelayableService, 'delayMs').and.returnValue(Promise.resolve());
-      spyOn(service as unknown as DelayableService, 'jitterMs').and.returnValue(0);
+      vi.spyOn(service as unknown as DelayableService, 'delayMs').mockReturnValue(Promise.resolve());
+      vi.spyOn(service as unknown as DelayableService, 'jitterMs').mockReturnValue(0);
 
-      spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
-        {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
-      );
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').mockReturnValue({} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>);
     });
 
     it('isRetryable returns true for "unavailable"', () => {
       const err = Object.assign(new Error(), { code: 'unavailable' });
-      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+      expect((service as unknown as InspectableService).isRetryable(err)).toBe(true);
     });
 
     it('isRetryable returns true for namespaced "firestore/unavailable"', () => {
       const err = Object.assign(new Error(), { code: 'firestore/unavailable' });
-      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+      expect((service as unknown as InspectableService).isRetryable(err)).toBe(true);
     });
 
     it('isRetryable returns true for "deadline-exceeded" and "internal"', () => {
       const fn = (service as unknown as InspectableService).isRetryable.bind(service);
-      expect(fn(Object.assign(new Error(), { code: 'deadline-exceeded' }))).toBeTrue();
-      expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBeTrue();
+      expect(fn(Object.assign(new Error(), { code: 'deadline-exceeded' }))).toBe(true);
+      expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBe(true);
     });
 
     it('isRetryable returns false for non-retryable Firebase codes', () => {
       const fn = (service as unknown as InspectableService).isRetryable.bind(service);
-      expect(fn(Object.assign(new Error(), { code: 'permission-denied' }))).toBeFalse();
-      expect(fn(Object.assign(new Error(), { code: 'not-found' }))).toBeFalse();
-      expect(fn(Object.assign(new Error(), { code: 'unauthenticated' }))).toBeFalse();
+      expect(fn(Object.assign(new Error(), { code: 'permission-denied' }))).toBe(false);
+      expect(fn(Object.assign(new Error(), { code: 'not-found' }))).toBe(false);
+      expect(fn(Object.assign(new Error(), { code: 'unauthenticated' }))).toBe(false);
     });
 
     it('isRetryable returns false for errors without a code property', () => {
       const fn = (service as unknown as InspectableService).isRetryable.bind(service);
-      expect(fn(new Error('plain error'))).toBeFalse();
-      expect(fn('string error')).toBeFalse();
-      expect(fn(null)).toBeFalse();
-      expect(fn(42)).toBeFalse();
+      expect(fn(new Error('plain error'))).toBe(false);
+      expect(fn('string error')).toBe(false);
+      expect(fn(null)).toBe(false);
+      expect(fn(42)).toBe(false);
     });
 
-    it('saveBirthday retries once on retryable error and succeeds', (done) => {
+    it('saveBirthday retries once on retryable error and succeeds', async () => {
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() =>
-          ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve()
-        )
+        set: vi.fn(),
+        commit: vi.fn().mockImplementation(() => ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve())
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-retry', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        complete: () => {
-          expect(callCount).toBe(2);
-          expect(loggerMock.warn).toHaveBeenCalled();
-          expect(loggerMock.info).toHaveBeenCalledWith('[Firestore] Birthday saved:', 'b-retry');
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.saveBirthday('user-123', birthday), { defaultValue: undefined });
+      expect(callCount).toBe(2);
+      expect(loggerMock.warn).toHaveBeenCalled();
+      expect(loggerMock.info).toHaveBeenCalledWith('[Firestore] Birthday saved:', 'b-retry');
     });
 
-    it('saveBirthday exhausts retries (4 total attempts) and rethrows', (done) => {
+    it('saveBirthday exhausts retries (4 total attempts) and rethrows', async () => {
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() => {
+        set: vi.fn(),
+        commit: vi.fn().mockImplementation(() => {
           callCount++;
           return Promise.reject(retryableError);
         })
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-exhaust', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        error: (err) => {
-          expect(err).toBe(retryableError);
-          expect(callCount).toBe(4); // 1 initial + 3 retries
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', retryableError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.saveBirthday('user-123', birthday)).catch((e: unknown) => e);
+      expect(err).toBe(retryableError);
+      expect(callCount).toBe(4); // 1 initial + 3 retries
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', retryableError);
     });
 
-    it('getBirthdays retries on retryable error and succeeds', (done) => {
+    it('getBirthdays retries on retryable error and succeeds', async () => {
       let callCount = 0;
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.callFake(() =>
-          ++callCount === 1
-            ? Promise.reject(retryableError)
-            : Promise.resolve({ docs: [] })
-        ),
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockImplementation(() => ++callCount === 1
+          ? Promise.reject(retryableError)
+          : Promise.resolve({ docs: [] })),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.getBirthdays('user-123').subscribe({
-        next: (result) => {
-          expect(result).toEqual([]);
-          expect(callCount).toBe(2);
-          done();
-        },
-        error: done.fail
-      });
+      const result = await firstValueFrom(service.getBirthdays('user-123'));
+      expect(result).toEqual([]);
+      expect(callCount).toBe(2);
     });
 
-    it('deleteCategory retries on retryable error and succeeds', (done) => {
+    it('deleteCategory retries on retryable error and succeeds', async () => {
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        delete: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() =>
-          ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve()
-        )
+        set: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockImplementation(() => ++callCount === 1 ? Promise.reject(retryableError) : Promise.resolve())
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.deleteCategory('user-123', 'c-retry').subscribe({
-        complete: () => {
-          expect(callCount).toBe(2);
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.deleteCategory('user-123', 'c-retry'), { defaultValue: undefined });
+      expect(callCount).toBe(2);
     });
 
     // ── isRateLimited ─────────────────────────────────────────────────────────
     describe('isRateLimited', () => {
       it('returns true for "resource-exhausted"', () => {
         const err = Object.assign(new Error(), { code: 'resource-exhausted' });
-        expect((service as unknown as InspectableService).isRateLimited(err)).toBeTrue();
+        expect((service as unknown as InspectableService).isRateLimited(err)).toBe(true);
       });
 
       it('returns true for namespaced "firestore/resource-exhausted"', () => {
         const err = Object.assign(new Error(), { code: 'firestore/resource-exhausted' });
-        expect((service as unknown as InspectableService).isRateLimited(err)).toBeTrue();
+        expect((service as unknown as InspectableService).isRateLimited(err)).toBe(true);
       });
 
       it('returns false for other retryable codes', () => {
         const fn = (service as unknown as InspectableService).isRateLimited.bind(service);
-        expect(fn(Object.assign(new Error(), { code: 'unavailable' }))).toBeFalse();
-        expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBeFalse();
+        expect(fn(Object.assign(new Error(), { code: 'unavailable' }))).toBe(false);
+        expect(fn(Object.assign(new Error(), { code: 'internal' }))).toBe(false);
       });
 
       it('returns false for errors without a code', () => {
         const fn = (service as unknown as InspectableService).isRateLimited.bind(service);
-        expect(fn(new Error('plain'))).toBeFalse();
-        expect(fn(null)).toBeFalse();
-        expect(fn('string')).toBeFalse();
+        expect(fn(new Error('plain'))).toBe(false);
+        expect(fn(null)).toBe(false);
+        expect(fn('string')).toBe(false);
       });
     });
 
     // ── rate-limit backoff ────────────────────────────────────────────────────
     it('isRetryable returns true for "resource-exhausted"', () => {
       const err = Object.assign(new Error(), { code: 'resource-exhausted' });
-      expect((service as unknown as InspectableService).isRetryable(err)).toBeTrue();
+      expect((service as unknown as InspectableService).isRetryable(err)).toBe(true);
     });
 
-    it('saveBirthday retries on resource-exhausted and uses longer base delay (1000 ms)', (done) => {
+    it('saveBirthday retries on resource-exhausted and uses longer base delay (1000 ms)', async () => {
       const rateLimitError = Object.assign(new Error('Quota exceeded'), { code: 'resource-exhausted' });
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() =>
-          ++callCount === 1 ? Promise.reject(rateLimitError) : Promise.resolve()
-        )
+        set: vi.fn(),
+        commit: vi.fn().mockImplementation(() => ++callCount === 1 ? Promise.reject(rateLimitError) : Promise.resolve())
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      const delaySpy = (service as unknown as DelayableService).delayMs as jasmine.Spy;
+      const delaySpy = (service as unknown as DelayableService).delayMs as Mock;
 
       const birthday = { id: 'b-ratelimit', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        complete: () => {
-          expect(callCount).toBe(2);
-          // jitterMs is spied to return 0, so delay = 1000 * 2^0 + 0 = 1000
-          expect(delaySpy).toHaveBeenCalledWith(1000);
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.saveBirthday('user-123', birthday), { defaultValue: undefined });
+      expect(callCount).toBe(2);
+      // jitterMs is spied to return 0, so delay = 1000 * 2^0 + 0 = 1000
+      expect(delaySpy).toHaveBeenCalledWith(1000);
     });
 
-    it('saveBirthday exhausts retries on resource-exhausted and rethrows', (done) => {
+    it('saveBirthday exhausts retries on resource-exhausted and rethrows', async () => {
       const rateLimitError = Object.assign(new Error('Quota exceeded'), { code: 'resource-exhausted' });
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() => { callCount++; return Promise.reject(rateLimitError); })
+        set: vi.fn(),
+        commit: vi.fn().mockImplementation(() => { callCount++; return Promise.reject(rateLimitError); })
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-ratelimit-exhaust', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        error: (err) => {
-          expect(err).toBe(rateLimitError);
-          expect(callCount).toBe(4); // 1 initial + 3 retries
-          expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', rateLimitError);
-          done();
-        }
-      });
+      const err = await firstValueFrom(service.saveBirthday('user-123', birthday)).catch((e: unknown) => e);
+      expect(err).toBe(rateLimitError);
+      expect(callCount).toBe(4); // 1 initial + 3 retries
+      expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', rateLimitError);
     });
 
-    it('saveBirthday stores birthDate as YYYY-MM-DD string — no Timestamp to avoid timezone shift', (done) => {
+    it('saveBirthday stores birthDate as YYYY-MM-DD string — no Timestamp to avoid timezone shift', async () => {
       // Regression guard: birthDate must be stored as a plain string so that
       // reading it back in a different timezone cannot shift the date by ±1 day.
       // batch.set is called twice: once for the birthday, once for the rate-limit
       // sentinel — so we inspect the first call's arguments.
-      const setSpy = jasmine.createSpy('batch.set');
+      const setSpy = vi.fn();
       const successBatch = {
         set: setSpy,
-        commit: jasmine.createSpy('batch.commit').and.resolveTo(undefined)
+        commit: vi.fn().mockResolvedValue(undefined)
       };
-      const timestampFromDateSpy = jasmine.createSpy('Timestamp.fromDate');
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(successBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+      const timestampFromDateSpy = vi.fn();
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(successBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
         Timestamp: { fromDate: timestampFromDateSpy },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = { id: 'b-tz', name: 'Test', birthDate: '1990-05-15', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        complete: () => {
-          // First call is the birthday document; second is the rate-limit sentinel
-          const birthdayData = setSpy.calls.first().args[1] as Record<string, unknown>;
-          expect(birthdayData['birthDate']).toBe('1990-05-15');
-          expect(timestampFromDateSpy).not.toHaveBeenCalled();
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.saveBirthday('user-123', birthday), { defaultValue: undefined });
+      // First call is the birthday document; second is the rate-limit sentinel
+      const birthdayData = vi.mocked(setSpy).mock.calls[0][1] as Record<string, unknown>;
+      expect(birthdayData['birthDate']).toBe('1990-05-15');
+      expect(timestampFromDateSpy).not.toHaveBeenCalled();
     });
 
-    it('withRetry uses BASE_DELAY_MS for transient errors (not rate-limit)', (done) => {
+    it('withRetry uses BASE_DELAY_MS for transient errors (not rate-limit)', async () => {
       const transientError = Object.assign(new Error('Unavailable'), { code: 'unavailable' });
       let callCount = 0;
       const mockBatch = {
-        set: jasmine.createSpy(),
-        commit: jasmine.createSpy().and.callFake(() =>
-          ++callCount === 1 ? Promise.reject(transientError) : Promise.resolve()
-        )
+        set: vi.fn(),
+        commit: vi.fn().mockImplementation(() => ++callCount === 1 ? Promise.reject(transientError) : Promise.resolve())
       };
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue(mockBatch),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: { fromDate: jasmine.createSpy().and.returnValue({}) },
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue(mockBatch),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: { fromDate: vi.fn().mockReturnValue({}) },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      const delaySpy = (service as unknown as DelayableService).delayMs as jasmine.Spy;
+      const delaySpy = (service as unknown as DelayableService).delayMs as Mock;
 
       const birthday = { id: 'b-transient', name: 'Test', birthDate: '2000-01-01', syncStatus: 'local-only' } as Birthday;
-      service.saveBirthday('user-123', birthday).subscribe({
-        complete: () => {
-          // jitterMs spied to 0: delay = 500 * 2^0 + 0 = 500
-          expect(delaySpy).toHaveBeenCalledWith(500);
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.saveBirthday('user-123', birthday), { defaultValue: undefined });
+      // jitterMs spied to 0: delay = 500 * 2^0 + 0 = 500
+      expect(delaySpy).toHaveBeenCalledWith(500);
     });
   });
 
@@ -700,11 +650,16 @@ describe('FirestoreService', () => {
     const RESOLVED_URL = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphoto%2F1234.jpg?alt=media&token=new';
 
     let service: FirestoreService;
-    let loggerMock: jasmine.SpyObj<LoggerService>;
-    let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
+    let loggerMock: MockedObject<LoggerService>;
+    let photoStorageMock: MockedObject<PhotoStorageService>;
 
     beforeEach(() => {
-      loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+      loggerMock = {
+        log: vi.fn().mockName('LoggerService.log'),
+        info: vi.fn().mockName('LoggerService.info'),
+        warn: vi.fn().mockName('LoggerService.warn'),
+        error: vi.fn().mockName('LoggerService.error')
+      } as unknown as MockedObject<LoggerService>;
       photoStorageMock = makePhotoStorageMock();
 
       TestBed.configureTestingModule({
@@ -717,22 +672,21 @@ describe('FirestoreService', () => {
       });
 
       service = TestBed.inject(FirestoreService);
-      spyOn(service as unknown as { delayMs: (ms: number) => Promise<void> }, 'delayMs')
-        .and.returnValue(Promise.resolve());
-      spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').and.returnValue(
-        {} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>
-      );
+      vi.spyOn(service as unknown as {
+        delayMs: (ms: number) => Promise<void>;
+      }, 'delayMs').mockReturnValue(Promise.resolve());
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirebaseFirestore').mockReturnValue({} as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirebaseFirestore>);
     });
 
-    it('saveBirthday stores photo as Storage path — not capability URL — in Firestore', (done) => {
-      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
-      photoStorageMock.extractPath.and.returnValue(STORAGE_PATH);
+    it('saveBirthday stores photo as Storage path — not capability URL — in Firestore', async () => {
+      photoStorageMock.isStorageUrl.mockImplementation((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.extractPath.mockReturnValue(STORAGE_PATH);
 
-      const setSpy = jasmine.createSpy('batch.set');
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        writeBatch: jasmine.createSpy().and.returnValue({ set: setSpy, commit: jasmine.createSpy().and.resolveTo() }),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
+      const setSpy = vi.fn();
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockReturnValue({ set: setSpy, commit: vi.fn().mockResolvedValue(undefined) }),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
       const birthday = {
@@ -740,21 +694,16 @@ describe('FirestoreService', () => {
         syncStatus: 'local-only', photo: DOWNLOAD_URL,
       } as Birthday;
 
-      service.saveBirthday('user-123', birthday).subscribe({
-        complete: () => {
-          const data = setSpy.calls.first().args[1] as Record<string, unknown>;
-          expect(data['photo']).toBe(STORAGE_PATH);
-          expect(data['photo']).not.toContain('token=');
-          done();
-        },
-        error: done.fail
-      });
+      await lastValueFrom(service.saveBirthday('user-123', birthday), { defaultValue: undefined });
+      const data = vi.mocked(setSpy).mock.calls[0][1] as Record<string, unknown>;
+      expect(data['photo']).toBe(STORAGE_PATH);
+      expect(data['photo']).not.toContain('token=');
     });
 
-    it('getBirthdays resolves Storage paths to download URLs for IndexedDB', (done) => {
-      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
-      photoStorageMock.isBase64.and.returnValue(false);
-      photoStorageMock.resolveUrl.and.resolveTo(RESOLVED_URL);
+    it('getBirthdays resolves Storage paths to download URLs for IndexedDB', async () => {
+      photoStorageMock.isStorageUrl.mockImplementation((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.isBase64.mockReturnValue(false);
+      photoStorageMock.resolveUrl.mockResolvedValue(RESOLVED_URL);
 
       const mockDoc = {
         id: 'b-1',
@@ -764,25 +713,21 @@ describe('FirestoreService', () => {
         }),
       };
 
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
-        Timestamp: class {},
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockResolvedValue({ docs: [mockDoc] }),
+        Timestamp: class {
+        },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.getBirthdays('user-123').subscribe({
-        next: (birthdays) => {
-          expect(birthdays[0].photo).toBe(RESOLVED_URL);
-          expect(photoStorageMock.resolveUrl).toHaveBeenCalledWith(STORAGE_PATH);
-          done();
-        },
-        error: done.fail
-      });
+      const birthdays = await firstValueFrom(service.getBirthdays('user-123'));
+      expect(birthdays[0].photo).toBe(RESOLVED_URL);
+      expect(photoStorageMock.resolveUrl).toHaveBeenCalledWith(STORAGE_PATH);
     });
 
-    it('getBirthdays passes through legacy capability URLs unchanged', (done) => {
-      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
-      photoStorageMock.isBase64.and.returnValue(false);
+    it('getBirthdays passes through legacy capability URLs unchanged', async () => {
+      photoStorageMock.isStorageUrl.mockImplementation((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.isBase64.mockReturnValue(false);
 
       const mockDoc = {
         id: 'b-legacy',
@@ -792,27 +737,23 @@ describe('FirestoreService', () => {
         }),
       };
 
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
-        Timestamp: class {},
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockResolvedValue({ docs: [mockDoc] }),
+        Timestamp: class {
+        },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.getBirthdays('user-123').subscribe({
-        next: (birthdays) => {
-          expect(birthdays[0].photo).toBe(DOWNLOAD_URL);
-          expect(photoStorageMock.resolveUrl).not.toHaveBeenCalled();
-          done();
-        },
-        error: done.fail
-      });
+      const birthdays = await firstValueFrom(service.getBirthdays('user-123'));
+      expect(birthdays[0].photo).toBe(DOWNLOAD_URL);
+      expect(photoStorageMock.resolveUrl).not.toHaveBeenCalled();
     });
 
-    it('migrateCapabilityUrls rewrites documents with capability URLs to Storage paths', (done) => {
-      photoStorageMock.isStorageUrl.and.callFake((v: string) => v.startsWith('https://firebasestorage'));
-      photoStorageMock.extractPath.and.returnValue(STORAGE_PATH);
+    it('migrateCapabilityUrls rewrites documents with capability URLs to Storage paths', async () => {
+      photoStorageMock.isStorageUrl.mockImplementation((v: string) => v.startsWith('https://firebasestorage'));
+      photoStorageMock.extractPath.mockReturnValue(STORAGE_PATH);
 
-      const setSpy = jasmine.createSpy('batch.set');
+      const setSpy = vi.fn();
       const mockDoc = {
         id: 'b-migrate',
         data: () => ({
@@ -821,33 +762,30 @@ describe('FirestoreService', () => {
         }),
       };
 
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
-        writeBatch: jasmine.createSpy().and.returnValue({
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockResolvedValue({ docs: [mockDoc] }),
+        writeBatch: vi.fn().mockReturnValue({
           set: setSpy,
-          commit: jasmine.createSpy().and.resolveTo(),
+          commit: vi.fn().mockResolvedValue(undefined),
         }),
-        doc: jasmine.createSpy().and.returnValue({}),
-        serverTimestamp: jasmine.createSpy().and.returnValue({}),
-        Timestamp: class {},
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+        Timestamp: class {
+        },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.migrateCapabilityUrls('user-123').then(() => {
-        const data = setSpy.calls.first().args[1] as Record<string, unknown>;
-        expect(data['photo']).toBe(STORAGE_PATH);
-        expect(data['photo']).not.toContain('token=');
-        expect(loggerMock.info).toHaveBeenCalledWith(
-          jasmine.stringContaining('migrated 1')
-        );
-        done();
-      }).catch(done.fail);
+      await service.migrateCapabilityUrls('user-123');
+      const data = vi.mocked(setSpy).mock.calls[0][1] as Record<string, unknown>;
+      expect(data['photo']).toBe(STORAGE_PATH);
+      expect(data['photo']).not.toContain('token=');
+      expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('migrated 1'));
     });
 
-    it('migrateCapabilityUrls is a no-op when all documents already use paths', (done) => {
-      photoStorageMock.isStorageUrl.and.returnValue(false);
+    it('migrateCapabilityUrls is a no-op when all documents already use paths', async () => {
+      photoStorageMock.isStorageUrl.mockReturnValue(false);
 
-      const writeBatchSpy = jasmine.createSpy('writeBatch');
+      const writeBatchSpy = vi.fn();
       const mockDoc = {
         id: 'b-already',
         data: () => ({
@@ -856,23 +794,20 @@ describe('FirestoreService', () => {
         }),
       };
 
-      spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').and.returnValue({
-        collection: jasmine.createSpy().and.returnValue({}),
-        getDocs: jasmine.createSpy().and.resolveTo({ docs: [mockDoc] }),
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        collection: vi.fn().mockReturnValue({}),
+        getDocs: vi.fn().mockResolvedValue({ docs: [mockDoc] }),
         writeBatch: writeBatchSpy,
-        Timestamp: class {},
+        Timestamp: class {
+        },
       } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
 
-      service.migrateCapabilityUrls('user-123').then(() => {
-        expect(writeBatchSpy).not.toHaveBeenCalled();
-        expect(loggerMock.info).toHaveBeenCalledWith(
-          jasmine.stringContaining('up to date')
-        );
-        done();
-      }).catch(done.fail);
+      await service.migrateCapabilityUrls('user-123');
+      expect(writeBatchSpy).not.toHaveBeenCalled();
+      expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('up to date'));
     });
 
-    it('migrateCapabilityUrls is a no-op when Firebase is not configured', (done) => {
+    it('migrateCapabilityUrls is a no-op when Firebase is not configured', async () => {
       // service in this describe has VALID_OPTIONS; re-create with undefined to test the guard
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -885,10 +820,8 @@ describe('FirestoreService', () => {
       });
       const unconfiguredService = TestBed.inject(FirestoreService);
 
-      unconfiguredService.migrateCapabilityUrls('user-123').then(() => {
-        expect(photoStorageMock.isStorageUrl).not.toHaveBeenCalled();
-        done();
-      }).catch(done.fail);
+      await unconfiguredService.migrateCapabilityUrls('user-123');
+      expect(photoStorageMock.isStorageUrl).not.toHaveBeenCalled();
     });
   });
 });

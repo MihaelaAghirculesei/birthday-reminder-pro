@@ -4,7 +4,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { IdGeneratorService } from './id-generator.service';
 
-const cryptoRef = crypto as unknown as { randomUUID?: () => string };
+const cryptoRef = crypto as unknown as {
+  randomUUID?: () => string;
+};
 
 describe('IdGeneratorService', () => {
   let service: IdGeneratorService;
