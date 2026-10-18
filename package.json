@@ -67,7 +67,7 @@
     "@ngrx/entity": "^21.1.1",
     "@ngrx/store": "^21.1.1",
     "@ngx-translate/core": "^16.0.4",
-    "@sentry/browser": "^11.6.0",
+    "@sentry/browser": "^11.7.0",
     "compression": "^1.8.2",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.1",
@@ -75,7 +75,7 @@
     "helmet": "^8.3.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zone.js": "~0.16.3"
   },
   "devDependencies": {
@@ -108,7 +108,7 @@
     "@vitest/coverage-v8": "^4.1.12",
     "angular-eslint": "21.4.0",
     "axe-core": "^4.14.0",
-    "cypress": "^16.1.1",
+    "cypress": "^16.2.0",
     "cypress-axe": "^1.7.0",
     "eslint": "^10.12.0",
     "eslint-plugin-simple-import-sort": "^14.0.0",
@@ -122,9 +122,9 @@
     "semantic-release": "^25.0.9",
     "source-map-explorer": "^2.5.3",
     "start-server-and-test": "^3.0.13",
-    "ts-jest": "^29.4.14",
+    "ts-jest": "^29.4.15",
     "typescript": "~5.9.3",
-    "typescript-eslint": "8.71.1",
+    "typescript-eslint": "8.71.2",
     "vitest": "^4.1.12"
   },
   "lint-staged": {
