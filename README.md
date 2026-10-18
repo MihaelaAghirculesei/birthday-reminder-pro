@@ -146,9 +146,9 @@ Core capabilities:
 - Google OAuth 2.0
 
 **Development**
-- Angular CLI 19.x
-- Karma & Jasmine (unit tests)
-- Cypress 15 (E2E, visual regression, accessibility with cypress-axe)
+- Angular CLI 21.x
+- Vitest in browser mode (unit tests, real Chromium via Playwright)
+- Cypress 16 (E2E, visual regression, accessibility with cypress-axe)
 
 ---
 
@@ -371,7 +371,7 @@ birthday-reminder-pro/
 - Message scheduling
 - Photo uploads
 - PWA with service worker
-- Unit tests (Jasmine/Karma)
+- Unit tests (Vitest)
 - E2E tests (Cypress, CI-ready)
 - Visual regression snapshots
 - Accessibility (NVDA, axe-core)
@@ -388,11 +388,14 @@ birthday-reminder-pro/
 
 ## Testing
 
-**Unit tests** (Karma/Jasmine):
+**Unit tests** (Vitest, browser mode):
 ```bash
+npx playwright install chromium   # once, downloads the test browser
 ng test
-ng test --code-coverage
+npm run test:coverage
 ```
+
+Set `CHROME_BIN` to an installed Chrome to skip the Playwright download (CI does this).
 
 **E2E tests** (Cypress):
 ```bash
