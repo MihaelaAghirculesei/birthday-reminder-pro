@@ -121,27 +121,32 @@ jobs:
       - name: Initialize environment files
         run: npm run env:init
 
-      # Google Chrome ships with ubuntu-latest; headless mode needs no display.
+      # Vitest drives the Google Chrome that ships with ubuntu-latest through
+      # Playwright, so no browser download is needed.
       - name: Run unit tests with coverage
-        run: npm test -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: npm run test:ci
 
+      # Thresholds are calibrated for V8 coverage (Vitest), which counts
+      # statements and functions differently from Karma's Istanbul.
       - name: Check coverage thresholds
         run: |
           SUMMARY=coverage/birthday-reminder-pro/coverage-summary.json
 
           jq -r '
             .total |
-            "Statements: \(.statements.pct)%  (min 92%)",
-            "Branches:   \(.branches.pct)%  (min 86%)",
-            "Functions:  \(.functions.pct)%  (min 92%)",
+            "Statements: \(.statements.pct)%  (min 91%)",
+            "Branches:   \(.branches.pct)%  (min 89%)",
+            "Functions:  \(.functions.pct)%  (min 89%)",
             "Lines:      \(.lines.pct)%  (min 93%)"
           ' "$SUMMARY"
 
           BELOW=$(jq -r '
             .total |
-            (if .statements.pct < 92 then "statements \(.statements.pct)% < 92%" else empty end),
-            (if .branches.pct   < 86 then "branches \(.branches.pct)% < 86%"     else empty end),
-            (if .functions.pct  < 92 then "functions \(.functions.pct)% < 92%"   else empty end),
+            (if .statements.pct < 91 then "statements \(.statements.pct)% < 91%" else empty end),
+            (if .branches.pct   < 89 then "branches \(.branches.pct)% < 89%"     else empty end),
+            (if .functions.pct  < 89 then "functions \(.functions.pct)% < 89%"   else empty end),
             (if .lines.pct      < 93 then "lines \(.lines.pct)% < 93%"           else empty end)
           ' "$SUMMARY")
 
