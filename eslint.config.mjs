@@ -198,7 +198,7 @@ export default tseslint.config(
     processor: angular.processInlineTemplates,
     rules: {
       "no-console": "off",
-      // Jasmine spies and test doubles often require `any`
+      // Test spies and doubles often require `any`
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": ["error", {
         varsIgnorePattern: "^_",

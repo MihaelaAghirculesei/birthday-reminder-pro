@@ -127,7 +127,7 @@ export function getStorageModule(): typeof import('firebase/storage') | null {
  * Mutable accessor bag for the two getters used by FirestoreService.
  *
  * ES-module named exports are compiled as non-configurable/non-writable
- * properties by Webpack, making them impossible to spy on with Jasmine.
+ * properties by Webpack, making them impossible to spy on in unit tests.
  * A plain-object property IS writable, so tests can do:
  *   spyOn(firebaseGetters, 'getFirebaseFirestore').and.returnValue(...)
  */
@@ -140,7 +140,7 @@ export const firebaseGetters = {
  * Mutable accessor bag for Firebase Storage getters.
  *
  * ES-module named exports are compiled as non-configurable/non-writable
- * properties by Webpack, making them impossible to spy on with Jasmine.
+ * properties by Webpack, making them impossible to spy on in unit tests.
  * A plain-object property IS writable, so tests can do:
  *   spyOn(storageGetters, 'getFirebaseStorage').and.returnValue(...)
  */
