@@ -1,5 +1,6 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
 import { LoggerService } from './logger.service';
@@ -17,12 +18,23 @@ function makeFile(name = 'photo.jpg', type = 'image/jpeg'): File {
 
 interface SetupResult {
   service: PhotoStorageService;
-  notificationMock: jasmine.SpyObj<NotificationService>;
+  notificationMock: MockedObject<NotificationService>;
 }
 
-function setup(opts: { firebase?: object | undefined; platform?: string } = {}): SetupResult {
-  const loggerMock = jasmine.createSpyObj<LoggerService>('LoggerService', ['info', 'warn', 'error', 'log']);
-  const notificationMock = jasmine.createSpyObj<NotificationService>('NotificationService', ['show', 'remove']);
+function setup(opts: {
+  firebase?: object | undefined;
+  platform?: string;
+} = {}): SetupResult {
+  const loggerMock = {
+    info: vi.fn().mockName('LoggerService.info'),
+    warn: vi.fn().mockName('LoggerService.warn'),
+    error: vi.fn().mockName('LoggerService.error'),
+    log: vi.fn().mockName('LoggerService.log')
+  };
+  const notificationMock = {
+    show: vi.fn().mockName('NotificationService.show'),
+    remove: vi.fn().mockName('NotificationService.remove')
+  } as unknown as MockedObject<NotificationService>;
 
   TestBed.configureTestingModule({
     providers: [
@@ -46,17 +58,17 @@ describe('PhotoStorageService', () => {
     beforeEach(() => ({ service } = setup()));
 
     it('returns true for firebasestorage.googleapis.com URLs', () => {
-      expect(service.isStorageUrl(STORAGE_URL)).toBeTrue();
+      expect(service.isStorageUrl(STORAGE_URL)).toBe(true);
     });
 
     it('returns true for storage.googleapis.com URLs', () => {
-      expect(service.isStorageUrl(STORAGE_URL_ALT)).toBeTrue();
+      expect(service.isStorageUrl(STORAGE_URL_ALT)).toBe(true);
     });
 
     it('returns false for base64, arbitrary URLs, and empty strings', () => {
-      expect(service.isStorageUrl(BASE64_PNG)).toBeFalse();
-      expect(service.isStorageUrl('https://example.com/img.jpg')).toBeFalse();
-      expect(service.isStorageUrl('')).toBeFalse();
+      expect(service.isStorageUrl(BASE64_PNG)).toBe(false);
+      expect(service.isStorageUrl('https://example.com/img.jpg')).toBe(false);
+      expect(service.isStorageUrl('')).toBe(false);
     });
   });
 
@@ -65,18 +77,18 @@ describe('PhotoStorageService', () => {
     beforeEach(() => ({ service } = setup()));
 
     it('returns true for safe MIME types (jpeg, png, webp)', () => {
-      expect(service.isBase64(BASE64_PNG)).toBeTrue();
-      expect(service.isBase64('data:image/jpeg;base64,abc')).toBeTrue();
-      expect(service.isBase64('data:image/webp;base64,abc')).toBeTrue();
+      expect(service.isBase64(BASE64_PNG)).toBe(true);
+      expect(service.isBase64('data:image/jpeg;base64,abc')).toBe(true);
+      expect(service.isBase64('data:image/webp;base64,abc')).toBe(true);
     });
 
     it('returns false for svg (XSS vector)', () => {
-      expect(service.isBase64('data:image/svg+xml;base64,abc')).toBeFalse();
+      expect(service.isBase64('data:image/svg+xml;base64,abc')).toBe(false);
     });
 
     it('returns false for storage URLs and empty strings', () => {
-      expect(service.isBase64(STORAGE_URL)).toBeFalse();
-      expect(service.isBase64('')).toBeFalse();
+      expect(service.isBase64(STORAGE_URL)).toBe(false);
+      expect(service.isBase64('')).toBe(false);
     });
   });
 
@@ -88,8 +100,7 @@ describe('PhotoStorageService', () => {
       const bigFile = new File(['x'], 'big.jpg', { type: 'image/jpeg' });
       Object.defineProperty(bigFile, 'size', { value: 7 * 1024 * 1024 + 1 });
 
-      await expectAsync(service.uploadPhoto(bigFile, 'uid', 'photo'))
-        .toBeRejectedWithError(/7 MB/);
+      await expect(service.uploadPhoto(bigFile, 'uid', 'photo')).rejects.toThrowError(/7 MB/);
     });
 
     it('accepts a file exactly at the 7 MB boundary', async () => {
@@ -97,7 +108,7 @@ describe('PhotoStorageService', () => {
       const boundaryFile = new File(['x'], 'ok.jpg', { type: 'image/jpeg' });
       Object.defineProperty(boundaryFile, 'size', { value: 7 * 1024 * 1024 });
 
-      await expectAsync(service.uploadPhoto(boundaryFile, 'uid', 'photo')).toBeResolved();
+      await expect(service.uploadPhoto(boundaryFile, 'uid', 'photo')).resolves.not.toThrow();
     });
 
     it('falls back to base64 on server platform (SSR)', async () => {
@@ -117,15 +128,13 @@ describe('PhotoStorageService', () => {
         firebase: { apiKey: 'real-key', projectId: 'real-proj' },
       });
       // storageGetters is a plain object — spyable unlike ES-module named exports
-      spyOn(storageGetters, 'initFirebase').and.rejectWith(new Error('network error'));
+      vi.spyOn(storageGetters, 'initFirebase').mockRejectedValue(new Error('network error'));
 
       const result = await service.uploadPhoto(makeFile(), 'uid', 'photo');
 
       expect(result).toMatch(/^data:image\//);
-      expect(notificationMock.show).toHaveBeenCalledOnceWith(
-        'Foto salvata in locale — cloud sync in sospeso',
-        'warning'
-      );
+      expect(notificationMock.show).toHaveBeenCalledTimes(1);
+      expect(notificationMock.show).toHaveBeenCalledWith('Foto salvata in locale — cloud sync in sospeso', 'warning');
     });
   });
 
@@ -183,12 +192,12 @@ describe('PhotoStorageService', () => {
       const { service } = setup({ firebase: { apiKey: 'real-key', projectId: 'real-proj' } });
       const fakeUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/file.jpg?alt=media&token=abc';
       const mockStorageModule = {
-        ref: jasmine.createSpy('ref').and.returnValue({}),
-        getDownloadURL: jasmine.createSpy('getDownloadURL').and.resolveTo(fakeUrl),
+        ref: vi.fn().mockReturnValue({}),
+        getDownloadURL: vi.fn().mockResolvedValue(fakeUrl),
       };
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(mockStorageModule as never);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(mockStorageModule as never);
 
       const result = await service.resolveUrl('users/uid/photo/file.jpg');
       expect(result).toBe(fakeUrl);
@@ -198,12 +207,12 @@ describe('PhotoStorageService', () => {
     it('returns null and logs a warning when getDownloadURL rejects', async () => {
       const { service } = setup({ firebase: { apiKey: 'k', projectId: 'p' } });
       const mockStorageModule = {
-        ref: jasmine.createSpy('ref').and.returnValue({}),
-        getDownloadURL: jasmine.createSpy('getDownloadURL').and.rejectWith(new Error('unauthenticated')),
+        ref: vi.fn().mockReturnValue({}),
+        getDownloadURL: vi.fn().mockRejectedValue(new Error('unauthenticated')),
       };
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(mockStorageModule as never);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(mockStorageModule as never);
 
       const result = await service.resolveUrl('users/uid/photo/file.jpg');
       expect(result).toBeNull();
@@ -215,17 +224,17 @@ describe('PhotoStorageService', () => {
   describe('deletePhotoByUrl', () => {
     it('is a no-op for an empty string', async () => {
       const { service } = setup();
-      await expectAsync(service.deletePhotoByUrl('')).toBeResolved();
+      await expect(service.deletePhotoByUrl('')).resolves.not.toThrow();
     });
 
     it('is a no-op for non-storage URLs', async () => {
       const { service } = setup();
-      await expectAsync(service.deletePhotoByUrl('https://example.com/img.jpg')).toBeResolved();
+      await expect(service.deletePhotoByUrl('https://example.com/img.jpg')).resolves.not.toThrow();
     });
 
     it('is a no-op when Firebase is not configured', async () => {
       const { service } = setup(); // FIREBASE_OPTIONS = undefined → isFirebaseConfigured = false
-      await expectAsync(service.deletePhotoByUrl(STORAGE_URL)).toBeResolved();
+      await expect(service.deletePhotoByUrl(STORAGE_URL)).resolves.not.toThrow();
     });
   });
 
@@ -241,9 +250,10 @@ describe('PhotoStorageService', () => {
     });
 
     it('calls uploadPhoto when value is a base64 string', async () => {
-      spyOn(service, 'uploadPhoto').and.resolveTo(STORAGE_URL);
+      vi.spyOn(service, 'uploadPhoto').mockResolvedValue(STORAGE_URL);
       const result = await service.migrateBase64(BASE64_PNG, 'uid', 'rememberPhoto');
-      expect(service.uploadPhoto).toHaveBeenCalledOnceWith(jasmine.any(File), 'uid', 'rememberPhoto');
+      expect(service.uploadPhoto).toHaveBeenCalledTimes(1);
+      expect(service.uploadPhoto).toHaveBeenCalledWith(expect.any(File), 'uid', 'rememberPhoto');
       expect(result).toBe(STORAGE_URL);
     });
   });
@@ -260,13 +270,17 @@ describe('PhotoStorageService', () => {
     it('rejects when FileReader triggers onerror', async () => {
       const { service } = setup();
       const origFileReader = window.FileReader;
-      (window as unknown as { FileReader: unknown }).FileReader = class {
-        onload: (() => void) | null = null;
-        onerror: ((e?: unknown) => void) | null = null;
-        readAsDataURL(_f: File): void { setTimeout(() => this.onerror?.(), 0); }
-      };
-      await expectAsync(service.fileToBase64(makeFile())).toBeRejected();
-      (window as unknown as { FileReader: unknown }).FileReader = origFileReader;
+      (window as unknown as {
+        FileReader: unknown;
+      }).FileReader = class {
+          onload: (() => void) | null = null;
+          onerror: ((e?: unknown) => void) | null = null;
+          readAsDataURL(_f: File): void { setTimeout(() => this.onerror?.(), 0); }
+        };
+      await expect(service.fileToBase64(makeFile())).rejects.toThrow();
+      (window as unknown as {
+        FileReader: unknown;
+      }).FileReader = origFileReader;
     });
   });
 });

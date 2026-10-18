@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { type Scope } from '@sentry/browser';
+import type { Mock, MockedObject } from 'vitest';
 
 import { environment } from '../../../environments/environment';
 import { type ErrorReport, ErrorReportingService } from './error-reporting.service';
@@ -7,8 +8,8 @@ import { type SentryClient, SentryClientHolder, SentryReporterService } from './
 
 describe('SentryReporterService', () => {
   let service: SentryReporterService;
-  let idbReporterMock: jasmine.SpyObj<ErrorReportingService>;
-  let sentryClientMock: jasmine.SpyObj<SentryClient>;
+  let idbReporterMock: MockedObject<ErrorReportingService>;
+  let sentryClientMock: MockedObject<SentryClient>;
 
   const mockReport: ErrorReport = {
     error: new Error('test error'),
@@ -19,12 +20,20 @@ describe('SentryReporterService', () => {
   };
 
   beforeEach(() => {
-    idbReporterMock  = jasmine.createSpyObj('ErrorReportingService', ['captureError']);
-    sentryClientMock = jasmine.createSpyObj('SentryClient', ['captureException', 'withScope']);
+    idbReporterMock = {
+      captureError: vi.fn().mockName('ErrorReportingService.captureError')
+    } as unknown as MockedObject<ErrorReportingService>;
+    sentryClientMock = {
+      captureException: vi.fn().mockName('SentryClient.captureException'),
+      withScope: vi.fn().mockName('SentryClient.withScope')
+    };
 
-    (sentryClientMock.withScope as jasmine.Spy).and.callFake((cb: (scope: Scope) => void) => {
-      const mockScope = jasmine.createSpyObj<Scope>('Scope', ['setTag', 'setExtra']);
-      cb(mockScope);
+    (sentryClientMock.withScope as Mock).mockImplementation((cb: (scope: Scope) => void) => {
+      const mockScope = {
+        setTag: vi.fn().mockName('Scope.setTag'),
+        setExtra: vi.fn().mockName('Scope.setExtra')
+      };
+      cb(mockScope as unknown as Scope);
     });
 
     TestBed.configureTestingModule({
@@ -39,7 +48,9 @@ describe('SentryReporterService', () => {
   });
 
   afterEach(() => {
-    (environment as { sentryDsn: string }).sentryDsn = '';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = '';
   });
 
   it('should always persist to IndexedDB', () => {
@@ -48,7 +59,9 @@ describe('SentryReporterService', () => {
   });
 
   it('should NOT call Sentry when sentryDsn is empty', () => {
-    (environment as { sentryDsn: string }).sentryDsn = '';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = '';
 
     service.captureError(mockReport);
 
@@ -56,7 +69,9 @@ describe('SentryReporterService', () => {
   });
 
   it('should NOT call Sentry when the SentryClientHolder has no client yet', () => {
-    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = 'https://fake@sentry.io/123';
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -76,7 +91,9 @@ describe('SentryReporterService', () => {
   });
 
   it('should call Sentry.captureException when sentryDsn is set', () => {
-    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = 'https://fake@sentry.io/123';
 
     service.captureError(mockReport);
 
@@ -85,12 +102,17 @@ describe('SentryReporterService', () => {
   });
 
   it('should set errorType tag and technicalMessage extra on the Sentry scope', () => {
-    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = 'https://fake@sentry.io/123';
 
-    let capturedScope: jasmine.SpyObj<Scope> | null = null;
-    (sentryClientMock.withScope as jasmine.Spy).and.callFake((cb: (scope: Scope) => void) => {
-      capturedScope = jasmine.createSpyObj<Scope>('Scope', ['setTag', 'setExtra']);
-      cb(capturedScope);
+    let capturedScope: MockedObject<Scope> | null = null;
+    (sentryClientMock.withScope as Mock).mockImplementation((cb: (scope: Scope) => void) => {
+      capturedScope = {
+        setTag: vi.fn().mockName('Scope.setTag'),
+        setExtra: vi.fn().mockName('Scope.setExtra')
+      } as unknown as MockedObject<Scope> | null;
+      cb(capturedScope as unknown as Scope);
     });
 
     service.captureError({ ...mockReport, type: 'IndexedDB' });
@@ -100,29 +122,36 @@ describe('SentryReporterService', () => {
   });
 
   it('should wrap non-Error values in a new Error before sending to Sentry', () => {
-    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = 'https://fake@sentry.io/123';
 
     const nonErrorReport: ErrorReport = { ...mockReport, error: { code: 500 } };
     service.captureError(nonErrorReport);
 
-    const captured = sentryClientMock.captureException.calls.first().args[0];
-    expect(captured instanceof Error).toBeTrue();
+    const captured = vi.mocked(sentryClientMock.captureException).mock.calls[0][0];
+    expect(captured instanceof Error).toBe(true);
     expect((captured as Error).message).toBe(nonErrorReport.technicalMessage);
   });
 
   it('should not set url extra when report has no url', () => {
-    (environment as { sentryDsn: string }).sentryDsn = 'https://fake@sentry.io/123';
+    (environment as {
+      sentryDsn: string;
+    }).sentryDsn = 'https://fake@sentry.io/123';
 
-    let capturedScope: jasmine.SpyObj<Scope> | null = null;
-    (sentryClientMock.withScope as jasmine.Spy).and.callFake((cb: (scope: Scope) => void) => {
-      capturedScope = jasmine.createSpyObj<Scope>('Scope', ['setTag', 'setExtra']);
-      cb(capturedScope);
+    let capturedScope: MockedObject<Scope> | null = null;
+    (sentryClientMock.withScope as Mock).mockImplementation((cb: (scope: Scope) => void) => {
+      capturedScope = {
+        setTag: vi.fn().mockName('Scope.setTag'),
+        setExtra: vi.fn().mockName('Scope.setExtra')
+      } as unknown as MockedObject<Scope> | null;
+      cb(capturedScope as unknown as Scope);
     });
 
     service.captureError({ ...mockReport, url: undefined });
 
-    const urlCalls = (capturedScope!.setExtra.calls.all() as jasmine.CallInfo<jasmine.Func>[])
-      .filter(c => c.args[0] === 'url');
+    const urlCalls = vi.mocked(capturedScope!.setExtra).mock.calls
+      .filter(c => c[0] === 'url');
     expect(urlCalls.length).toBe(0);
   });
 });

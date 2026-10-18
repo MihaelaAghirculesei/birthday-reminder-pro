@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
@@ -12,7 +13,7 @@ import { DashboardFacadeService } from './dashboard-facade.service';
 describe('DashboardFacadeService', () => {
   let service: DashboardFacadeService;
   let store: MockStore;
-  let statsServiceSpy: jasmine.SpyObj<BirthdayStatsService>;
+  let statsServiceSpy: MockedObject<BirthdayStatsService>;
 
   const mockBirthdays: Birthday[] = [
     {
@@ -48,23 +49,23 @@ describe('DashboardFacadeService', () => {
   ];
 
   beforeEach(() => {
-    const categoryFacadeSpyObj = jasmine.createSpyObj('CategoryFacadeService', [], {
+    const categoryFacadeSpyObj = {
       categories: signal(mockCategories),
       resolvedCategories: signal(mockCategories)
-    });
+    };
 
-    const statsServiceSpyObj = jasmine.createSpyObj('BirthdayStatsService', [
-      'getChartData',
-      'getMaxCount',
-      'getCategoriesStats'
-    ]);
+    const statsServiceSpyObj = {
+      getChartData: vi.fn().mockName('BirthdayStatsService.getChartData'),
+      getMaxCount: vi.fn().mockName('BirthdayStatsService.getMaxCount'),
+      getCategoriesStats: vi.fn().mockName('BirthdayStatsService.getCategoriesStats')
+    };
 
-    statsServiceSpyObj.getChartData.and.returnValue([
+    statsServiceSpyObj.getChartData.mockReturnValue([
       { month: 'Jan', count: 1, label: 'January' },
       { month: 'Jun', count: 1, label: 'June' }
     ]);
-    statsServiceSpyObj.getMaxCount.and.returnValue(1);
-    statsServiceSpyObj.getCategoriesStats.and.returnValue([
+    statsServiceSpyObj.getMaxCount.mockReturnValue(1);
+    statsServiceSpyObj.getCategoriesStats.mockReturnValue([
       { categoryId: 'friends', count: 1 },
       { categoryId: 'family', count: 1 }
     ]);
@@ -87,7 +88,7 @@ describe('DashboardFacadeService', () => {
     store.overrideSelector(BirthdaySelectors.selectSearchTerm, '');
 
     service = TestBed.inject(DashboardFacadeService);
-    statsServiceSpy = TestBed.inject(BirthdayStatsService) as jasmine.SpyObj<BirthdayStatsService>;
+    statsServiceSpy = TestBed.inject(BirthdayStatsService) as MockedObject<BirthdayStatsService>;
   });
 
   afterEach(() => store.resetSelectors());
@@ -173,7 +174,7 @@ describe('DashboardFacadeService', () => {
 
   describe('Category selection', () => {
     it('should dispatch setSelectedCategory', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.selectCategory('friends');
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -181,13 +182,13 @@ describe('DashboardFacadeService', () => {
     it('should dispatch null when same category is selected again (toggle)', () => {
       store.overrideSelector(BirthdaySelectors.selectSelectedCategory, 'friends');
       store.refreshState();
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.selectCategory('friends');
       expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should clear category filter', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.clearCategoryFilter();
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -195,20 +196,20 @@ describe('DashboardFacadeService', () => {
     it('should check if category is selected', () => {
       store.overrideSelector(BirthdaySelectors.selectSelectedCategory, 'friends');
       store.refreshState();
-      expect(service.isCategorySelected('friends')).toBeTrue();
-      expect(service.isCategorySelected('family')).toBeFalse();
+      expect(service.isCategorySelected('friends')).toBe(true);
+      expect(service.isCategorySelected('family')).toBe(false);
     });
   });
 
   describe('Search functionality', () => {
     it('should dispatch setSearchTerm', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.setSearchTerm('John');
       expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should dispatch clearSearch', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.clearSearch();
       expect(store.dispatch).toHaveBeenCalled();
     });
@@ -275,27 +276,27 @@ describe('DashboardFacadeService', () => {
 
   describe('Data management', () => {
     it('should dispatch loadTestData', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.loadTestData();
       expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should dispatch clearAllBirthdays and clear lastAction', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.clearAllData();
       expect(store.dispatch).toHaveBeenCalled();
       expect(service.lastAction()).toBeNull();
     });
 
     it('should dispatch addBirthday', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       const newBirthday = { name: 'Test', birthDate: '2000-01-01' } as Omit<Birthday, 'id'>;
       service.addBirthday(newBirthday);
       expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should store deleted birthday in lastAction', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.deleteBirthday(mockBirthdays[0]);
       expect(service.lastAction()).toEqual({
         type: 'delete',
@@ -305,24 +306,24 @@ describe('DashboardFacadeService', () => {
     });
 
     it('should undo last delete action', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.deleteBirthday(mockBirthdays[0]);
-      (store.dispatch as jasmine.Spy).calls.reset();
+      (store.dispatch as Mock).mockClear();
       service.undoLastAction();
       expect(store.dispatch).toHaveBeenCalled();
       expect(service.lastAction()).toBeNull();
     });
 
     it('should not undo if no last action', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.undoLastAction();
       expect(store.dispatch).not.toHaveBeenCalled();
     });
 
     it('should not dispatch when the deleted birthday fails schema validation', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       service.deleteBirthday({ id: 'x', name: 'X', birthDate: 'not-a-date' } as unknown as Birthday);
-      (store.dispatch as jasmine.Spy).calls.reset();
+      (store.dispatch as Mock).mockClear();
       service.undoLastAction();
       expect(store.dispatch).not.toHaveBeenCalled();
     });
@@ -330,7 +331,7 @@ describe('DashboardFacadeService', () => {
 
   describe('Import birthdays', () => {
     it('should import birthdays with delay', () => {
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       const birthdays = [mockBirthdays[0], mockBirthdays[1]];
       service.importBirthdays(birthdays);
       expect(store.dispatch).toHaveBeenCalledTimes(1);

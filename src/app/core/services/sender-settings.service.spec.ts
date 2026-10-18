@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { SecureStorageService } from './secure-storage.service';
@@ -6,13 +7,17 @@ import { SenderSettingsService } from './sender-settings.service';
 
 describe('SenderSettingsService', () => {
   let service: SenderSettingsService;
-  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
+  let mockSecureStorage: MockedObject<SecureStorageService>;
 
   beforeEach(() => {
-    mockSecureStorage = jasmine.createSpyObj('SecureStorageService', ['setItem', 'getItem', 'removeItem']);
-    mockSecureStorage.setItem.and.returnValue(Promise.resolve());
-    mockSecureStorage.getItem.and.returnValue(Promise.resolve(null));
-    mockSecureStorage.removeItem.and.returnValue(Promise.resolve());
+    mockSecureStorage = {
+      setItem: vi.fn().mockName('SecureStorageService.setItem'),
+      getItem: vi.fn().mockName('SecureStorageService.getItem'),
+      removeItem: vi.fn().mockName('SecureStorageService.removeItem')
+    } as unknown as MockedObject<SecureStorageService>;
+    mockSecureStorage.setItem.mockReturnValue(Promise.resolve());
+    mockSecureStorage.getItem.mockReturnValue(Promise.resolve(null));
+    mockSecureStorage.removeItem.mockReturnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
       providers: [

@@ -1,4 +1,5 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationService } from '../../core/services/notification.service';
@@ -15,10 +16,12 @@ interface MockFileInputEvent {
 describe('PhotoUploadComponent', () => {
   let component: PhotoUploadComponent;
   let fixture: ComponentFixture<PhotoUploadComponent>;
-  let mockNotificationService: jasmine.SpyObj<NotificationService>;
+  let mockNotificationService: MockedObject<NotificationService>;
 
   beforeEach(async () => {
-    mockNotificationService = jasmine.createSpyObj('NotificationService', ['show']);
+    mockNotificationService = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
 
     await TestBed.configureTestingModule({
       imports: [PhotoUploadComponent],
@@ -104,7 +107,7 @@ describe('PhotoUploadComponent', () => {
   describe('triggerFileInput', () => {
     it('should click the hidden file input element', () => {
       const fileInput = fixture.nativeElement.querySelector('input[type="file"]');
-      spyOn(fileInput, 'click');
+      vi.spyOn(fileInput, 'click');
 
       component.triggerFileInput();
 
@@ -119,22 +122,27 @@ describe('PhotoUploadComponent', () => {
   describe('onFileSelected', () => {
     let mockEvent: MockFileInputEvent;
     let mockFile: File;
-    let mockFileReader: jasmine.SpyObj<FileReader>;
+    let mockFileReader: MockedObject<FileReader>;
 
     beforeEach(() => {
       mockFile = new File(['test'], 'test.png', { type: 'image/png' });
       mockEvent = { target: { files: [mockFile] } };
 
-      mockFileReader = jasmine.createSpyObj('FileReader', ['readAsDataURL']);
-      spyOn(window as unknown as { FileReader: typeof FileReader }, 'FileReader').and.returnValue(mockFileReader);
+      mockFileReader = {
+        readAsDataURL: vi.fn().mockName('FileReader.readAsDataURL')
+      } as unknown as MockedObject<FileReader>;
+      vi.spyOn(window as unknown as {
+        FileReader: typeof FileReader;
+      }, 'FileReader').mockImplementation(function () {
+        return mockFileReader;
+      } as unknown as typeof FileReader);
     });
 
-    it('should emit photoSelected with base64 string on successful file read', (done) => {
+    it('should emit photoSelected with base64 string on successful file read', async () => {
       const base64Data = 'data:image/png;base64,abc123';
 
       component.photoSelected.subscribe((data: string) => {
         expect(data).toBe(base64Data);
-        done();
       });
 
       component.onFileSelected(mockEvent as unknown as Event);
@@ -143,29 +151,28 @@ describe('PhotoUploadComponent', () => {
     });
 
     it('should show error and NOT emit when base64 result exceeds 7 MB', () => {
-      spyOn(component.photoSelected, 'emit');
+      vi.spyOn(component.photoSelected, 'emit');
 
       component.onFileSelected(mockEvent as unknown as Event);
 
-      const oversizedBase64 = 'x'.repeat(7_000_001);
+      const oversizedBase64 = 'x'.repeat(7000001);
       mockFileReader.onload!({ target: { result: oversizedBase64 } } as unknown as ProgressEvent<FileReader>);
 
-      expect(mockNotificationService.show).toHaveBeenCalledWith(
-        'File size must be less than 5MB',
-        'error'
-      );
+      expect(mockNotificationService.show).toHaveBeenCalledWith('File size must be less than 5MB', 'error');
       expect(component.photoSelected.emit).not.toHaveBeenCalled();
     });
 
-    it('should NOT show error for base64 result exactly at the 7 MB boundary', (done) => {
-      const boundaryBase64 = 'x'.repeat(7_000_000);
+    it('should NOT show error for base64 result exactly at the 7 MB boundary', () => {
+      const boundaryBase64 = 'x'.repeat(7000000);
+      const selected = vi.fn();
 
-      component.photoSelected.subscribe(() => done());
+      component.photoSelected.subscribe(selected);
 
       component.onFileSelected(mockEvent as unknown as Event);
 
       mockFileReader.onload!({ target: { result: boundaryBase64 } } as unknown as ProgressEvent<FileReader>);
 
+      expect(selected).toHaveBeenCalled();
       expect(mockNotificationService.show).not.toHaveBeenCalled();
     });
 
@@ -176,10 +183,7 @@ describe('PhotoUploadComponent', () => {
 
       component.onFileSelected(mockEvent as unknown as Event);
 
-      expect(mockNotificationService.show).toHaveBeenCalledWith(
-        'File size must be less than 5MB',
-        'error'
-      );
+      expect(mockNotificationService.show).toHaveBeenCalledWith('File size must be less than 5MB', 'error');
     });
 
     it('should NOT call readAsDataURL for oversized files', () => {
@@ -198,20 +202,16 @@ describe('PhotoUploadComponent', () => {
 
       component.onFileSelected(mockEvent as unknown as Event);
 
-      expect(mockNotificationService.show).toHaveBeenCalledWith(
-        'Please select a valid image file',
-        'error'
-      );
+      expect(mockNotificationService.show).toHaveBeenCalledWith('Please select a valid image file', 'error');
     });
 
-    it('should accept image/jpeg files without error', (done) => {
+    it('should accept image/jpeg files without error', async () => {
       const jpegFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       mockEvent.target.files = [jpegFile];
       const base64Data = 'data:image/jpeg;base64,xyz';
 
       component.photoSelected.subscribe((data: string) => {
         expect(data).toBe(base64Data);
-        done();
       });
 
       component.onFileSelected(mockEvent as unknown as Event);
@@ -226,10 +226,7 @@ describe('PhotoUploadComponent', () => {
 
       mockFileReader.onerror!({} as unknown as ProgressEvent<FileReader>);
 
-      expect(mockNotificationService.show).toHaveBeenCalledWith(
-        'Failed to read the selected file. Please try again.',
-        'error'
-      );
+      expect(mockNotificationService.show).toHaveBeenCalledWith('Failed to read the selected file. Please try again.', 'error');
     });
 
     it('should not process if file list is empty', () => {
@@ -257,7 +254,7 @@ describe('PhotoUploadComponent', () => {
 
   describe('removePhoto', () => {
     it('should emit photoRemoved event', () => {
-      spyOn(component.photoRemoved, 'emit');
+      vi.spyOn(component.photoRemoved, 'emit');
       const mockEvent = new Event('click');
 
       component.removePhoto(mockEvent);
@@ -267,7 +264,7 @@ describe('PhotoUploadComponent', () => {
 
     it('should stop event propagation to prevent triggering triggerFileInput', () => {
       const mockEvent = new Event('click');
-      spyOn(mockEvent, 'stopPropagation');
+      vi.spyOn(mockEvent, 'stopPropagation');
 
       component.removePhoto(mockEvent);
 
@@ -294,7 +291,7 @@ describe('PhotoUploadComponent', () => {
     // so an aria-label would only risk diverging from what users see.
     it('should not override the visible text with an aria-label', () => {
       const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
-      expect(preview.hasAttribute('aria-label')).toBeFalse();
+      expect(preview.hasAttribute('aria-label')).toBe(false);
     });
 
     it('should expose the add-photo text when no photo is set', () => {
@@ -309,7 +306,7 @@ describe('PhotoUploadComponent', () => {
       fixture.detectChanges();
       const preview: HTMLElement = fixture.nativeElement.querySelector('.photo-preview');
       expect(preview.textContent).toContain('Change Photo');
-      expect(preview.hasAttribute('aria-label')).toBeFalse();
+      expect(preview.hasAttribute('aria-label')).toBe(false);
     });
   });
 
@@ -323,7 +320,7 @@ describe('PhotoUploadComponent', () => {
       fixture.detectChanges();
 
       const fileInput = fixture.nativeElement.querySelector('input[type="file"]');
-      spyOn(fileInput, 'click');
+      vi.spyOn(fileInput, 'click');
 
       component.triggerFileInput();
 
@@ -335,7 +332,7 @@ describe('PhotoUploadComponent', () => {
       fixture.detectChanges();
 
       const fileInput = fixture.nativeElement.querySelector('input[type="file"]');
-      spyOn(fileInput, 'click');
+      vi.spyOn(fileInput, 'click');
 
       component.triggerFileInput();
 
@@ -345,7 +342,7 @@ describe('PhotoUploadComponent', () => {
     it('should not emit photoRemoved when disabled', () => {
       fixture.componentRef.setInput('disabled', true);
       fixture.detectChanges();
-      spyOn(component.photoRemoved, 'emit');
+      vi.spyOn(component.photoRemoved, 'emit');
 
       component.removePhoto(new Event('click'));
 

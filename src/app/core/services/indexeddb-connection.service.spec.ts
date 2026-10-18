@@ -176,7 +176,7 @@ describe('IndexedDBConnectionService', () => {
     });
 
     it('resolves without error when all stores are already empty', async () => {
-      await expectAsync(service.clearAllStores()).toBeResolved();
+      await expect(service.clearAllStores()).resolves.not.toThrow();
     });
   });
 });

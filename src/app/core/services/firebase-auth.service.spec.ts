@@ -1,13 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { lastValueFrom } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { FIREBASE_OPTIONS } from '../../firebase.config';
 import { provideTranslateTesting } from '../../testing/translate-testing';
-import {
-  FIREBASE_AUTH_CODES,
-  FirebaseAuthService,
-  isFirebaseAuthError,
-  mapFirebaseSignInError,
-} from './firebase-auth.service';
+import { FIREBASE_AUTH_CODES, FirebaseAuthService, isFirebaseAuthError, mapFirebaseSignInError, } from './firebase-auth.service';
 import { LoggerService } from './logger.service';
 
 const AUTH_HINT_COOKIE = '__Secure-fb_auth_hint';
@@ -32,12 +29,17 @@ function injectAuthHintCookie(): void {
 
 describe('FirebaseAuthService', () => {
   let service: FirebaseAuthService;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let loggerMock: MockedObject<LoggerService>;
 
   beforeEach(() => {
     clearAuthHintCookie();
 
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -65,20 +67,18 @@ describe('FirebaseAuthService', () => {
   });
 
   it('should initially not be authenticated', () => {
-    expect(service.isAuthenticated).toBeFalse();
+    expect(service.isAuthenticated).toBe(false);
   });
 
-  it('should emit null from user$', (done) => {
+  it('should emit null from user$', async () => {
     service.user$.subscribe((user) => {
       expect(user).toBeNull();
-      done();
     });
   });
 
-  it('should emit true from loading$ initially', (done) => {
+  it('should emit true from loading$ initially', async () => {
     service.loading$.subscribe((loading) => {
-      expect(loading).toBeTrue();
-      done();
+      expect(loading).toBe(true);
     });
   });
 
@@ -100,19 +100,18 @@ describe('FirebaseAuthService', () => {
   // ── auth-hint cookie: initAuthListener without Firebase configured ─────────
 
   describe('initAuthListener (Firebase not configured)', () => {
-    it('resolves loading immediately when no hint cookie is present', (done) => {
+    it('resolves loading immediately when no hint cookie is present', async () => {
       service.initAuthListener();
 
       // loading$ should emit false after init (Firebase not configured → fast path)
       service.loading$.subscribe((loading) => {
         if (!loading) {
-          expect(loading).toBeFalse();
-          done();
+          expect(loading).toBe(false);
         }
       });
     });
 
-    it('resolves loading immediately even when hint cookie is present', (done) => {
+    it('resolves loading immediately even when hint cookie is present', async () => {
       // Firebase not configured → isFirebaseConfigured() returns false →
       // initAuthListener() exits early before reading the cookie.
       injectAuthHintCookie();
@@ -120,8 +119,7 @@ describe('FirebaseAuthService', () => {
 
       service.loading$.subscribe((loading) => {
         if (!loading) {
-          expect(loading).toBeFalse();
-          done();
+          expect(loading).toBe(false);
         }
       });
     });
@@ -156,24 +154,19 @@ describe('FirebaseAuthService', () => {
   // ── signOut observable ────────────────────────────────────────────────────
 
   describe('signOut (Firebase not configured)', () => {
-    it('returns a completing observable', (done) => {
-      service.signOut().subscribe({
-        complete: () => {
-          expect().nothing();
-          done();
-        }
-      });
+    it('returns a completing observable', async () => {
+      // lastValueFrom only settles once the observable completes.
+      await expect(lastValueFrom(service.signOut(), { defaultValue: undefined })).resolves.toBeUndefined();
     });
   });
 
   // ── signInWithGoogle observable ───────────────────────────────────────────
 
   describe('signInWithGoogle (Firebase not configured)', () => {
-    it('returns an observable that errors with a configuration message', (done) => {
+    it('returns an observable that errors with a configuration message', async () => {
       service.signInWithGoogle().subscribe({
         error: (err: Error) => {
           expect(err.message).toContain('Firebase not configured');
-          done();
         }
       });
     });
@@ -184,40 +177,40 @@ describe('FirebaseAuthService', () => {
   describe('isFirebaseAuthError', () => {
     it('returns true for a well-formed FirebaseError', () => {
       const err = { name: 'FirebaseError', code: 'auth/popup-blocked', message: 'Popup blocked' };
-      expect(isFirebaseAuthError(err)).toBeTrue();
+      expect(isFirebaseAuthError(err)).toBe(true);
     });
 
     it('returns true for an unknown code (open extension)', () => {
       const err = { name: 'FirebaseError', code: 'auth/future-code', message: 'Future error' };
-      expect(isFirebaseAuthError(err)).toBeTrue();
+      expect(isFirebaseAuthError(err)).toBe(true);
     });
 
     it('returns false for a plain Error', () => {
-      expect(isFirebaseAuthError(new Error('oops'))).toBeFalse();
+      expect(isFirebaseAuthError(new Error('oops'))).toBe(false);
     });
 
     it('returns false when name is not FirebaseError', () => {
       const err = { name: 'OtherError', code: 'auth/popup-blocked', message: 'msg' };
-      expect(isFirebaseAuthError(err)).toBeFalse();
+      expect(isFirebaseAuthError(err)).toBe(false);
     });
 
     it('returns false when code is missing', () => {
       const err = { name: 'FirebaseError', message: 'no code' };
-      expect(isFirebaseAuthError(err)).toBeFalse();
+      expect(isFirebaseAuthError(err)).toBe(false);
     });
 
     it('returns false when message is missing', () => {
       const err = { name: 'FirebaseError', code: 'auth/popup-blocked' };
-      expect(isFirebaseAuthError(err)).toBeFalse();
+      expect(isFirebaseAuthError(err)).toBe(false);
     });
 
     it('returns false for null', () => {
-      expect(isFirebaseAuthError(null)).toBeFalse();
+      expect(isFirebaseAuthError(null)).toBe(false);
     });
 
     it('returns false for a primitive', () => {
-      expect(isFirebaseAuthError('string error')).toBeFalse();
-      expect(isFirebaseAuthError(42)).toBeFalse();
+      expect(isFirebaseAuthError('string error')).toBe(false);
+      expect(isFirebaseAuthError(42)).toBe(false);
     });
   });
 
@@ -306,8 +299,7 @@ describe('FirebaseAuthService', () => {
 
   describe('performGoogleSignInDirect (Firebase not configured)', () => {
     it('rejects with "Firebase not configured"', async () => {
-      await expectAsync(service.performGoogleSignInDirect())
-        .toBeRejectedWithError(/Firebase not configured/);
+      await expect(service.performGoogleSignInDirect()).rejects.toThrowError(/Firebase not configured/);
     });
   });
 });
@@ -322,12 +314,17 @@ describe('FirebaseAuthService', () => {
 
 describe('FirebaseAuthService — lazy-loading guarantee (anonymous session)', () => {
   let service: FirebaseAuthService;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let loggerMock: MockedObject<LoggerService>;
 
   beforeEach(() => {
     clearAuthHintCookie();
 
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -359,7 +356,7 @@ describe('FirebaseAuthService — lazy-loading guarantee (anonymous session)', (
   it('leaves user unauthenticated after initAuthListener()', () => {
     service.initAuthListener();
 
-    expect(service.isAuthenticated).toBeFalse();
+    expect(service.isAuthenticated).toBe(false);
     expect(service.currentUser).toBeNull();
   });
 });

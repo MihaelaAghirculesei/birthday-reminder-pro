@@ -1,6 +1,7 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import { SILENT_LOGGER_PROVIDER } from './logger.service';
@@ -8,7 +9,7 @@ import { NotificationPermissionService } from './notification-permission.service
 
 interface MockNotification {
   permission: NotificationPermission;
-  requestPermission?: jasmine.Spy;
+  requestPermission?: Mock;
 }
 
 interface WindowWithNotification {
@@ -24,17 +25,17 @@ describe('NotificationPermissionService', () => {
   beforeEach(() => {
     localStorageMock = {};
 
-    spyOn(localStorage, 'getItem').and.callFake((key: string) => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
       return localStorageMock[key] || null;
     });
 
-    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
       localStorageMock[key] = value;
     });
 
     windowRef.Notification = {
       permission: 'default',
-      requestPermission: jasmine.createSpy('requestPermission').and.returnValue(Promise.resolve('granted'))
+      requestPermission: vi.fn().mockReturnValue(Promise.resolve('granted'))
     };
 
     Object.defineProperty(navigator, 'serviceWorker', {
@@ -134,7 +135,7 @@ describe('NotificationPermissionService', () => {
 
     it('should request permission and return true on granted', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('granted'));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.resolve('granted'));
 
       const result = await service.requestPermission();
 
@@ -144,7 +145,7 @@ describe('NotificationPermissionService', () => {
 
     it('should request permission and return false on denied', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('denied'));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.resolve('denied'));
 
       const result = await service.requestPermission();
 
@@ -153,7 +154,7 @@ describe('NotificationPermissionService', () => {
 
     it('should save permission state to localStorage', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('granted'));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.resolve('granted'));
 
       await service.requestPermission();
 
@@ -163,7 +164,7 @@ describe('NotificationPermissionService', () => {
 
     it('should handle request permission error', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.reject(new Error('Permission request failed')));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.reject(new Error('Permission request failed')));
 
       const result = await service.requestPermission();
 
@@ -198,13 +199,13 @@ describe('NotificationPermissionService', () => {
   describe('showTestNotification', () => {
     it('should not show notification when no permission', async () => {
       windowRef.Notification!.permission = 'denied';
-      await expectAsync(service.showTestNotification()).toBeResolved();
+      await expect(service.showTestNotification()).resolves.not.toThrow();
     });
 
     it('should show test notification when permission granted', async () => {
       windowRef.Notification!.permission = 'granted';
       const mockRegistration = {
-        showNotification: jasmine.createSpy('showNotification').and.returnValue(Promise.resolve())
+        showNotification: vi.fn().mockReturnValue(Promise.resolve())
       };
       Object.defineProperty(navigator.serviceWorker, 'ready', {
         value: Promise.resolve(mockRegistration),
@@ -213,13 +214,10 @@ describe('NotificationPermissionService', () => {
 
       await service.showTestNotification();
 
-      expect(mockRegistration.showNotification).toHaveBeenCalledWith(
-        '🎂 Birthday Reminder Test',
-        jasmine.objectContaining({
-          body: 'Notifications are working correctly!',
-          tag: 'test-notification'
-        })
-      );
+      expect(mockRegistration.showNotification).toHaveBeenCalledWith('🎂 Birthday Reminder Test', expect.objectContaining({
+        body: 'Notifications are working correctly!',
+        tag: 'test-notification'
+      }));
     });
 
     it('should handle showNotification error', async () => {
@@ -229,7 +227,7 @@ describe('NotificationPermissionService', () => {
         configurable: true
       });
 
-      await expectAsync(service.showTestNotification()).toBeResolved();
+      await expect(service.showTestNotification()).resolves.not.toThrow();
     });
   });
 
@@ -275,10 +273,9 @@ describe('NotificationPermissionService', () => {
   });
 
   describe('permissionStatus observable', () => {
-    it('should expose permissionStatus observable', (done) => {
+    it('should expose permissionStatus observable', async () => {
       service.permissionStatus.pipe(take(1)).subscribe(status => {
         expect(['default', 'granted', 'denied']).toContain(status);
-        done();
       });
     });
   });
@@ -343,17 +340,16 @@ describe('NotificationPermissionService', () => {
       expect(localStorage.setItem).toHaveBeenCalledWith('notificationsEnabled', 'false');
     });
 
-    it('should emit via notificationsEnabled observable', (done) => {
+    it('should emit via notificationsEnabled observable', async () => {
       service.setNotificationsEnabled(true);
       service.notificationsEnabled.pipe(take(1)).subscribe(enabled => {
         expect(enabled).toBe(true);
-        done();
       });
     });
 
     it('should auto-enable when requestPermission grants', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('granted'));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.resolve('granted'));
 
       await service.requestPermission();
 
@@ -363,7 +359,7 @@ describe('NotificationPermissionService', () => {
 
     it('should not auto-enable when requestPermission is denied', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = jasmine.createSpy().and.returnValue(Promise.resolve('denied'));
+      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.resolve('denied'));
 
       await service.requestPermission();
 

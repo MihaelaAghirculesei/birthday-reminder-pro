@@ -5,35 +5,35 @@ import { checkFirebaseOptions, isFirebaseConfigured } from './firebase.config';
 
 describe('checkFirebaseOptions', () => {
   it('returns false when opts is undefined', () => {
-    expect(checkFirebaseOptions(undefined)).toBeFalse();
+    expect(checkFirebaseOptions(undefined)).toBe(false);
   });
 
   it('returns false when opts is an empty object', () => {
-    expect(checkFirebaseOptions({} as FirebaseOptions)).toBeFalse();
+    expect(checkFirebaseOptions({} as FirebaseOptions)).toBe(false);
   });
 
   it('returns false when apiKey is a placeholder', () => {
-    expect(checkFirebaseOptions({ apiKey: 'YOUR_API_KEY', projectId: 'real-project' })).toBeFalse();
+    expect(checkFirebaseOptions({ apiKey: 'YOUR_API_KEY', projectId: 'real-project' })).toBe(false);
   });
 
   it('returns false when projectId is a placeholder', () => {
-    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal', projectId: 'YOUR_PROJECT_ID' })).toBeFalse();
+    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal', projectId: 'YOUR_PROJECT_ID' })).toBe(false);
   });
 
   it('returns false when apiKey starts with YOUR_ and projectId also starts with YOUR_', () => {
-    expect(checkFirebaseOptions({ apiKey: 'YOUR_API_KEY', projectId: 'YOUR_PROJECT_ID' })).toBeFalse();
+    expect(checkFirebaseOptions({ apiKey: 'YOUR_API_KEY', projectId: 'YOUR_PROJECT_ID' })).toBe(false);
   });
 
   it('returns false when apiKey is missing but projectId is real', () => {
-    expect(checkFirebaseOptions({ projectId: 'real-project' } as FirebaseOptions)).toBeFalse();
+    expect(checkFirebaseOptions({ projectId: 'real-project' } as FirebaseOptions)).toBe(false);
   });
 
   it('returns false when projectId is missing but apiKey is real', () => {
-    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal' } as FirebaseOptions)).toBeFalse();
+    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal' } as FirebaseOptions)).toBe(false);
   });
 
   it('returns true when both apiKey and projectId are non-placeholder strings', () => {
-    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal', projectId: 'real-project' })).toBeTrue();
+    expect(checkFirebaseOptions({ apiKey: 'AIzaSyReal', projectId: 'real-project' })).toBe(true);
   });
 });
 

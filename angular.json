@@ -135,34 +135,23 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing"
-            ],
+            "runner": "vitest",
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              "src/favicon.ico",
-              "src/assets",
-              "src/manifest.webmanifest"
-            ],
-            "styles": [
-              "src/theme.scss",
-              "src/styles.scss"
-            ],
-            "scripts": [],
-            "karmaConfig": "karma.conf.js",
-            "codeCoverage": true,
-            "codeCoverageExclude": [
+            "browsers": ["ChromiumHeadless"],
+            "setupFiles": ["src/test-setup.ts"],
+            "runnerConfig": "vitest.config.ts",
+            "coverageReporters": ["html", "text-summary", "lcovonly", "json", "json-summary"],
+            "coverageExclude": [
               "src/app/firebase.config.ts",
               "src/app/core/services/firebase-auth.service.ts",
               "src/app/core/services/google-api-loader.service.ts",
               "src/app/core/services/google-calendar-auth.service.ts",
               "src/app/core/services/google-calendar.service.ts",
               "src/app/core/services/push-notification.service.ts",
-              "src/app/core/services/browser-notification-scheduler.service.ts"
+              "src/app/core/services/browser-notification-scheduler.service.ts",
+              "src/**/*.html"
             ]
           }
         },

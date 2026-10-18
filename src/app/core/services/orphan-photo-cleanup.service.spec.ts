@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { FIREBASE_OPTIONS, storageGetters } from '../../firebase.config';
 import { LoggerService } from './logger.service';
@@ -8,20 +9,25 @@ import { OrphanPhotoCleanupService } from './orphan-photo-cleanup.service';
 const VALID_FIREBASE_OPTIONS = { apiKey: 'test-key', projectId: 'test-project' };
 
 /** A Firebase Storage-style download URL for path "users/uid/photos/uuid.jpg". */
-const STORAGE_URL =
-  'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fuuid.jpg?alt=media&token=tok';
+const STORAGE_URL = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fuuid.jpg?alt=media&token=tok';
 
 describe('OrphanPhotoCleanupService', () => {
   let service: OrphanPhotoCleanupService;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
-  let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
+  let loggerMock: MockedObject<LoggerService>;
+  let offlineStorageMock: MockedObject<IndexedDBStorageService>;
 
-  function setup(opts: { firebase?: object | undefined } = {}): void {
-    loggerMock = jasmine.createSpyObj<LoggerService>('LoggerService', ['info', 'warn', 'error']);
-    offlineStorageMock = jasmine.createSpyObj<IndexedDBStorageService>('IndexedDBStorageService', [
-      'getBirthdays',
-    ]);
-    offlineStorageMock.getBirthdays.and.resolveTo([]);
+  function setup(opts: {
+    firebase?: object | undefined;
+  } = {}): void {
+    loggerMock = {
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
+    offlineStorageMock = {
+      getBirthdays: vi.fn().mockName('IndexedDBStorageService.getBirthdays')
+    } as unknown as MockedObject<IndexedDBStorageService>;
+    offlineStorageMock.getBirthdays.mockResolvedValue([]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -49,8 +55,7 @@ describe('OrphanPhotoCleanupService', () => {
     });
 
     it('handles nested paths with multiple encoded slashes', () => {
-      const url =
-        'https://firebasestorage.googleapis.com/v0/b/proj/o/a%2Fb%2Fc.jpg?alt=media';
+      const url = 'https://firebasestorage.googleapis.com/v0/b/proj/o/a%2Fb%2Fc.jpg?alt=media';
       expect(service.extractStoragePath(url)).toBe('a/b/c.jpg');
     });
 
@@ -79,23 +84,25 @@ describe('OrphanPhotoCleanupService', () => {
     beforeEach(() => setup());
 
     it('returns true when no cleanup has ever run', () => {
-      expect(service.isDue()).toBeTrue();
+      expect(service.isDue()).toBe(true);
     });
 
     it('returns false when cleanup ran less than 24 h ago', () => {
-      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - 1_000));
-      expect(service.isDue()).toBeFalse();
+      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - 1000));
+      expect(service.isDue()).toBe(false);
     });
 
     it('returns true when cleanup ran exactly 24 h ago or longer', () => {
       const oneDayMs = 24 * 60 * 60 * 1000;
-      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - oneDayMs - 1_000));
-      expect(service.isDue()).toBeTrue();
+      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - oneDayMs - 1000));
+      expect(service.isDue()).toBe(true);
     });
 
     it('returns true when localStorage throws', () => {
-      spyOn(localStorage, 'getItem').and.throwError('QuotaExceededError');
-      expect(service.isDue()).toBeTrue();
+      vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+      expect(service.isDue()).toBe(true);
     });
   });
 
@@ -104,7 +111,7 @@ describe('OrphanPhotoCleanupService', () => {
   describe('cleanupOrphans', () => {
     it('returns early and never touches Storage when Firebase is not configured', async () => {
       setup(); // FIREBASE_OPTIONS = undefined
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
 
       await service.cleanupOrphans('uid');
 
@@ -113,8 +120,8 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('returns early when cleanup is not due yet', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - 1_000));
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
+      localStorage.setItem('__orphan_cleanup_ts', String(Date.now() - 1000));
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
 
       await service.cleanupOrphans('uid');
 
@@ -123,9 +130,9 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('returns early when storage SDK is not available after init', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue(null);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(null);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue(null);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(null);
 
       await service.cleanupOrphans('uid');
 
@@ -134,14 +141,20 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('marks cleanup done and returns without deleting when the folder is empty', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.resolveTo({ items: [] });
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockResolvedValue({ items: [] });
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
@@ -151,55 +164,62 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('deletes Storage files not referenced by any birthday', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
 
       const orphanRef = { fullPath: 'users/uid/photos/orphan.jpg' };
       const usedRef = { fullPath: 'users/uid/photos/used.jpg' };
-      const usedUrl =
-        'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fused.jpg?alt=media';
+      const usedUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fused.jpg?alt=media';
 
-      offlineStorageMock.getBirthdays.and.resolveTo([
+      offlineStorageMock.getBirthdays.mockResolvedValue([
         { id: '1', photo: usedUrl } as never,
       ]);
 
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.resolveTo({ items: [orphanRef, usedRef] });
-      stMock.deleteObject.and.resolveTo();
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockResolvedValue({ items: [orphanRef, usedRef] });
+      stMock.deleteObject.mockResolvedValue(undefined);
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
-      expect(stMock.deleteObject).toHaveBeenCalledOnceWith(orphanRef);
+      expect(stMock.deleteObject).toHaveBeenCalledTimes(1);
+
+      expect(stMock.deleteObject).toHaveBeenCalledWith(orphanRef);
       expect(stMock.deleteObject).not.toHaveBeenCalledWith(usedRef);
-      expect(loggerMock.info).toHaveBeenCalledWith(
-        '[OrphanCleanup] Deleted orphan:',
-        orphanRef.fullPath
-      );
+      expect(loggerMock.info).toHaveBeenCalledWith('[OrphanCleanup] Deleted orphan:', orphanRef.fullPath);
     });
 
     it('skips files referenced only via rememberPhoto', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
 
       const rememberedRef = { fullPath: 'users/uid/photos/remembered.jpg' };
-      const remUrl =
-        'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fremembered.jpg?alt=media';
+      const remUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2Fphotos%2Fremembered.jpg?alt=media';
 
-      offlineStorageMock.getBirthdays.and.resolveTo([
+      offlineStorageMock.getBirthdays.mockResolvedValue([
         { id: '1', rememberPhoto: remUrl } as never,
       ]);
 
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.resolveTo({ items: [rememberedRef] });
-      stMock.deleteObject.and.resolveTo();
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockResolvedValue({ items: [rememberedRef] });
+      stMock.deleteObject.mockResolvedValue(undefined);
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
@@ -208,108 +228,121 @@ describe('OrphanPhotoCleanupService', () => {
 
     it('logs a warning and continues when deleting an individual orphan fails', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
 
       const orphanRef = { fullPath: 'users/uid/photos/orphan.jpg' };
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.resolveTo({ items: [orphanRef] });
-      stMock.deleteObject.and.rejectWith(new Error('Permission denied'));
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockResolvedValue({ items: [orphanRef] });
+      stMock.deleteObject.mockRejectedValue(new Error('Permission denied'));
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[OrphanCleanup] Could not delete orphan:',
-        orphanRef.fullPath,
-        jasmine.any(Error)
-      );
+      expect(loggerMock.warn).toHaveBeenCalledWith('[OrphanCleanup] Could not delete orphan:', orphanRef.fullPath, expect.any(Error));
       // Summary log still fires; cleanup is considered done even with partial failures
-      expect(loggerMock.info).toHaveBeenCalledWith(
-        jasmine.stringContaining('[OrphanCleanup] Complete')
-      );
+      expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('[OrphanCleanup] Complete'));
     });
 
     it('logs a warning and does not throw when listAll rejects', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
 
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.rejectWith(new Error('Network error'));
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockRejectedValue(new Error('Network error'));
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
-      await expectAsync(service.cleanupOrphans('uid')).toBeResolved();
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[OrphanCleanup] Aborted:',
-        jasmine.any(Error)
-      );
+      await expect(service.cleanupOrphans('uid')).resolves.not.toThrow();
+      expect(loggerMock.warn).toHaveBeenCalledWith('[OrphanCleanup] Aborted:', expect.any(Error));
     });
 
     it('scans files nested under photo/ and rememberPhoto/ subfolders', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
 
       const photoPrefix = { name: 'photo' };
       const rememberPrefix = { name: 'rememberPhoto' };
       const orphanRef = { fullPath: 'users/uid/photo/orphan.jpg' };
       const usedRef = { fullPath: 'users/uid/rememberPhoto/used.jpg' };
-      const usedUrl =
-        'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2FrememberPhoto%2Fused.jpg?alt=media';
+      const usedUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/users%2Fuid%2FrememberPhoto%2Fused.jpg?alt=media';
 
-      offlineStorageMock.getBirthdays.and.resolveTo([
+      offlineStorageMock.getBirthdays.mockResolvedValue([
         { id: '1', rememberPhoto: usedUrl } as never,
       ]);
 
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.callFake((ref: unknown) => {
-        if (ref === photoPrefix) return Promise.resolve({ items: [orphanRef] });
-        if (ref === rememberPrefix) return Promise.resolve({ items: [usedRef] });
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockImplementation((ref: unknown) => {
+        if (ref === photoPrefix)
+          return Promise.resolve({ items: [orphanRef] });
+        if (ref === rememberPrefix)
+          return Promise.resolve({ items: [usedRef] });
         return Promise.resolve({ prefixes: [photoPrefix, rememberPrefix], items: [] });
       });
-      stMock.deleteObject.and.resolveTo();
+      stMock.deleteObject.mockResolvedValue(undefined);
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
-      expect(stMock.deleteObject).toHaveBeenCalledOnceWith(orphanRef);
+      expect(stMock.deleteObject).toHaveBeenCalledTimes(1);
+
+      expect(stMock.deleteObject).toHaveBeenCalledWith(orphanRef);
       expect(stMock.deleteObject).not.toHaveBeenCalledWith(usedRef);
     });
 
     it('logs a summary with counts after a mixed delete run', async () => {
       setup({ firebase: VALID_FIREBASE_OPTIONS });
-      spyOn(service as unknown as { isDevEnvironment(): boolean }, 'isDevEnvironment').and.returnValue(false);
+      vi.spyOn(service as unknown as {
+        isDevEnvironment(): boolean;
+      }, 'isDevEnvironment').mockReturnValue(false);
 
       const orphan1 = { fullPath: 'users/uid/photos/a.jpg' };
       const orphan2 = { fullPath: 'users/uid/photos/b.jpg' };
-      const stMock = jasmine.createSpyObj('st', ['ref', 'listAll', 'deleteObject']);
-      stMock.ref.and.returnValue({});
-      stMock.listAll.and.resolveTo({ items: [orphan1, orphan2] });
+      const stMock = {
+        ref: vi.fn().mockName('st.ref'),
+        listAll: vi.fn().mockName('st.listAll'),
+        deleteObject: vi.fn().mockName('st.deleteObject')
+      };
+      stMock.ref.mockReturnValue({});
+      stMock.listAll.mockResolvedValue({ items: [orphan1, orphan2] });
       // First succeeds, second fails
-      stMock.deleteObject.and.returnValues(
-        Promise.resolve(),
-        Promise.reject(new Error('quota'))
-      );
+      stMock.deleteObject.mockReturnValueOnce(Promise.resolve()).mockReturnValueOnce(Promise.reject(new Error('quota')));
 
-      spyOn(storageGetters, 'initFirebase').and.resolveTo();
-      spyOn(storageGetters, 'getFirebaseStorage').and.returnValue({} as never);
-      spyOn(storageGetters, 'getStorageModule').and.returnValue(stMock);
+      vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
+      vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);
+      vi.spyOn(storageGetters, 'getStorageModule').mockReturnValue(stMock as unknown as ReturnType<typeof storageGetters.getStorageModule>);
 
       await service.cleanupOrphans('uid');
 
-      expect(loggerMock.info).toHaveBeenCalledWith(
-        jasmine.stringContaining('deleted: 1, failed: 1, scanned: 2')
-      );
+      expect(loggerMock.info).toHaveBeenCalledWith(expect.stringContaining('deleted: 1, failed: 1, scanned: 2'));
     });
   });
 });

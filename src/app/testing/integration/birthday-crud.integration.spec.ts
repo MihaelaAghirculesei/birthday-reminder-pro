@@ -2,6 +2,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore, Store } from '@ngrx/store';
+import type { MockedObject } from 'vitest';
 
 import { GoogleCalendarService } from '../../core/services/google-calendar.service';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
@@ -20,7 +21,7 @@ import { provideTranslateTesting } from '../translate-testing';
 
 describe('Birthday CRUD Integration', () => {
   let store: Store;
-  let mockStorage: jasmine.SpyObj<IndexedDBStorageService>;
+  let mockStorage: MockedObject<IndexedDBStorageService>;
   let storedBirthdays: Birthday[] = [];
 
   beforeEach(() => {
@@ -31,58 +32,65 @@ describe('Birthday CRUD Integration', () => {
       BirthdaySelectors.selectBirthdayTotal
     ].forEach(s => {
       s.release();
-      (s as { clearResult?: () => void }).clearResult?.();
+      (s as {
+        clearResult?: () => void;
+      }).clearResult?.();
     });
 
     storedBirthdays = [];
 
-    mockStorage = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays',
-      'addBirthday',
-      'updateBirthday',
-      'deleteBirthday',
-      'clear',
-      'saveScheduledMessage',
-      'deleteScheduledMessage',
-      'getScheduledMessagesByBirthday'
-    ]);
+    mockStorage = {
+      getBirthdays: vi.fn().mockName('IndexedDBStorageService.getBirthdays'),
+      addBirthday: vi.fn().mockName('IndexedDBStorageService.addBirthday'),
+      updateBirthday: vi.fn().mockName('IndexedDBStorageService.updateBirthday'),
+      deleteBirthday: vi.fn().mockName('IndexedDBStorageService.deleteBirthday'),
+      clear: vi.fn().mockName('IndexedDBStorageService.clear'),
+      saveScheduledMessage: vi.fn().mockName('IndexedDBStorageService.saveScheduledMessage'),
+      deleteScheduledMessage: vi.fn().mockName('IndexedDBStorageService.deleteScheduledMessage'),
+      getScheduledMessagesByBirthday: vi.fn().mockName('IndexedDBStorageService.getScheduledMessagesByBirthday')
+    } as unknown as MockedObject<IndexedDBStorageService>;
 
-    mockStorage.getBirthdays.and.callFake(() => Promise.resolve([...storedBirthdays]));
-    mockStorage.addBirthday.and.callFake((b: Birthday) => {
+    mockStorage.getBirthdays.mockImplementation(() => Promise.resolve([...storedBirthdays]));
+    mockStorage.addBirthday.mockImplementation((b: Birthday) => {
       storedBirthdays.push(b);
       return Promise.resolve();
     });
-    mockStorage.updateBirthday.and.callFake((b: Birthday) => {
+    mockStorage.updateBirthday.mockImplementation((b: Birthday) => {
       const index = storedBirthdays.findIndex(x => x.id === b.id);
-      if (index >= 0) storedBirthdays[index] = b;
+      if (index >= 0)
+        storedBirthdays[index] = b;
       return Promise.resolve();
     });
-    mockStorage.deleteBirthday.and.callFake((id: string) => {
+    mockStorage.deleteBirthday.mockImplementation((id: string) => {
       storedBirthdays = storedBirthdays.filter(b => b.id !== id);
       return Promise.resolve();
     });
-    mockStorage.clear.and.callFake(() => {
+    mockStorage.clear.mockImplementation(() => {
       storedBirthdays = [];
       return Promise.resolve();
     });
-    mockStorage.getScheduledMessagesByBirthday.and.returnValue(Promise.resolve([]));
+    mockStorage.getScheduledMessagesByBirthday.mockReturnValue(Promise.resolve([]));
 
-    const mockNotification = jasmine.createSpyObj('NotificationService', ['show']);
-    const mockPushNotification = jasmine.createSpyObj('PushNotificationService', [
-      'scheduleNotification',
-      'cancelNotification',
-      'cancelAllNotificationsForBirthday'
-    ]);
-    const mockGoogleCalendar = jasmine.createSpyObj('GoogleCalendarService', [
-      'isEnabled',
-      'syncBirthdayToCalendar',
-      'updateBirthdayInCalendar',
-      'deleteBirthdayFromCalendar'
-    ]);
-    mockGoogleCalendar.isEnabled.and.returnValue(false);
+    const mockNotification = {
+      show: vi.fn().mockName('NotificationService.show')
+    };
+    const mockPushNotification = {
+      scheduleNotification: vi.fn().mockName('PushNotificationService.scheduleNotification'),
+      cancelNotification: vi.fn().mockName('PushNotificationService.cancelNotification'),
+      cancelAllNotificationsForBirthday: vi.fn().mockName('PushNotificationService.cancelAllNotificationsForBirthday')
+    };
+    const mockGoogleCalendar = {
+      isEnabled: vi.fn().mockName('GoogleCalendarService.isEnabled'),
+      syncBirthdayToCalendar: vi.fn().mockName('GoogleCalendarService.syncBirthdayToCalendar'),
+      updateBirthdayInCalendar: vi.fn().mockName('GoogleCalendarService.updateBirthdayInCalendar'),
+      deleteBirthdayFromCalendar: vi.fn().mockName('GoogleCalendarService.deleteBirthdayFromCalendar')
+    };
+    mockGoogleCalendar.isEnabled.mockReturnValue(false);
 
-    const mockSyncCoordinator = jasmine.createSpyObj('SyncCoordinatorService', ['queueChange']);
-    mockSyncCoordinator.queueChange.and.returnValue(Promise.resolve());
+    const mockSyncCoordinator = {
+      queueChange: vi.fn().mockName('SyncCoordinatorService.queueChange')
+    };
+    mockSyncCoordinator.queueChange.mockReturnValue(Promise.resolve());
 
     TestBed.configureTestingModule({
       providers: [

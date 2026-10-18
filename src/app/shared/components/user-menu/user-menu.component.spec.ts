@@ -1,8 +1,10 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import * as AuthActions from '../../../core/store/auth/auth.actions';
@@ -14,7 +16,7 @@ describe('UserMenuComponent', () => {
   let component: UserMenuComponent;
   let fixture: ComponentFixture<UserMenuComponent>;
   let store: MockStore;
-  let dialogSpy: jasmine.SpyObj<MatDialog>;
+  let dialogSpy: MockedObject<MatDialog>;
 
   const initialState = {
     auth: {
@@ -32,7 +34,9 @@ describe('UserMenuComponent', () => {
   };
 
   beforeEach(async () => {
-    const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
+    const dialogSpyObj = {
+      open: vi.fn().mockName('MatDialog.open')
+    };
 
     await TestBed.configureTestingModule({
       imports: [UserMenuComponent, NoopAnimationsModule],
@@ -44,7 +48,7 @@ describe('UserMenuComponent', () => {
     }).compileComponents();
 
     store = TestBed.inject(MockStore);
-    dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+    dialogSpy = TestBed.inject(MatDialog) as MockedObject<MatDialog>;
     fixture = TestBed.createComponent(UserMenuComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -81,7 +85,7 @@ describe('UserMenuComponent', () => {
   });
 
   it('should dispatch signOut on signOut call', () => {
-    const dispatchSpy = spyOn(store, 'dispatch');
+    const dispatchSpy = vi.spyOn(store, 'dispatch');
     component.signOut();
     expect(dispatchSpy).toHaveBeenCalledWith(AuthActions.signOut());
   });
@@ -103,24 +107,28 @@ describe('UserMenuComponent', () => {
     });
 
     it('should open the confirm dialog with delete-account data', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       component.confirmDeleteAccount();
 
       expect(dialogSpy.open).toHaveBeenCalledTimes(1);
-      const [, config] = dialogSpy.open.calls.mostRecent().args;
+      const [, config] = vi.mocked(dialogSpy.open).mock.lastCall!;
       const data = config?.data as ConfirmDialogData;
       expect(data.color).toBe('warn');
       expect(data.icon).toBe('delete_forever');
     });
 
     it('should dispatch deleteAccount with the user id when confirmed', () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       component.confirmDeleteAccount();
 
@@ -128,14 +136,16 @@ describe('UserMenuComponent', () => {
     });
 
     it('should not dispatch deleteAccount when the dialog is cancelled', () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       component.confirmDeleteAccount();
 
-      expect(dispatchSpy).not.toHaveBeenCalledWith(jasmine.objectContaining({ type: AuthActions.deleteAccount.type }));
+      expect(dispatchSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: AuthActions.deleteAccount.type }));
     });
   });
 });

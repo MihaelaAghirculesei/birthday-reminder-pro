@@ -1,8 +1,10 @@
 import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { type BirthdayCategory } from '../../../../shared';
@@ -13,7 +15,7 @@ describe('BirthdayListComponent', () => {
   let component: BirthdayListComponent;
   let fixture: ComponentFixture<BirthdayListComponent>;
   let store: MockStore;
-  let dialogSpy: jasmine.SpyObj<MatDialog>;
+  let dialogSpy: MockedObject<MatDialog>;
 
   const mockBirthdays = [
     createMockBirthday({ id: '1', name: 'Alice Johnson', birthDate: '1992-03-10', category: 'friends', notes: '' }),
@@ -26,7 +28,9 @@ describe('BirthdayListComponent', () => {
   ];
 
   beforeEach(async () => {
-    const dialogSpyObj = jasmine.createSpyObj('MatDialog', ['open']);
+    const dialogSpyObj = {
+      open: vi.fn().mockName('MatDialog.open')
+    };
 
     await TestBed.configureTestingModule({
       imports: [BirthdayListComponent, NoopAnimationsModule],
@@ -51,7 +55,7 @@ describe('BirthdayListComponent', () => {
     }).compileComponents();
 
     store = TestBed.inject(MockStore);
-    dialogSpy = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+    dialogSpy = TestBed.inject(MatDialog) as MockedObject<MatDialog>;
 
     fixture = TestBed.createComponent(BirthdayListComponent);
     component = fixture.componentInstance;
@@ -97,7 +101,7 @@ describe('BirthdayListComponent', () => {
 
   describe('Search functionality', () => {
     it('should emit searchTermChange when search changes', () => {
-      spyOn(component.searchTermChange, 'emit');
+      vi.spyOn(component.searchTermChange, 'emit');
       const input = document.createElement('input');
       input.value = 'Alice';
       const event = { target: input } as unknown as Event;
@@ -108,7 +112,7 @@ describe('BirthdayListComponent', () => {
     });
 
     it('should emit clearSearch when clearing search', () => {
-      spyOn(component.clearSearch, 'emit');
+      vi.spyOn(component.clearSearch, 'emit');
       component.onClearSearch();
       expect(component.clearSearch.emit).toHaveBeenCalled();
     });
@@ -116,7 +120,7 @@ describe('BirthdayListComponent', () => {
 
   describe('Undo functionality', () => {
     it('should emit undoAction when undo is triggered', () => {
-      spyOn(component.undoAction, 'emit');
+      vi.spyOn(component.undoAction, 'emit');
       component.onUndo();
       expect(component.undoAction.emit).toHaveBeenCalled();
     });
@@ -124,37 +128,39 @@ describe('BirthdayListComponent', () => {
 
   describe('Test data management', () => {
     it('should emit addTestData and set loading state', fakeAsync(() => {
-      spyOn(component.addTestData, 'emit');
+      vi.spyOn(component.addTestData, 'emit');
       component.onAddTestData();
 
-      expect(component.isAddingTestData()).toBeTrue();
+      expect(component.isAddingTestData()).toBe(true);
       expect(component.addTestData.emit).toHaveBeenCalled();
 
       tick(2000);
 
-      expect(component.isAddingTestData()).toBeFalse();
+      expect(component.isAddingTestData()).toBe(false);
     }));
 
     it('should emit clearAllData and set clearing state', fakeAsync(() => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(component.clearAllData, 'emit');
+      vi.spyOn(component.clearAllData, 'emit');
       component.onClearAllData();
 
-      expect(component.isClearingData()).toBeTrue();
+      expect(component.isClearingData()).toBe(true);
       expect(component.clearAllData.emit).toHaveBeenCalled();
 
       tick(2000);
 
-      expect(component.isClearingData()).toBeFalse();
+      expect(component.isClearingData()).toBe(false);
     }));
   });
 
   describe('Birthdays imported', () => {
     it('should emit birthdaysImported when birthdays are imported', () => {
-      spyOn(component.birthdaysImported, 'emit');
+      vi.spyOn(component.birthdaysImported, 'emit');
       component.onBirthdaysImported(mockBirthdays);
 
       expect(component.birthdaysImported.emit).toHaveBeenCalledWith(mockBirthdays);
@@ -171,15 +177,17 @@ describe('BirthdayListComponent', () => {
 
   describe('Edit dialog', () => {
     it('should open edit dialog with correct data', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(undefined));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(undefined));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
       await component.editBirthday(mockBirthdays[0]);
       await fixture.whenStable();
 
       expect(dialogSpy.open).toHaveBeenCalled();
-      const callArgs = dialogSpy.open.calls.first().args;
+      const callArgs = vi.mocked(dialogSpy.open).mock.calls[0];
       expect(callArgs[1]?.data).toEqual({
         birthday: mockBirthdays[0],
         categories: mockCategories
@@ -187,8 +195,10 @@ describe('BirthdayListComponent', () => {
     });
 
     it('should update birthday when dialog returns result (empty fields fall back to undefined)', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of({
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of({
         birthday: mockBirthdays[0],
         editedData: {
           name: 'Updated Name',
@@ -202,9 +212,9 @@ describe('BirthdayListComponent', () => {
           telegramUsername: ''
         }
       }));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
       // The save path awaits the lazily imported schema module after the dialog closes.
       // Its continuation was queued first, so it has dispatched once this await resolves.
@@ -214,8 +224,10 @@ describe('BirthdayListComponent', () => {
     });
 
     it('should update birthday preserving contact info when provided', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of({
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of({
         birthday: mockBirthdays[0],
         editedData: {
           name: 'Alice Johnson',
@@ -229,9 +241,9 @@ describe('BirthdayListComponent', () => {
           telegramUsername: 'alice_tg'
         }
       }));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
       // The save path awaits the lazily imported schema module after the dialog closes.
       // Its continuation was queued first, so it has dispatched once this await resolves.
@@ -241,11 +253,13 @@ describe('BirthdayListComponent', () => {
     });
 
     it('should fall back to birthday.name when edited name is empty after trim', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of({
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of({
         birthday: mockBirthdays[0],
         editedData: {
-          name: '   ',  // only whitespace → trimmed name is ''
+          name: '   ', // only whitespace → trimmed name is ''
           notes: '',
           birthDate: '1992-03-10',
           category: 'friends',
@@ -256,9 +270,9 @@ describe('BirthdayListComponent', () => {
           telegramUsername: ''
         }
       }));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
       // The save path awaits the lazily imported schema module after the dialog closes.
       // Its continuation was queued first, so it has dispatched once this await resolves.
@@ -268,11 +282,13 @@ describe('BirthdayListComponent', () => {
     });
 
     it('should not update birthday when dialog is cancelled', async () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(undefined));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(undefined));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       await component.editBirthday(mockBirthdays[0]);
       // The save path awaits the lazily imported schema module after the dialog closes.
       // Its continuation was queued first, so it has dispatched once this await resolves.
@@ -284,21 +300,25 @@ describe('BirthdayListComponent', () => {
 
   describe('Delete birthday', () => {
     it('should delete birthday by id', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       component.deleteBirthday(mockBirthdays[0]);
       expect(store.dispatch).toHaveBeenCalled();
     });
 
     it('should not delete birthday when dialog is cancelled', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       component.deleteBirthday(mockBirthdays[0]);
       expect(store.dispatch).not.toHaveBeenCalled();
     });
@@ -306,11 +326,13 @@ describe('BirthdayListComponent', () => {
 
   describe('Clear all data', () => {
     it('should not emit clearAllData when confirm dialog is rejected', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogSpy.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogSpy.open.mockReturnValue(mockDialogRef);
 
-      spyOn(component.clearAllData, 'emit');
+      vi.spyOn(component.clearAllData, 'emit');
       component.onClearAllData();
 
       expect(component.clearAllData.emit).not.toHaveBeenCalled();

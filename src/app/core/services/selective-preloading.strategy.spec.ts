@@ -38,12 +38,12 @@ describe('SelectivePreloadingStrategy', () => {
   // ─── SSR ────────────────────────────────────────────────────────────────────
 
   describe('SSR (non-browser platform)', () => {
-    it('returns EMPTY regardless of route data', (done) => {
+    it('returns EMPTY regardless of route data', async () => {
       setup('server');
       let emitted = false;
       strategy.preload(preloadRoute, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
   });
@@ -53,19 +53,19 @@ describe('SelectivePreloadingStrategy', () => {
   describe('preload flag', () => {
     beforeEach(() => setup());
 
-    it('returns EMPTY when data.preload is absent', (done) => {
+    it('returns EMPTY when data.preload is absent', async () => {
       let emitted = false;
       strategy.preload(noPreloadRoute, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
 
-    it('returns EMPTY when data.preload is false', (done) => {
+    it('returns EMPTY when data.preload is false', async () => {
       let emitted = false;
       strategy.preload({ path: 'x', data: { preload: false } }, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
   });
@@ -89,30 +89,30 @@ describe('SelectivePreloadingStrategy', () => {
       expect(results).toContain(true);
     }));
 
-    it('returns EMPTY on slow-2g', (done) => {
+    it('returns EMPTY on slow-2g', async () => {
       setup('browser', { effectiveType: 'slow-2g' });
       let emitted = false;
       strategy.preload(preloadRoute, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
 
-    it('returns EMPTY on 2g', (done) => {
+    it('returns EMPTY on 2g', async () => {
       setup('browser', { effectiveType: '2g' });
       let emitted = false;
       strategy.preload(preloadRoute, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
 
-    it('returns EMPTY when saveData is true', (done) => {
+    it('returns EMPTY when saveData is true', async () => {
       setup('browser', { saveData: true });
       let emitted = false;
       strategy.preload(preloadRoute, () => of(true)).subscribe({
         next: () => (emitted = true),
-        complete: () => { expect(emitted).toBeFalse(); done(); }
+        complete: () => { expect(emitted).toBe(false);; }
       });
     });
   });
@@ -125,16 +125,14 @@ describe('SelectivePreloadingStrategy', () => {
     it('uses requestIdleCallback when available', fakeAsync(() => {
       // Install a synchronous requestIdleCallback before creating the strategy
       // so the strategy picks it up via 'requestIdleCallback' in window
-      const idleSpy = jasmine.createSpy('requestIdleCallback').and.callFake(
-        (cb: IdleRequestCallback) => { cb({ didTimeout: false, timeRemaining: () => 50 }); return 1; }
-      );
+      const idleSpy = vi.fn().mockImplementation((cb: IdleRequestCallback) => { cb({ didTimeout: false, timeRemaining: () => 50 }); return 1; });
       (window as unknown as Record<string, unknown>)['requestIdleCallback'] = idleSpy;
 
       const results: unknown[] = [];
       strategy.preload(preloadRoute, () => of(true)).subscribe(v => results.push(v));
       tick();
 
-      expect(idleSpy).toHaveBeenCalledWith(jasmine.any(Function), { timeout: 3000 });
+      expect(idleSpy).toHaveBeenCalledWith(expect.any(Function), { timeout: 3000 });
       expect(results).toContain(true);
 
       delete (window as unknown as Record<string, unknown>)['requestIdleCallback'];
@@ -181,19 +179,19 @@ describe('SelectivePreloadingStrategy', () => {
       });
       tick(100);
 
-      expect(errored).toBeFalse();
-      expect(completed).toBeTrue();
+      expect(errored).toBe(false);
+      expect(completed).toBe(true);
     }));
 
     it('logs a warning when load() throws', fakeAsync(() => {
       const logger = TestBed.inject(LoggerService);
-      const warnSpy = spyOn(logger, 'warn');
+      const warnSpy = vi.spyOn(logger, 'warn');
       const err = new Error('chunk fail');
 
       strategy.preload(preloadRoute, () => throwError(() => err)).subscribe();
       tick(100);
 
-      expect(warnSpy).toHaveBeenCalledWith(jasmine.stringContaining('"settings"'), err);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"settings"'), err);
     }));
   });
 

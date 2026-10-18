@@ -1,8 +1,10 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import * as BirthdaySelectors from '../../core/store/birthday/birthday.selectors';
@@ -13,7 +15,7 @@ import { ScheduledMessagesComponent } from './scheduled-messages.component';
 describe('ScheduledMessagesComponent', () => {
   let component: ScheduledMessagesComponent;
   let fixture: ComponentFixture<ScheduledMessagesComponent>;
-  let mockDialog: jasmine.SpyObj<MatDialog>;
+  let mockDialog: MockedObject<MatDialog>;
   let store: MockStore;
 
   const mockMessage1: ScheduledMessage = {
@@ -69,7 +71,9 @@ describe('ScheduledMessagesComponent', () => {
   ];
 
   beforeEach(() => {
-    mockDialog = jasmine.createSpyObj('MatDialog', ['open']);
+    mockDialog = {
+      open: vi.fn().mockName('MatDialog.open')
+    } as unknown as MockedObject<MatDialog>;
 
     TestBed.configureTestingModule({
       imports: [ScheduledMessagesComponent, BrowserAnimationsModule],
@@ -114,7 +118,7 @@ describe('ScheduledMessagesComponent', () => {
       birthdaysWithMsgs.forEach(entry => {
         entry.messages.forEach(msg => {
           expect(msg.wishLinks).toBeDefined();
-          expect(Array.isArray(msg.wishLinks)).toBeTrue();
+          expect(Array.isArray(msg.wishLinks)).toBe(true);
         });
       });
     });
@@ -140,48 +144,41 @@ describe('ScheduledMessagesComponent', () => {
 
       component.openScheduleDialog(birthday);
 
-      expect(mockDialog.open).toHaveBeenCalledWith(
-        MessageScheduleDialogComponent,
-        jasmine.objectContaining({
-          width: '800px',
-          maxWidth: '95vw',
-          maxHeight: '90vh',
-          data: { birthday },
-          autoFocus: 'dialog',
-          restoreFocus: true
-        })
-      );
+      expect(mockDialog.open).toHaveBeenCalledWith(MessageScheduleDialogComponent, expect.objectContaining({
+        width: '800px',
+        maxWidth: '95vw',
+        maxHeight: '90vh',
+        data: { birthday },
+        autoFocus: 'dialog',
+        restoreFocus: true
+      }));
     });
 
     it('should open dialog without birthday data', () => {
       component.openScheduleDialog();
 
-      expect(mockDialog.open).toHaveBeenCalledWith(
-        MessageScheduleDialogComponent,
-        jasmine.objectContaining({
-          data: { birthday: undefined }
-        })
-      );
+      expect(mockDialog.open).toHaveBeenCalledWith(MessageScheduleDialogComponent, expect.objectContaining({
+        data: { birthday: undefined }
+      }));
     });
 
     it('should open dialog with undefined birthday', () => {
       component.openScheduleDialog(undefined);
 
-      expect(mockDialog.open).toHaveBeenCalledWith(
-        MessageScheduleDialogComponent,
-        jasmine.objectContaining({
-          data: { birthday: undefined }
-        })
-      );
+      expect(mockDialog.open).toHaveBeenCalledWith(MessageScheduleDialogComponent, expect.objectContaining({
+        data: { birthday: undefined }
+      }));
     });
   });
 
   describe('deleteMessage', () => {
     it('should dispatch deleteMessageFromBirthday when confirmed', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      mockDialog.open.and.returnValue(mockDialogRef);
-      spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      mockDialog.open.mockReturnValue(mockDialogRef);
+      vi.spyOn(store, 'dispatch');
 
       component.deleteMessage('1', 'm1');
 
@@ -189,10 +186,12 @@ describe('ScheduledMessagesComponent', () => {
     });
 
     it('should not dispatch when cancelled', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      mockDialog.open.and.returnValue(mockDialogRef);
-      spyOn(store, 'dispatch');
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      mockDialog.open.mockReturnValue(mockDialogRef);
+      vi.spyOn(store, 'dispatch');
 
       component.deleteMessage('1', 'm1');
 

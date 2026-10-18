@@ -343,8 +343,8 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
 
       expect(result.merged[0].name).toBe('New Name');
-      expect(result.merged[0].notes).toBe('');  // Device A's note is silently discarded — cloud wins entirely
-      expect(result.toUpload.length).toBe(0);   // Cloud already has the winning version
+      expect(result.merged[0].notes).toBe(''); // Device A's note is silently discarded — cloud wins entirely
+      expect(result.toUpload.length).toBe(0); // Cloud already has the winning version
     });
 
     it('near-simultaneous edits on different fields both survive (≤1s diff): field-level merge', () => {
@@ -358,9 +358,9 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
       const merged = result.merged[0];
 
-      expect(merged.notes).toBe('Call mum');    // From Device B (winner — higher updatedAt)
-      expect(merged.category).toBe('family');   // From Device A (loser fallback — winner's was empty)
-      expect(result.toUpload.length).toBe(1);   // Re-upload so cloud gains Device A's category
+      expect(merged.notes).toBe('Call mum'); // From Device B (winner — higher updatedAt)
+      expect(merged.category).toBe('family'); // From Device A (loser fallback — winner's was empty)
+      expect(result.toUpload.length).toBe(1); // Re-upload so cloud gains Device A's category
       expect(result.toUpload[0].notes).toBe('Call mum');
       expect(result.toUpload[0].category).toBe('family');
     });
@@ -374,7 +374,7 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(deviceA, deviceB, { strategy: 'latest-wins' });
 
       expect(result.merged[0].name).toBe('Device B Name'); // Newer timestamp wins
-      expect(result.toUpload.length).toBe(1);              // Merged object must be re-uploaded
+      expect(result.toUpload.length).toBe(1); // Merged object must be re-uploaded
       expect(result.toUpload[0].name).toBe('Device B Name');
       expect(result.toUpload[0].syncStatus).toBe('synced');
     });

@@ -45,18 +45,16 @@ describe('RememberPhotoComponent', () => {
   });
 
   describe('Event Emitters', () => {
-    it('should emit share event when onShare is called', (done) => {
+    it('should emit share event when onShare is called', async () => {
       component.share.subscribe(() => {
         expect(true).toBe(true);
-        done();
       });
       component.onShare();
     });
 
-    it('should emit download event when onDownload is called', (done) => {
+    it('should emit download event when onDownload is called', async () => {
       component.download.subscribe(() => {
         expect(true).toBe(true);
-        done();
       });
       component.onDownload();
     });
@@ -156,28 +154,28 @@ describe('RememberPhotoComponent', () => {
     });
 
     it('should emit download on click', () => {
-      spyOn(component.download, 'emit');
+      vi.spyOn(component.download, 'emit');
       const el = fixture.nativeElement.querySelector('.remember-photo-icon') as HTMLElement;
       el.click();
       expect(component.download.emit).toHaveBeenCalled();
     });
 
     it('should emit share on dblclick', () => {
-      spyOn(component.share, 'emit');
+      vi.spyOn(component.share, 'emit');
       const el = fixture.nativeElement.querySelector('.remember-photo-icon') as HTMLElement;
       el.dispatchEvent(new Event('dblclick'));
       expect(component.share.emit).toHaveBeenCalled();
     });
 
     it('should emit download on keydown Enter', () => {
-      spyOn(component.download, 'emit');
+      vi.spyOn(component.download, 'emit');
       const el = fixture.nativeElement.querySelector('.remember-photo-icon') as HTMLElement;
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       expect(component.download.emit).toHaveBeenCalled();
     });
 
     it('should emit download on keydown Space', () => {
-      spyOn(component.download, 'emit');
+      vi.spyOn(component.download, 'emit');
       const el = fixture.nativeElement.querySelector('.remember-photo-icon') as HTMLElement;
       el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
       expect(component.download.emit).toHaveBeenCalled();

@@ -15,14 +15,14 @@ describe('UI Reducer', () => {
     it('should toggle dark mode from false to true', () => {
       const action = UIActions.toggleDarkMode();
       const state = uiReducer(initialUIState, action);
-      expect(state.darkMode).toBeTrue();
+      expect(state.darkMode).toBe(true);
     });
 
     it('should toggle dark mode from true to false', () => {
       const darkState = { ...initialUIState, darkMode: true };
       const action = UIActions.toggleDarkMode();
       const state = uiReducer(darkState, action);
-      expect(state.darkMode).toBeFalse();
+      expect(state.darkMode).toBe(false);
     });
   });
 
@@ -30,14 +30,14 @@ describe('UI Reducer', () => {
     it('should set dark mode to true', () => {
       const action = UIActions.setDarkMode({ enabled: true });
       const state = uiReducer(initialUIState, action);
-      expect(state.darkMode).toBeTrue();
+      expect(state.darkMode).toBe(true);
     });
 
     it('should set dark mode to false', () => {
       const darkState = { ...initialUIState, darkMode: true };
       const action = UIActions.setDarkMode({ enabled: false });
       const state = uiReducer(darkState, action);
-      expect(state.darkMode).toBeFalse();
+      expect(state.darkMode).toBe(false);
     });
 
     it('should not mutate other state properties', () => {

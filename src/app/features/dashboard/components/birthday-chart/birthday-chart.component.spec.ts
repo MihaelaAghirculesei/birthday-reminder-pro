@@ -77,7 +77,7 @@ describe('BirthdayChartComponent', () => {
       });
 
       const marchItem = component.chartDataItems.find(i => i.month === 'Mar');
-      expect(marchItem?.isCurrentMonth).toBeTrue();
+      expect(marchItem?.isCurrentMonth).toBe(true);
     });
 
     it('should NOT re-enrich when unrelated input changes', () => {
@@ -126,8 +126,8 @@ describe('BirthdayChartComponent', () => {
 
         const janItem = component.chartDataItems.find(i => i.month === 'Jan');
         const febItem = component.chartDataItems.find(i => i.month === 'Feb');
-        expect(janItem?.isCurrentMonth).toBeTrue();
-        expect(febItem?.isCurrentMonth).toBeFalse();
+        expect(janItem?.isCurrentMonth).toBe(true);
+        expect(febItem?.isCurrentMonth).toBe(false);
       });
     });
   });

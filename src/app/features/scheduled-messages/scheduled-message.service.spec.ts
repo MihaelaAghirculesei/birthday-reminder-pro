@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { IdGeneratorService } from '../../core/services/id-generator.service';
@@ -6,11 +7,13 @@ import { ScheduledMessageService } from '../../shared/services/scheduled-message
 
 describe('ScheduledMessageService', () => {
   let service: ScheduledMessageService;
-  let idGeneratorMock: jasmine.SpyObj<IdGeneratorService>;
+  let idGeneratorMock: MockedObject<IdGeneratorService>;
 
   beforeEach(() => {
-    idGeneratorMock = jasmine.createSpyObj('IdGeneratorService', ['generateId']);
-    idGeneratorMock.generateId.and.returnValue('test-id-123');
+    idGeneratorMock = {
+      generateId: vi.fn().mockName('IdGeneratorService.generateId')
+    } as unknown as MockedObject<IdGeneratorService>;
+    idGeneratorMock.generateId.mockReturnValue('test-id-123');
 
     TestBed.configureTestingModule({
       providers: [
@@ -33,7 +36,7 @@ describe('ScheduledMessageService', () => {
       expect(message.title).toBe('');
       expect(message.message).toBe('');
       expect(message.scheduledTime).toBe('09:00');
-      expect(message.active).toBeTrue();
+      expect(message.active).toBe(true);
       expect(message.messageType).toBe('text');
       expect(message.priority).toBe('normal');
       expect(message.createdDate).toBeDefined();
@@ -52,7 +55,7 @@ describe('ScheduledMessageService', () => {
       expect(message.title).toBe('Happy Birthday!');
       expect(message.message).toBe('Wish you the best');
       expect(message.scheduledTime).toBe('14:30');
-      expect(message.active).toBeFalse();
+      expect(message.active).toBe(false);
       expect(message.messageType).toBe('html');
       expect(message.priority).toBe('high');
       expect(message.birthdayId).toBe('bday-1');

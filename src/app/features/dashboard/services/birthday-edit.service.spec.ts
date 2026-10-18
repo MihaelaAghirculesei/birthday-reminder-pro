@@ -26,17 +26,15 @@ describe('BirthdayEditService', () => {
   });
 
   describe('Observables', () => {
-    it('should have editingBirthdayId$ observable', (done) => {
+    it('should have editingBirthdayId$ observable', async () => {
       service.editingBirthdayId$.subscribe(id => {
         expect(id).toBeNull();
-        done();
       });
     });
 
-    it('should have editingBirthdayData$ observable', (done) => {
+    it('should have editingBirthdayData$ observable', async () => {
       service.editingBirthdayData$.subscribe(data => {
         expect(data).toBeNull();
-        done();
       });
     });
   });
@@ -67,12 +65,11 @@ describe('BirthdayEditService', () => {
   });
 
   describe('startEdit', () => {
-    it('should set editing birthday ID', (done) => {
+    it('should set editing birthday ID', async () => {
       service.startEdit(mockBirthday, 'friends');
 
       service.editingBirthdayId$.subscribe(id => {
         expect(id).toBe('1');
-        done();
       });
     });
 
@@ -171,8 +168,8 @@ describe('BirthdayEditService', () => {
     it('should preserve unmodified fields', () => {
       service.updateEditingData({ name: 'Updated Name' });
       const data = service.currentEditingData;
-      expect(data?.notes).toBe('Test notes'); 
-      expect(data?.category).toBe('friends'); 
+      expect(data?.notes).toBe('Test notes');
+      expect(data?.category).toBe('friends');
     });
   });
 
@@ -191,7 +188,7 @@ describe('BirthdayEditService', () => {
       expect(service.currentEditingData).toBeNull();
     });
 
-    it('should emit null for observables', (done) => {
+    it('should emit null for observables', async () => {
       service.cancelEdit();
 
       service.editingBirthdayId$.subscribe(id => {
@@ -200,7 +197,6 @@ describe('BirthdayEditService', () => {
 
       service.editingBirthdayData$.subscribe(data => {
         expect(data).toBeNull();
-        done();
       });
     });
   });
@@ -229,7 +225,7 @@ describe('BirthdayEditService', () => {
 
   describe('scheduleAutoSave', () => {
     it('should call callback after debounce delay', fakeAsync(() => {
-      const callback = jasmine.createSpy('callback');
+      const callback = vi.fn();
       service.scheduleAutoSave(callback);
       tick(1999);
       expect(callback).not.toHaveBeenCalled();
@@ -238,8 +234,8 @@ describe('BirthdayEditService', () => {
     }));
 
     it('should debounce multiple calls and only execute the last', fakeAsync(() => {
-      const callback1 = jasmine.createSpy('callback1');
-      const callback2 = jasmine.createSpy('callback2');
+      const callback1 = vi.fn();
+      const callback2 = vi.fn();
 
       service.scheduleAutoSave(callback1);
       tick(500);

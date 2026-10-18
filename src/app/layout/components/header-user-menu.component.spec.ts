@@ -35,7 +35,7 @@ describe('HeaderUserMenuComponent', () => {
   });
 
   it('should emit signOutClicked when sign out is triggered', () => {
-    spyOn(component.signOutClicked, 'emit');
+    vi.spyOn(component.signOutClicked, 'emit');
     component.signOutClicked.emit();
     expect(component.signOutClicked.emit).toHaveBeenCalled();
   });

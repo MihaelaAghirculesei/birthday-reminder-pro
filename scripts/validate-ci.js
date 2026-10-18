@@ -116,7 +116,7 @@ const requiredFiles = [
   'tsconfig.app.json',
   'tsconfig.spec.json',
   'angular.json',
-  'karma.conf.js',
+  'vitest.config.ts',
   'cypress.config.ts'
 ];
 

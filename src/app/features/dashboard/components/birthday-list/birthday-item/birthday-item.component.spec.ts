@@ -1,12 +1,15 @@
 import { SimpleChange } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import type { Mock } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../../../testing/translate-testing';
 import { type Birthday } from '../../../../../shared';
 import { BirthdayItemComponent } from './birthday-item.component';
 
 interface MockMouseEvent {
-  currentTarget: { blur: jasmine.Spy } | HTMLButtonElement;
+  currentTarget: {
+    blur: Mock;
+  } | HTMLButtonElement;
 }
 
 describe('BirthdayItemComponent', () => {
@@ -55,7 +58,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('ngOnChanges', () => {
     it('should update days data when daysUntilBirthday changes', () => {
-      spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
+      vi.spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
 
       component.ngOnChanges({
         daysUntilBirthday: new SimpleChange(0, 5, false)
@@ -65,7 +68,7 @@ describe('BirthdayItemComponent', () => {
     });
 
     it('should not update if daysUntilBirthday does not change', () => {
-      spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
+      vi.spyOn(component as unknown as Record<string, () => void>, 'updateDaysData');
 
       component.ngOnChanges({
         birthday: new SimpleChange(null, mockBirthday, false)
@@ -164,8 +167,8 @@ describe('BirthdayItemComponent', () => {
 
   describe('onEdit', () => {
     it('should emit edit event with birthday', () => {
-      spyOn(component.edit, 'emit');
-      const mockEvent: MockMouseEvent = { currentTarget: { blur: jasmine.createSpy('blur') } };
+      vi.spyOn(component.edit, 'emit');
+      const mockEvent: MockMouseEvent = { currentTarget: { blur: vi.fn() } };
 
       component.onEdit(mockEvent as unknown as Event);
 
@@ -175,7 +178,7 @@ describe('BirthdayItemComponent', () => {
 
     it('should blur the button element', () => {
       const mockButton = document.createElement('button');
-      spyOn(mockButton, 'blur');
+      vi.spyOn(mockButton, 'blur');
       const mockEvent: MockMouseEvent = { currentTarget: mockButton };
 
       component.onEdit(mockEvent as unknown as Event);
@@ -186,7 +189,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('onDelete', () => {
     it('should emit deleted event with birthday', () => {
-      spyOn(component.deleted, 'emit');
+      vi.spyOn(component.deleted, 'emit');
 
       component.onDelete();
 
@@ -196,7 +199,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('onShareRememberPhoto', () => {
     it('should emit shareRememberPhoto event with birthday', () => {
-      spyOn(component.shareRememberPhoto, 'emit');
+      vi.spyOn(component.shareRememberPhoto, 'emit');
 
       component.onShareRememberPhoto();
 
@@ -206,7 +209,7 @@ describe('BirthdayItemComponent', () => {
 
   describe('onDownloadRememberPhoto', () => {
     it('should emit downloadRememberPhoto event with birthday', () => {
-      spyOn(component.downloadRememberPhoto, 'emit');
+      vi.spyOn(component.downloadRememberPhoto, 'emit');
 
       component.onDownloadRememberPhoto();
 

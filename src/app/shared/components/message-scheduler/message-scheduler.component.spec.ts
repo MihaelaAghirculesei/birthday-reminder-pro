@@ -1,9 +1,11 @@
 import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of } from 'rxjs';
+import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { NotificationService } from '../../../core';
@@ -14,9 +16,9 @@ import { MessageSchedulerComponent } from './message-scheduler.component';
 describe('MessageSchedulerComponent', () => {
   let component: MessageSchedulerComponent;
   let fixture: ComponentFixture<MessageSchedulerComponent>;
-  let scheduledMessageServiceMock: jasmine.SpyObj<ScheduledMessageService>;
-  let notificationServiceMock: jasmine.SpyObj<NotificationService>;
-  let dialogMock: jasmine.SpyObj<MatDialog>;
+  let scheduledMessageServiceMock: MockedObject<ScheduledMessageService>;
+  let notificationServiceMock: MockedObject<NotificationService>;
+  let dialogMock: MockedObject<MatDialog>;
   let store: MockStore;
 
   const mockBirthday: Birthday = {
@@ -40,14 +42,18 @@ describe('MessageSchedulerComponent', () => {
   };
 
   beforeEach(async () => {
-    scheduledMessageServiceMock = jasmine.createSpyObj('ScheduledMessageService', [
-      'getMessageTemplates',
-      'createMessage'
-    ]);
-    notificationServiceMock = jasmine.createSpyObj('NotificationService', ['show']);
-    dialogMock = jasmine.createSpyObj('MatDialog', ['open']);
+    scheduledMessageServiceMock = {
+      getMessageTemplates: vi.fn().mockName('ScheduledMessageService.getMessageTemplates'),
+      createMessage: vi.fn().mockName('ScheduledMessageService.createMessage')
+    } as unknown as MockedObject<ScheduledMessageService>;
+    notificationServiceMock = {
+      show: vi.fn().mockName('NotificationService.show')
+    } as unknown as MockedObject<NotificationService>;
+    dialogMock = {
+      open: vi.fn().mockName('MatDialog.open')
+    } as unknown as MockedObject<MatDialog>;
 
-    scheduledMessageServiceMock.getMessageTemplates.and.returnValue([
+    scheduledMessageServiceMock.getMessageTemplates.mockReturnValue([
       { title: 'Birthday', message: 'Happy birthday {name}!' },
       { title: 'Reminder', message: 'Don\'t forget {name}\'s birthday!' }
     ]);
@@ -102,20 +108,22 @@ describe('MessageSchedulerComponent', () => {
 
   it('should validate required fields', () => {
     const form = component.messageForm;
-    expect(form.valid).toBeFalse();
+    expect(form.valid).toBe(false);
 
     form.patchValue({
       title: 'Test',
       message: 'Test message'
     });
 
-    expect(form.valid).toBeTrue();
+    expect(form.valid).toBe(true);
   });
 
   it('should pre-compute processed messages in enrichedMessages', () => {
     component.birthday = mockBirthday;
     component.messages = [mockMessage];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages().length).toBe(1);
     expect(component.enrichedMessages()[0].processedMessage).toContain('John Doe');
@@ -135,7 +143,9 @@ describe('MessageSchedulerComponent', () => {
       message: 'You are a {zodiac}!'
     };
     component.messages = [messageWithZodiac];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages()[0].processedMessage).toBe('You are a Capricorn!');
   });
@@ -143,16 +153,20 @@ describe('MessageSchedulerComponent', () => {
   it('should pre-compute wishLinks in enrichedMessages', () => {
     component.birthday = { ...mockBirthday, email: 'test@example.com' };
     component.messages = [mockMessage];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages()[0].wishLinks).toBeDefined();
-    expect(Array.isArray(component.enrichedMessages()[0].wishLinks)).toBeTrue();
+    expect(Array.isArray(component.enrichedMessages()[0].wishLinks)).toBe(true);
   });
 
   it('should pre-compute formatted dates in enrichedMessages', () => {
     component.birthday = mockBirthday;
     component.messages = [mockMessage];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages()[0].formattedCreatedDate).toBeDefined();
     expect(component.enrichedMessages()[0].formattedCreatedDate).toContain(new Date().getFullYear().toString());
@@ -163,7 +177,9 @@ describe('MessageSchedulerComponent', () => {
     const messageWithLastSent: ScheduledMessage = { ...mockMessage, lastSentDate };
     component.birthday = mockBirthday;
     component.messages = [messageWithLastSent];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     const enriched = component.enrichedMessages()[0];
     expect(enriched.formattedLastSentDate).toBeDefined();
@@ -174,7 +190,9 @@ describe('MessageSchedulerComponent', () => {
   it('should set formattedLastSentDate to null when lastSentDate is absent', () => {
     component.birthday = mockBirthday;
     component.messages = [mockMessage]; // mockMessage has no lastSentDate
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages()[0].formattedLastSentDate).toBeNull();
   });
@@ -184,7 +202,9 @@ describe('MessageSchedulerComponent', () => {
     component.birthday = birthdayNoZodiac;
     const messageWithZodiac: ScheduledMessage = { ...mockMessage, message: 'You are a {zodiac}!' };
     component.messages = [messageWithZodiac];
-    (component as unknown as { enrichMessages: () => void }).enrichMessages();
+    (component as unknown as {
+      enrichMessages: () => void;
+    }).enrichMessages();
 
     expect(component.enrichedMessages()[0].processedMessage).toBe('You are a !');
   });
@@ -197,7 +217,7 @@ describe('MessageSchedulerComponent', () => {
   it('should start creating message with default values', () => {
     component.startCreatingMessage();
 
-    expect(component.isCreatingMessage).toBeTrue();
+    expect(component.isCreatingMessage).toBe(true);
     expect(component.editingMessage).toBeNull();
     expect(component.messageForm.get('scheduledTime')?.value).toBe('09:00');
     expect(component.messageForm.get('priority')?.value).toBe('normal');
@@ -215,7 +235,7 @@ describe('MessageSchedulerComponent', () => {
   it('should edit message and populate form', () => {
     component.editMessage(mockMessage);
 
-    expect(component.isCreatingMessage).toBeTrue();
+    expect(component.isCreatingMessage).toBe(true);
     expect(component.editingMessage).toBe(mockMessage);
     expect(component.messageForm.get('title')?.value).toBe(mockMessage.title);
     expect(component.messageForm.get('message')?.value).toBe(mockMessage.message);
@@ -227,7 +247,7 @@ describe('MessageSchedulerComponent', () => {
 
     component.cancelEdit();
 
-    expect(component.isCreatingMessage).toBeFalse();
+    expect(component.isCreatingMessage).toBe(false);
     expect(component.editingMessage).toBeNull();
     expect(component.messageForm.get('title')?.value).toBeNull();
   });
@@ -297,31 +317,31 @@ describe('MessageSchedulerComponent', () => {
     });
 
     it('should create new message when not editing', () => {
-      scheduledMessageServiceMock.createMessage.and.returnValue(mockMessage);
-      spyOn(store, 'dispatch');
+      scheduledMessageServiceMock.createMessage.mockReturnValue(mockMessage);
+      vi.spyOn(store, 'dispatch');
 
       component.saveMessage();
 
       expect(scheduledMessageServiceMock.createMessage).toHaveBeenCalled();
       expect(store.dispatch).toHaveBeenCalled();
       expect(notificationServiceMock.show).toHaveBeenCalledWith('Scheduled message created!', 'success');
-      expect(component.isCreatingMessage).toBeFalse();
+      expect(component.isCreatingMessage).toBe(false);
     });
 
     it('should update existing message when editing', () => {
       component.editingMessage = mockMessage;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.saveMessage();
 
       expect(store.dispatch).toHaveBeenCalled();
       expect(notificationServiceMock.show).toHaveBeenCalledWith('Message updated!', 'success');
-      expect(component.isCreatingMessage).toBeFalse();
+      expect(component.isCreatingMessage).toBe(false);
     });
 
     it('should not save when form is invalid', () => {
       component.messageForm.patchValue({ title: '', message: '' });
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.saveMessage();
 
@@ -331,7 +351,7 @@ describe('MessageSchedulerComponent', () => {
 
     it('should not save when birthday is null', () => {
       component.birthday = null;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.saveMessage();
 
@@ -343,7 +363,7 @@ describe('MessageSchedulerComponent', () => {
   describe('toggleMessageStatus', () => {
     it('should toggle message active status', () => {
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.toggleMessageStatus(mockMessage);
 
@@ -352,7 +372,7 @@ describe('MessageSchedulerComponent', () => {
 
     it('should not toggle when birthday is null', () => {
       component.birthday = null;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.toggleMessageStatus(mockMessage);
 
@@ -366,10 +386,7 @@ describe('MessageSchedulerComponent', () => {
 
       component.testMessage(mockMessage);
 
-      expect(notificationServiceMock.show).toHaveBeenCalledWith(
-        jasmine.stringContaining('TEST'),
-        'info'
-      );
+      expect(notificationServiceMock.show).toHaveBeenCalledWith(expect.stringContaining('TEST'), 'info');
     });
 
     it('should not show notification when birthday is null', () => {
@@ -383,11 +400,13 @@ describe('MessageSchedulerComponent', () => {
 
   describe('deleteMessage', () => {
     it('should delete message after confirmation', fakeAsync(() => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(true));
-      dialogMock.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(true));
+      dialogMock.open.mockReturnValue(mockDialogRef);
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.deleteMessage(mockMessage);
       tick();
@@ -397,11 +416,13 @@ describe('MessageSchedulerComponent', () => {
     }));
 
     it('should not delete when confirmation is cancelled', () => {
-      const mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['afterClosed']);
-      mockDialogRef.afterClosed.and.returnValue(of(false));
-      dialogMock.open.and.returnValue(mockDialogRef);
+      const mockDialogRef = {
+        afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
+      } as unknown as MockedObject<MatDialogRef<unknown>>;
+      mockDialogRef.afterClosed.mockReturnValue(of(false));
+      dialogMock.open.mockReturnValue(mockDialogRef);
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.deleteMessage(mockMessage);
 
@@ -410,7 +431,7 @@ describe('MessageSchedulerComponent', () => {
 
     it('should not delete when birthday is null', () => {
       component.birthday = null;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.deleteMessage(mockMessage);
 
@@ -421,41 +442,39 @@ describe('MessageSchedulerComponent', () => {
   describe('markAsSent', () => {
     it('should dispatch updateMessageInBirthday with lastSentDate and sentCount=1 when never sent', () => {
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.markAsSent(mockMessage);
 
-      expect(store.dispatch).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          type: '[Birthday] Update Message In Birthday',
-          birthdayId: mockBirthday.id,
-          messageId: mockMessage.id,
-          updates: jasmine.objectContaining({ sentCount: 1 })
-        })
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+        type: '[Birthday] Update Message In Birthday',
+        birthdayId: mockBirthday.id,
+        messageId: mockMessage.id,
+        updates: expect.objectContaining({ sentCount: 1 })
+      }));
     });
 
     it('should increment sentCount when message was already sent', () => {
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
       const alreadySent: ScheduledMessage = { ...mockMessage, sentCount: 3, lastSentDate: new Date() };
 
       component.markAsSent(alreadySent);
 
-      expect(store.dispatch).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          updates: jasmine.objectContaining({ sentCount: 4 })
-        })
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+        updates: expect.objectContaining({ sentCount: 4 })
+      }));
     });
 
     it('should set lastSentDate to a Date instance', () => {
       component.birthday = mockBirthday;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.markAsSent(mockMessage);
 
-      const call = (store.dispatch as jasmine.Spy).calls.mostRecent().args[0] as { updates: Partial<ScheduledMessage> };
+      const call = vi.mocked((store.dispatch as Mock)).mock.lastCall![0] as {
+        updates: Partial<ScheduledMessage>;
+      };
       expect(call.updates.lastSentDate).toBeInstanceOf(Date);
     });
 
@@ -464,14 +483,12 @@ describe('MessageSchedulerComponent', () => {
 
       component.markAsSent(mockMessage);
 
-      expect(notificationServiceMock.show).toHaveBeenCalledWith(
-        jasmine.any(String), 'success'
-      );
+      expect(notificationServiceMock.show).toHaveBeenCalledWith(expect.any(String), 'success');
     });
 
     it('should not dispatch when birthday is null', () => {
       component.birthday = null;
-      spyOn(store, 'dispatch');
+      vi.spyOn(store, 'dispatch');
 
       component.markAsSent(mockMessage);
 
@@ -483,46 +500,44 @@ describe('MessageSchedulerComponent', () => {
   describe('hasAnyContact', () => {
     it('should return false when birthday is null', () => {
       component.birthday = null;
-      expect(component.hasAnyContact).toBeFalse();
+      expect(component.hasAnyContact).toBe(false);
     });
 
     it('should return false when birthday has no contact info', () => {
       component.birthday = mockBirthday;
-      expect(component.hasAnyContact).toBeFalse();
+      expect(component.hasAnyContact).toBe(false);
     });
 
     it('should return true when birthday has email', () => {
       component.birthday = { ...mockBirthday, email: 'test@example.com' };
-      expect(component.hasAnyContact).toBeTrue();
+      expect(component.hasAnyContact).toBe(true);
     });
 
     it('should return true when birthday has phone', () => {
       component.birthday = { ...mockBirthday, phone: '+1234567890' };
-      expect(component.hasAnyContact).toBeTrue();
+      expect(component.hasAnyContact).toBe(true);
     });
 
     it('should return true when birthday has telegram', () => {
       component.birthday = { ...mockBirthday, telegramUsername: 'testuser' };
-      expect(component.hasAnyContact).toBeTrue();
+      expect(component.hasAnyContact).toBe(true);
     });
 
     it('should return false when contact fields are empty strings', () => {
       component.birthday = { ...mockBirthday, email: '', phone: '  ', telegramUsername: '' };
-      expect(component.hasAnyContact).toBeFalse();
+      expect(component.hasAnyContact).toBe(false);
     });
   });
 
   describe('message value changes', () => {
-    it('should update preview when message value changes', (done) => {
+    it('should update preview when message value changes', async () => {
       component.birthday = mockBirthday;
       fixture.detectChanges();
 
       component.messageForm.patchValue({ message: 'Hello {name}!' });
 
-      setTimeout(() => {
-        expect(component.messagePreview).toContain('John Doe');
-        done();
-      }, 50);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(component.messagePreview).toContain('John Doe');
     });
   });
 });

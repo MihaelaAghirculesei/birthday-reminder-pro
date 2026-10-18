@@ -1,5 +1,6 @@
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { Mock } from 'vitest';
 
 import { type BirthdayCategory } from '../../shared';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -27,19 +28,19 @@ describe('CategoryStorageService', () => {
   beforeEach(() => {
     localStorageMock = {};
 
-    spyOn(localStorage, 'getItem').and.callFake((key: string) => {
+    vi.spyOn(localStorage, 'getItem').mockImplementation((key: string) => {
       return localStorageMock[key] || null;
     });
 
-    spyOn(localStorage, 'setItem').and.callFake((key: string, value: string) => {
+    vi.spyOn(localStorage, 'setItem').mockImplementation((key: string, value: string) => {
       localStorageMock[key] = value;
     });
 
-    spyOn(localStorage, 'removeItem').and.callFake((key: string) => {
+    vi.spyOn(localStorage, 'removeItem').mockImplementation((key: string) => {
       delete localStorageMock[key];
     });
 
-    spyOn(localStorage, 'clear').and.callFake(() => {
+    vi.spyOn(localStorage, 'clear').mockImplementation(() => {
       localStorageMock = {};
     });
 
@@ -161,24 +162,20 @@ describe('CategoryStorageService', () => {
   describe('addCustomCategory', () => {
     it('should add a custom category to localStorage', () => {
       service.addCustomCategory(mockCategory);
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'customCategories',
-        JSON.stringify([mockCategory])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('customCategories', JSON.stringify([mockCategory]));
     });
 
     it('should append to existing custom categories', () => {
       localStorageMock['customCategories'] = JSON.stringify([mockCategory]);
       service.addCustomCategory(mockCategory2);
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'customCategories',
-        JSON.stringify([mockCategory, mockCategory2])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('customCategories', JSON.stringify([mockCategory, mockCategory2]));
     });
 
     it('should not crash when localStorage.setItem throws error', () => {
-      (localStorage.setItem as jasmine.Spy).and.throwError('Storage error');
+      (localStorage.setItem as Mock).mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       expect(() => service.addCustomCategory(mockCategory)).not.toThrow();
     });
 
@@ -200,10 +197,7 @@ describe('CategoryStorageService', () => {
   describe('updateCategory', () => {
     it('should add category to modified categories if not exists', () => {
       service.updateCategory(mockCategory);
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'modifiedCategories',
-        JSON.stringify([mockCategory])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('modifiedCategories', JSON.stringify([mockCategory]));
     });
 
     it('should update existing category in modified categories', () => {
@@ -211,24 +205,20 @@ describe('CategoryStorageService', () => {
       const updated = { ...mockCategory, name: 'Updated Name' };
       service.updateCategory(updated);
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'modifiedCategories',
-        JSON.stringify([updated])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('modifiedCategories', JSON.stringify([updated]));
     });
 
     it('should append if category does not exist in modified list', () => {
       localStorageMock['modifiedCategories'] = JSON.stringify([mockCategory]);
       service.updateCategory(mockCategory2);
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'modifiedCategories',
-        JSON.stringify([mockCategory, mockCategory2])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('modifiedCategories', JSON.stringify([mockCategory, mockCategory2]));
     });
 
     it('should not crash when localStorage.setItem throws error', () => {
-      (localStorage.setItem as jasmine.Spy).and.throwError('Storage error');
+      (localStorage.setItem as Mock).mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       expect(() => service.updateCategory(mockCategory)).not.toThrow();
     });
 
@@ -250,20 +240,14 @@ describe('CategoryStorageService', () => {
   describe('deleteCategory', () => {
     it('should add category ID to deleted IDs', () => {
       service.deleteCategory('custom1');
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'deletedCategoryIds',
-        JSON.stringify(['custom1'])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('deletedCategoryIds', JSON.stringify(['custom1']));
     });
 
     it('should append to existing deleted IDs', () => {
       localStorageMock['deletedCategoryIds'] = JSON.stringify(['id1']);
       service.deleteCategory('id2');
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'deletedCategoryIds',
-        JSON.stringify(['id1', 'id2'])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('deletedCategoryIds', JSON.stringify(['id1', 'id2']));
     });
 
     it('should not add duplicate IDs', () => {
@@ -274,7 +258,9 @@ describe('CategoryStorageService', () => {
     });
 
     it('should not crash when localStorage.setItem throws error', () => {
-      (localStorage.setItem as jasmine.Spy).and.throwError('Storage error');
+      (localStorage.setItem as Mock).mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       expect(() => service.deleteCategory('custom1')).not.toThrow();
     });
 
@@ -298,23 +284,19 @@ describe('CategoryStorageService', () => {
       localStorageMock['deletedCategoryIds'] = JSON.stringify(['id1', 'id2', 'id3']);
       service.restoreCategory('id2');
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'deletedCategoryIds',
-        JSON.stringify(['id1', 'id3'])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('deletedCategoryIds', JSON.stringify(['id1', 'id3']));
     });
 
     it('should handle empty deleted IDs list', () => {
       service.restoreCategory('id1');
 
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'deletedCategoryIds',
-        JSON.stringify([])
-      );
+      expect(localStorage.setItem).toHaveBeenCalledWith('deletedCategoryIds', JSON.stringify([]));
     });
 
     it('should not crash when localStorage.setItem throws error', () => {
-      (localStorage.setItem as jasmine.Spy).and.throwError('Storage error');
+      (localStorage.setItem as Mock).mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       expect(() => service.restoreCategory('id1')).not.toThrow();
     });
 
@@ -350,7 +332,9 @@ describe('CategoryStorageService', () => {
     });
 
     it('should not crash when localStorage.removeItem throws error', () => {
-      (localStorage.removeItem as jasmine.Spy).and.throwError('Storage error');
+      (localStorage.removeItem as Mock).mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       expect(() => service.clearAll()).not.toThrow();
     });
 

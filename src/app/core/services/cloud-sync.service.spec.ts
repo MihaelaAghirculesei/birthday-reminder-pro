@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { of, Subject, throwError } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -8,7 +9,7 @@ import * as SyncActions from '../store/sync/sync.actions';
 import { BirthdayMergeService, type MergeResult } from './birthday-merge.service';
 import { CloudSyncService } from './cloud-sync.service';
 import { FeatureFlagsService } from './feature-flags.service';
-import { type AuthUser,FirebaseAuthService } from './firebase-auth.service';
+import { type AuthUser, FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
 import { NetworkService } from './network.service';
@@ -18,14 +19,16 @@ import { PhotoStorageService } from './photo-storage.service';
 describe('CloudSyncService', () => {
   let service: CloudSyncService;
   let store: MockStore;
-  let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
-  let firestoreServiceMock: jasmine.SpyObj<FirestoreService>;
-  let offlineStorageMock: jasmine.SpyObj<IndexedDBStorageService>;
-  let networkServiceMock: { isOnline: boolean };
-  let loggerMock: jasmine.SpyObj<LoggerService>;
-  let mergeServiceMock: jasmine.SpyObj<BirthdayMergeService>;
-  let photoStorageMock: jasmine.SpyObj<PhotoStorageService>;
-  let featureFlagsMock: jasmine.SpyObj<FeatureFlagsService>;
+  let authServiceMock: MockedObject<FirebaseAuthService>;
+  let firestoreServiceMock: MockedObject<FirestoreService>;
+  let offlineStorageMock: MockedObject<IndexedDBStorageService>;
+  let networkServiceMock: {
+    isOnline: boolean;
+  };
+  let loggerMock: MockedObject<LoggerService>;
+  let mergeServiceMock: MockedObject<BirthdayMergeService>;
+  let photoStorageMock: MockedObject<PhotoStorageService>;
+  let featureFlagsMock: MockedObject<FeatureFlagsService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -51,34 +54,56 @@ describe('CloudSyncService', () => {
   }
 
   beforeEach(() => {
-    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [], {
+    authServiceMock = {
       currentUser: null,
       isAuthenticated: false
-    });
-    firestoreServiceMock = jasmine.createSpyObj('FirestoreService', [
-      'subscribeToBirthdays', 'subscribeToCategories', 'unsubscribeAll',
-      'getBirthdays', 'saveBirthdaysBatch', 'saveBirthday', 'deleteBirthday',
-      'saveCategory', 'deleteCategory'
-    ], {
+    } as unknown as MockedObject<FirebaseAuthService>;
+    firestoreServiceMock = {
+      subscribeToBirthdays: vi.fn().mockName('FirestoreService.subscribeToBirthdays'),
+      subscribeToCategories: vi.fn().mockName('FirestoreService.subscribeToCategories'),
+      unsubscribeAll: vi.fn().mockName('FirestoreService.unsubscribeAll'),
+      getBirthdays: vi.fn().mockName('FirestoreService.getBirthdays'),
+      saveBirthdaysBatch: vi.fn().mockName('FirestoreService.saveBirthdaysBatch'),
+      saveBirthday: vi.fn().mockName('FirestoreService.saveBirthday'),
+      deleteBirthday: vi.fn().mockName('FirestoreService.deleteBirthday'),
+      saveCategory: vi.fn().mockName('FirestoreService.saveCategory'),
+      deleteCategory: vi.fn().mockName('FirestoreService.deleteCategory'),
       birthdays$: new Subject(),
       categories$: new Subject()
-    });
-    offlineStorageMock = jasmine.createSpyObj('IndexedDBStorageService', [
-      'getBirthdays', 'saveBirthdays'
-    ]);
+    } as unknown as MockedObject<FirestoreService>;
+    offlineStorageMock = {
+      getBirthdays: vi.fn().mockName('IndexedDBStorageService.getBirthdays'),
+      saveBirthdays: vi.fn().mockName('IndexedDBStorageService.saveBirthdays')
+    } as unknown as MockedObject<IndexedDBStorageService>;
     networkServiceMock = { isOnline: true };
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
-    mergeServiceMock = jasmine.createSpyObj('BirthdayMergeService', ['merge']);
-    mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] } as MergeResult);
-    photoStorageMock = jasmine.createSpyObj<PhotoStorageService>('PhotoStorageService', ['isBase64', 'migrateBase64', 'deletePhotoByUrl', 'uploadPhoto', 'isStorageUrl', 'fileToBase64']);
-    photoStorageMock.isBase64.and.returnValue(false);
-    photoStorageMock.migrateBase64.and.callFake((val: string) => Promise.resolve(val));
-    featureFlagsMock = jasmine.createSpyObj('FeatureFlagsService', ['isCloudSyncEnabled']);
-    featureFlagsMock.isCloudSyncEnabled.and.returnValue(true);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
+    mergeServiceMock = {
+      merge: vi.fn().mockName('BirthdayMergeService.merge')
+    } as unknown as MockedObject<BirthdayMergeService>;
+    mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] } as MergeResult);
+    photoStorageMock = {
+      isBase64: vi.fn().mockName('PhotoStorageService.isBase64'),
+      migrateBase64: vi.fn().mockName('PhotoStorageService.migrateBase64'),
+      deletePhotoByUrl: vi.fn().mockName('PhotoStorageService.deletePhotoByUrl'),
+      uploadPhoto: vi.fn().mockName('PhotoStorageService.uploadPhoto'),
+      isStorageUrl: vi.fn().mockName('PhotoStorageService.isStorageUrl'),
+      fileToBase64: vi.fn().mockName('PhotoStorageService.fileToBase64')
+    } as unknown as MockedObject<PhotoStorageService>;
+    photoStorageMock.isBase64.mockReturnValue(false);
+    photoStorageMock.migrateBase64.mockImplementation((val: string) => Promise.resolve(val));
+    featureFlagsMock = {
+      isCloudSyncEnabled: vi.fn().mockName('FeatureFlagsService.isCloudSyncEnabled')
+    } as unknown as MockedObject<FeatureFlagsService>;
+    featureFlagsMock.isCloudSyncEnabled.mockReturnValue(true);
 
-    offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-    offlineStorageMock.saveBirthdays.and.returnValue(Promise.resolve());
-    firestoreServiceMock.saveBirthdaysBatch.and.returnValue(of(undefined));
+    offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
+    offlineStorageMock.saveBirthdays.mockReturnValue(Promise.resolve());
+    firestoreServiceMock.saveBirthdaysBatch.mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -110,7 +135,7 @@ describe('CloudSyncService', () => {
 
   describe('feature flag kill-switch', () => {
     beforeEach(() => {
-      featureFlagsMock.isCloudSyncEnabled.and.returnValue(false);
+      featureFlagsMock.isCloudSyncEnabled.mockReturnValue(false);
     });
 
     it('setupListeners should not subscribe to Firestore when cloud sync is disabled', () => {
@@ -138,7 +163,7 @@ describe('CloudSyncService', () => {
     });
 
     it('setupListeners should dispatch cloudBirthdaysUpdated when birthdays$ emits', () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
       const birthdays$ = new Subject<Birthday[]>();
       Object.defineProperty(firestoreServiceMock, 'birthdays$', { get: () => birthdays$, configurable: true });
 
@@ -151,7 +176,7 @@ describe('CloudSyncService', () => {
     });
 
     it('setupListeners should dispatch cloudCategoriesUpdated when categories$ emits', () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
       const categories$ = new Subject<unknown[]>();
       Object.defineProperty(firestoreServiceMock, 'categories$', { get: () => categories$, configurable: true });
 
@@ -160,9 +185,7 @@ describe('CloudSyncService', () => {
       const categories = [{ id: 'cat-1', name: 'Family' }];
       categories$.next(categories);
 
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        SyncActions.cloudCategoriesUpdated({ categories: categories as never[] })
-      );
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.cloudCategoriesUpdated({ categories: categories as never[] }));
     });
 
     it('teardownListeners should call firestoreService.unsubscribeAll', () => {
@@ -179,9 +202,9 @@ describe('CloudSyncService', () => {
 
   describe('checkForMigration', () => {
     it('should dispatch migrateLocalToCloud when no cloud data and local data exists', async () => {
-      firestoreServiceMock.getBirthdays.and.returnValue(of([]));
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([makeBirthday()]));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      firestoreServiceMock.getBirthdays.mockReturnValue(of([]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([makeBirthday()]));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.checkForMigration('user-123');
 
@@ -190,9 +213,9 @@ describe('CloudSyncService', () => {
 
     it('should merge when cloud data exists', async () => {
       const cloudBirthdays = [makeBirthday({ id: 'cloud-1' })];
-      firestoreServiceMock.getBirthdays.and.returnValue(of(cloudBirthdays));
+      firestoreServiceMock.getBirthdays.mockReturnValue(of(cloudBirthdays));
 
-      const mergeSpy = spyOn(service, 'mergeCloudWithLocal').and.returnValue(Promise.resolve());
+      const mergeSpy = vi.spyOn(service, 'mergeCloudWithLocal').mockReturnValue(Promise.resolve());
 
       await service.checkForMigration('user-123');
 
@@ -200,9 +223,9 @@ describe('CloudSyncService', () => {
     });
 
     it('should not dispatch migrateLocalToCloud when both cloud and local are empty', async () => {
-      firestoreServiceMock.getBirthdays.and.returnValue(of([]));
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      firestoreServiceMock.getBirthdays.mockReturnValue(of([]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.checkForMigration('user-123');
 
@@ -210,38 +233,28 @@ describe('CloudSyncService', () => {
     });
 
     it('should catch and log errors gracefully', async () => {
-      firestoreServiceMock.getBirthdays.and.returnValue(
-        throwError(() => new Error('Network error'))
-      );
+      firestoreServiceMock.getBirthdays.mockReturnValue(throwError(() => new Error('Network error')));
 
-      await expectAsync(service.checkForMigration('user-123')).toBeResolved();
-      expect(loggerMock.error).toHaveBeenCalledWith('[CloudSync] Migration check failed:', jasmine.any(Error));
+      await expect(service.checkForMigration('user-123')).resolves.not.toThrow();
+      expect(loggerMock.error).toHaveBeenCalledWith('[CloudSync] Migration check failed:', expect.any(Error));
     });
 
     it('should dispatch syncFailure when migration check throws', async () => {
-      firestoreServiceMock.getBirthdays.and.returnValue(
-        throwError(() => new Error('Network error'))
-      );
-      const dispatchSpy = spyOn(store, 'dispatch');
+      firestoreServiceMock.getBirthdays.mockReturnValue(throwError(() => new Error('Network error')));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.checkForMigration('user-123');
 
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        SyncActions.syncFailure({ error: 'Network error' })
-      );
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.syncFailure({ error: 'Network error' }));
     });
 
     it('should dispatch syncFailure with fallback message for non-Error throws', async () => {
-      firestoreServiceMock.getBirthdays.and.returnValue(
-        throwError(() => 'plain string error')
-      );
-      const dispatchSpy = spyOn(store, 'dispatch');
+      firestoreServiceMock.getBirthdays.mockReturnValue(throwError(() => 'plain string error'));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.checkForMigration('user-123');
 
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        SyncActions.syncFailure({ error: 'Migration check failed' })
-      );
+      expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.syncFailure({ error: 'Migration check failed' }));
     });
   });
 
@@ -249,22 +262,18 @@ describe('CloudSyncService', () => {
     it('should call mergeService.merge with latest-wins strategy', async () => {
       const cloudBirthdays = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
       const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve(localBirthdays));
-      mergeServiceMock.merge.and.returnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [] });
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve(localBirthdays));
+      mergeServiceMock.merge.mockReturnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [] });
 
       await service.mergeCloudWithLocal(cloudBirthdays, 'user-123');
 
-      expect(mergeServiceMock.merge).toHaveBeenCalledWith(
-        localBirthdays,
-        cloudBirthdays,
-        { strategy: 'latest-wins' }
-      );
+      expect(mergeServiceMock.merge).toHaveBeenCalledWith(localBirthdays, cloudBirthdays, { strategy: 'latest-wins' });
     });
 
     it('should save merged result to IndexedDB', async () => {
       const mergedBirthdays = [makeBirthday({ id: 'b-1', name: 'Merged' })];
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
-      mergeServiceMock.merge.and.returnValue({ merged: mergedBirthdays, toUpload: [] });
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
+      mergeServiceMock.merge.mockReturnValue({ merged: mergedBirthdays, toUpload: [] });
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -273,7 +282,7 @@ describe('CloudSyncService', () => {
 
     it('should upload toUpload items to cloud when online', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
-      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
+      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems });
       networkServiceMock.isOnline = true;
 
       await service.mergeCloudWithLocal([], 'user-123');
@@ -283,7 +292,7 @@ describe('CloudSyncService', () => {
 
     it('should not upload when offline', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
-      mergeServiceMock.merge.and.returnValue({ merged: toUploadItems, toUpload: toUploadItems });
+      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems });
       networkServiceMock.isOnline = false;
 
       await service.mergeCloudWithLocal([], 'user-123');
@@ -292,7 +301,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should not upload when toUpload is empty', async () => {
-      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] });
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -300,51 +309,44 @@ describe('CloudSyncService', () => {
     });
 
     it('should dispatch syncSuccess after merge', async () => {
-      mergeServiceMock.merge.and.returnValue({ merged: [], toUpload: [] });
-      spyOn(store, 'dispatch');
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] });
+      vi.spyOn(store, 'dispatch');
 
       await service.mergeCloudWithLocal([], 'user-123');
 
-      expect(store.dispatch).toHaveBeenCalledWith(
-        jasmine.objectContaining({ type: '[Sync] Success' })
-      );
+      expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: '[Sync] Success' }));
     });
-  
+
     it('should migrate base64 photos in toUpload items before cloud upload', async () => {
       const base64Photo = 'data:image/jpeg;base64,/9j/abc';
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const local = makeBirthday({ id: 'local-photo', photo: base64Photo, needsMigration: true });
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([local]));
-      mergeServiceMock.merge.and.returnValue({ merged: [local], toUpload: [local] });
-      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
-      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([local]));
+      mergeServiceMock.merge.mockReturnValue({ merged: [local], toUpload: [local] });
+      photoStorageMock.isBase64.mockImplementation((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.mockReturnValue(Promise.resolve(storageUrl));
       networkServiceMock.isOnline = true;
 
       await service.mergeCloudWithLocal([], 'user-123');
 
-      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      const uploaded = vi.mocked(firestoreServiceMock.saveBirthdaysBatch).mock.lastCall![1];
       expect(uploaded[0].photo).toBe(storageUrl);
-      expect(uploaded[0].needsMigration).toBeFalse();
+      expect(uploaded[0].needsMigration).toBe(false);
     });
-});
+  });
 
   describe('migrateLocalToCloud', () => {
     function setCurrentUser(user: AuthUser | null): void {
-      (Object.getOwnPropertyDescriptor(authServiceMock, 'currentUser')!.get as jasmine.Spy).and.returnValue(user);
+      (authServiceMock as { currentUser: AuthUser | null }).currentUser = user;
     }
 
     it('should throw when user is not authenticated', async () => {
-      try {
-        await service.migrateLocalToCloud();
-        fail('Should have thrown');
-      } catch (err: unknown) {
-        expect((err as Error).message).toBe('User not authenticated');
-      }
+      await expect(service.migrateLocalToCloud()).rejects.toThrow('User not authenticated');
     });
 
     it('should return 0 when no local data', async () => {
       setCurrentUser(mockUser);
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
 
       const count = await service.migrateLocalToCloud();
       expect(count).toBe(0);
@@ -352,13 +354,13 @@ describe('CloudSyncService', () => {
 
     it('should upload local birthdays with sync metadata', async () => {
       setCurrentUser(mockUser);
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
 
       const count = await service.migrateLocalToCloud();
 
       expect(count).toBe(1);
       expect(firestoreServiceMock.saveBirthdaysBatch).toHaveBeenCalled();
-      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      const uploaded = vi.mocked(firestoreServiceMock.saveBirthdaysBatch).mock.lastCall![1];
       expect(uploaded[0].ownerId).toBe('user-123');
       expect(uploaded[0].syncStatus).toBe('synced');
       expect(uploaded[0].updatedAt).toBeDefined();
@@ -366,17 +368,17 @@ describe('CloudSyncService', () => {
 
     it('should update local storage with sync metadata after upload', async () => {
       setCurrentUser(mockUser);
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([makeBirthday({ id: 'b-1' })]));
 
       await service.migrateLocalToCloud();
 
-      const saved = offlineStorageMock.saveBirthdays.calls.mostRecent().args[0];
+      const saved = vi.mocked(offlineStorageMock.saveBirthdays).mock.lastCall![0];
       expect(saved[0].syncStatus).toBe('synced');
     });
 
     it('should migrate multiple birthdays', async () => {
       setCurrentUser(mockUser);
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([
         makeBirthday({ id: 'b-1' }),
         makeBirthday({ id: 'b-2' }),
         makeBirthday({ id: 'b-3' })
@@ -389,37 +391,35 @@ describe('CloudSyncService', () => {
     it('should preserve existing updatedAt during migration', async () => {
       setCurrentUser(mockUser);
       const existingTimestamp = 1700000000000;
-      offlineStorageMock.getBirthdays.and.returnValue(
-        Promise.resolve([makeBirthday({ id: 'b-1', updatedAt: existingTimestamp })])
-      );
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([makeBirthday({ id: 'b-1', updatedAt: existingTimestamp })]));
 
       await service.migrateLocalToCloud();
 
-      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      const uploaded = vi.mocked(firestoreServiceMock.saveBirthdaysBatch).mock.lastCall![1];
       expect(uploaded[0].updatedAt).toBe(existingTimestamp);
     });
-  
+
     it('should migrate base64 photos to Storage before upload', async () => {
       setCurrentUser(mockUser);
       const base64Photo = 'data:image/jpeg;base64,/9j/abc';
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const b = makeBirthday({ id: 'b-photo', photo: base64Photo, needsMigration: true });
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
-      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
-      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([b]));
+      photoStorageMock.isBase64.mockImplementation((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.mockReturnValue(Promise.resolve(storageUrl));
 
       await service.migrateLocalToCloud();
 
-      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      const uploaded = vi.mocked(firestoreServiceMock.saveBirthdaysBatch).mock.lastCall![1];
       expect(uploaded[0].photo).toBe(storageUrl);
-      expect(uploaded[0].needsMigration).toBeFalse();
+      expect(uploaded[0].needsMigration).toBe(false);
     });
 
     it('should skip photo migration for birthdays without base64 photos', async () => {
       setCurrentUser(mockUser);
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const b = makeBirthday({ id: 'b-cdn', photo: storageUrl });
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([b]));
 
       await service.migrateLocalToCloud();
 
@@ -431,15 +431,15 @@ describe('CloudSyncService', () => {
       const base64Photo = 'data:image/jpeg;base64,/9j/abc';
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/remember.jpg?alt=media';
       const b = makeBirthday({ id: 'b-remember', rememberPhoto: base64Photo, needsMigration: true });
-      offlineStorageMock.getBirthdays.and.returnValue(Promise.resolve([b]));
-      photoStorageMock.isBase64.and.callFake((v: string) => v.startsWith('data:image/'));
-      photoStorageMock.migrateBase64.and.returnValue(Promise.resolve(storageUrl));
+      offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([b]));
+      photoStorageMock.isBase64.mockImplementation((v: string) => v.startsWith('data:image/'));
+      photoStorageMock.migrateBase64.mockReturnValue(Promise.resolve(storageUrl));
 
       await service.migrateLocalToCloud();
 
-      const uploaded = firestoreServiceMock.saveBirthdaysBatch.calls.mostRecent().args[1];
+      const uploaded = vi.mocked(firestoreServiceMock.saveBirthdaysBatch).mock.lastCall![1];
       expect(uploaded[0].rememberPhoto).toBe(storageUrl);
-      expect(uploaded[0].needsMigration).toBeFalse();
+      expect(uploaded[0].needsMigration).toBe(false);
     });
-});
+  });
 });

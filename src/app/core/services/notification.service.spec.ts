@@ -1,6 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
-import { type NotificationMessage,NotificationService } from './notification.service';
+import { type NotificationMessage, NotificationService } from './notification.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
@@ -13,37 +13,33 @@ describe('NotificationService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should add notification with default values', (done) => {
+  it('should add notification with default values', async () => {
     service.notifications.subscribe(notifications => {
       if (notifications.length) {
-        expect(notifications[0]).toEqual(
-          jasmine.objectContaining({
-            message: 'test',
-            type: 'info',
-            duration: 0,
-            id: jasmine.any(String)
-          })
-        );
-        done();
+        expect(notifications[0]).toEqual(expect.objectContaining({
+          message: 'test',
+          type: 'info',
+          duration: 0,
+          id: expect.any(String)
+        }));
       }
     });
 
     service.show('test');
   });
 
-  it('should add notification with custom values', (done) => {
+  it('should add notification with custom values', async () => {
     service.notifications.subscribe(notifications => {
       if (notifications.length) {
         expect(notifications[0].type).toBe('error');
         expect(notifications[0].duration).toBe(5000);
-        done();
       }
     });
 
     service.show('error test', 'error', 5000);
   });
 
-  it('should remove notification by id', (done) => {
+  it('should remove notification by id', async () => {
     service.show('test');
 
     let callCount = 0;
@@ -52,9 +48,9 @@ describe('NotificationService', () => {
       if (callCount === 1) {
         expect(notifications.length).toBe(1);
         service.remove(notifications[0].id);
-      } else if (callCount === 2) {
+      }
+      else if (callCount === 2) {
         expect(notifications.length).toBe(0);
-        done();
       }
     });
   });
@@ -80,24 +76,22 @@ describe('NotificationService', () => {
     expect(notifications.length).toBe(1);
   }));
 
-  it('should store action when provided', (done) => {
-    const action = { label: 'Retry', callback: jasmine.createSpy('callback') };
+  it('should store action when provided', async () => {
+    const action = { label: 'Retry', callback: vi.fn() };
 
     service.notifications.subscribe(notifications => {
       if (notifications.length) {
-        expect(notifications[0].action).toEqual(jasmine.objectContaining({ label: 'Retry' }));
-        done();
+        expect(notifications[0].action).toEqual(expect.objectContaining({ label: 'Retry' }));
       }
     });
 
     service.show('test', 'error', undefined, action);
   });
 
-  it('should not include action field when not provided', (done) => {
+  it('should not include action field when not provided', async () => {
     service.notifications.subscribe(notifications => {
       if (notifications.length) {
         expect(notifications[0].action).toBeUndefined();
-        done();
       }
     });
 

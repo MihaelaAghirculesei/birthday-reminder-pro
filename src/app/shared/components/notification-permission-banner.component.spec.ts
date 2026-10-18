@@ -1,5 +1,6 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../testing/translate-testing';
 import { NotificationPermissionService } from '../../core/services/notification-permission.service';
@@ -9,30 +10,33 @@ import { NotificationPermissionBannerComponent } from './notification-permission
 describe('NotificationPermissionBannerComponent', () => {
   let component: NotificationPermissionBannerComponent;
   let fixture: ComponentFixture<NotificationPermissionBannerComponent>;
-  let mockPermissionService: jasmine.SpyObj<NotificationPermissionService>;
-  let mockSecureStorage: jasmine.SpyObj<SecureStorageService>;
+  let mockPermissionService: MockedObject<NotificationPermissionService>;
+  let mockSecureStorage: MockedObject<SecureStorageService>;
   let permissionStatusSubject: BehaviorSubject<NotificationPermission>;
 
   beforeEach(async () => {
     permissionStatusSubject = new BehaviorSubject<NotificationPermission>('default');
-    mockPermissionService = jasmine.createSpyObj('NotificationPermissionService', [
-      'isSupported',
-      'getCurrentPermission',
-      'requestPermission',
-      'showTestNotification'
-    ], {
+    mockPermissionService = {
+      isSupported: vi.fn().mockName('NotificationPermissionService.isSupported'),
+      getCurrentPermission: vi.fn().mockName('NotificationPermissionService.getCurrentPermission'),
+      requestPermission: vi.fn().mockName('NotificationPermissionService.requestPermission'),
+      showTestNotification: vi.fn().mockName('NotificationPermissionService.showTestNotification'),
       permissionStatus: permissionStatusSubject.asObservable()
-    });
+    } as unknown as MockedObject<NotificationPermissionService>;
 
-    mockPermissionService.isSupported.and.returnValue(true);
-    mockPermissionService.getCurrentPermission.and.returnValue('default');
-    mockPermissionService.requestPermission.and.returnValue(Promise.resolve(true));
-    mockPermissionService.showTestNotification.and.returnValue(Promise.resolve());
+    mockPermissionService.isSupported.mockReturnValue(true);
+    mockPermissionService.getCurrentPermission.mockReturnValue('default');
+    mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(true));
+    mockPermissionService.showTestNotification.mockReturnValue(Promise.resolve());
 
-    mockSecureStorage = jasmine.createSpyObj('SecureStorageService', ['setItem', 'getItem', 'removeItem']);
-    mockSecureStorage.setItem.and.returnValue(Promise.resolve());
-    mockSecureStorage.getItem.and.returnValue(Promise.resolve(null));
-    mockSecureStorage.removeItem.and.returnValue(Promise.resolve());
+    mockSecureStorage = {
+      setItem: vi.fn().mockName('SecureStorageService.setItem'),
+      getItem: vi.fn().mockName('SecureStorageService.getItem'),
+      removeItem: vi.fn().mockName('SecureStorageService.removeItem')
+    } as unknown as MockedObject<SecureStorageService>;
+    mockSecureStorage.setItem.mockReturnValue(Promise.resolve());
+    mockSecureStorage.getItem.mockReturnValue(Promise.resolve(null));
+    mockSecureStorage.removeItem.mockReturnValue(Promise.resolve());
 
     await TestBed.configureTestingModule({
       imports: [NotificationPermissionBannerComponent],
@@ -59,21 +63,21 @@ describe('NotificationPermissionBannerComponent', () => {
     });
 
     it('should not show banner when not supported', async () => {
-      mockPermissionService.isSupported.and.returnValue(false);
+      mockPermissionService.isSupported.mockReturnValue(false);
       fixture.detectChanges();
       await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
     it('should not show banner when permission is granted', async () => {
-      mockPermissionService.getCurrentPermission.and.returnValue('granted');
+      mockPermissionService.getCurrentPermission.mockReturnValue('granted');
       fixture.detectChanges();
       await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
     });
 
     it('should still show banner (denied variant) when permission is denied', async () => {
-      mockPermissionService.getCurrentPermission.and.returnValue('denied');
+      mockPermissionService.getCurrentPermission.mockReturnValue('denied');
       fixture.detectChanges();
       await fixture.whenStable();
       expect(component.shouldShow()).toBe(true);
@@ -88,7 +92,7 @@ describe('NotificationPermissionBannerComponent', () => {
 
     it('should not show banner when dismissed recently', async () => {
       const recentTimestamp = Date.now() - (1000 * 60 * 60);
-      mockSecureStorage.getItem.and.returnValue(Promise.resolve(recentTimestamp.toString()));
+      mockSecureStorage.getItem.mockReturnValue(Promise.resolve(recentTimestamp.toString()));
       fixture.detectChanges();
       await fixture.whenStable();
       expect(component.shouldShow()).toBe(false);
@@ -96,26 +100,23 @@ describe('NotificationPermissionBannerComponent', () => {
 
     it('should show banner when dismissed more than 7 days ago', async () => {
       const oldTimestamp = Date.now() - (8 * 24 * 60 * 60 * 1000);
-      mockSecureStorage.getItem.and.returnValue(Promise.resolve(oldTimestamp.toString()));
+      mockSecureStorage.getItem.mockReturnValue(Promise.resolve(oldTimestamp.toString()));
       fixture.detectChanges();
       await fixture.whenStable();
       expect(component.shouldShow()).toBe(true);
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('notificationBannerDismissed');
     });
 
-    it('should update shouldShow when permission status changes', (done) => {
+    it('should update shouldShow when permission status changes', async () => {
       fixture.detectChanges();
-      fixture.whenStable().then(() => {
-        expect(component.shouldShow()).toBe(true);
+      await fixture.whenStable();
+      expect(component.shouldShow()).toBe(true);
 
-        mockPermissionService.getCurrentPermission.and.returnValue('granted');
-        permissionStatusSubject.next('granted');
+      mockPermissionService.getCurrentPermission.mockReturnValue('granted');
+      permissionStatusSubject.next('granted');
 
-        setTimeout(() => {
-          expect(component.shouldShow()).toBe(false);
-          done();
-        }, 50);
-      });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(component.shouldShow()).toBe(false);
     });
   });
 
@@ -145,13 +146,13 @@ describe('NotificationPermissionBannerComponent', () => {
     });
 
     it('should show test notification when permission granted', async () => {
-      mockPermissionService.requestPermission.and.returnValue(Promise.resolve(true));
+      mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(true));
       await component.requestPermission();
       expect(mockPermissionService.showTestNotification).toHaveBeenCalled();
     });
 
     it('should not show test notification when permission denied', async () => {
-      mockPermissionService.requestPermission.and.returnValue(Promise.resolve(false));
+      mockPermissionService.requestPermission.mockReturnValue(Promise.resolve(false));
       await component.requestPermission();
       expect(mockPermissionService.showTestNotification).not.toHaveBeenCalled();
     });
@@ -183,11 +184,8 @@ describe('NotificationPermissionBannerComponent', () => {
       const beforeTimestamp = Date.now();
       component.dismiss();
 
-      expect(mockSecureStorage.setItem).toHaveBeenCalledWith(
-        'notificationBannerDismissed',
-        jasmine.any(String)
-      );
-      const savedTimestamp = parseInt(mockSecureStorage.setItem.calls.mostRecent().args[1] as string);
+      expect(mockSecureStorage.setItem).toHaveBeenCalledWith('notificationBannerDismissed', expect.any(String));
+      const savedTimestamp = parseInt(vi.mocked(mockSecureStorage.setItem).mock.lastCall![1] as string);
       expect(savedTimestamp).toBeGreaterThanOrEqual(beforeTimestamp);
       expect(savedTimestamp).toBeLessThanOrEqual(Date.now());
     });
@@ -203,7 +201,7 @@ describe('NotificationPermissionBannerComponent', () => {
 
   describe('denied permission variant', () => {
     beforeEach(async () => {
-      mockPermissionService.getCurrentPermission.and.returnValue('denied');
+      mockPermissionService.getCurrentPermission.mockReturnValue('denied');
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();

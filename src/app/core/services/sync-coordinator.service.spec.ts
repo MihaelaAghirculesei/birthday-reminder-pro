@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -16,11 +17,11 @@ import { SyncQueueProcessorService } from './sync-queue-processor.service';
 describe('SyncCoordinatorService', () => {
   let service: SyncCoordinatorService;
   let store: MockStore;
-  let cloudSyncMock: jasmine.SpyObj<CloudSyncService>;
-  let queueProcessorMock: jasmine.SpyObj<SyncQueueProcessorService>;
-  let pendingChangesMock: jasmine.SpyObj<PendingChangesService>;
+  let cloudSyncMock: MockedObject<CloudSyncService>;
+  let queueProcessorMock: MockedObject<SyncQueueProcessorService>;
+  let pendingChangesMock: MockedObject<PendingChangesService>;
   let networkServiceMock: Partial<NetworkService>;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let loggerMock: MockedObject<LoggerService>;
   let networkOnline$: BehaviorSubject<boolean>;
 
   const mockUser: AuthUser = {
@@ -38,30 +39,41 @@ describe('SyncCoordinatorService', () => {
   beforeEach(() => {
     networkOnline$ = new BehaviorSubject<boolean>(true);
 
-    cloudSyncMock = jasmine.createSpyObj('CloudSyncService', [
-      'setupListeners', 'teardownListeners', 'checkForMigration', 'migrateLocalToCloud'
-    ]);
-    cloudSyncMock.migrateLocalToCloud.and.returnValue(Promise.resolve(0));
-    cloudSyncMock.checkForMigration.and.returnValue(Promise.resolve());
+    cloudSyncMock = {
+      setupListeners: vi.fn().mockName('CloudSyncService.setupListeners'),
+      teardownListeners: vi.fn().mockName('CloudSyncService.teardownListeners'),
+      checkForMigration: vi.fn().mockName('CloudSyncService.checkForMigration'),
+      migrateLocalToCloud: vi.fn().mockName('CloudSyncService.migrateLocalToCloud')
+    } as unknown as MockedObject<CloudSyncService>;
+    cloudSyncMock.migrateLocalToCloud.mockReturnValue(Promise.resolve(0));
+    cloudSyncMock.checkForMigration.mockReturnValue(Promise.resolve());
 
-    queueProcessorMock = jasmine.createSpyObj('SyncQueueProcessorService', [
-      'updatePendingCount', 'queueChange', 'processPendingChanges'
-    ]);
-    queueProcessorMock.queueChange.and.returnValue(Promise.resolve());
-    queueProcessorMock.processPendingChanges.and.returnValue(Promise.resolve(0));
+    queueProcessorMock = {
+      updatePendingCount: vi.fn().mockName('SyncQueueProcessorService.updatePendingCount'),
+      queueChange: vi.fn().mockName('SyncQueueProcessorService.queueChange'),
+      processPendingChanges: vi.fn().mockName('SyncQueueProcessorService.processPendingChanges')
+    } as unknown as MockedObject<SyncQueueProcessorService>;
+    queueProcessorMock.queueChange.mockReturnValue(Promise.resolve());
+    queueProcessorMock.processPendingChanges.mockReturnValue(Promise.resolve(0));
 
-    pendingChangesMock = jasmine.createSpyObj('PendingChangesService', ['initialize'], {
+    pendingChangesMock = {
+      initialize: vi.fn().mockName('PendingChangesService.initialize'),
       changes$: new BehaviorSubject<unknown[]>([]).asObservable(),
       pendingCount: 0
-    });
-    pendingChangesMock.initialize.and.returnValue(Promise.resolve());
+    } as unknown as MockedObject<PendingChangesService>;
+    pendingChangesMock.initialize.mockReturnValue(Promise.resolve());
 
     networkServiceMock = {
       online$: networkOnline$.asObservable(),
       isOnline: true
     } as Partial<NetworkService>;
 
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -108,7 +120,7 @@ describe('SyncCoordinatorService', () => {
     });
 
     it('should dispatch setOnlineStatus when network changes', async () => {
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
       await service.initialize();
 
       networkOnline$.next(false);
@@ -148,7 +160,7 @@ describe('SyncCoordinatorService', () => {
       Object.defineProperty(pendingChangesMock, 'changes$', { get: () => changesSubject.asObservable() });
 
       await service.initialize();
-      queueProcessorMock.updatePendingCount.calls.reset();
+      queueProcessorMock.updatePendingCount.mockClear();
 
       changesSubject.next([{ id: 'c-1' }]);
 
@@ -158,7 +170,7 @@ describe('SyncCoordinatorService', () => {
 
   describe('delegation', () => {
     it('migrateLocalToCloud delegates to cloudSync', async () => {
-      cloudSyncMock.migrateLocalToCloud.and.returnValue(Promise.resolve(5));
+      cloudSyncMock.migrateLocalToCloud.mockReturnValue(Promise.resolve(5));
       const result = await service.migrateLocalToCloud();
       expect(cloudSyncMock.migrateLocalToCloud).toHaveBeenCalled();
       expect(result).toBe(5);
@@ -172,7 +184,7 @@ describe('SyncCoordinatorService', () => {
     });
 
     it('processPendingChanges delegates to queueProcessor', async () => {
-      queueProcessorMock.processPendingChanges.and.returnValue(Promise.resolve(3));
+      queueProcessorMock.processPendingChanges.mockReturnValue(Promise.resolve(3));
       const result = await service.processPendingChanges();
       expect(queueProcessorMock.processPendingChanges).toHaveBeenCalled();
       expect(result).toBe(3);

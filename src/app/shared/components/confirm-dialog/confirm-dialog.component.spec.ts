@@ -1,6 +1,7 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { ConfirmDialogComponent, type ConfirmDialogData } from './confirm-dialog.component';
@@ -8,12 +9,14 @@ import { ConfirmDialogComponent, type ConfirmDialogData } from './confirm-dialog
 describe('ConfirmDialogComponent', () => {
   let fixture: ComponentFixture<ConfirmDialogComponent>;
   let component: ConfirmDialogComponent;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<ConfirmDialogComponent>>;
+  let dialogRef: MockedObject<MatDialogRef<ConfirmDialogComponent>>;
 
   const baseData: ConfirmDialogData = { title: 'Delete?', message: 'This cannot be undone.' };
 
   function setup(data: ConfirmDialogData = baseData) {
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close')
+    } as unknown as MockedObject<MatDialogRef<ConfirmDialogComponent>>;
     TestBed.configureTestingModule({
       imports: [ConfirmDialogComponent, NoopAnimationsModule],
       providers: [
@@ -76,22 +79,26 @@ describe('ConfirmDialogComponent', () => {
 
     it('onCancel() closes dialog with false', () => {
       component.onCancel();
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(false);
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+      expect(dialogRef.close).toHaveBeenCalledWith(false);
     });
 
     it('onConfirm() closes dialog with true', () => {
       component.onConfirm();
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(true);
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
 
     it('cancel button click triggers onCancel()', () => {
       fixture.nativeElement.querySelector('.cancel-btn').click();
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(false);
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+      expect(dialogRef.close).toHaveBeenCalledWith(false);
     });
 
     it('confirm button click triggers onConfirm()', () => {
       fixture.nativeElement.querySelector('.confirm-btn').click();
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(true);
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+      expect(dialogRef.close).toHaveBeenCalledWith(true);
     });
   });
 });

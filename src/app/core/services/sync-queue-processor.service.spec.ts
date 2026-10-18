@@ -1,25 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { MockStore,provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type Birthday } from '../../shared/models/birthday.model';
 import { provideTranslateTesting } from '../../testing/translate-testing';
 import * as SyncActions from '../store/sync/sync.actions';
-import { type AuthUser,FirebaseAuthService } from './firebase-auth.service';
+import { type AuthUser, FirebaseAuthService } from './firebase-auth.service';
 import { FirestoreService } from './firestore.service';
 import { LoggerService } from './logger.service';
 import { NetworkService } from './network.service';
-import { type PendingChange,PendingChangesService } from './pending-changes.service';
+import { type PendingChange, PendingChangesService } from './pending-changes.service';
 import { SyncQueueProcessorService } from './sync-queue-processor.service';
 
 describe('SyncQueueProcessorService', () => {
   let service: SyncQueueProcessorService;
   let store: MockStore;
-  let authServiceMock: jasmine.SpyObj<FirebaseAuthService>;
-  let firestoreServiceMock: jasmine.SpyObj<FirestoreService>;
-  let pendingChangesMock: jasmine.SpyObj<PendingChangesService>;
+  let authServiceMock: MockedObject<FirebaseAuthService>;
+  let firestoreServiceMock: MockedObject<FirestoreService>;
+  let pendingChangesMock: MockedObject<PendingChangesService>;
   let networkServiceMock: Partial<NetworkService>;
-  let loggerMock: jasmine.SpyObj<LoggerService>;
+  let loggerMock: MockedObject<LoggerService>;
 
   const mockUser: AuthUser = {
     uid: 'user-123',
@@ -61,26 +62,36 @@ describe('SyncQueueProcessorService', () => {
   }
 
   beforeEach(() => {
-    authServiceMock = jasmine.createSpyObj('FirebaseAuthService', [], {
+    authServiceMock = {
       currentUser: null,
       isAuthenticated: false
-    });
-    firestoreServiceMock = jasmine.createSpyObj('FirestoreService', [
-      'saveBirthday', 'deleteBirthday', 'saveCategory', 'deleteCategory'
-    ]);
-    pendingChangesMock = jasmine.createSpyObj('PendingChangesService', [
-      'addChange', 'removeChange', 'markRetry', 'getChangesForEntity'
-    ], {
+    } as unknown as MockedObject<FirebaseAuthService>;
+    firestoreServiceMock = {
+      saveBirthday: vi.fn().mockName('FirestoreService.saveBirthday'),
+      deleteBirthday: vi.fn().mockName('FirestoreService.deleteBirthday'),
+      saveCategory: vi.fn().mockName('FirestoreService.saveCategory'),
+      deleteCategory: vi.fn().mockName('FirestoreService.deleteCategory')
+    } as unknown as MockedObject<FirestoreService>;
+    pendingChangesMock = {
+      addChange: vi.fn().mockName('PendingChangesService.addChange'),
+      removeChange: vi.fn().mockName('PendingChangesService.removeChange'),
+      markRetry: vi.fn().mockName('PendingChangesService.markRetry'),
+      getChangesForEntity: vi.fn().mockName('PendingChangesService.getChangesForEntity'),
       changes$: new BehaviorSubject<unknown[]>([]).asObservable(),
       pendingCount: 0
-    });
+    } as unknown as MockedObject<PendingChangesService>;
     networkServiceMock = { isOnline: true } as Partial<NetworkService>;
-    loggerMock = jasmine.createSpyObj('LoggerService', ['log', 'info', 'warn', 'error']);
+    loggerMock = {
+      log: vi.fn().mockName('LoggerService.log'),
+      info: vi.fn().mockName('LoggerService.info'),
+      warn: vi.fn().mockName('LoggerService.warn'),
+      error: vi.fn().mockName('LoggerService.error')
+    } as unknown as MockedObject<LoggerService>;
 
-    pendingChangesMock.addChange.and.returnValue(Promise.resolve());
-    pendingChangesMock.removeChange.and.returnValue(Promise.resolve());
-    pendingChangesMock.markRetry.and.returnValue(Promise.resolve());
-    pendingChangesMock.getChangesForEntity.and.returnValue([]);
+    pendingChangesMock.addChange.mockReturnValue(Promise.resolve());
+    pendingChangesMock.removeChange.mockReturnValue(Promise.resolve());
+    pendingChangesMock.markRetry.mockReturnValue(Promise.resolve());
+    pendingChangesMock.getChangesForEntity.mockReturnValue([]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -110,7 +121,7 @@ describe('SyncQueueProcessorService', () => {
   describe('updatePendingCount', () => {
     it('should dispatch updatePendingCount action', () => {
       Object.defineProperty(pendingChangesMock, 'pendingCount', { get: () => 3 });
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       service.updatePendingCount();
 
@@ -122,16 +133,12 @@ describe('SyncQueueProcessorService', () => {
     it('should validate and add a valid birthday change', async () => {
       const birthday = makeBirthday();
       await service.queueChange('birthday', 'b-1', 'create', birthday);
-      expect(pendingChangesMock.addChange).toHaveBeenCalledWith(
-        'birthday', 'b-1', 'create', jasmine.objectContaining({ id: 'b-1', name: 'Mario Rossi' })
-      );
+      expect(pendingChangesMock.addChange).toHaveBeenCalledWith('birthday', 'b-1', 'create', expect.objectContaining({ id: 'b-1', name: 'Mario Rossi' }));
     });
 
     it('should throw and not enqueue when birthday data is invalid', async () => {
       // Missing required fields — must be rejected at the queue boundary, not during sync.
-      await expectAsync(
-        service.queueChange('birthday', 'b-bad', 'create', { name: 'Incomplete' } as never)
-      ).toBeRejectedWithError(/Refusing to enqueue invalid birthday/);
+      await expect(service.queueChange('birthday', 'b-bad', 'create', { name: 'Incomplete' } as never)).rejects.toThrowError(/Refusing to enqueue invalid birthday/);
       expect(pendingChangesMock.addChange).not.toHaveBeenCalled();
     });
 
@@ -143,7 +150,7 @@ describe('SyncQueueProcessorService', () => {
     it('should dispatch pushPendingChanges when online and authenticated', async () => {
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
@@ -153,7 +160,7 @@ describe('SyncQueueProcessorService', () => {
     it('should not dispatch when offline', async () => {
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => true });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => false });
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
@@ -163,7 +170,7 @@ describe('SyncQueueProcessorService', () => {
     it('should not dispatch when not authenticated', async () => {
       Object.defineProperty(authServiceMock, 'isAuthenticated', { get: () => false });
       Object.defineProperty(networkServiceMock, 'isOnline', { get: () => true });
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.queueChange('birthday', 'b-1', 'create', makeBirthday());
 
@@ -190,7 +197,7 @@ describe('SyncQueueProcessorService', () => {
     });
 
     it('should skip when no pending changes', async () => {
-      pendingChangesMock.getChangesForEntity.and.returnValue([]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([]);
       await service.processPendingChanges();
       expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
     });
@@ -198,8 +205,8 @@ describe('SyncQueueProcessorService', () => {
     it('should process birthday create change', async () => {
       const birthday = makeBirthday({ id: 'b-new' });
       const change = makePendingChange({ id: 'c-1', entityId: 'b-new', changeType: 'create', data: birthday });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -210,8 +217,8 @@ describe('SyncQueueProcessorService', () => {
     it('should process birthday update change', async () => {
       const birthday = makeBirthday({ id: 'b-1', name: 'Updated' });
       const change = makePendingChange({ id: 'c-2', entityId: 'b-1', changeType: 'update', data: birthday });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -220,8 +227,8 @@ describe('SyncQueueProcessorService', () => {
 
     it('should process birthday delete change', async () => {
       const change = makePendingChange({ id: 'c-3', entityId: 'b-1', changeType: 'delete', data: null });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.deleteBirthday.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -235,9 +242,9 @@ describe('SyncQueueProcessorService', () => {
         makePendingChange({ id: 'c-2', entityId: 'b-2', changeType: 'create' }),
         makePendingChange({ id: 'c-3', entityId: 'b-3', changeType: 'delete' })
       ];
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue(changes);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
+      firestoreServiceMock.deleteBirthday.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -246,20 +253,18 @@ describe('SyncQueueProcessorService', () => {
 
     it('should skip changes that exceeded MAX_RETRY_COUNT', async () => {
       const change = makePendingChange({ id: 'c-1', retryCount: 3 });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
 
       await service.processPendingChanges();
 
       expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncQueueProcessor] Max retries reached for change:', 'c-1'
-      );
+      expect(loggerMock.warn).toHaveBeenCalledWith('[SyncQueueProcessor] Max retries reached for change:', 'c-1');
     });
 
     it('should increment retry on failure', async () => {
       const change = makePendingChange({ id: 'c-1', retryCount: 1 });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(throwError(() => new Error('Network error')));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(throwError(() => new Error('Network error')));
 
       await service.processPendingChanges();
 
@@ -273,12 +278,13 @@ describe('SyncQueueProcessorService', () => {
         makePendingChange({ id: 'c-2', entityId: 'b-2', changeType: 'create' }),
         makePendingChange({ id: 'c-3', entityId: 'b-3', changeType: 'create' })
       ];
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
+      pendingChangesMock.getChangesForEntity.mockReturnValue(changes);
 
       let callCount = 0;
-      firestoreServiceMock.saveBirthday.and.callFake(() => {
+      firestoreServiceMock.saveBirthday.mockImplementation(() => {
         callCount++;
-        if (callCount === 2) return throwError(() => new Error('Firestore error'));
+        if (callCount === 2)
+          return throwError(() => new Error('Firestore error'));
         return of(undefined);
       });
 
@@ -298,8 +304,8 @@ describe('SyncQueueProcessorService', () => {
         data: makeBirthday({ id: 'b-x' }), sequenceNumber: 1
       });
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([deleteChange, createChange]);
-      firestoreServiceMock.deleteBirthday.and.returnValue(throwError(() => new Error('Network error')));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([deleteChange, createChange]);
+      firestoreServiceMock.deleteBirthday.mockReturnValue(throwError(() => new Error('Network error')));
 
       await service.processPendingChanges();
 
@@ -319,17 +325,13 @@ describe('SyncQueueProcessorService', () => {
         data: makeBirthday({ id: 'b-y' }), sequenceNumber: 1
       });
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([exhaustedDelete, pendingCreate]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([exhaustedDelete, pendingCreate]);
 
       await service.processPendingChanges();
 
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncQueueProcessor] Max retries reached for change:', 'del-x'
-      );
+      expect(loggerMock.warn).toHaveBeenCalledWith('[SyncQueueProcessor] Max retries reached for change:', 'del-x');
       expect(firestoreServiceMock.saveBirthday).not.toHaveBeenCalled();
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        '[SyncQueueProcessor] Skipping change blocked by prior entity failure:', 'cre-x'
-      );
+      expect(loggerMock.warn).toHaveBeenCalledWith('[SyncQueueProcessor] Skipping change blocked by prior entity failure:', 'cre-x');
     });
   });
 
@@ -343,7 +345,7 @@ describe('SyncQueueProcessorService', () => {
       const change = makePendingChange({
         id: 'c-invalid', entityId: 'b-bad', changeType: 'create', data: null
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
 
       await service.processPendingChanges();
 
@@ -356,7 +358,7 @@ describe('SyncQueueProcessorService', () => {
         id: 'c-cat-bad', entityType: 'category', entityId: 'cat-bad',
         changeType: 'create', data: null
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
 
       await service.processPendingChanges();
 
@@ -377,8 +379,8 @@ describe('SyncQueueProcessorService', () => {
         id: 'c-cat-1', entityType: 'category', entityId: 'cat-1',
         changeType: 'create', data: categoryData
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveCategory.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.saveCategory.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -390,8 +392,8 @@ describe('SyncQueueProcessorService', () => {
         id: 'c-cat-2', entityType: 'category', entityId: 'cat-1',
         changeType: 'delete', data: null
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.deleteCategory.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.deleteCategory.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -411,9 +413,9 @@ describe('SyncQueueProcessorService', () => {
         const birthday = makeBirthday({ id: `b-${i}` });
         return makePendingChange({ id: `c-${i}`, entityId: `b-${i}`, changeType: 'create', data: birthday });
       });
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      pendingChangesMock.getChangesForEntity.mockReturnValue(changes);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       const result = await service.processPendingChanges();
 
@@ -425,33 +427,27 @@ describe('SyncQueueProcessorService', () => {
 
     it('should dispatch exactly one progress event for a queue under BATCH_SIZE', async () => {
       const change = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create' });
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.processPendingChanges();
 
-      const progressCalls = dispatchSpy.calls.all()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter(call => (call.args[0] as unknown as any).type === '[Sync] Batch Sync Progress');
+      const progressCalls = vi.mocked(dispatchSpy).mock.calls.filter(call => (call[0] as unknown as { type: string }).type === '[Sync] Batch Sync Progress');
       expect(progressCalls.length).toBe(1);
       expect(dispatchSpy).toHaveBeenCalledWith(SyncActions.batchSyncProgress({ completed: 1, total: 1 }));
     });
 
     it('should call updatePendingCount once per batch', async () => {
-      const changes = Array.from({ length: 220 }, (_, i) =>
-        makePendingChange({ id: `c-${i}`, entityId: `b-${i}`, changeType: 'delete', data: null })
-      );
-      pendingChangesMock.getChangesForEntity.and.returnValue(changes);
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const changes = Array.from({ length: 220 }, (_, i) => makePendingChange({ id: `c-${i}`, entityId: `b-${i}`, changeType: 'delete', data: null }));
+      pendingChangesMock.getChangesForEntity.mockReturnValue(changes);
+      firestoreServiceMock.deleteBirthday.mockReturnValue(of(undefined));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       await service.processPendingChanges();
 
       // 220 changes → 3 batches (100+100+20), so 3 updatePendingCount dispatches
-      const pendingCountCalls = dispatchSpy.calls.all()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter(call => (call.args[0] as unknown as any).type === '[Sync] Update Pending Count');
+      const pendingCountCalls = vi.mocked(dispatchSpy).mock.calls.filter(call => (call[0] as unknown as { type: string }).type === '[Sync] Update Pending Count');
       expect(pendingCountCalls.length).toBe(3);
     });
 
@@ -465,16 +461,15 @@ describe('SyncQueueProcessorService', () => {
         data: makeBirthday({ id: 'b-cross' }), sequenceNumber: 100
       });
       // fill batch 1 with 99 unrelated changes so the create lands in batch 2
-      const fillers = Array.from({ length: 99 }, (_, i) =>
-        makePendingChange({ id: `filler-${i}`, entityId: `bf-${i}`, changeType: 'delete', data: null, sequenceNumber: i + 1 })
-      );
+      const fillers = Array.from({ length: 99 }, (_, i) => makePendingChange({ id: `filler-${i}`, entityId: `bf-${i}`, changeType: 'delete', data: null, sequenceNumber: i + 1 }));
       const allChanges = [deleteChange, ...fillers, createChange];
-      pendingChangesMock.getChangesForEntity.and.returnValue(allChanges);
-      firestoreServiceMock.deleteBirthday.and.callFake((uid: string, id: string) => {
-        if (id === 'b-cross') return throwError(() => new Error('Network'));
+      pendingChangesMock.getChangesForEntity.mockReturnValue(allChanges);
+      firestoreServiceMock.deleteBirthday.mockImplementation((uid: string, id: string) => {
+        if (id === 'b-cross')
+          return throwError(() => new Error('Network'));
         return of(undefined);
       });
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
 
       await service.processPendingChanges();
 
@@ -502,8 +497,8 @@ describe('SyncQueueProcessorService', () => {
         timestamp: 2000
       } as PendingChange;
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([newer, older]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([newer, older]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
 
       const result = await service.processPendingChanges();
 
@@ -524,9 +519,9 @@ describe('SyncQueueProcessorService', () => {
         data: makeBirthday({ id: 'b-mix-modern' }), sequenceNumber: 1
       });
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([modernChange, legacyChange]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      firestoreServiceMock.deleteBirthday.and.returnValue(of(undefined));
+      pendingChangesMock.getChangesForEntity.mockReturnValue([modernChange, legacyChange]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
+      firestoreServiceMock.deleteBirthday.mockReturnValue(of(undefined));
 
       const result = await service.processPendingChanges();
 
@@ -547,9 +542,9 @@ describe('SyncQueueProcessorService', () => {
       const birthday = makeBirthday({ id: 'b-1' });
       const change = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday });
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([change]);
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change]);
 
-      firestoreServiceMock.saveBirthday.and.callFake(() => {
+      firestoreServiceMock.saveBirthday.mockImplementation(() => {
         return new Observable((subscriber) => {
           blockingPromise.then(() => {
             subscriber.next(undefined);
@@ -558,7 +553,7 @@ describe('SyncQueueProcessorService', () => {
         });
       });
 
-      const dispatchSpy = spyOn(store, 'dispatch');
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       const firstRun = service.processPendingChanges();
       const secondRun = service.processPendingChanges();
@@ -581,12 +576,13 @@ describe('SyncQueueProcessorService', () => {
       const change = makePendingChange({ id: 'c-dup', entityId: 'b-dup', changeType: 'create', data: birthday });
 
       let callCount = 0;
-      pendingChangesMock.getChangesForEntity.and.callFake(() => {
+      pendingChangesMock.getChangesForEntity.mockImplementation(() => {
         callCount++;
-        if (callCount === 1) return [change];
+        if (callCount === 1)
+          return [change];
         return [];
       });
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
 
       await Promise.all([
         service.processPendingChanges(),
@@ -601,9 +597,9 @@ describe('SyncQueueProcessorService', () => {
       const birthday1 = makeBirthday({ id: 'b-1' });
       const change1 = makePendingChange({ id: 'c-1', entityId: 'b-1', changeType: 'create', data: birthday1 });
 
-      pendingChangesMock.getChangesForEntity.and.returnValue([change1]);
-      firestoreServiceMock.saveBirthday.and.returnValue(of(undefined));
-      const dispatchSpy = spyOn(store, 'dispatch');
+      pendingChangesMock.getChangesForEntity.mockReturnValue([change1]);
+      firestoreServiceMock.saveBirthday.mockReturnValue(of(undefined));
+      const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       const firstRun = service.processPendingChanges();
       service.processPendingChanges(); // deferred via syncAgain

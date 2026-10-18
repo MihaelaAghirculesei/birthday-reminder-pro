@@ -23,17 +23,17 @@ describe('FeatureFlagsService', () => {
 
   it('isCloudSyncEnabled reflects environment.featureFlags.cloudSyncEnabled', () => {
     environment.featureFlags.cloudSyncEnabled = true;
-    expect(service.isCloudSyncEnabled()).toBeTrue();
+    expect(service.isCloudSyncEnabled()).toBe(true);
 
     environment.featureFlags.cloudSyncEnabled = false;
-    expect(service.isCloudSyncEnabled()).toBeFalse();
+    expect(service.isCloudSyncEnabled()).toBe(false);
   });
 
   it('isCalendarSyncEnabled reflects environment.featureFlags.calendarSyncEnabled', () => {
     environment.featureFlags.calendarSyncEnabled = true;
-    expect(service.isCalendarSyncEnabled()).toBeTrue();
+    expect(service.isCalendarSyncEnabled()).toBe(true);
 
     environment.featureFlags.calendarSyncEnabled = false;
-    expect(service.isCalendarSyncEnabled()).toBeFalse();
+    expect(service.isCalendarSyncEnabled()).toBe(false);
   });
 });

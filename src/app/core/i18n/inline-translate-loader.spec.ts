@@ -1,3 +1,5 @@
+import { firstValueFrom } from 'rxjs';
+
 import { InlineTranslateLoader } from './inline-translate-loader';
 
 describe('InlineTranslateLoader', () => {
@@ -7,37 +9,29 @@ describe('InlineTranslateLoader', () => {
     loader = new InlineTranslateLoader();
   });
 
-  it('should return English translations for "en"', (done) => {
-    loader.getTranslation('en').subscribe(translations => {
-      expect(translations).toBeTruthy();
-      expect(typeof translations).toBe('object');
-      done();
-    });
+  it('should return English translations for "en"', async () => {
+    const translations = await firstValueFrom(loader.getTranslation('en'));
+    expect(translations).toBeTruthy();
+    expect(typeof translations).toBe('object');
   });
 
-  it('should return Italian translations for "it"', (done) => {
-    loader.getTranslation('it').subscribe(translations => {
-      expect(translations).toBeTruthy();
-      expect(typeof translations).toBe('object');
-      done();
-    });
+  it('should return Italian translations for "it"', async () => {
+    const translations = await firstValueFrom(loader.getTranslation('it'));
+    expect(translations).toBeTruthy();
+    expect(typeof translations).toBe('object');
   });
 
-  it('should fall back to English for an unknown language', (done) => {
-    loader.getTranslation('fr').subscribe(translations => {
-      loader.getTranslation('en').subscribe(en => {
-        expect(translations).toEqual(en);
-        done();
-      });
-    });
+  it('should fall back to English for an unknown language', async () => {
+    const translations = await firstValueFrom(loader.getTranslation('fr'));
+    const en = await firstValueFrom(loader.getTranslation('en'));
+    expect(translations).toEqual(en);
   });
 
-  it('should return an observable (synchronous of())', (done) => {
+  it('should return an observable (synchronous of())', async () => {
     let emitted = false;
     loader.getTranslation('en').subscribe(() => {
       emitted = true;
     });
-    expect(emitted).toBeTrue();
-    done();
+    expect(emitted).toBe(true);
   });
 });

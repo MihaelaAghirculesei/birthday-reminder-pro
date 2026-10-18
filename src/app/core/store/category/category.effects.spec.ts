@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { type Action } from '@ngrx/store';
 import { type Observable, of } from 'rxjs';
+import type { MockedObject } from 'vitest';
 
 import { type BirthdayCategory } from '../../../shared';
 import { BIRTHDAY_CATEGORIES } from '../../../shared/constants/categories';
@@ -13,7 +14,7 @@ import { CategoryEffects } from './category.effects';
 describe('CategoryEffects', () => {
   let actions$: Observable<Action>;
   let effects: CategoryEffects;
-  let categoryStorageMock: jasmine.SpyObj<CategoryStorageService>;
+  let categoryStorageMock: MockedObject<CategoryStorageService>;
 
   const mockCategory: BirthdayCategory = {
     id: 'custom1',
@@ -23,19 +24,19 @@ describe('CategoryEffects', () => {
   };
 
   beforeEach(() => {
-    categoryStorageMock = jasmine.createSpyObj('CategoryStorageService', [
-      'getCustomCategories',
-      'getModifiedCategories',
-      'getDeletedIds',
-      'addCustomCategory',
-      'updateCategory',
-      'deleteCategory',
-      'restoreCategory'
-    ]);
+    categoryStorageMock = {
+      getCustomCategories: vi.fn().mockName('CategoryStorageService.getCustomCategories'),
+      getModifiedCategories: vi.fn().mockName('CategoryStorageService.getModifiedCategories'),
+      getDeletedIds: vi.fn().mockName('CategoryStorageService.getDeletedIds'),
+      addCustomCategory: vi.fn().mockName('CategoryStorageService.addCustomCategory'),
+      updateCategory: vi.fn().mockName('CategoryStorageService.updateCategory'),
+      deleteCategory: vi.fn().mockName('CategoryStorageService.deleteCategory'),
+      restoreCategory: vi.fn().mockName('CategoryStorageService.restoreCategory')
+    } as unknown as MockedObject<CategoryStorageService>;
 
-    categoryStorageMock.getCustomCategories.and.returnValue([]);
-    categoryStorageMock.getModifiedCategories.and.returnValue([]);
-    categoryStorageMock.getDeletedIds.and.returnValue([]);
+    categoryStorageMock.getCustomCategories.mockReturnValue([]);
+    categoryStorageMock.getModifiedCategories.mockReturnValue([]);
+    categoryStorageMock.getDeletedIds.mockReturnValue([]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -50,7 +51,7 @@ describe('CategoryEffects', () => {
   });
 
   describe('loadCategories$', () => {
-    it('should load default categories successfully', (done) => {
+    it('should load default categories successfully', async () => {
       actions$ = of(CategoryActions.loadCategories());
 
       effects.loadCategories$.subscribe(action => {
@@ -59,13 +60,12 @@ describe('CategoryEffects', () => {
         expect(payload.categories.length).toBeGreaterThan(0);
         expect(payload.customIds).toEqual([]);
         expect(payload.deletedIds).toEqual([]);
-        done();
       });
     });
 
-    it('should load custom categories', (done) => {
+    it('should load custom categories', async () => {
       const customCategories = [mockCategory];
-      categoryStorageMock.getCustomCategories.and.returnValue(customCategories);
+      categoryStorageMock.getCustomCategories.mockReturnValue(customCategories);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -74,13 +74,12 @@ describe('CategoryEffects', () => {
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesSuccess>;
         expect(payload.categories).toContain(mockCategory);
         expect(payload.customIds).toEqual(['custom1']);
-        done();
       });
     });
 
-    it('should apply modifications to default categories', (done) => {
+    it('should apply modifications to default categories', async () => {
       const modifiedCategory = { ...BIRTHDAY_CATEGORIES[0], name: 'Modified Name' };
-      categoryStorageMock.getModifiedCategories.and.returnValue([modifiedCategory]);
+      categoryStorageMock.getModifiedCategories.mockReturnValue([modifiedCategory]);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -89,16 +88,15 @@ describe('CategoryEffects', () => {
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesSuccess>;
         const modified = payload.categories.find(c => c.id === modifiedCategory.id);
         expect(modified?.name).toBe('Modified Name');
-        done();
       });
     });
 
-    it('should apply modifications to custom categories', (done) => {
+    it('should apply modifications to custom categories', async () => {
       const customCat = { ...mockCategory };
       const modifiedCustomCat = { ...mockCategory, name: 'Modified Custom' };
 
-      categoryStorageMock.getCustomCategories.and.returnValue([customCat]);
-      categoryStorageMock.getModifiedCategories.and.returnValue([modifiedCustomCat]);
+      categoryStorageMock.getCustomCategories.mockReturnValue([customCat]);
+      categoryStorageMock.getModifiedCategories.mockReturnValue([modifiedCustomCat]);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -107,13 +105,12 @@ describe('CategoryEffects', () => {
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesSuccess>;
         const modified = payload.categories.find(c => c.id === 'custom1');
         expect(modified?.name).toBe('Modified Custom');
-        done();
       });
     });
 
-    it('should load deleted ids', (done) => {
+    it('should load deleted ids', async () => {
       const deletedIds = ['family', 'friends'];
-      categoryStorageMock.getDeletedIds.and.returnValue(deletedIds);
+      categoryStorageMock.getDeletedIds.mockReturnValue(deletedIds);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -121,12 +118,13 @@ describe('CategoryEffects', () => {
         expect(action.type).toBe(CategoryActions.loadCategoriesSuccess.type);
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesSuccess>;
         expect(payload.deletedIds).toEqual(deletedIds);
-        done();
       });
     });
 
-    it('should handle load categories failure', (done) => {
-      categoryStorageMock.getCustomCategories.and.throwError('Storage error');
+    it('should handle load categories failure', async () => {
+      categoryStorageMock.getCustomCategories.mockImplementation(() => {
+        throw new Error('Storage error');
+      });
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -134,12 +132,11 @@ describe('CategoryEffects', () => {
         expect(action.type).toBe(CategoryActions.loadCategoriesFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesFailure>;
         expect(payload.error).toBe('Storage error');
-        done();
       });
     });
 
-    it('should use fallback message when load throws a non-Error value', (done) => {
-      categoryStorageMock.getCustomCategories.and.callFake(() => { throw 'unexpected'; });
+    it('should use fallback message when load throws a non-Error value', async () => {
+      categoryStorageMock.getCustomCategories.mockImplementation(() => { throw 'unexpected'; });
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -147,160 +144,155 @@ describe('CategoryEffects', () => {
         expect(action.type).toBe(CategoryActions.loadCategoriesFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.loadCategoriesFailure>;
         expect(payload.error).toBe('Failed to load categories');
-        done();
       });
     });
   });
 
   describe('addCategory$', () => {
-    it('should add custom category successfully', (done) => {
+    it('should add custom category successfully', async () => {
       actions$ = of(CategoryActions.addCategory({ category: mockCategory }));
 
       effects.addCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.addCategorySuccess({ category: mockCategory }));
         expect(categoryStorageMock.addCustomCategory).toHaveBeenCalledWith(mockCategory);
-        done();
       });
     });
 
-    it('should handle add category failure', (done) => {
-      categoryStorageMock.addCustomCategory.and.throwError('Storage error');
+    it('should handle add category failure', async () => {
+      categoryStorageMock.addCustomCategory.mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       actions$ = of(CategoryActions.addCategory({ category: mockCategory }));
 
       effects.addCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.addCategoryFailure>;
         expect(payload.error).toBe('Storage error');
-        done();
       });
     });
 
-    it('should use fallback message when add throws a non-Error value', (done) => {
-      categoryStorageMock.addCustomCategory.and.callFake(() => { throw 'unexpected'; });
+    it('should use fallback message when add throws a non-Error value', async () => {
+      categoryStorageMock.addCustomCategory.mockImplementation(() => { throw 'unexpected'; });
       actions$ = of(CategoryActions.addCategory({ category: mockCategory }));
 
       effects.addCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.addCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.addCategoryFailure>;
         expect(payload.error).toBe('Failed to add category');
-        done();
       });
     });
   });
 
   describe('updateCategory$', () => {
-    it('should update category successfully', (done) => {
+    it('should update category successfully', async () => {
       const updatedCategory = { ...mockCategory, name: 'Updated Name' };
       actions$ = of(CategoryActions.updateCategory({ category: updatedCategory }));
 
       effects.updateCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.updateCategorySuccess({ category: updatedCategory }));
         expect(categoryStorageMock.updateCategory).toHaveBeenCalledWith(updatedCategory);
-        done();
       });
     });
 
-    it('should handle update category failure', (done) => {
-      categoryStorageMock.updateCategory.and.throwError('Storage error');
+    it('should handle update category failure', async () => {
+      categoryStorageMock.updateCategory.mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       actions$ = of(CategoryActions.updateCategory({ category: mockCategory }));
 
       effects.updateCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.updateCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.updateCategoryFailure>;
         expect(payload.error).toBe('Storage error');
-        done();
       });
     });
 
-    it('should use fallback message when update throws a non-Error value', (done) => {
-      categoryStorageMock.updateCategory.and.callFake(() => { throw 'unexpected'; });
+    it('should use fallback message when update throws a non-Error value', async () => {
+      categoryStorageMock.updateCategory.mockImplementation(() => { throw 'unexpected'; });
       actions$ = of(CategoryActions.updateCategory({ category: mockCategory }));
 
       effects.updateCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.updateCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.updateCategoryFailure>;
         expect(payload.error).toBe('Failed to update category');
-        done();
       });
     });
   });
 
   describe('deleteCategory$', () => {
-    it('should delete category successfully', (done) => {
+    it('should delete category successfully', async () => {
       actions$ = of(CategoryActions.deleteCategory({ categoryId: 'custom1' }));
 
       effects.deleteCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.deleteCategorySuccess({ categoryId: 'custom1' }));
         expect(categoryStorageMock.deleteCategory).toHaveBeenCalledWith('custom1');
-        done();
       });
     });
 
-    it('should handle delete category failure', (done) => {
-      categoryStorageMock.deleteCategory.and.throwError('Storage error');
+    it('should handle delete category failure', async () => {
+      categoryStorageMock.deleteCategory.mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       actions$ = of(CategoryActions.deleteCategory({ categoryId: 'custom1' }));
 
       effects.deleteCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.deleteCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.deleteCategoryFailure>;
         expect(payload.error).toBe('Storage error');
-        done();
       });
     });
 
-    it('should use fallback message when delete throws a non-Error value', (done) => {
-      categoryStorageMock.deleteCategory.and.callFake(() => { throw 'unexpected'; });
+    it('should use fallback message when delete throws a non-Error value', async () => {
+      categoryStorageMock.deleteCategory.mockImplementation(() => { throw 'unexpected'; });
       actions$ = of(CategoryActions.deleteCategory({ categoryId: 'custom1' }));
 
       effects.deleteCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.deleteCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.deleteCategoryFailure>;
         expect(payload.error).toBe('Failed to delete category');
-        done();
       });
     });
   });
 
   describe('restoreCategory$', () => {
-    it('should restore category successfully', (done) => {
+    it('should restore category successfully', async () => {
       actions$ = of(CategoryActions.restoreCategory({ categoryId: 'family' }));
 
       effects.restoreCategory$.subscribe(action => {
         expect(action).toEqual(CategoryActions.restoreCategorySuccess({ categoryId: 'family' }));
         expect(categoryStorageMock.restoreCategory).toHaveBeenCalledWith('family');
-        done();
       });
     });
 
-    it('should handle restore category failure', (done) => {
-      categoryStorageMock.restoreCategory.and.throwError('Storage error');
+    it('should handle restore category failure', async () => {
+      categoryStorageMock.restoreCategory.mockImplementation(() => {
+        throw new Error('Storage error');
+      });
       actions$ = of(CategoryActions.restoreCategory({ categoryId: 'family' }));
 
       effects.restoreCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.restoreCategoryFailure>;
         expect(payload.error).toBe('Storage error');
-        done();
       });
     });
 
-    it('should use fallback message when restore throws a non-Error value', (done) => {
-      categoryStorageMock.restoreCategory.and.callFake(() => { throw 'unexpected'; });
+    it('should use fallback message when restore throws a non-Error value', async () => {
+      categoryStorageMock.restoreCategory.mockImplementation(() => { throw 'unexpected'; });
       actions$ = of(CategoryActions.restoreCategory({ categoryId: 'family' }));
 
       effects.restoreCategory$.subscribe(action => {
         expect(action.type).toBe(CategoryActions.restoreCategoryFailure.type);
         const payload = action as ReturnType<typeof CategoryActions.restoreCategoryFailure>;
         expect(payload.error).toBe('Failed to restore category');
-        done();
       });
     });
   });
 
   describe('Integration tests', () => {
-    it('should combine custom and default categories correctly', (done) => {
+    it('should combine custom and default categories correctly', async () => {
       const customCategories = [mockCategory];
-      categoryStorageMock.getCustomCategories.and.returnValue(customCategories);
+      categoryStorageMock.getCustomCategories.mockReturnValue(customCategories);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -309,15 +301,14 @@ describe('CategoryEffects', () => {
         const hasDefaults = payload.categories.some(c => BIRTHDAY_CATEGORIES.find(bc => bc.id === c.id));
         const hasCustom = payload.categories.some(c => c.id === 'custom1');
 
-        expect(hasDefaults).toBeTrue();
-        expect(hasCustom).toBeTrue();
-        done();
+        expect(hasDefaults).toBe(true);
+        expect(hasCustom).toBe(true);
       });
     });
 
-    it('should preserve category order (defaults first, then custom)', (done) => {
+    it('should preserve category order (defaults first, then custom)', async () => {
       const customCategories = [mockCategory];
-      categoryStorageMock.getCustomCategories.and.returnValue(customCategories);
+      categoryStorageMock.getCustomCategories.mockReturnValue(customCategories);
 
       actions$ = of(CategoryActions.loadCategories());
 
@@ -327,7 +318,6 @@ describe('CategoryEffects', () => {
         const customIndex = payload.categories.findIndex(c => c.id === 'custom1');
 
         expect(customIndex).toBeGreaterThanOrEqual(defaultCount);
-        done();
       });
     });
   });

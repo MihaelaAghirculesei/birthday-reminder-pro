@@ -1,6 +1,7 @@
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA,MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../../testing/translate-testing';
 import { type BirthdayCategory } from '../../../../shared';
@@ -9,7 +10,7 @@ import { CategoryReassignDialogComponent, type CategoryReassignDialogData } from
 describe('CategoryReassignDialogComponent', () => {
   let component: CategoryReassignDialogComponent;
   let fixture: ComponentFixture<CategoryReassignDialogComponent>;
-  let mockDialogRef: jasmine.SpyObj<MatDialogRef<CategoryReassignDialogComponent>>;
+  let mockDialogRef: MockedObject<MatDialogRef<CategoryReassignDialogComponent>>;
 
   const mockCategories: BirthdayCategory[] = [
     { id: '1', name: 'Family', icon: 'family_restroom', color: '#FF0000' },
@@ -34,7 +35,9 @@ describe('CategoryReassignDialogComponent', () => {
   };
 
   beforeEach(() => {
-    mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    mockDialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close')
+    } as unknown as MockedObject<MatDialogRef<CategoryReassignDialogComponent>>;
   });
 
   describe('Component Creation', () => {

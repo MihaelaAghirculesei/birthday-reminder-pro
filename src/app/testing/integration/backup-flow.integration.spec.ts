@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { type BackupData,BackupService } from '../../core/services/backup.service';
+import { type BackupData, BackupService } from '../../core/services/backup.service';
 import { LoggerService, SILENT_LOGGING } from '../../core/services/logger.service';
 import { createMockBirthday } from '../mock-data/birthday-mock.data';
 import { provideTranslateTesting } from '../translate-testing';
@@ -29,18 +29,18 @@ describe('Backup Flow Integration', () => {
   describe('JSON Import/Export', () => {
     it('should export and reimport birthdays without data loss', async () => {
       let exportedContent = '';
-      spyOn(URL, 'createObjectURL').and.callFake((blob: Blob) => {
+      vi.spyOn(URL, 'createObjectURL').mockImplementation((blob: Blob | MediaSource) => {
         const reader = new FileReader();
         reader.onload = () => exportedContent = reader.result as string;
-        reader.readAsText(blob);
+        reader.readAsText(blob as Blob);
         return 'blob:test';
       });
-      spyOn(URL, 'revokeObjectURL');
+      vi.spyOn(URL, 'revokeObjectURL');
 
-      const mockAnchor = { href: '', download: '', click: jasmine.createSpy('click') };
-      spyOn(document, 'createElement').and.returnValue(mockAnchor as unknown as HTMLAnchorElement);
-      spyOn(document.body, 'appendChild').and.stub();
-      spyOn(document.body, 'removeChild').and.stub();
+      const mockAnchor = { href: '', download: '', click: vi.fn() };
+      vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
+      vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+      vi.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
 
       backupService.exportToJSON(mockBirthdays);
 
@@ -67,8 +67,7 @@ describe('Backup Flow Integration', () => {
     it('should reject invalid JSON structure', async () => {
       const invalidFile = new File(['{ invalid json }'], 'bad.json', { type: 'application/json' });
 
-      await expectAsync(backupService.importFromFile(invalidFile))
-        .toBeRejectedWithError(/Invalid JSON file/);
+      await expect(backupService.importFromFile(invalidFile)).rejects.toThrowError(/Invalid JSON file/);
     });
 
     it('should reject missing required fields', async () => {
@@ -79,26 +78,25 @@ describe('Backup Flow Integration', () => {
       });
       const file = new File([incompleteData], 'incomplete.json', { type: 'application/json' });
 
-      await expectAsync(backupService.importFromFile(file))
-        .toBeRejectedWithError(/Invalid backup format/);
+      await expect(backupService.importFromFile(file)).rejects.toThrowError(/Invalid backup format/);
     });
   });
 
   describe('CSV Import/Export', () => {
     it('should export to CSV format', async () => {
       let exportedContent = '';
-      spyOn(URL, 'createObjectURL').and.callFake((blob: Blob) => {
+      vi.spyOn(URL, 'createObjectURL').mockImplementation((blob: Blob | MediaSource) => {
         const reader = new FileReader();
         reader.onload = () => exportedContent = reader.result as string;
-        reader.readAsText(blob);
+        reader.readAsText(blob as Blob);
         return 'blob:test';
       });
-      spyOn(URL, 'revokeObjectURL');
+      vi.spyOn(URL, 'revokeObjectURL');
 
-      const mockAnchor = { href: '', download: '', click: jasmine.createSpy('click') };
-      spyOn(document, 'createElement').and.returnValue(mockAnchor as unknown as HTMLAnchorElement);
-      spyOn(document.body, 'appendChild').and.stub();
-      spyOn(document.body, 'removeChild').and.stub();
+      const mockAnchor = { href: '', download: '', click: vi.fn() };
+      vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as unknown as HTMLAnchorElement);
+      vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+      vi.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
 
       backupService.exportToCSV(mockBirthdays);
 
@@ -138,8 +136,7 @@ Bob Smith,1985-12-25,friends,Birthday on Christmas,Capricorn`;
     it('should reject empty CSV', async () => {
       const file = new File(['Name,Birth Date'], 'empty.csv', { type: 'text/csv' });
 
-      await expectAsync(backupService.importFromCSV(file))
-        .toBeRejectedWithError(/CSV file is empty/);
+      await expect(backupService.importFromCSV(file)).rejects.toThrowError(/CSV file is empty/);
     });
   });
 
