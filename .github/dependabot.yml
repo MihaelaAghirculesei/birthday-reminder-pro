@@ -22,6 +22,11 @@ updates:
       capacitor:
         patterns:
           - "@capacitor/*"
+      # vitest and its browser/coverage plugins require the exact same version.
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
       # Patch/minor bumps are extremely unlikely to break anything under semver
       # and are bundled into a single low-noise PR, auto-merged once CI is green
       # (see .github/workflows/dependabot-auto-merge.yml).
@@ -61,10 +66,10 @@ updates:
       # v6 requires Node >= 24; lands with the Node 24 migration.
       - dependency-name: "@firebase/rules-unit-testing"
         update-types: ["version-update:semver-major"]
-      # Karma's jasmine stack moves with the test runner migration, not on its own.
-      - dependency-name: "jasmine-core"
+      # The supported Vitest major is pinned by @angular/build (^4 on Angular 21).
+      - dependency-name: "vitest"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "@types/jasmine"
+      - dependency-name: "@vitest/*"
         update-types: ["version-update:semver-major"]
       # v16 → v18 changes the provider API; planned as a dedicated migration.
       - dependency-name: "@ngx-translate/*"
