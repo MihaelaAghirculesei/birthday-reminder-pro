@@ -42,3 +42,5 @@ jobs:
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The pre-push hook's unit tests use the runner's Chrome, as in ci.yml.
+          CHROME_BIN: /usr/bin/google-chrome
