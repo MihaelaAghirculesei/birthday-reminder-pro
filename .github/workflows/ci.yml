@@ -395,7 +395,10 @@ jobs:
             echo ""
             echo "Main bundle size: ${MAIN_JS_KB}KB"
 
-            MAX_SIZE_KB=500
+            # Angular 22 merges the shared vendor chunks into main (initial total
+            # unchanged at ~1.6 MB, guarded by the angular.json budget), so main
+            # alone is ~790KB; this limit only catches regressions on top of that.
+            MAX_SIZE_KB=900
             if [ "$MAIN_JS_KB" -gt "$MAX_SIZE_KB" ]; then
               echo "❌ Main bundle (${MAIN_JS_KB}KB) exceeds limit (${MAX_SIZE_KB}KB)"
               echo "Consider code splitting or lazy loading"
