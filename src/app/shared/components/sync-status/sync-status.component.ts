@@ -38,7 +38,7 @@ import * as SyncSelectors from '../../../core/store/sync/sync.selectors';
         @default {
           @if (syncSummary()?.pendingCount && syncSummary()!.pendingCount! > 0) {
             <mat-icon class="pending">cloud_upload</mat-icon>
-            <span class="status-text pending">{{ 'SYNC_STATUS.PENDING' | translate: {count: $safeNavigationMigration(syncSummary()?.pendingCount)} }}</span>
+            <span class="status-text pending">{{ 'SYNC_STATUS.PENDING' | translate: {count: syncSummary()?.pendingCount} }}</span>
           } @else {
             <mat-icon class="synced">cloud_done</mat-icon>
             <span class="status-text synced">{{ 'SYNC_STATUS.SYNCED' | translate }}</span>
