@@ -7,6 +7,11 @@ import { checkFirebaseOptions, FIREBASE_OPTIONS, storageGetters } from '../../fi
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
 
+const STORAGE_HOSTS: ReadonlySet<string> = new Set([
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+]);
+
 @Injectable({ providedIn: 'root' })
 export class PhotoStorageService {
   private readonly logger = inject(LoggerService);
@@ -16,12 +21,19 @@ export class PhotoStorageService {
 
   // ─── Type guards ──────────────────────────────────────────────────────────
 
-  /** Returns true for Firebase Storage CDN download URLs. */
+  /**
+   * Returns true for Firebase Storage CDN download URLs. Compares the parsed host,
+   * not a string prefix: `https://firebasestorage.googleapis.com.evil.example/...`
+   * starts with the right text but points at another host.
+   */
   isStorageUrl(value: string): boolean {
-    return (
-      value.startsWith('https://firebasestorage.googleapis.com') ||
-      value.startsWith('https://storage.googleapis.com')
-    );
+    let url: URL;
+    try {
+      url = new URL(value);
+    } catch {
+      return false;
+    }
+    return url.protocol === 'https:' && STORAGE_HOSTS.has(url.hostname);
   }
 
   /** Returns true for base64-encoded data URLs (legacy format, safe MIME types only). */
