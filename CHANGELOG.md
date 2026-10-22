@@ -1,3 +1,10 @@
+## [1.2.24](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.23...v1.2.24) (2026-10-22)
+
+
+### Bug Fixes
+
+* **storage:** match photo URLs by exact host, not prefix ([b9e6910](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/b9e69100059765d134a79c685acf9bf85c0bf010))
+
 ## [1.2.23](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.22...v1.2.23) (2026-10-17)
 
 
