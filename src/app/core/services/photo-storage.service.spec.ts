@@ -70,6 +70,16 @@ describe('PhotoStorageService', () => {
       expect(service.isStorageUrl('https://example.com/img.jpg')).toBe(false);
       expect(service.isStorageUrl('')).toBe(false);
     });
+
+    it('returns false for look-alike hosts that only share the prefix', () => {
+      expect(service.isStorageUrl('https://firebasestorage.googleapis.com.evil.example/o/x.jpg')).toBe(false);
+      expect(service.isStorageUrl('https://storage.googleapis.com.evil.example/x.jpg')).toBe(false);
+      expect(service.isStorageUrl('https://firebasestorage.googleapis.com@evil.example/x.jpg')).toBe(false);
+    });
+
+    it('returns false for the right host over plain http', () => {
+      expect(service.isStorageUrl('http://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg')).toBe(false);
+    });
   });
 
   describe('isBase64', () => {
