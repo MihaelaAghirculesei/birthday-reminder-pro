@@ -5,7 +5,7 @@
         <div class="empty-state no-contact-alert">
           <mat-icon>contact_mail</mat-icon>
           <h3>{{ 'MESSAGE_SCHEDULER.NO_CONTACT_TITLE' | translate }}</h3>
-          <p>{{ 'MESSAGE_SCHEDULER.NO_CONTACT_MESSAGE' | translate: {name: $safeNavigationMigration(birthday?.name)} }}</p>
+          <p>{{ 'MESSAGE_SCHEDULER.NO_CONTACT_MESSAGE' | translate: {name: birthday?.name} }}</p>
         </div>
       } @else {
       <mat-expansion-panel
@@ -247,7 +247,7 @@
         <div class="empty-state">
           <mat-icon>schedule_send</mat-icon>
           <h3>{{ 'MESSAGE_SCHEDULER.NO_MESSAGES_TITLE' | translate }}</h3>
-          <p>{{ 'MESSAGE_SCHEDULER.NO_MESSAGES_SUBTITLE' | translate: {name: $safeNavigationMigration(birthday?.name)} }}</p>
+          <p>{{ 'MESSAGE_SCHEDULER.NO_MESSAGES_SUBTITLE' | translate: {name: birthday?.name} }}</p>
           <button
             mat-raised-button
             color="primary"
