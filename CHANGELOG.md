@@ -1,3 +1,10 @@
+## [1.2.25](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.24...v1.2.25) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** override vite to 8.3.5 to patch open advisories ([404af97](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/404af97df49e7181e725585884b4a6c9cbeedf55))
+
 ## [1.2.24](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.23...v1.2.24) (2026-10-22)
 
 
