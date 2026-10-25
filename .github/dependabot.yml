@@ -71,9 +71,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/*"
         update-types: ["version-update:semver-major"]
-      # v16 → v18 changes the provider API; planned as a dedicated migration.
-      - dependency-name: "@ngx-translate/*"
-        update-types: ["version-update:semver-major"]
 
   # GitHub Actions versions used in workflows (actions/checkout, setup-node, ...)
   - package-ecosystem: "github-actions"
