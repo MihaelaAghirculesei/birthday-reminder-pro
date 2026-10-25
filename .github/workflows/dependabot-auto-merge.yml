@@ -25,6 +25,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: write # dispatch CI on main after merging
   contents: write
   pull-requests: write
   checks: read
@@ -82,6 +83,11 @@ jobs:
           fi
 
           gh pr merge --squash "$PR_URL"
+
+          # A merge made with GITHUB_TOKEN does not trigger `push` workflows,
+          # so CI (and CD, which follows CI) would never run on the new main.
+          # workflow_dispatch is the one event GITHUB_TOKEN is allowed to start.
+          gh workflow run ci.yml --repo "$REPO" --ref main
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           REPO: ${{ github.repository }}
