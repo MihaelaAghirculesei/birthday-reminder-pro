@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { APP_INITIALIZER, type ApplicationConfig, ErrorHandler, importProvidersFrom, isDevMode, PLATFORM_ID, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, type ApplicationConfig, ErrorHandler, isDevMode, PLATFORM_ID, provideZoneChangeDetection } from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -10,7 +10,7 @@ import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 
-import { TranslateLoader,TranslateModule } from '@ngx-translate/core';
+import { provideTranslateLoader, provideTranslateService } from '@ngx-translate/core';
 
 import { routes } from './app.routes';
 import { ERROR_REPORTER, GlobalErrorHandler, NotificationService, SelectivePreloadingStrategy, SentryReporterService, ThemeService } from './core';
@@ -103,12 +103,12 @@ export const appConfig: ApplicationConfig = {
       deps: [FirebaseAuthService, SyncCoordinatorService, LoggerService, LocaleService],
       multi: true
     },
-    importProvidersFrom(
-      TranslateModule.forRoot({
-        loader: { provide: TranslateLoader, useClass: InlineTranslateLoader },
-        defaultLanguage: 'en'
-      })
-    ),
+    provideTranslateService({
+      // Factory, not the class: ngx-translate tells them apart with /^class\s/ on
+      // the source, which fails on minified output (`class{`) and calls it without `new`.
+      loader: provideTranslateLoader(() => new InlineTranslateLoader()),
+      fallbackLang: 'en'
+    }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'

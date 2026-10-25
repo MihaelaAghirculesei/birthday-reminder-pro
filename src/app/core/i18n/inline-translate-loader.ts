@@ -1,4 +1,4 @@
-import { type TranslateLoader } from '@ngx-translate/core';
+import { type TranslateLoader, type TranslationObject } from '@ngx-translate/core';
 import { from, type Observable, of } from 'rxjs';
 
 import { en } from './translations/en';
@@ -9,7 +9,7 @@ import { en } from './translations/en';
  * never download the extra translation chunk.
  */
 export class InlineTranslateLoader implements TranslateLoader {
-  getTranslation(lang: string): Observable<object> {
+  getTranslation(lang: string): Observable<TranslationObject> {
     if (lang === 'en') return of(en);
     if (lang === 'it') return from(import('./translations/it').then(m => m.it));
     return of(en);
