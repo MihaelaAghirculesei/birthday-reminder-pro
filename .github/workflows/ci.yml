@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  # Dispatched by dependabot-auto-merge.yml after it merges: its GITHUB_TOKEN
+  # push does not trigger `push` workflows, so main would otherwise go
+  # untested and undeployed (CD runs off this workflow's completion).
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
