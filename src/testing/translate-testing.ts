@@ -1,25 +1,21 @@
-import { importProvidersFrom } from '@angular/core';
-
-import { TranslateLoader,TranslateModule } from '@ngx-translate/core';
+import { provideTranslateLoader, provideTranslateService, type TranslateLoader, type TranslationObject } from '@ngx-translate/core';
 import { type Observable, of } from 'rxjs';
 
 import { en } from '../app/core/i18n/translations/en';
 
 class FakeLoader implements TranslateLoader {
-  getTranslation(): Observable<object> {
+  getTranslation(): Observable<TranslationObject> {
     return of(en);
   }
 }
 
 /**
- * Provides TranslateModule with real English translations for unit tests.
+ * Provides the translate service with real English translations for unit tests.
  * This ensures translate.instant() resolves correctly instead of returning keys.
  * Add to the `providers` array of TestBed.configureTestingModule.
  */
 export const provideTranslateTesting = () =>
-  importProvidersFrom(
-    TranslateModule.forRoot({
-      loader: { provide: TranslateLoader, useClass: FakeLoader },
-      defaultLanguage: 'en'
-    })
-  );
+  provideTranslateService({
+    loader: provideTranslateLoader(() => new FakeLoader()),
+    fallbackLang: 'en'
+  });

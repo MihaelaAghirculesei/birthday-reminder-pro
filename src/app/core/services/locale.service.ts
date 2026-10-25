@@ -25,12 +25,12 @@ export class LocaleService {
   readonly lang = this._lang.asReadonly();
 
   get currentLang(): string {
-    return this.translate.currentLang ?? DEFAULT_LANG;
+    return this.translate.getCurrentLang() ?? DEFAULT_LANG;
   }
 
   async initialize(): Promise<void> {
     this.translate.addLangs(['en', 'it']);
-    this.translate.setDefaultLang(DEFAULT_LANG);
+    this.translate.setFallbackLang(DEFAULT_LANG);
 
     const saved = isPlatformBrowser(this.platformId)
       ? (localStorage.getItem(STORAGE_KEY) ?? DEFAULT_LANG)

@@ -1,11 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 
 import { TranslatePipe,TranslateService } from '@ngx-translate/core';
-import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-privacy-policy',
@@ -252,8 +250,5 @@ import { map } from 'rxjs/operators';
 export class PrivacyPolicyComponent {
   private readonly translate = inject(TranslateService);
 
-  readonly isIt = toSignal(
-    this.translate.onLangChange.pipe(map(e => e.lang === 'it')),
-    { initialValue: this.translate.currentLang === 'it' }
-  );
+  readonly isIt = computed(() => this.translate.currentLang() === 'it');
 }
