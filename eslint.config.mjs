@@ -185,6 +185,23 @@ export default tseslint.config(
     },
   },
 
+  // ── 4b. Core: no value imports from the shared barrel ────────────────────
+  // The barrel re-exports every shared component; a value import from core
+  // (eagerly loaded via app.config) drags them all into the initial bundle.
+  {
+    files: ["src/app/core/**/*.ts"],
+    ignores: ["**/*.spec.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        patterns: [{
+          regex: "^(\\.\\./)+shared(/index)?$",
+          allowTypeImports: true,
+          message: "Import values from a specific shared sub-path (e.g. shared/constants, shared/utils) to keep shared components out of the initial bundle.",
+        }],
+      }],
+    },
+  },
+
   // ── 5. Spec / test files ──────────────────────────────────────────────────
   {
     files: ["**/*.spec.ts"],
