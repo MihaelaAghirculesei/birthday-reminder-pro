@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 
-import { DEFAULT_CATEGORY } from '../../shared';
+import { DEFAULT_CATEGORY } from '../../shared/constants';
 import { type Birthday, createSyncMetadata, updateSyncMetadata } from '../../shared/models/birthday.model';
 import { BirthdayNormalizationService } from './birthday-normalization.service';
 import { IdGeneratorService } from './id-generator.service';

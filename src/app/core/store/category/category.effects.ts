@@ -5,7 +5,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { BIRTHDAY_CATEGORIES, type BirthdayCategory } from '../../../shared';
+import { BIRTHDAY_CATEGORIES, type BirthdayCategory } from '../../../shared/constants';
 import { CategoryStorageService } from '../../services/category-storage.service';
 import * as CategoryActions from './category.actions';
 
