@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 
-import { DEFAULT_CATEGORY,getZodiacSign } from '../../shared';
+import { DEFAULT_CATEGORY } from '../../shared/constants';
 import { type Birthday } from '../../shared/models/birthday.model';
+import { getZodiacSign } from '../../shared/utils';
 
 @Injectable({ providedIn: 'root' })
 export class BirthdayNormalizationService {
