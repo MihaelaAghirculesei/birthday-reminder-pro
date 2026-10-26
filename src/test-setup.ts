@@ -1,5 +1,6 @@
-// fakeAsync/tick need each test to run in a ProxyZone; the app's polyfills
-// only load zone.js, and the Vitest patch wraps describe/it accordingly.
+// The app is zoneless; the build:test configuration loads zone.js only for tests,
+// because fakeAsync/tick need each test to run in a ProxyZone (the Vitest patch
+// wraps describe/it accordingly).
 import 'zone.js/testing';
 import 'zone.js/plugins/vitest-patch';
 
