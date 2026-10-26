@@ -1,3 +1,10 @@
+## [1.2.27](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.26...v1.2.27) (2026-10-26)
+
+
+### Performance Improvements
+
+* keep shared components out of the initial bundle ([542e838](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/542e838318fbce83c62ff4116bdc3d331f05c2ce))
+
 ## [1.2.26](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.25...v1.2.26) (2026-10-26)
 
 
