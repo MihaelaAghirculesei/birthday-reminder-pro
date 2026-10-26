@@ -404,6 +404,16 @@ Cypress.Commands.add('visualSnapshot', (name: string) => {
   // calls never fire and the zone stays dirty, causing flaky screenshots.
   cy.tick(1000);
   cy.waitForAngular();
+  // Material Icons come from Google Fonts with display=swap: until the font
+  // arrives, ligature names ("home", "group") render as plain text. On a cold
+  // CI browser the first snapshot can beat the download, so wait for the face.
+  cy.document().then((doc) => doc.fonts.load('24px "Material Icons"'));
+  cy.document({ timeout: 15000 }).should((doc) => {
+    const iconFontLoaded = Array.from(doc.fonts).some(
+      (face) => face.family.replace(/["']/g, '') === 'Material Icons' && face.status === 'loaded'
+    );
+    expect(iconFontLoaded, 'Material Icons font loaded').to.equal(true);
+  });
   // capture:'viewport' takes a single frame instead of Cypress's default fullPage
   // scroll-and-stitch, which duplicates position:sticky/fixed elements (header,
   // FABs) once per scroll segment on any page taller than the viewport — same
