@@ -7,7 +7,7 @@ on:
     branches: [main]
   # Dispatched by dependabot-auto-merge.yml after it merges: its GITHUB_TOKEN
   # push does not trigger `push` workflows, so main would otherwise go
-  # untested and undeployed (CD runs off this workflow's completion).
+  # untested and undeployed (see the dispatch-deploy job below).
   workflow_dispatch:
 
 concurrency:
@@ -568,3 +568,22 @@ jobs:
           fi
 
           echo "✅ All required checks passed!"
+
+  # A run started by GITHUB_TOKEN (the Dependabot auto-merge dispatch) does not
+  # fire workflow_run, so CD would never deploy it. workflow_dispatch is the one
+  # event GITHUB_TOKEN may start: hand CD this run's id to deploy its build.
+  # Human-started runs are left to workflow_run, so nothing deploys twice.
+  dispatch-deploy:
+    name: Dispatch CD
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: status-check
+    if: github.event_name == 'workflow_dispatch' && github.actor == 'github-actions[bot]' && github.ref == 'refs/heads/main'
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run deploy.yml --repo "$REPO" --ref main -f ci-run-id="$RUN_ID"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
