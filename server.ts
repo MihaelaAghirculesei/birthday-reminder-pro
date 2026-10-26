@@ -34,9 +34,9 @@ function buildCsp(nonce: string): string {
     // is present (CSP3). Lighthouse recommends keeping them as backward-compat
     // fallbacks; removing them adds a medium-severity finding to the csp-xss audit.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'unsafe-inline' https: http:`,
-    // No script-src-attr hash here, unlike src/_headers: with ngCspNonce on <app-root>
-    // the SSR critical-CSS inliner swaps onload="this.media='all'" for an ngCspMedia
-    // attribute plus a nonced loader script, so no inline handler reaches the page.
+    // No script hash here, unlike src/_headers: the critical-CSS loader script that
+    // switches the main stylesheet to media="all" gets the nonce stamped below, and
+    // no inline event handler reaches the page.
     `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
     `style-src-elem 'self' 'nonce-${nonce}' https://fonts.googleapis.com https://accounts.google.com`,
     // Angular Material sets inline style="" attributes that cannot carry a nonce.
