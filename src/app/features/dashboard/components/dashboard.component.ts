@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, DestroyRef, DOCUMENT,inject, NgZone, type OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, DOCUMENT,inject, type OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -42,7 +42,6 @@ export class DashboardComponent implements OnInit {
   readonly editService = inject(BirthdayEditService);
   private readonly dialog = inject(MatDialog);
   private readonly categoryManager = inject(CategoryManagerService);
-  private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
 
@@ -50,11 +49,9 @@ export class DashboardComponent implements OnInit {
   readonly forceLoad = !!(window as Window & { Cypress?: unknown }).Cypress;
 
   ngOnInit(): void {
-    this.ngZone.runOutsideAngular(() => {
-      fromEvent<MouseEvent>(this.document, 'click')
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(event => this.handleDocumentClick(event));
-    });
+    fromEvent<MouseEvent>(this.document, 'click')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(event => this.handleDocumentClick(event));
   }
 
   onCategorySelect(categoryId: string): void {
@@ -138,10 +135,10 @@ export class DashboardComponent implements OnInit {
     if (clickedBirthdayItem) {
       const isInEditMode = clickedBirthdayItem.querySelector('.edit-name-input, .dashboard-category-edit, .dashboard-photo-edit');
       if (!isInEditMode) {
-        this.ngZone.run(() => this.editService.cancelEdit());
+        this.editService.cancelEdit();
       }
     } else {
-      this.ngZone.run(() => this.editService.cancelEdit());
+      this.editService.cancelEdit();
     }
   }
 }

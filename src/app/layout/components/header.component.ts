@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, NgZone, type OnInit,PLATFORM_ID, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, type OnInit,PLATFORM_ID, ViewChild } from '@angular/core';
 import { takeUntilDestroyed,toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -437,7 +437,6 @@ import { HeaderUserMenuComponent } from './header-user-menu.component';
 export class HeaderComponent implements OnInit {
   private readonly store = inject(Store<AppState>);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly ngZone = inject(NgZone);
   private readonly el = inject(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly authService = inject(FirebaseAuthService);
@@ -480,14 +479,12 @@ export class HeaderComponent implements OnInit {
 
     this.lastScrollY = this.getScrollY();
     const opts = { passive: true } as AddEventListenerOptions;
-    this.ngZone.runOutsideAngular(() => {
-      merge(
-        fromEvent(window, 'scroll', opts as EventListenerOptions),
-        fromEvent(document.body, 'scroll', opts as EventListenerOptions)
-      )
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((_event: Event) => this.onScroll());
-    });
+    merge(
+      fromEvent(window, 'scroll', opts as EventListenerOptions),
+      fromEvent(document.body, 'scroll', opts as EventListenerOptions)
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((_event: Event) => this.onScroll());
   }
 
   signOut(): void {

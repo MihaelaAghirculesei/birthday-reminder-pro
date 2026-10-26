@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, NgZone,PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 
 import type { Auth, User } from 'firebase/auth';
 import { BehaviorSubject, from, type Observable,Subject } from 'rxjs';
@@ -144,7 +144,6 @@ function hasAuthHint(): boolean {
 })
 export class FirebaseAuthService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
   private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
 
@@ -231,23 +230,19 @@ export class FirebaseAuthService {
     }
 
     this.authUnsubscribe = authModule.onAuthStateChanged(auth, (user) => {
-      this.ngZone.run(() => {
-        if (user) {
-          this.userSubject.next(this.mapFirebaseUser(user));
-          setAuthHint();
-          this.logger.info('[FirebaseAuth] User signed in:', user.email);
-        } else {
-          this.userSubject.next(null);
-          clearAuthHint();
-          this.logger.info('[FirebaseAuth] User signed out');
-        }
-        this.loadingSubject.next(false);
-      });
+      if (user) {
+        this.userSubject.next(this.mapFirebaseUser(user));
+        setAuthHint();
+        this.logger.info('[FirebaseAuth] User signed in:', user.email);
+      } else {
+        this.userSubject.next(null);
+        clearAuthHint();
+        this.logger.info('[FirebaseAuth] User signed out');
+      }
+      this.loadingSubject.next(false);
     }, (error) => {
-      this.ngZone.run(() => {
-        this.logger.error('[FirebaseAuth] Auth state error:', error);
-        this.loadingSubject.next(false);
-      });
+      this.logger.error('[FirebaseAuth] Auth state error:', error);
+      this.loadingSubject.next(false);
     });
 
     // Check for a pending redirect sign-in result (fire-and-forget).
@@ -259,18 +254,14 @@ export class FirebaseAuthService {
       .then((result) => {
         sessionStorage.removeItem(REDIRECT_PENDING_KEY);
         if (result?.user) {
-          this.ngZone.run(() => {
-            this._redirectSignInSubject.next(this.mapFirebaseUser(result.user));
-          });
+          this._redirectSignInSubject.next(this.mapFirebaseUser(result.user));
         }
       })
       .catch((error: unknown) => {
         sessionStorage.removeItem(REDIRECT_PENDING_KEY);
         if (isFirebaseAuthError(error)) {
           const signInError = mapFirebaseSignInError(error);
-          this.ngZone.run(() => {
-            this._redirectErrorSubject.next(signInError.message);
-          });
+          this._redirectErrorSubject.next(signInError.message);
         } else {
           this.logger.error('[FirebaseAuth] Redirect result error:', error);
         }
@@ -329,28 +320,20 @@ export class FirebaseAuthService {
     // signInWithCredential while its promise settled as rejected (isSkippedMoment),
     // opening the popup on top of an already-authenticated session.
     // Popup avoids getRedirectResult() iframe issues caused by third-party cookie blocking.
-    //
-    // signInWithPopup resolves via window.postMessage (a browser macrotask), which fires
-    // outside Angular zone. The explicit ngZone.run() brings the result back into zone so
-    // that the component's signInSuccess dispatch triggers OnPush change detection.
     if (!environment.production) {
       return new Promise<AuthUser>((resolve, reject) => {
         signInWithPopup(auth, provider).then(
           (result) => {
-            this.ngZone.run(() => {
-              setAuthHint();
-              resolve(this.mapFirebaseUser(result.user));
-            });
+            setAuthHint();
+            resolve(this.mapFirebaseUser(result.user));
           },
           (error: unknown) => {
-            this.ngZone.run(() => {
-              if (isFirebaseAuthError(error)) {
-                this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
-                reject(mapFirebaseSignInError(error));
-              } else {
-                reject(error instanceof Error ? error : new Error('Sign-in failed'));
-              }
-            });
+            if (isFirebaseAuthError(error)) {
+              this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
+              reject(mapFirebaseSignInError(error));
+            } else {
+              reject(error instanceof Error ? error : new Error('Sign-in failed'));
+            }
           }
         );
       });
@@ -374,20 +357,16 @@ export class FirebaseAuthService {
     return new Promise<AuthUser>((resolve, reject) => {
       signInWithPopup(auth, provider).then(
         (result) => {
-          this.ngZone.run(() => {
-            setAuthHint();
-            resolve(this.mapFirebaseUser(result.user));
-          });
+          setAuthHint();
+          resolve(this.mapFirebaseUser(result.user));
         },
         (error: unknown) => {
-          this.ngZone.run(() => {
-            if (isFirebaseAuthError(error)) {
-              this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
-              reject(mapFirebaseSignInError(error));
-            } else {
-              reject(error instanceof Error ? error : new Error('Sign-in failed'));
-            }
-          });
+          if (isFirebaseAuthError(error)) {
+            this.logger.error('[FirebaseAuth] Google popup sign-in failed:', error);
+            reject(mapFirebaseSignInError(error));
+          } else {
+            reject(error instanceof Error ? error : new Error('Sign-in failed'));
+          }
         }
       );
     });
@@ -484,10 +463,8 @@ export class FirebaseAuthService {
    */
   setTestUser(user: AuthUser | null): void {
     if (typeof window === 'undefined' || !(window as unknown as Record<string, unknown>)['Cypress']) return;
-    this.ngZone.run(() => {
-      this.userSubject.next(user);
-      this.loadingSubject.next(false);
-    });
+    this.userSubject.next(user);
+    this.loadingSubject.next(false);
   }
 
   destroy(): void {

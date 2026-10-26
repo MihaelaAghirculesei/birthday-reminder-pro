@@ -1,5 +1,5 @@
 import { animate,style, transition, trigger } from '@angular/animations';
-import { type AfterViewInit, ChangeDetectionStrategy, Component, type ComponentRef, DestroyRef, effect, inject, NgZone, type OnInit, type Signal, signal,ViewChild, ViewContainerRef } from '@angular/core';
+import { type AfterViewInit, ChangeDetectionStrategy, Component, type ComponentRef, DestroyRef, effect, inject, type OnInit, type Signal, signal,ViewChild, ViewContainerRef } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -52,7 +52,6 @@ export class HomeComponent implements OnInit, AfterViewInit {
   private readonly categoryFacade = inject(CategoryFacadeService);
   private readonly logger = inject(LoggerService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly ngZone = inject(NgZone);
 
   birthdays: Signal<Birthday[]> = toSignal(this.store.select(BirthdaySelectors.selectAllBirthdays), { initialValue: [] });
   categories: Signal<BirthdayCategory[]> = this.categoryFacade.categories;
