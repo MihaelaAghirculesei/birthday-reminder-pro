@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, NgZone, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 
 import type { DocumentData, QuerySnapshot, WriteBatch } from 'firebase/firestore';
 import { BehaviorSubject, from, type Observable, of } from 'rxjs';
@@ -35,7 +35,6 @@ export interface FirestoreDocument {
 })
 export class FirestoreService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
   private readonly photoStorage = inject(PhotoStorageService);
   private readonly firebaseOptions = inject(FIREBASE_OPTIONS);
@@ -182,16 +181,12 @@ export class FirestoreService {
         (snapshot) => {
           const raw = this.mapBirthdaysFromSnapshot(snapshot, fs, schemas);
           void this.resolvePhotoUrls(raw).then(birthdays => {
-            this.ngZone.run(() => {
-              this.birthdaysSubject.next(birthdays);
-              this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
-            });
+            this.birthdaysSubject.next(birthdays);
+            this.logger.info('[Firestore] Birthdays updated:', birthdays.length);
           });
         },
         (error) => {
-          this.ngZone.run(() => {
-            this.logger.error('[Firestore] Birthdays listener error:', error);
-          });
+          this.logger.error('[Firestore] Birthdays listener error:', error);
         }
       );
     });
@@ -328,16 +323,12 @@ export class FirestoreService {
       this.categoriesListener = fs.onSnapshot(
         fs.collection(db, this.getUserPath(userId), 'categories'),
         (snapshot) => {
-          this.ngZone.run(() => {
-            const categories = this.mapCategoriesFromSnapshot(snapshot, schemas);
-            this.categoriesSubject.next(categories);
-            this.logger.info('[Firestore] Categories updated:', categories.length);
-          });
+          const categories = this.mapCategoriesFromSnapshot(snapshot, schemas);
+          this.categoriesSubject.next(categories);
+          this.logger.info('[Firestore] Categories updated:', categories.length);
         },
         (error) => {
-          this.ngZone.run(() => {
-            this.logger.error('[Firestore] Categories listener error:', error);
-          });
+          this.logger.error('[Firestore] Categories listener error:', error);
         }
       );
     });

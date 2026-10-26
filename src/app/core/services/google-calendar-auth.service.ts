@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, NgZone,PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 
 import { BehaviorSubject } from 'rxjs';
 
@@ -26,7 +26,6 @@ const TOKEN_REFRESH_THRESHOLD_SECONDS = 300;
 @Injectable({ providedIn: 'root' })
 export class GoogleCalendarAuthService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
   private readonly secureStorage = inject(SecureStorageService);
 
@@ -62,17 +61,15 @@ export class GoogleCalendarAuthService {
       client_id: clientId,
       scope: scopes,
       callback: (response: TokenResponse) => {
-        this.ngZone.run(() => { this.handleTokenResponse(response); });
+        this.handleTokenResponse(response);
       },
       // eslint-disable-next-line @typescript-eslint/naming-convention -- GIS API contract, must match the SDK property name exactly
       error_callback: (error: { type: string; message: string }) => {
-        this.ngZone.run(() => {
-          this.logger.error('[GoogleCalendar] Token error:', error);
-          if (this.pendingTokenPromise) {
-            this.pendingTokenPromise.reject(new Error(error.message || 'Token request failed'));
-            this.pendingTokenPromise = null;
-          }
-        });
+        this.logger.error('[GoogleCalendar] Token error:', error);
+        if (this.pendingTokenPromise) {
+          this.pendingTokenPromise.reject(new Error(error.message || 'Token request failed'));
+          this.pendingTokenPromise = null;
+        }
       }
     });
   }
@@ -203,7 +200,7 @@ export class GoogleCalendarAuthService {
     const token = gapi.client.getToken();
     if (token && token.access_token && window.google && window.google.accounts) {
       window.google.accounts.oauth2.revoke(token.access_token, () => {
-        this.ngZone.run(() => { this.logger.info('[GoogleCalendar] Token revoked'); });
+        this.logger.info('[GoogleCalendar] Token revoked');
       });
     }
 
