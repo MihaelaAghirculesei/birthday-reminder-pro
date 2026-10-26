@@ -1,3 +1,10 @@
+## [1.2.26](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.25...v1.2.26) (2026-10-26)
+
+
+### Bug Fixes
+
+* **csp:** allow the Angular 22 critical-css loader script ([61e7fda](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/61e7fdacaef63033396f464a8023b9340bed4f86))
+
 ## [1.2.25](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.24...v1.2.25) (2026-10-24)
 
 
