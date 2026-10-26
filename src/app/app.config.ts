@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { APP_INITIALIZER, type ApplicationConfig, ErrorHandler, isDevMode, PLATFORM_ID, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, type ApplicationConfig, ErrorHandler, isDevMode, PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -77,8 +77,7 @@ const devProviders = isDevMode()
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Angular 21 defaults to zoneless; keep zone.js until the app is migrated off it.
-    provideZoneChangeDetection(),
+    provideZonelessChangeDetection(),
     provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
       ? provideNoopAnimations()

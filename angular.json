@@ -20,9 +20,6 @@
             "outputPath": "dist/birthday-reminder-pro",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
             "tsConfig": "tsconfig.app.json",
             "allowedCommonJsDependencies": [
               "@firebase/firestore",
@@ -98,6 +95,12 @@
               "extractLicenses": false,
               "sourceMap": true
             },
+            "test": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "polyfills": ["zone.js"]
+            },
             "ci": {
               "optimization": false,
               "extractLicenses": false,
@@ -137,6 +140,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
+            "buildTarget": "birthday-reminder-pro:build:test",
             "runner": "vitest",
             "tsConfig": "tsconfig.spec.json",
             "browsers": ["ChromiumHeadless"],
