@@ -5,6 +5,14 @@ on:
     workflows: ['CI']
     types: [completed]
     branches: [main]
+  # Started by ci.yml's dispatch-deploy job for CI runs that workflow_run
+  # misses (runs started by GITHUB_TOKEN after a Dependabot auto-merge).
+  workflow_dispatch:
+    inputs:
+      ci-run-id:
+        description: 'Successful CI run on main whose production build to deploy'
+        required: true
+        type: string
 
 # workflow_run executes in the context of the default branch, which is a
 # security feature: secrets are not exposed to untrusted PR code.
@@ -19,7 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     # Gate: only deploy when CI completed successfully — not on failure/cancel.
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # A dispatch comes from CI only after "All Checks Passed" succeeded.
+    if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
 
     environment:
       name: production
@@ -33,7 +42,7 @@ jobs:
         with:
           name: production-build
           path: dist/birthday-reminder-pro
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ inputs.ci-run-id || github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Cloudflare Pages
