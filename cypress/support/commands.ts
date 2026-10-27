@@ -397,12 +397,6 @@ Cypress.Commands.add('mockDeferViewport', () => {
 
 Cypress.Commands.add('visualSnapshot', (name: string) => {
   cy.disableAnimations();
-  // cy.clock() is active in every visual test (set in visitFresh). Ticking
-  // 1 000 ms drains all pending fake-timer callbacks before the screenshot:
-  // Angular animation onDone handlers, CDK overlay setup, BreakpointObserver
-  // debounces after viewport resize, etc. Without this those setTimeout(0/300)
-  // calls never fire and the zone stays dirty, causing flaky screenshots.
-  cy.tick(1000);
   cy.waitForAngular();
   // Material Icons come from Google Fonts with display=swap: until the font
   // arrives, ligature names ("home", "group") render as plain text. On a cold

@@ -10,6 +10,8 @@
  * Viewport: 1280×800 as documented in README.md contributor note.
  */
 
+import { emulateReducedMotion } from '../support/reduced-motion';
+
 const VIEWPORT_W = 1280;
 const VIEWPORT_H = 800;
 // Same fixed timestamp used across all visual tests (2026-03-24 12:00 UTC)
@@ -29,7 +31,6 @@ function prepSnap(): void {
       doc.head.appendChild(s);
     }
   });
-  cy.tick(1000);
   cy.waitForAngular();
 }
 
@@ -91,7 +92,10 @@ function visitFreshReadme(darkMode = false): void {
   cy.clearLocalStorage();
   cy.clearCookies();
   cy.clearIndexedDB();
-  cy.clock(FIXED_DATE);
+  // Fake only Date: zoneless change detection is scheduled via setTimeout/rAF,
+  // so faking timers would freeze rendering.
+  cy.clock(FIXED_DATE, ['Date']);
+  cy.on('window:before:load', emulateReducedMotion);
   cy.visit('/', {
     onBeforeLoad(win) {
       if (darkMode) {
@@ -100,8 +104,8 @@ function visitFreshReadme(darkMode = false): void {
     },
   });
   cy.waitForAngular();
-  // Drain the 600 ms theme-transition timer so .theme-transitioning is gone
-  cy.tick(700);
+  // Timers are real: wait for the 600 ms theme-transition timer to clear the class
+  cy.get('body').should('not.have.class', 'theme-transitioning');
 }
 
 describe('README Screenshots', () => {

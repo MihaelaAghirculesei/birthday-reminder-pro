@@ -3,17 +3,20 @@
  *
  * Strategy
  * ─────────
- * • cy.clock() freezes Date to 2026-03-24 before each visit so "days until
- *   birthday" counters are always deterministic across CI runs.
+ * • cy.clock(…, ['Date']) freezes only Date to 2026-03-24 before each visit so
+ *   "days until birthday" counters are always deterministic across CI runs.
+ *   Timers stay real: zoneless change detection is scheduled via setTimeout/rAF.
  * • cy.seedVisualTestData() writes 4 fixtures directly into IndexedDB, then
  *   reloads so NgRx effects pick them up on boot (no UI interaction needed).
- * • cy.visualSnapshot() disables animations, drains the Angular zone, then
+ * • cy.visualSnapshot() disables animations, waits for Angular to settle, then
  *   saves a screenshot to cypress/screenshots/ (gitignored).
  *
  * Running:
  *   npm run e2e:visual
  *   → Screenshots saved locally; compare manually or diff with a tool like pixelmatch.
  */
+
+import { emulateReducedMotion } from '../support/reduced-motion';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -27,7 +30,8 @@ function visitFresh(darkMode = false): void {
 
   // Freeze Date BEFORE visit — Angular will use this for all new Date() calls.
   // Value must match VISUAL_FIXED_TIMESTAMP defined in commands.ts.
-  cy.clock(new Date('2026-03-24T12:00:00.000Z').getTime());
+  cy.clock(new Date('2026-03-24T12:00:00.000Z').getTime(), ['Date']);
+  cy.on('window:before:load', emulateReducedMotion);
 
   cy.visit('/', {
     onBeforeLoad(win) {
@@ -39,9 +43,9 @@ function visitFresh(darkMode = false): void {
 
   cy.waitForAngular();
 
-  // Tick past the 600 ms theme-transition timer so body never has
+  // Wait for the 600 ms theme-transition timer so body never has
   // the .theme-transitioning class when the screenshot is taken
-  cy.tick(700);
+  cy.get('body').should('not.have.class', 'theme-transitioning');
 }
 
 // ---------------------------------------------------------------------------
