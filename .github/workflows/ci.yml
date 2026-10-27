@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -56,7 +56,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -121,7 +121,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -185,7 +185,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -237,7 +237,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -276,7 +276,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - uses: actions/setup-java@v6
@@ -313,7 +313,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci
@@ -376,7 +376,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - name: Download build artifacts
@@ -470,7 +470,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version-file: .node-version
           cache: 'npm'
 
       - run: npm ci

@@ -207,7 +207,7 @@ src/app/
 
 ### Prerequisites
 
-- Node.js 20.x or higher
+- Node.js 24 (exact version in `.node-version`)
 - npm 10.x or higher
 - Angular CLI 19.x (`npm install -g @angular/cli@^19`)
 - Android Studio (optional, for Android build)
