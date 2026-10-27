@@ -59,8 +59,14 @@ function openAlertPackages() {
     const alerts = gh('api', `repos/${REPO}/dependabot/alerts?state=open&per_page=100`);
     return new Set(alerts.map((alert) => alert.dependency.package.name));
   } catch {
-    return null; // token without security-events: read
+    return null; // GITHUB_TOKEN cannot read Dependabot alerts, whatever its permissions
   }
+}
+
+// Times of merges and pushes to main, newest first.
+function mainUpdates() {
+  return gh('api', `repos/${REPO}/activity?ref=refs/heads/main&per_page=100`)
+    .map((activity) => Date.parse(activity.timestamp));
 }
 
 async function checkDependabotJobs() {
@@ -75,13 +81,20 @@ async function checkDependabotJobs() {
   }
   // Security-update jobs ("... for <package>") are never re-run once their alert
   // is closed some other way, so their last failure only matters while it is open.
+  // Without access to alerts: an open alert re-runs its job within minutes of every
+  // update to main, so a failure followed by an update (with time to re-run) and no
+  // newer run means the alert is gone.
   const alerts = openAlertPackages();
+  const updates = alerts ? [] : mainUpdates();
+  const settled = Date.now() - 30 * 60 * 1000;
   return [...latest].filter(([job, run]) => {
     if (run.conclusion !== 'failure') return false;
     const pkg = job.match(/ for (\S+)$/)?.[1];
-    return !pkg || !alerts || alerts.has(pkg);
-  }).map(([job, run]) => `Dependabot job **${job}** is failing — the log usually names the blocking dependency: ${run.html_url}` +
-    (alerts ? '' : ' (open alerts could not be read; it may already be resolved)'));
+    if (!pkg) return true;
+    if (alerts) return alerts.has(pkg);
+    const failedAt = Date.parse(run.created_at);
+    return !updates.some((at) => at > failedAt && at < settled);
+  }).map(([job, run]) => `Dependabot job **${job}** is failing — the log usually names the blocking dependency: ${run.html_url}`);
 }
 
 async function checkProductionAudit() {
