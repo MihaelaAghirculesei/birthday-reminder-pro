@@ -98,6 +98,8 @@ export interface ConfirmDialogData {
     }
 
     .cancel-btn {
+      // Global .mat-mdc-outlined-button paints var(--surface): keep it ghost on the gradient
+      background: transparent !important;
       color: white !important;
       border-color: rgba(255, 255, 255, 0.4) !important;
       font-weight: 600 !important;
