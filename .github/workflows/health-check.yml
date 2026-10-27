@@ -21,6 +21,8 @@ permissions:
   actions: read
   issues: write
   pull-requests: read
+  # Dependabot alerts: lets the script ignore failed jobs whose alert is already closed.
+  security-events: read
 
 jobs:
   health-check:
@@ -31,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Node 22 ships fetch and WebSocket; the script needs no npm install.
+      # Node ships fetch and WebSocket; the script needs no npm install.
       - uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
