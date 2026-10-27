@@ -54,6 +54,15 @@ async function checkMainWorkflows() {
   return findings;
 }
 
+function openAlertPackages() {
+  try {
+    const alerts = gh('api', `repos/${REPO}/dependabot/alerts?state=open&per_page=100`);
+    return new Set(alerts.map((alert) => alert.dependency.package.name));
+  } catch {
+    return null; // token without security-events: read
+  }
+}
+
 async function checkDependabotJobs() {
   const since = isoDate(new Date(Date.now() - 7 * DAY));
   const { workflow_runs: runs } = gh('api',
@@ -64,8 +73,15 @@ async function checkDependabotJobs() {
     const job = run.name.replace(/ - Update #\d+$/, '');
     if (!latest.has(job)) latest.set(job, run);
   }
-  return [...latest].filter(([, run]) => run.conclusion === 'failure')
-    .map(([job, run]) => `Dependabot job **${job}** is failing — the log usually names the blocking dependency: ${run.html_url}`);
+  // Security-update jobs ("... for <package>") are never re-run once their alert
+  // is closed some other way, so their last failure only matters while it is open.
+  const alerts = openAlertPackages();
+  return [...latest].filter(([job, run]) => {
+    if (run.conclusion !== 'failure') return false;
+    const pkg = job.match(/ for (\S+)$/)?.[1];
+    return !pkg || !alerts || alerts.has(pkg);
+  }).map(([job, run]) => `Dependabot job **${job}** is failing — the log usually names the blocking dependency: ${run.html_url}` +
+    (alerts ? '' : ' (open alerts could not be read; it may already be resolved)'));
 }
 
 async function checkProductionAudit() {
@@ -90,10 +106,11 @@ async function checkStalePullRequests() {
 
 async function checkEndOfLife() {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  const ci = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
+  // Every workflow reads .node-version, so its major is the Node cycle in use.
+  const node = fs.readFileSync(path.join(ROOT, '.node-version'), 'utf8');
   const products = [
     { name: 'Angular', product: 'angular', cycle: pkg.dependencies['@angular/core'].match(/\d+/)[0] },
-    { name: 'Node.js', product: 'nodejs', cycle: ci.match(/node-version:\s*'(\d+)'/)[1] },
+    { name: 'Node.js', product: 'nodejs', cycle: node.match(/\d+/)[0] },
   ];
   const findings = [];
   for (const { name, product, cycle } of products) {
