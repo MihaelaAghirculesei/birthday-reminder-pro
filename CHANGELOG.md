@@ -1,3 +1,15 @@
+## [1.2.28](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.27...v1.2.28) (2026-10-27)
+
+
+### Bug Fixes
+
+* **confirm-dialog:** keep cancel button transparent on the gradient ([36e6a2b](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/36e6a2bc8479b104eeb3f28516144b829d7455c1))
+
+
+### Performance Improvements
+
+* switch to zoneless change detection ([962d38d](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/962d38d567c6b011461cdd2978ab58003244ebe9))
+
 ## [1.2.27](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.26...v1.2.27) (2026-10-26)
 
 
