@@ -21,8 +21,6 @@ permissions:
   actions: read
   issues: write
   pull-requests: read
-  # Dependabot alerts: lets the script ignore failed jobs whose alert is already closed.
-  security-events: read
 
 jobs:
   health-check:
