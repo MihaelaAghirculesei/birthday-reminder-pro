@@ -1,3 +1,10 @@
+## [1.2.29](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.28...v1.2.29) (2026-10-27)
+
+
+### Bug Fixes
+
+* **health-check:** read Node from .node-version and skip resolved alerts ([a9d2258](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a9d225853279066cabb12108d864f850ec8fd2af)), closes [#129](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/issues/129)
+
 ## [1.2.28](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.27...v1.2.28) (2026-10-27)
 
 
