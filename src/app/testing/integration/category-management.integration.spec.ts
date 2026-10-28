@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore, Store } from '@ngrx/store';
 import type { MockedObject } from 'vitest';
@@ -81,22 +81,24 @@ describe('Category Management Integration', () => {
     facade = TestBed.inject(CategoryFacadeService);
   });
 
-  it('should load default categories on init', fakeAsync(() => {
+  it('should load default categories on init', async () => {
+    vi.useFakeTimers();
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     let categories: BirthdayCategory[] = [];
     store.select(CategorySelectors.selectAllCategories).subscribe(c => categories = c);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(categories.length).toBeGreaterThanOrEqual(BIRTHDAY_CATEGORIES.length);
     expect(categories.find(c => c.id === 'family')).toBeDefined();
     expect(categories.find(c => c.id === 'friends')).toBeDefined();
-  }));
+  });
 
-  it('should add custom category', fakeAsync(() => {
+  it('should add custom category', async () => {
+    vi.useFakeTimers();
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     const newCategory: BirthdayCategory = {
       id: 'gaming-crew',
@@ -106,21 +108,22 @@ describe('Category Management Integration', () => {
     };
 
     facade.addCategory(newCategory);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(customCategories.length).toBe(1);
     expect(customCategories[0].name).toBe('Gaming Crew');
 
     let categories: BirthdayCategory[] = [];
     store.select(CategorySelectors.selectAllCategories).subscribe(c => categories = c);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(categories.find(c => c.id === 'gaming-crew')).toBeDefined();
-  }));
+  });
 
-  it('should update existing category', fakeAsync(() => {
+  it('should update existing category', async () => {
+    vi.useFakeTimers();
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     const updatedFamily: BirthdayCategory = {
       id: 'family',
@@ -130,15 +133,16 @@ describe('Category Management Integration', () => {
     };
 
     facade.updateCategory(updatedFamily);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(modifiedCategories.find(c => c.id === 'family')).toBeDefined();
     expect(modifiedCategories.find(c => c.id === 'family')?.name).toBe('Close Family');
-  }));
+  });
 
-  it('should delete and restore category', fakeAsync(() => {
+  it('should delete and restore category', async () => {
+    vi.useFakeTimers();
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     const customCat: BirthdayCategory = {
       id: 'temp-cat',
@@ -148,37 +152,39 @@ describe('Category Management Integration', () => {
     };
 
     facade.addCategory(customCat);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     expect(customCategories.length).toBe(1);
 
     facade.deleteCategory('temp-cat');
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     expect(customCategories.length).toBe(0);
     expect(deletedIds).toContain('temp-cat');
 
     facade.restoreCategory('temp-cat');
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     expect(deletedIds).not.toContain('temp-cat');
-  }));
+  });
 
-  it('should track custom category IDs', fakeAsync(() => {
+  it('should track custom category IDs', async () => {
+    vi.useFakeTimers();
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     facade.addCategory({ id: 'custom-1', name: 'Custom 1', icon: 'star', color: '#FFC107' });
     facade.addCategory({ id: 'custom-2', name: 'Custom 2', icon: 'star', color: '#FF5722' });
-    tick(200);
+    await vi.advanceTimersByTimeAsync(200);
 
     let customIds: string[] = [];
     store.select(CategorySelectors.selectCustomCategoryIds).subscribe(ids => customIds = ids);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(customIds).toContain('custom-1');
     expect(customIds).toContain('custom-2');
     expect(customIds).not.toContain('family');
-  }));
+  });
 
-  it('should preserve modifications after reload', fakeAsync(() => {
+  it('should preserve modifications after reload', async () => {
+    vi.useFakeTimers();
     const modified: BirthdayCategory = {
       id: 'friends',
       name: 'Best Friends',
@@ -188,14 +194,14 @@ describe('Category Management Integration', () => {
     modifiedCategories.push(modified);
 
     facade.loadCategories();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     let categories: BirthdayCategory[] = [];
     store.select(CategorySelectors.selectAllCategories).subscribe(c => categories = c);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     const friendsCat = categories.find(c => c.id === 'friends');
     expect(friendsCat?.name).toBe('Best Friends');
     expect(friendsCat?.icon).toBe('favorite');
-  }));
+  });
 });

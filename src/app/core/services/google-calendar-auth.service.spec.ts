@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -121,7 +121,8 @@ describe('GoogleCalendarAuthService', () => {
       expect(service.tokenClient).toBeTruthy();
     });
 
-    it('wires the error_callback to reject pendingTokenPromise', fakeAsync(() => {
+    it('wires the error_callback to reject pendingTokenPromise', async () => {
+      vi.useFakeTimers();
       service.initTokenClient('client_id', 'scope');
 
       let rejected = false;
@@ -132,11 +133,11 @@ describe('GoogleCalendarAuthService', () => {
 
       const config = vi.mocked((window.google!.accounts.oauth2.initTokenClient as Mock)).mock.lastCall![0];
       config.error_callback({ type: 'popup_closed', message: 'closed' });
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(rejected).toBe(true);
       expect(service.pendingTokenPromise).toBeNull();
-    }));
+    });
   });
 
   // ──────────────────────────────────────────────

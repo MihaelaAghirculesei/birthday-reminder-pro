@@ -1,5 +1,5 @@
-import { NgZone, PLATFORM_ID } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import type { MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../testing/translate-testing';
@@ -159,27 +159,24 @@ describe('GoogleCalendarService', () => {
       auth.initTokenClient('test-client-id', 'test-scopes');
     });
 
-    it('should handle successful token response', fakeAsync(() => {
-      const ngZone = TestBed.inject(NgZone);
-
-      ngZone.run(() => {
-        if (tokenCallback) {
-          tokenCallback({
-            access_token: 'test-token',
-            expires_in: 3600,
-            scope: 'https://www.googleapis.com/auth/calendar',
-            token_type: 'Bearer'
-          });
-        }
-      });
-      tick();
+    it('should handle successful token response', async () => {
+      vi.useFakeTimers();
+      if (tokenCallback) {
+        tokenCallback({
+          access_token: 'test-token',
+          expires_in: 3600,
+          scope: 'https://www.googleapis.com/auth/calendar',
+          token_type: 'Bearer'
+        });
+      }
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith({ access_token: 'test-token' });
       expect(mockSecureStorage.setItem).toHaveBeenCalled();
-    }));
+    });
 
-    it('should handle token error response', fakeAsync(() => {
-      const ngZone = TestBed.inject(NgZone);
+    it('should handle token error response', async () => {
+      vi.useFakeTimers();
       let rejectedError: unknown = null;
 
       const pendingPromise = new Promise<string>((resolve, reject) => {
@@ -190,23 +187,21 @@ describe('GoogleCalendarService', () => {
         rejectedError = error;
       });
 
-      ngZone.run(() => {
-        if (tokenCallback) {
-          tokenCallback({
-            access_token: '',
-            expires_in: 0,
-            scope: '',
-            token_type: '',
-            error: 'access_denied',
-            error_description: 'User denied access'
-          });
-        }
-      });
-      tick();
+      if (tokenCallback) {
+        tokenCallback({
+          access_token: '',
+          expires_in: 0,
+          scope: '',
+          token_type: '',
+          error: 'access_denied',
+          error_description: 'User denied access'
+        });
+      }
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(rejectedError).not.toBeNull();
       expect((rejectedError as Error).message).toBe('User denied access');
-    }));
+    });
 
     it('should revoke token on sign out', async () => {
       currentToken = { access_token: 'test-token' };
@@ -223,7 +218,8 @@ describe('GoogleCalendarService', () => {
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
     });
 
-    it('should request access token on sign in', fakeAsync(() => {
+    it('should request access token on sign in', async () => {
+      vi.useFakeTimers();
       mockTokenClient.requestAccessToken.mockImplementation(() => {
         if (tokenCallback) {
           tokenCallback({
@@ -236,13 +232,13 @@ describe('GoogleCalendarService', () => {
       });
 
       const signInPromise = service.signIn();
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       signInPromise.then(() => {
         expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: 'consent' });
       });
-      tick();
-    }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
   });
 
   describe('Token Refresh', () => {
@@ -257,7 +253,8 @@ describe('GoogleCalendarService', () => {
       }).isSignedInSubject.next(true);
     });
 
-    it('should refresh token when expiring soon', fakeAsync(() => {
+    it('should refresh token when expiring soon', async () => {
+      vi.useFakeTimers();
       const expiresAt = Date.now() + 200000;
       storedData.set('googleCalendarToken', { access_token: 'old-token', expires_at: expiresAt });
 
@@ -273,22 +270,24 @@ describe('GoogleCalendarService', () => {
       });
 
       auth.ensureValidToken();
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' });
-    }));
+    });
 
-    it('should not refresh token when valid', fakeAsync(() => {
+    it('should not refresh token when valid', async () => {
+      vi.useFakeTimers();
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'valid-token', expires_at: expiresAt });
 
       auth.ensureValidToken();
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(mockTokenClient.requestAccessToken).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should retry on 401 error', fakeAsync(() => {
+    it('should retry on 401 error', async () => {
+      vi.useFakeTimers();
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'test-token', expires_at: expiresAt });
 
@@ -318,10 +317,10 @@ describe('GoogleCalendarService', () => {
         executeWithRetry: <T>(op: () => Promise<T>, ctx: string) => Promise<T>;
       })
         .executeWithRetry(operation, 'test');
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(operation).toHaveBeenCalledTimes(2);
-    }));
+    });
   });
 
   describe('Calendar Operations', () => {
@@ -475,7 +474,8 @@ describe('GoogleCalendarService', () => {
   });
 
   describe('Session Restore', () => {
-    it('should restore session from valid stored token', fakeAsync(() => {
+    it('should restore session from valid stored token', async () => {
+      vi.useFakeTimers();
       const expiresAt = Date.now() + 600000;
       storedData.set('googleCalendarToken', { access_token: 'stored-token', expires_at: expiresAt });
 
@@ -483,12 +483,13 @@ describe('GoogleCalendarService', () => {
       loader.isGisLoaded = true;
       auth.initTokenClient('test-client-id', 'test-scopes');
       auth.restoreSession(loader.isGapiLoaded);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(window.gapi?.client.setToken).toHaveBeenCalledWith({ access_token: 'stored-token' });
-    }));
+    });
 
-    it('should clear expired token on restore', fakeAsync(() => {
+    it('should clear expired token on restore', async () => {
+      vi.useFakeTimers();
       const expiresAt = Date.now() - 1000;
       storedData.set('googleCalendarToken', { access_token: 'expired-token', expires_at: expiresAt });
 
@@ -496,10 +497,10 @@ describe('GoogleCalendarService', () => {
       loader.isGisLoaded = true;
       auth.initTokenClient('test-client-id', 'test-scopes');
       auth.restoreSession(loader.isGapiLoaded);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('googleCalendarToken');
-    }));
+    });
   });
 
   describe('isInitialized', () => {

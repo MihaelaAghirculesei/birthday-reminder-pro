@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
@@ -224,26 +224,28 @@ describe('BirthdayEditService', () => {
   });
 
   describe('scheduleAutoSave', () => {
-    it('should call callback after debounce delay', fakeAsync(() => {
+    it('should call callback after debounce delay', async () => {
+      vi.useFakeTimers();
       const callback = vi.fn();
       service.scheduleAutoSave(callback);
-      tick(1999);
+      await vi.advanceTimersByTimeAsync(1999);
       expect(callback).not.toHaveBeenCalled();
-      tick(1);
+      await vi.advanceTimersByTimeAsync(1);
       expect(callback).toHaveBeenCalledTimes(1);
-    }));
+    });
 
-    it('should debounce multiple calls and only execute the last', fakeAsync(() => {
+    it('should debounce multiple calls and only execute the last', async () => {
+      vi.useFakeTimers();
       const callback1 = vi.fn();
       const callback2 = vi.fn();
 
       service.scheduleAutoSave(callback1);
-      tick(500);
+      await vi.advanceTimersByTimeAsync(500);
       service.scheduleAutoSave(callback2);
-      tick(2000);
+      await vi.advanceTimersByTimeAsync(2000);
 
       expect(callback1).not.toHaveBeenCalled();
       expect(callback2).toHaveBeenCalledTimes(1);
-    }));
+    });
   });
 });

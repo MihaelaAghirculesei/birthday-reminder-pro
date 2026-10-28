@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { type NotificationMessage, NotificationService } from './notification.service';
 
@@ -55,26 +55,28 @@ describe('NotificationService', () => {
     });
   });
 
-  it('should auto-remove notification after duration', fakeAsync(() => {
+  it('should auto-remove notification after duration', async () => {
+    vi.useFakeTimers();
     let notifications: NotificationMessage[] = [];
     service.notifications.subscribe(n => notifications = n);
 
     service.show('test', 'info', 1000);
     expect(notifications.length).toBe(1);
 
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     expect(notifications.length).toBe(0);
-  }));
+  });
 
-  it('should not auto-remove when duration is 0', fakeAsync(() => {
+  it('should not auto-remove when duration is 0', async () => {
+    vi.useFakeTimers();
     let notifications: NotificationMessage[] = [];
     service.notifications.subscribe(n => notifications = n);
 
     service.show('test', 'info', 0);
-    tick(5000);
+    await vi.advanceTimersByTimeAsync(5000);
 
     expect(notifications.length).toBe(1);
-  }));
+  });
 
   it('should store action when provided', async () => {
     const action = { label: 'Retry', callback: vi.fn() };

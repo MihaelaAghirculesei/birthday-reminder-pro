@@ -1,4 +1,4 @@
-import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -127,19 +127,21 @@ describe('BirthdayListComponent', () => {
   });
 
   describe('Test data management', () => {
-    it('should emit addTestData and set loading state', fakeAsync(() => {
+    it('should emit addTestData and set loading state', async () => {
+      vi.useFakeTimers();
       vi.spyOn(component.addTestData, 'emit');
       component.onAddTestData();
 
       expect(component.isAddingTestData()).toBe(true);
       expect(component.addTestData.emit).toHaveBeenCalled();
 
-      tick(2000);
+      await vi.advanceTimersByTimeAsync(2000);
 
       expect(component.isAddingTestData()).toBe(false);
-    }));
+    });
 
-    it('should emit clearAllData and set clearing state', fakeAsync(() => {
+    it('should emit clearAllData and set clearing state', async () => {
+      vi.useFakeTimers();
       const mockDialogRef = {
         afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
       } as unknown as MockedObject<MatDialogRef<unknown>>;
@@ -152,10 +154,10 @@ describe('BirthdayListComponent', () => {
       expect(component.isClearingData()).toBe(true);
       expect(component.clearAllData.emit).toHaveBeenCalled();
 
-      tick(2000);
+      await vi.advanceTimersByTimeAsync(2000);
 
       expect(component.isClearingData()).toBe(false);
-    }));
+    });
   });
 
   describe('Birthdays imported', () => {

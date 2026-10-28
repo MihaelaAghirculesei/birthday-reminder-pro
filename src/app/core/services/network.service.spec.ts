@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { discardPeriodicTasks, fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { type Subscription } from 'rxjs';
 import type { Mock } from 'vitest';
 
@@ -155,70 +155,60 @@ describe('NetworkService', () => {
     });
 
     it('performHealthCheck resolves false when fetch rejects', async () => {
-      fetchSpy.mockReturnValue(Promise.reject(new TypeError('Failed to fetch')));
+      fetchSpy.mockRejectedValue(new TypeError('Failed to fetch'));
       service = TestBed.inject(NetworkService);
       const result = await (service as TestableService).performHealthCheck();
       expect(result).toBe(false);
     });
 
-    it('should mark offline when periodic health check fails', fakeAsync(() => {
+    it('should mark offline when periodic health check fails', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(NetworkService);
       vi.spyOn(service as TestableService, 'performHealthCheck').mockReturnValue(Promise.resolve(false));
 
-      tick(30000);
-      flushMicrotasks();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(30000);
 
       expect(service.isOnline).toBe(false);
-      discardPeriodicTasks();
-    }));
+    });
 
-    it('should remain online when periodic health check succeeds', fakeAsync(() => {
+    it('should remain online when periodic health check succeeds', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(NetworkService);
       vi.spyOn(service as TestableService, 'performHealthCheck').mockReturnValue(Promise.resolve(true));
 
-      tick(30000);
-      flushMicrotasks();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(30000);
 
       expect(service.isOnline).toBe(true);
-      discardPeriodicTasks();
-    }));
+    });
 
-    it('should recover to online after health check succeeds following failure', fakeAsync(() => {
+    it('should recover to online after health check succeeds following failure', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(NetworkService);
       const healthCheckSpy = vi.spyOn(service as TestableService, 'performHealthCheck').mockReturnValue(Promise.resolve(false));
 
-      tick(30000);
-      flushMicrotasks();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(30000);
       expect(service.isOnline).toBe(false);
 
       healthCheckSpy.mockReturnValue(Promise.resolve(true));
-      tick(30000);
-      flushMicrotasks();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(30000);
       expect(service.isOnline).toBe(true);
+    });
 
-      discardPeriodicTasks();
-    }));
-
-    it('should not emit when health check confirms current online state', fakeAsync(() => {
+    it('should not emit when health check confirms current online state', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(NetworkService);
       vi.spyOn(service as TestableService, 'performHealthCheck').mockReturnValue(Promise.resolve(true));
       let emitCount = 0;
       subscription = service.online$.subscribe(() => emitCount++);
       const initial = emitCount;
 
-      tick(30000);
-      flushMicrotasks();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(30000);
 
       expect(emitCount).toBe(initial);
-      discardPeriodicTasks();
-    }));
+    });
 
-    it('performHealthCheck resolves false when abort timeout fires', fakeAsync(() => {
+    it('performHealthCheck resolves false when abort timeout fires', async () => {
+      vi.useFakeTimers();
       fetchSpy.mockImplementation((_url: string, options?: RequestInit) => new Promise<Response>((_, reject) => {
         options?.signal?.addEventListener('abort', () => reject(new DOMException('The user aborted a request.', 'AbortError')));
         // intentionally never resolves — simulates a hanging server
@@ -228,12 +218,10 @@ describe('NetworkService', () => {
       let result: boolean | undefined;
       (service as TestableService).performHealthCheck().then((val: boolean) => { result = val; });
 
-      tick(5000); // fires setTimeout → controller.abort()
-      flushMicrotasks(); // .then error callback: clearTimeout + return false
-      flushMicrotasks(); // outer .then: result = false
+      await vi.advanceTimersByTimeAsync(5000); // fires setTimeout → controller.abort()
 
       expect(result).toBe(false);
-    }));
+    });
 
     it('should not call fetch in server environment', () => {
       TestBed.resetTestingModule();

@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject } from 'rxjs';
 import type { Mock, MockedObject } from 'vitest';
@@ -67,78 +67,84 @@ describe('ThemeService', () => {
       expect(storeSpy.dispatch).toHaveBeenCalledWith(UIActions.setDarkMode({ enabled: true }));
     });
 
-    it('should apply dark theme class on initial load without transition', fakeAsync(() => {
+    it('should apply dark theme class on initial load without transition', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(true);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(document.body.classList.contains('dark-theme')).toBe(true);
       // No transition on the very first apply (initial page load)
       expect(document.body.classList.contains('theme-transitioning')).toBe(false);
-    }));
+    });
 
-    it('should add transition on user-triggered toggle after initial load', fakeAsync(() => {
+    it('should add transition on user-triggered toggle after initial load', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(ThemeService);
-      tick(); // flush initial apply (first apply, isFirstApply set to false)
+      await vi.advanceTimersByTimeAsync(0); // flush initial apply (first apply, isFirstApply set to false)
 
       darkModeSubject.next(true); // second apply — simulates user toggle
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(document.body.classList.contains('dark-theme')).toBe(true);
       expect(document.body.classList.contains('theme-transitioning')).toBe(true);
 
-      tick(600);
+      await vi.advanceTimersByTimeAsync(600);
       expect(document.body.classList.contains('theme-transitioning')).toBe(false);
-    }));
+    });
 
-    it('should remove dark theme class from body when disabled', fakeAsync(() => {
+    it('should remove dark theme class from body when disabled', async () => {
+      vi.useFakeTimers();
       document.body.classList.add('dark-theme');
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(false);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(document.body.classList.contains('dark-theme')).toBe(false);
-      tick(600);
-    }));
+      await vi.advanceTimersByTimeAsync(600);
+    });
 
-    it('should save theme preference to localStorage', fakeAsync(() => {
+    it('should save theme preference to localStorage', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(true);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(localStorage.setItem).toHaveBeenCalledWith('birthday-app-dark-mode', 'true');
-      tick(600);
-    }));
+      await vi.advanceTimersByTimeAsync(600);
+    });
 
-    it('should update localStorage when theme changes', fakeAsync(() => {
+    it('should update localStorage when theme changes', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(ThemeService);
       darkModeSubject.next(true);
-      tick(600);
+      await vi.advanceTimersByTimeAsync(600);
       darkModeSubject.next(false);
-      tick(600);
+      await vi.advanceTimersByTimeAsync(600);
 
       expect(localStorage.setItem).toHaveBeenCalledWith('birthday-app-dark-mode', 'false');
-    }));
+    });
 
-    it('should cancel the previous timer when theme changes rapidly', fakeAsync(() => {
+    it('should cancel the previous timer when theme changes rapidly', async () => {
+      vi.useFakeTimers();
       service = TestBed.inject(ThemeService);
-      tick(); // flush initial apply so isFirstApply is false
+      await vi.advanceTimersByTimeAsync(0); // flush initial apply so isFirstApply is false
 
       // Toggle theme 3 times in rapid succession (within 600 ms window)
       darkModeSubject.next(true);
-      tick(100);
+      await vi.advanceTimersByTimeAsync(100);
       darkModeSubject.next(false);
-      tick(100);
+      await vi.advanceTimersByTimeAsync(100);
       darkModeSubject.next(true);
-      tick(100);
+      await vi.advanceTimersByTimeAsync(100);
 
       // After only 300 ms total, the class should still be present (last timer pending)
       expect(document.body.classList.contains('theme-transitioning')).toBe(true);
 
       // Advance past the single surviving timer
-      tick(500);
+      await vi.advanceTimersByTimeAsync(500);
       expect(document.body.classList.contains('theme-transitioning')).toBe(false);
-    }));
+    });
   });
 
   describe('Server-side rendering', () => {
