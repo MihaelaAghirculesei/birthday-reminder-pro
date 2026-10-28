@@ -14,6 +14,13 @@ describe('NotificationPermissionBannerComponent', () => {
   let mockSecureStorage: MockedObject<SecureStorageService>;
   let permissionStatusSubject: BehaviorSubject<NotificationPermission>;
 
+  // ngOnInit awaits secure storage; without zone.js whenStable() does not wait for that
+  // chain, so let a macrotask pass first.
+  const settle = async () => {
+    await new Promise((resolve) => setTimeout(resolve));
+    await fixture.whenStable();
+  };
+
   beforeEach(async () => {
     permissionStatusSubject = new BehaviorSubject<NotificationPermission>('default');
     mockPermissionService = {
@@ -58,35 +65,35 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('ngOnInit', () => {
     it('should show banner when supported and permission is default', async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(true);
     });
 
     it('should not show banner when not supported', async () => {
       mockPermissionService.isSupported.mockReturnValue(false);
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(false);
     });
 
     it('should not show banner when permission is granted', async () => {
       mockPermissionService.getCurrentPermission.mockReturnValue('granted');
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(false);
     });
 
     it('should still show banner (denied variant) when permission is denied', async () => {
       mockPermissionService.getCurrentPermission.mockReturnValue('denied');
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(true);
       expect(component.isDenied()).toBe(true);
     });
 
     it('should not mark isDenied when permission is default', async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.isDenied()).toBe(false);
     });
 
@@ -94,7 +101,7 @@ describe('NotificationPermissionBannerComponent', () => {
       const recentTimestamp = Date.now() - (1000 * 60 * 60);
       mockSecureStorage.getItem.mockReturnValue(Promise.resolve(recentTimestamp.toString()));
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(false);
     });
 
@@ -102,14 +109,14 @@ describe('NotificationPermissionBannerComponent', () => {
       const oldTimestamp = Date.now() - (8 * 24 * 60 * 60 * 1000);
       mockSecureStorage.getItem.mockReturnValue(Promise.resolve(oldTimestamp.toString()));
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(true);
       expect(mockSecureStorage.removeItem).toHaveBeenCalledWith('notificationBannerDismissed');
     });
 
     it('should update shouldShow when permission status changes', async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component.shouldShow()).toBe(true);
 
       mockPermissionService.getCurrentPermission.mockReturnValue('granted');
@@ -123,7 +130,7 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('cleanup', () => {
     it('should use DestroyRef for subscription cleanup', async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       expect(component['destroyRef']).toBeTruthy();
     });
   });
@@ -131,7 +138,7 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('requestPermission', () => {
     beforeEach(async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
     });
 
     it('should set isRequesting to true during request', async () => {
@@ -166,7 +173,7 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('dismiss', () => {
     beforeEach(async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
     });
 
     it('should set dismissed to true', () => {
@@ -203,7 +210,7 @@ describe('NotificationPermissionBannerComponent', () => {
     beforeEach(async () => {
       mockPermissionService.getCurrentPermission.mockReturnValue('denied');
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       fixture.detectChanges();
     });
 
@@ -233,7 +240,7 @@ describe('NotificationPermissionBannerComponent', () => {
   describe('accessibility', () => {
     beforeEach(async () => {
       fixture.detectChanges();
-      await fixture.whenStable();
+      await settle();
       fixture.detectChanges(); // flush signal-driven re-render after async ngOnInit
     });
 

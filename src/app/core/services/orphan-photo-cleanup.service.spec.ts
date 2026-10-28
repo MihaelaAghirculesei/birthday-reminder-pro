@@ -334,7 +334,7 @@ describe('OrphanPhotoCleanupService', () => {
       stMock.ref.mockReturnValue({});
       stMock.listAll.mockResolvedValue({ items: [orphan1, orphan2] });
       // First succeeds, second fails
-      stMock.deleteObject.mockReturnValueOnce(Promise.resolve()).mockReturnValueOnce(Promise.reject(new Error('quota')));
+      stMock.deleteObject.mockReturnValueOnce(Promise.resolve()).mockRejectedValueOnce(new Error('quota'));
 
       vi.spyOn(storageGetters, 'initFirebase').mockResolvedValue(undefined);
       vi.spyOn(storageGetters, 'getFirebaseStorage').mockReturnValue({} as never);

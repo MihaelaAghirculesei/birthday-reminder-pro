@@ -115,7 +115,7 @@ describe('AuthButtonComponent', () => {
   });
 
   it('should dispatch signInFailure with error message when sign-in throws an Error', async () => {
-    authServiceMock.performGoogleSignInDirect.mockReturnValue(Promise.reject(new Error('popup closed')));
+    authServiceMock.performGoogleSignInDirect.mockRejectedValue(new Error('popup closed'));
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     await component.signIn();
@@ -124,7 +124,7 @@ describe('AuthButtonComponent', () => {
   });
 
   it('should dispatch signInFailure with fallback message when sign-in throws a non-Error', async () => {
-    authServiceMock.performGoogleSignInDirect.mockReturnValue(Promise.reject('unknown'));
+    authServiceMock.performGoogleSignInDirect.mockRejectedValue('unknown');
     const dispatchSpy = vi.spyOn(store, 'dispatch');
 
     await component.signIn();

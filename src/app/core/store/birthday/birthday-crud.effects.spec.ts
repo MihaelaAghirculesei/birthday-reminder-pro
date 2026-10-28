@@ -133,7 +133,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should handle load birthdays failure', async () => {
       const error = new Error('Load failed');
-      offlineStorageMock.getBirthdays.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.getBirthdays.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.loadBirthdays());
 
@@ -172,7 +172,7 @@ describe('BirthdayCrudEffects', () => {
     it('should handle add birthday failure', async () => {
       const newBirthday = { name: 'Jane Doe', birthDate: '1995-06-20', category: 'Friends' };
       const error = new Error('Add failed');
-      offlineStorageMock.addBirthday.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.addBirthday.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.addBirthday({ birthday: newBirthday as Birthday }));
 
@@ -207,7 +207,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should handle update birthday failure', async () => {
       const error = new Error('Update failed');
-      offlineStorageMock.updateBirthday.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.updateBirthday.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: mockBirthday, operationId: 'op-1' }));
 
@@ -253,7 +253,7 @@ describe('BirthdayCrudEffects', () => {
       store.overrideSelector(BirthdaySelectors.selectOptimisticBackup, [{ operationId: '1', entityId: '1', snapshot: mockBirthday }]);
       store.refreshState();
       const error = new Error('Delete failed');
-      offlineStorageMock.deleteBirthday.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.deleteBirthday.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.deleteBirthday({ id: '1' }));
 
@@ -303,7 +303,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should handle clear all birthdays failure', async () => {
       const error = new Error('Clear failed');
-      offlineStorageMock.clear.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.clear.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.clearAllBirthdays());
 
@@ -343,7 +343,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should dispatch importBirthdaysFailure on storage error', async () => {
       const error = new Error('Import failed');
-      offlineStorageMock.addBirthdays.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.addBirthdays.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.importBirthdays({ birthdays: birthdaysToImport }));
 
@@ -364,7 +364,7 @@ describe('BirthdayCrudEffects', () => {
 
     it('should dispatch loadTestDataFailure on storage error', async () => {
       const error = new Error('Save failed');
-      offlineStorageMock.saveBirthdays.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.saveBirthdays.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.loadTestData());
 

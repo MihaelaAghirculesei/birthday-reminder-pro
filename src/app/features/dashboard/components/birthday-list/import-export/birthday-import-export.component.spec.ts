@@ -210,7 +210,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should handle JSON import error', async () => {
       vi.spyOn(console, 'error');
-      backupServiceSpy.importFromFile.mockReturnValue(Promise.reject(new Error('Invalid file')));
+      backupServiceSpy.importFromFile.mockRejectedValue(new Error('Invalid file'));
 
       await component.onImportBackup(mockEvent as unknown as Event);
 
@@ -221,7 +221,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should handle CSV import error', async () => {
       vi.spyOn(console, 'error');
-      backupServiceSpy.importFromCSV.mockReturnValue(Promise.reject(new Error('Invalid file')));
+      backupServiceSpy.importFromCSV.mockRejectedValue(new Error('Invalid file'));
 
       await component.onImportCSV(mockEvent as unknown as Event);
 
@@ -232,7 +232,7 @@ describe('BirthdayImportExportComponent', () => {
 
     it('should handle vCard import error', async () => {
       vi.spyOn(console, 'error');
-      backupServiceSpy.importFromVCard.mockReturnValue(Promise.reject(new Error('Invalid file')));
+      backupServiceSpy.importFromVCard.mockRejectedValue(new Error('Invalid file'));
 
       await component.onImportVCard(mockEvent as unknown as Event);
 

@@ -164,7 +164,7 @@ describe('NotificationPermissionService', () => {
 
     it('should handle request permission error', async () => {
       windowRef.Notification!.permission = 'default';
-      windowRef.Notification!.requestPermission = vi.fn().mockReturnValue(Promise.reject(new Error('Permission request failed')));
+      windowRef.Notification!.requestPermission = vi.fn().mockRejectedValue(new Error('Permission request failed'));
 
       const result = await service.requestPermission();
 
