@@ -8,6 +8,7 @@ import type { Mock, MockedObject } from 'vitest';
 
 import { provideTranslateTesting } from '../../../../testing/translate-testing';
 import { CategoryFacadeService } from '../../../core';
+import { initialBirthdayState } from '../../../core/store/birthday/birthday.reducer';
 import * as BirthdaySelectors from '../../../core/store/birthday/birthday.selectors';
 import { type Birthday } from '../../../shared/models';
 import { createMockBirthday } from '../../../testing/mock-data/birthday-mock.data';
@@ -56,7 +57,8 @@ describe('MessageScheduleDialogComponent', () => {
     TestBed.configureTestingModule({
       imports: [MessageScheduleDialogComponent, BrowserAnimationsModule],
       providers: [
-        provideMockStore(),
+        // Real state shape: after resetSelectors() a pending emission runs the real selectors.
+        provideMockStore({ initialState: { birthdays: initialBirthdayState } }),
         { provide: MatDialogRef, useValue: mockDialogRef },
         { provide: MAT_DIALOG_DATA, useValue: data },
         { provide: CategoryFacadeService, useValue: mockCategoryFacade },

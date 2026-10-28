@@ -108,7 +108,7 @@ describe('BirthdayCalendarSyncEffects', () => {
 
     it('should dispatch calendarSyncFailed when IndexedDB update fails', async () => {
       calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.resolve('event-x'));
-      offlineStorageMock.updateBirthday.mockReturnValue(Promise.reject(new Error('DB error')));
+      offlineStorageMock.updateBirthday.mockRejectedValue(new Error('DB error'));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
@@ -121,7 +121,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should dispatch calendarSyncFailed when syncToCalendar throws', async () => {
-      calendarIntegrationMock.syncToCalendar.mockReturnValue(Promise.reject(new Error('Network error')));
+      calendarIntegrationMock.syncToCalendar.mockRejectedValue(new Error('Network error'));
 
       actions$ = of(BirthdayActions.addBirthdaySuccess({ birthday: mockBirthday }));
 
@@ -155,7 +155,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should dispatch calendarSyncFailed when updateInCalendar fails', async () => {
-      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(new Error('Calendar error')));
+      calendarIntegrationMock.updateInCalendar.mockRejectedValue(new Error('Calendar error'));
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
@@ -215,7 +215,7 @@ describe('BirthdayCalendarSyncEffects', () => {
     });
 
     it('should dispatch calendarSyncFailed when deleteFromCalendar fails', async () => {
-      calendarIntegrationMock.deleteFromCalendar.mockReturnValue(Promise.reject(new Error('Delete error')));
+      calendarIntegrationMock.deleteFromCalendar.mockRejectedValue(new Error('Delete error'));
       store.setState({
         birthdays: {
           ...initialState.birthdays,
@@ -273,7 +273,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       const authError = Object.assign(new Error('Authentication expired. Please sign in again.'), {
         googleApiDetails: { code: 401 }
       });
-      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(authError));
+      calendarIntegrationMock.updateInCalendar.mockRejectedValue(authError);
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 
@@ -293,7 +293,7 @@ describe('BirthdayCalendarSyncEffects', () => {
       const rateLimitError = Object.assign(new Error('Too many requests.'), {
         googleApiDetails: { code: 429 }
       });
-      calendarIntegrationMock.updateInCalendar.mockReturnValue(Promise.reject(rateLimitError));
+      calendarIntegrationMock.updateInCalendar.mockRejectedValue(rateLimitError);
 
       actions$ = of(BirthdayActions.updateBirthday({ birthday: birthdayWithEvent, operationId: 'op-cal-1' }));
 

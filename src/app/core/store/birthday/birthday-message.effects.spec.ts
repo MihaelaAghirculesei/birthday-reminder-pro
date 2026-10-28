@@ -125,7 +125,7 @@ describe('BirthdayMessageEffects', () => {
         createdDate: new Date()
       };
       const error = new Error('Add message failed');
-      offlineStorageMock.saveScheduledMessage.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.saveScheduledMessage.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.addMessageToBirthday({ birthdayId: '1', message }));
 
@@ -231,7 +231,7 @@ describe('BirthdayMessageEffects', () => {
 
     it('should handle update message failure', async () => {
       const error = new Error('Update failed');
-      offlineStorageMock.getScheduledMessagesByBirthday.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.getScheduledMessagesByBirthday.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.updateMessageInBirthday({ birthdayId: '1', messageId: 'msg1', updates: {} }));
 
@@ -318,7 +318,7 @@ describe('BirthdayMessageEffects', () => {
 
     it('should handle delete message failure', async () => {
       const error = new Error('Delete failed');
-      offlineStorageMock.deleteScheduledMessage.mockReturnValue(Promise.reject(error));
+      offlineStorageMock.deleteScheduledMessage.mockRejectedValue(error);
 
       actions$ = of(BirthdayActions.deleteMessageFromBirthday({ birthdayId: '1', messageId: 'msg1' }));
 

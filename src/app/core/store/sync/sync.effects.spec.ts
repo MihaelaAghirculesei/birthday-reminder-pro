@@ -88,7 +88,7 @@ describe('SyncEffects', () => {
     });
 
     it('should dispatch migrationFailure on error', async () => {
-      syncCoordinatorMock.migrateLocalToCloud.mockReturnValue(Promise.reject(new Error('Migration failed')));
+      syncCoordinatorMock.migrateLocalToCloud.mockRejectedValue(new Error('Migration failed'));
       actions$ = of(SyncActions.migrateLocalToCloud());
 
       effects.migrateLocalToCloud$.subscribe((action) => {
@@ -151,7 +151,7 @@ describe('SyncEffects', () => {
     });
 
     it('should dispatch syncFailure on error', async () => {
-      offlineStorageMock.getBirthdays.mockReturnValue(Promise.reject(new Error('DB error')));
+      offlineStorageMock.getBirthdays.mockRejectedValue(new Error('DB error'));
 
       actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [] }));
 
@@ -256,7 +256,7 @@ describe('SyncEffects', () => {
     });
 
     it('should dispatch pushChangesFailure on error', async () => {
-      syncCoordinatorMock.processPendingChanges.mockReturnValue(Promise.reject(new Error('network error')));
+      syncCoordinatorMock.processPendingChanges.mockRejectedValue(new Error('network error'));
       actions$ = of(SyncActions.pushPendingChanges());
 
       effects.pushPendingChanges$.subscribe((action) => {

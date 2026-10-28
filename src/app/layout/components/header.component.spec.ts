@@ -110,7 +110,7 @@ describe('HeaderComponent', () => {
 
   it('dispatches signInFailure when performGoogleSignInDirect rejects', async () => {
     const authService = TestBed.inject(FirebaseAuthService);
-    (authService.performGoogleSignInDirect as Mock).mockReturnValue(Promise.reject(new Error('popup closed')));
+    (authService.performGoogleSignInDirect as Mock).mockRejectedValue(new Error('popup closed'));
     vi.spyOn(store, 'dispatch');
 
     await component.signInDirect();

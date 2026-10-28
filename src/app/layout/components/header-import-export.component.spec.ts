@@ -139,7 +139,7 @@ describe('HeaderImportExportComponent', () => {
     });
 
     it('should show error when import throws', async () => {
-      mockBackupService.importFromFile.mockReturnValue(Promise.reject(new Error('Parse error')));
+      mockBackupService.importFromFile.mockRejectedValue(new Error('Parse error'));
 
       await component.onImportJSON({ target: mockInput } as unknown as Event);
 

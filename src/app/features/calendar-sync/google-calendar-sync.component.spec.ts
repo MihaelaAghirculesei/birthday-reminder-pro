@@ -174,7 +174,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign in error', async () => {
-      googleCalendarServiceSpy.signIn.mockReturnValue(Promise.reject(new Error('Sign in failed')));
+      googleCalendarServiceSpy.signIn.mockRejectedValue(new Error('Sign in failed'));
 
       await component.signIn();
 
@@ -208,7 +208,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sign out error', async () => {
-      googleCalendarServiceSpy.signOut.mockReturnValue(Promise.reject(new Error('Sign out failed')));
+      googleCalendarServiceSpy.signOut.mockRejectedValue(new Error('Sign out failed'));
 
       await expect(component.signOut()).resolves.not.toThrow();
     });
@@ -227,7 +227,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle calendar loading error', async () => {
-      googleCalendarServiceSpy.getCalendars.mockReturnValue(Promise.reject(new Error('Failed to load calendars')));
+      googleCalendarServiceSpy.getCalendars.mockRejectedValue(new Error('Failed to load calendars'));
 
       await expect(component.loadCalendars()).resolves.not.toThrow();
     });
@@ -262,7 +262,7 @@ describe('GoogleCalendarSyncComponent', () => {
     });
 
     it('should handle sync error', async () => {
-      googleCalendarServiceSpy.syncAllBirthdays.mockReturnValue(Promise.reject(new Error('Sync failed')));
+      googleCalendarServiceSpy.syncAllBirthdays.mockRejectedValue(new Error('Sync failed'));
 
       await component.syncAllBirthdays();
 

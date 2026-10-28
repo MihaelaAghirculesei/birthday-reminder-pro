@@ -69,7 +69,7 @@ describe('initSwErrorLogging', () => {
     it('should log registration failures', async () => {
       const registrationError = new Error('SW script not found');
       const swMock = {
-        register: vi.fn().mockReturnValue(Promise.reject(registrationError))
+        register: vi.fn().mockRejectedValue(registrationError)
       };
       Object.defineProperty(navigator, 'serviceWorker', {
         value: swMock,
