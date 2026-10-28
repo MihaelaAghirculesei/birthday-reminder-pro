@@ -149,4 +149,50 @@ describe('NotificationComponent', () => {
       notificationsSubject.next(testNotifications);
     });
   });
+
+  describe('template', () => {
+    const show = async (notifications: NotificationMessage[]) => {
+      notificationsSubject.next(notifications);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return fixture.nativeElement as HTMLElement;
+    };
+
+    it('should render one toast per notification with its type, icon and message', async () => {
+      const el = await show([
+        { id: '1', message: 'Saved', type: 'success' },
+        { id: '2', message: 'Failed', type: 'error' },
+      ]);
+
+      const toasts = el.querySelectorAll('[data-testid="notification"]');
+      expect(toasts).toHaveLength(2);
+      expect(toasts[0].classList).toContain('notification-success');
+      expect(toasts[0].querySelector('.notification-icon')?.textContent?.trim()).toBe('check_circle');
+      expect(toasts[1].querySelector('.notification-message')?.textContent).toBe('Failed');
+    });
+
+    it('should show the action button only when the notification has an action', async () => {
+      const callback = vi.fn();
+      const el = await show([
+        { id: '1', message: 'Plain', type: 'info' },
+        { id: '2', message: 'Offline', type: 'warning', action: { label: 'Retry', callback } },
+      ]);
+
+      const actions = el.querySelectorAll<HTMLButtonElement>('[data-testid="notification-action"]');
+      expect(actions).toHaveLength(1);
+      expect(actions[0].textContent?.trim()).toBe('Retry');
+
+      actions[0].click();
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(mockNotificationService.remove).toHaveBeenCalledWith('2');
+    });
+
+    it('should remove the notification when its close button is clicked', async () => {
+      const el = await show([{ id: 'n-1', message: 'Hello', type: 'info' }]);
+
+      el.querySelector<HTMLButtonElement>('[data-testid="close-notification"]')?.click();
+
+      expect(mockNotificationService.remove).toHaveBeenCalledWith('n-1');
+    });
+  });
 });
