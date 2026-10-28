@@ -1,3 +1,10 @@
+## [1.2.30](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.29...v1.2.30) (2026-10-28)
+
+
+### Bug Fixes
+
+* **health-check:** detect resolved Dependabot alerts from main activity ([a1e21b5](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a1e21b598fdf37e1163c290f177ca71710219f6e))
+
 ## [1.2.29](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.28...v1.2.29) (2026-10-27)
 
 
