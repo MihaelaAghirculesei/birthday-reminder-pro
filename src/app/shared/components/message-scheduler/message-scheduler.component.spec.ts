@@ -1,4 +1,4 @@
-import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { type MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
@@ -399,7 +399,8 @@ describe('MessageSchedulerComponent', () => {
   });
 
   describe('deleteMessage', () => {
-    it('should delete message after confirmation', fakeAsync(() => {
+    it('should delete message after confirmation', async () => {
+      vi.useFakeTimers();
       const mockDialogRef = {
         afterClosed: vi.fn().mockName('MatDialogRef.afterClosed')
       } as unknown as MockedObject<MatDialogRef<unknown>>;
@@ -409,11 +410,11 @@ describe('MessageSchedulerComponent', () => {
       vi.spyOn(store, 'dispatch');
 
       component.deleteMessage(mockMessage);
-      tick();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(store.dispatch).toHaveBeenCalled();
       expect(notificationServiceMock.show).toHaveBeenCalledWith('Message deleted', 'success');
-    }));
+    });
 
     it('should not delete when confirmation is cancelled', () => {
       const mockDialogRef = {

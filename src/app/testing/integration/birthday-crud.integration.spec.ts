@@ -1,5 +1,5 @@
 import { PLATFORM_ID } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore, Store } from '@ngrx/store';
 import type { MockedObject } from 'vitest';
@@ -112,7 +112,8 @@ describe('Birthday CRUD Integration', () => {
     store = TestBed.inject(Store);
   });
 
-  it('should complete full CRUD cycle', fakeAsync(() => {
+  it('should complete full CRUD cycle', async () => {
+    vi.useFakeTimers();
     const newBirthday = {
       name: 'Integration Test User',
       birthDate: '1990-06-15',
@@ -121,7 +122,7 @@ describe('Birthday CRUD Integration', () => {
     };
 
     store.dispatch(BirthdayActions.addBirthday({ birthday: newBirthday }));
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays.length).toBe(1);
     expect(storedBirthdays[0].name).toBe('Integration Test User');
@@ -129,7 +130,7 @@ describe('Birthday CRUD Integration', () => {
 
     let birthdays: Birthday[] = [];
     store.select(BirthdaySelectors.selectAllBirthdays).subscribe(b => birthdays = b);
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(birthdays.length).toBe(1);
     expect(birthdays[0].id).toBe(createdId);
@@ -140,18 +141,19 @@ describe('Birthday CRUD Integration', () => {
       notes: 'Updated notes'
     };
     store.dispatch(BirthdayActions.updateBirthday({ birthday: updatedBirthday, operationId: crypto.randomUUID() }));
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays[0].name).toBe('Updated Name');
     expect(storedBirthdays[0].notes).toBe('Updated notes');
 
     store.dispatch(BirthdayActions.deleteBirthday({ id: createdId }));
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays.length).toBe(0);
-  }));
+  });
 
-  it('should handle multiple birthdays correctly', fakeAsync(() => {
+  it('should handle multiple birthdays correctly', async () => {
+    vi.useFakeTimers();
     const birthdays = [
       { name: 'User A', birthDate: '1990-01-01', category: 'family' },
       { name: 'User B', birthDate: '1991-02-02', category: 'friends' },
@@ -159,32 +161,34 @@ describe('Birthday CRUD Integration', () => {
     ];
 
     birthdays.forEach(b => store.dispatch(BirthdayActions.addBirthday({ birthday: b })));
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     expect(storedBirthdays.length).toBe(3);
 
     const idToDelete = storedBirthdays[1].id;
     store.dispatch(BirthdayActions.deleteBirthday({ id: idToDelete }));
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays.length).toBe(2);
     expect(storedBirthdays.find(b => b.id === idToDelete)).toBeUndefined();
-  }));
+  });
 
-  it('should clear all birthdays', fakeAsync(() => {
+  it('should clear all birthdays', async () => {
+    vi.useFakeTimers();
     store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: '2000-01-01', category: 'family' } }));
     store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: '2000-01-01', category: 'friends' } }));
-    tick(200);
+    await vi.advanceTimersByTimeAsync(200);
 
     expect(storedBirthdays.length).toBe(2);
 
     store.dispatch(BirthdayActions.clearAllBirthdays());
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays.length).toBe(0);
-  }));
+  });
 
-  it('should assign zodiac sign automatically', fakeAsync(() => {
+  it('should assign zodiac sign automatically', async () => {
+    vi.useFakeTimers();
     store.dispatch(BirthdayActions.addBirthday({
       birthday: {
         name: 'Leo Person',
@@ -192,18 +196,19 @@ describe('Birthday CRUD Integration', () => {
         category: 'friends'
       }
     }));
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
 
     expect(storedBirthdays[0].zodiacSign).toBe('Leo');
-  }));
+  });
 
-  it('should generate unique IDs', fakeAsync(() => {
+  it('should generate unique IDs', async () => {
+    vi.useFakeTimers();
     store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 1', birthDate: '2000-01-01', category: 'family' } }));
     store.dispatch(BirthdayActions.addBirthday({ birthday: { name: 'User 2', birthDate: '2000-02-02', category: 'family' } }));
-    tick(200);
+    await vi.advanceTimersByTimeAsync(200);
 
     expect(storedBirthdays[0].id).toBeDefined();
     expect(storedBirthdays[1].id).toBeDefined();
     expect(storedBirthdays[0].id).not.toBe(storedBirthdays[1].id);
-  }));
+  });
 });

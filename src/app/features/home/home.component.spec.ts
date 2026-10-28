@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import { type ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import type { MockedObject } from 'vitest';
@@ -107,7 +107,8 @@ describe('HomeComponent', () => {
   });
 
   describe('addTestData', () => {
-    it('should dispatch loadTestData and set isAddingTestData to true then false', fakeAsync(() => {
+    it('should dispatch loadTestData and set isAddingTestData to true then false', async () => {
+      vi.useFakeTimers();
       const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       component.addTestData();
@@ -116,9 +117,9 @@ describe('HomeComponent', () => {
       expect(dispatchSpy).toHaveBeenCalledTimes(1);
       expect(dispatchSpy).toHaveBeenCalledWith(BirthdayActions.loadTestData());
 
-      tick(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(component.isAddingTestData()).toBe(false);
-    }));
+    });
   });
 
   describe('dashboard lazy loading', () => {

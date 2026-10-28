@@ -95,12 +95,6 @@
               "extractLicenses": false,
               "sourceMap": true
             },
-            "test": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "polyfills": ["zone.js"]
-            },
             "ci": {
               "optimization": false,
               "extractLicenses": false,
@@ -140,7 +134,7 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "birthday-reminder-pro:build:test",
+            "buildTarget": "birthday-reminder-pro:build:development",
             "runner": "vitest",
             "tsConfig": "tsconfig.spec.json",
             "browsers": ["ChromiumHeadless"],
