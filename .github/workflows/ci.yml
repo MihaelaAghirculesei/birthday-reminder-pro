@@ -332,6 +332,7 @@ jobs:
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          FIREBASE_APPCHECK_SITE_KEY: ${{ secrets.FIREBASE_APPCHECK_SITE_KEY }}
 
       - name: Check CSP allows inline handlers
         run: node scripts/check-csp-handlers.js

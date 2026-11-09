@@ -1,6 +1,7 @@
 import { InjectionToken } from '@angular/core';
 
 import type { FirebaseApp, FirebaseOptions } from 'firebase/app';
+import type { AppCheck } from 'firebase/app-check';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
@@ -51,6 +52,49 @@ export function isFirebaseConfigured(): boolean {
   return checkFirebaseOptions(environment.firebase);
 }
 
+export interface AppCheckConfig {
+  siteKey: string;
+  /** Registered in Firebase Console → App Check → Manage debug tokens. Never set in production. */
+  debugToken?: string;
+}
+
+interface AppCheckEnvironment {
+  production: boolean;
+  appCheckSiteKey: string;
+  appCheckDebugToken: string;
+}
+
+/**
+ * Returns the App Check settings, or null when App Check must stay off: no reCAPTCHA
+ * site key configured, or no DOM for reCAPTCHA to run in (SSR). A debug token is only
+ * honoured outside production builds.
+ */
+export function resolveAppCheckConfig(env: AppCheckEnvironment = environment): AppCheckConfig | null {
+  if (!env.appCheckSiteKey || typeof document === 'undefined') return null;
+  return {
+    siteKey: env.appCheckSiteKey,
+    debugToken: env.production ? undefined : env.appCheckDebugToken || undefined,
+  };
+}
+
+/**
+ * Attaches App Check to the app. Must run before Auth, Firestore or Storage are created,
+ * so that their first request already carries an App Check token.
+ */
+export function activateAppCheck(
+  appCheckModule: Pick<typeof import('firebase/app-check'), 'initializeAppCheck' | 'ReCaptchaV3Provider'>,
+  app: FirebaseApp,
+  config: AppCheckConfig
+): AppCheck {
+  if (config.debugToken) {
+    (globalThis as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN = config.debugToken;
+  }
+  return appCheckModule.initializeAppCheck(app, {
+    provider: new appCheckModule.ReCaptchaV3Provider(config.siteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 /**
  * Lazily loads the Firebase SDK into a separate chunk and initializes the
  * app/auth/firestore/storage singletons. Safe to call multiple times — returns the
@@ -65,11 +109,13 @@ export function initFirebase(): Promise<void> {
   if (_initPromise) return _initPromise;
 
   _initPromise = (async () => {
-    const [appModule, authModule, firestoreModule, storageModule] = await Promise.all([
+    const appCheckConfig = resolveAppCheckConfig();
+    const [appModule, authModule, firestoreModule, storageModule, appCheckModule] = await Promise.all([
       import('firebase/app'),
       import('firebase/auth'),
       import('firebase/firestore'),
       import('firebase/storage'),
+      appCheckConfig ? import('firebase/app-check') : Promise.resolve(null),
     ]);
 
     _authModule = authModule;
@@ -79,9 +125,14 @@ export function initFirebase(): Promise<void> {
     if (!_app) {
       const { initializeApp, getApps } = appModule;
       const existingApps = getApps();
-      _app = existingApps.length > 0
-        ? existingApps[0]
-        : initializeApp(environment.firebase);
+      if (existingApps.length > 0) {
+        _app = existingApps[0];
+      } else {
+        _app = initializeApp(environment.firebase);
+        if (appCheckModule && appCheckConfig) {
+          activateAppCheck(appCheckModule, _app, appCheckConfig);
+        }
+      }
     }
 
     _auth = authModule.getAuth(_app);

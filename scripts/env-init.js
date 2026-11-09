@@ -90,6 +90,9 @@ function hasAllVars() {
 function buildEnvironmentContent(isProduction) {
   const clientId  = process.env.GOOGLE_CLIENT_ID ?? '';
   const sentryDsn = isProduction ? (process.env.SENTRY_DSN ?? '') : '';
+  const appCheckSiteKey = process.env.FIREBASE_APPCHECK_SITE_KEY ?? '';
+  // A debug token bypasses App Check, so it must never reach a production bundle.
+  const appCheckDebugToken = isProduction ? '' : (process.env.FIREBASE_APPCHECK_DEBUG_TOKEN ?? '');
 
   return [
     `export const environment = {`,
@@ -99,6 +102,8 @@ function buildEnvironmentContent(isProduction) {
     `  },`,
     `  googleAuthClientId: '${clientId}',`,
     `  sentryDsn: '${sentryDsn}',`,
+    `  appCheckSiteKey: '${appCheckSiteKey}',`,
+    `  appCheckDebugToken: '${appCheckDebugToken}',`,
     `  featureFlags: {`,
     `    cloudSyncEnabled: true,`,
     `    calendarSyncEnabled: true`,
