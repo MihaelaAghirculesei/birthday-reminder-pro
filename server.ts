@@ -65,9 +65,11 @@ function buildCsp(nonce: string): string {
       `https://fonts.googleapis.com`,
       `https://fonts.gstatic.com`,
       ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
+      // App Check token exchange. The reCAPTCHA script itself is covered by 'strict-dynamic'.
+      ...(firebaseConfigured && environment.appCheckSiteKey ? ['https://content-firebaseappcheck.googleapis.com'] : []),
       ...(sentryIngestUrl ? [sentryIngestUrl] : []),
     ].join(' '),
-    // https://www.google.com required for GIS One Tap / FedCM iframe
+    // https://www.google.com required for GIS One Tap / FedCM iframe and the reCAPTCHA iframe
     `frame-src 'self' https://accounts.google.com https://www.google.com${firebaseConfigured ? ` https://${environment.firebase.authDomain}` : ''}`,
     `object-src 'none'`,
     `base-uri 'self'`,
