@@ -464,6 +464,10 @@ jobs:
       pull-requests: write
     timeout-minutes: 15
     needs: build
+    env:
+      # Kept out of package.json on purpose: its dependency tree adds high-severity
+      # advisories to the lockfile for a tool that only runs in this job.
+      LHCI_CLI_VERSION: 0.16.0
 
     steps:
       - uses: actions/checkout@v7
@@ -475,6 +479,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Cache Lighthouse CI
+        uses: actions/cache@v6
+        with:
+          path: ~/.npm/_npx
+          key: lhci-cli-${{ runner.os }}-${{ env.LHCI_CLI_VERSION }}
+
       - name: Download build artifacts
         uses: actions/download-artifact@v8
         with:
@@ -482,7 +492,7 @@ jobs:
           path: dist/birthday-reminder-pro
 
       - name: Run Lighthouse CI
-        run: npx @lhci/cli autorun
+        run: npx --yes "@lhci/cli@${LHCI_CLI_VERSION}" autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
