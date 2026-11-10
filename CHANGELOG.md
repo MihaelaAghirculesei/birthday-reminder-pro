@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.2...v1.3.3) (2026-11-10)
+
+
+### Bug Fixes
+
+* **pwa:** roll out CSP changes to installed service workers ([46678eb](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/46678eb2174741c871978625967a4aba9b2798ec))
+
 ## [1.3.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.1...v1.3.2) (2026-11-10)
 
 
