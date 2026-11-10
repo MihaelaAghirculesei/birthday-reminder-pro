@@ -464,7 +464,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Known Limitations
 
-- **Google Calendar sync** requests a sensitive OAuth scope. Until Google completes the app verification, Google only grants access to accounts registered as test users; other accounts see Google's "access blocked" screen. Everything else in the app works without it.
+- **Google Calendar sync** requests a sensitive OAuth scope and the app has not been through Google's verification. Google therefore shows an "unverified app" screen before granting calendar access (continue via *Advanced*), and caps calendar access at 100 users over the project's lifetime. Google sign-in and every other feature are unaffected.
 
 ## Troubleshooting
 
