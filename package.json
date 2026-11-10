@@ -145,6 +145,20 @@
     "piscina@5": "^5.3.2",
     "http-cache-semantics": "^4.3.0",
     "uuid": "^11.1.1",
-    "vite": "^8.3.3"
+    "vite": "^8.3.3",
+    "glob@10": "^14.0.4",
+    "glob@13": "^14.0.4",
+    "eslint": {
+      "minimatch": "^11.0.5"
+    },
+    "@eslint/config-array": {
+      "minimatch": "^11.0.5"
+    },
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    },
+    "test-exclude": {
+      "minimatch": "^11.0.5"
+    }
   }
 }
