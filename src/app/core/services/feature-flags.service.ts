@@ -16,4 +16,12 @@ export class FeatureFlagsService {
   isCalendarSyncEnabled(): boolean {
     return environment.featureFlags.calendarSyncEnabled;
   }
+
+  /**
+   * Cloud photo storage (Firebase Storage). Off unless the project has a Storage
+   * bucket, which requires the Blaze plan; photos then stay on the device.
+   */
+  isPhotoStorageEnabled(): boolean {
+    return environment.featureFlags.photoStorageEnabled;
+  }
 }

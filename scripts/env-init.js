@@ -106,7 +106,9 @@ function buildEnvironmentContent(isProduction) {
     `  appCheckDebugToken: '${appCheckDebugToken}',`,
     `  featureFlags: {`,
     `    cloudSyncEnabled: true,`,
-    `    calendarSyncEnabled: true`,
+    `    calendarSyncEnabled: true,`,
+    // Firebase Storage needs a bucket, which needs the Blaze plan. Off unless opted in.
+    `    photoStorageEnabled: ${process.env.FIREBASE_STORAGE_ENABLED === 'true'}`,
     `  },`,
     `  firebase: {`,
     `    apiKey: '${process.env.FIREBASE_API_KEY}',`,

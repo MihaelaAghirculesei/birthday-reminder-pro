@@ -336,6 +336,8 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           FIREBASE_APPCHECK_SITE_KEY: ${{ secrets.FIREBASE_APPCHECK_SITE_KEY }}
+          # Repository variable, not a secret: set to 'true' once the project has a Storage bucket.
+          FIREBASE_STORAGE_ENABLED: ${{ vars.FIREBASE_STORAGE_ENABLED }}
 
       - name: Check CSP allows inline handlers
         run: node scripts/check-csp-handlers.js

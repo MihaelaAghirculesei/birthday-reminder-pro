@@ -105,6 +105,9 @@ export function activateAppCheck(
  * Must be awaited before calling any getFirebase*() or get*Module() getter.
  * Called on-demand: by initAuthListener() for returning users and by performGoogleSignIn()
  * on first sign-in. Never called from APP_INITIALIZER — anonymous users never pay the cost.
+ *
+ * Storage is only loaded when `featureFlags.photoStorageEnabled` is set. Otherwise the
+ * Storage getters return null and photo services keep photos on the device.
  */
 export function initFirebase(): Promise<void> {
   if (!isFirebaseConfigured()) return Promise.resolve();
@@ -116,7 +119,7 @@ export function initFirebase(): Promise<void> {
       import('firebase/app'),
       import('firebase/auth'),
       import('firebase/firestore'),
-      import('firebase/storage'),
+      environment.featureFlags.photoStorageEnabled ? import('firebase/storage') : Promise.resolve(null),
       appCheckConfig ? import('firebase/app-check') : Promise.resolve(null),
     ]);
 
@@ -139,7 +142,7 @@ export function initFirebase(): Promise<void> {
 
     _auth = authModule.getAuth(_app);
     _db = firestoreModule.getFirestore(_app);
-    _storage = storageModule.getStorage(_app);
+    _storage = storageModule ? storageModule.getStorage(_app) : null;
   })();
 
   return _initPromise;
