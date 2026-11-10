@@ -1,11 +1,13 @@
 # Birthday Memories
 
-A birthday management application built with Angular 21. Never forget a birthday again with calendar sync, notifications, and offline support.
+A birthday management application built with Angular 22. Never forget a birthday again with calendar sync, notifications, and offline support.
+
+**Live demo:** [birthday-reminder-aghirculesei.pages.dev](https://birthday-reminder-aghirculesei.pages.dev) — works without an account; use the gear icon → "Load Test Data" to explore with sample entries.
 
 [![CI](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/actions/workflows/ci.yml)
-[![Angular](https://img.shields.io/badge/Angular-21-red?logo=angular)](https://angular.io/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue?logo=capacitor)](https://capacitorjs.com/)
+[![Angular](https://img.shields.io/badge/Angular-22-red?logo=angular)](https://angular.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8-blue?logo=capacitor)](https://capacitorjs.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -28,12 +30,12 @@ A birthday management application built with Angular 21. Never forget a birthday
 
 ## About
 
-A cross-platform birthday manager with an offline-first architecture: IndexedDB is the source of truth, Firebase Firestore is an optional cloud replica, and a pending-changes queue reconciles the two. Built with Angular 21 and NgRx, packaged for Android with Capacitor.
+A cross-platform birthday manager with an offline-first architecture: IndexedDB is the source of truth, Firebase Firestore is an optional cloud replica, and a pending-changes queue reconciles the two. Built with Angular 22 (zoneless) and NgRx, packaged for Android with Capacitor.
 
 Core capabilities:
 - Works offline using IndexedDB
 - Optional cloud sync via Firebase Firestore (auth users only)
-- Syncs with Google Calendar (one-way or two-way)
+- Syncs with Google Calendar (one-way or two-way; see [Known Limitations](#known-limitations))
 - Sends notifications on web and Android
 - Exports/imports data in multiple formats
 - Organizes contacts by categories
@@ -121,17 +123,18 @@ Core capabilities:
 ## Tech Stack
 
 **Frontend**
-- Angular 21 (standalone components, Signals, SSR)
-- TypeScript 5.9
-- Angular Material 19
-- RxJS 7.8.0
+- Angular 22 (standalone components, Signals, zoneless change detection, SSR)
+- TypeScript 6.0
+- Angular Material 22
+- RxJS 7.8
+- ngx-translate (English and Italian)
 
 **State Management**
-- NgRx 19 (Store, Effects, Entity adapters, Selectors)
+- NgRx 22 (Store, Effects, Entity adapters, Selectors)
 - DevTools for debugging
 
 **Mobile & PWA**
-- Capacitor 7.4.4 for Android
+- Capacitor 8 for Android
 - Angular Service Worker for offline caching
 - @capacitor/local-notifications for native notifications
 
@@ -139,6 +142,7 @@ Core capabilities:
 - IndexedDB (offline-first source of truth)
 - Firebase Auth + Firestore (cloud sync, auth users only)
 - Firebase Storage (photo CDN, lazy-loaded)
+- Firebase App Check (reCAPTCHA v3), enabled through configuration
 - LocalStorage for settings
 
 **External APIs**
@@ -146,8 +150,8 @@ Core capabilities:
 - Google OAuth 2.0
 
 **Development**
-- Angular CLI 21.x
-- Vitest in browser mode (unit tests, real Chromium via Playwright)
+- Angular CLI 22
+- Vitest 5 in browser mode (unit tests, real Chromium via Playwright)
 - Cypress 16 (E2E, visual regression, accessibility with cypress-axe)
 
 ---
@@ -376,11 +380,13 @@ birthday-reminder-pro/
 - Visual regression snapshots
 - Accessibility (NVDA, axe-core)
 - Responsive design (mobile-first, 320px+)
+- Internationalization (English, Italian)
+- Cloud sync with Firebase (Auth, Firestore, Storage)
+- Firebase Security Rules with emulator-backed tests
+- CI/CD: GitHub Actions, semantic-release, Cloudflare Pages deploy, Dependabot auto-merge
 
 **Future ideas**
-- i18n support
 - iOS app
-- Cloud backup
 - Birthday wish templates
 - Gift tracking
 
@@ -456,10 +462,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## Known Issues
+## Known Limitations
 
-- Some transitions could be smoother
-- Google Calendar re-authentication after token expiry
+- **Google Calendar sync** requests a sensitive OAuth scope. Until Google completes the app verification, Google only grants access to accounts registered as test users; other accounts see Google's "access blocked" screen. Everything else in the app works without it.
+
+## Troubleshooting
 
 ### WebSocket errors during E2E tests
 When running `npm run ci:local` you may see errors like:

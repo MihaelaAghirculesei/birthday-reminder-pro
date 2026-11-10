@@ -73,8 +73,8 @@ only after confirming that all dependents have upgraded past the pinned version.
 | `serialize-javascript` | `≥ 7.0.4` | ReDoS in serialisation regex (CVE-2024-11831) | [GHSA-76p7-773f-r4q5](https://github.com/advisories/GHSA-76p7-773f-r4q5) |
 | `file-type` | `≥ 21.3.3` | ReDoS via crafted binary input (CVE-2024-4067) | [GHSA-mwqq-9qge-5fj3](https://github.com/advisories/GHSA-mwqq-9qge-5fj3) |
 
-**Latest Audit** (2026-10-17):
-- **Production dependencies**: 0 vulnerabilities on Angular 21.2, upgraded ahead of the Angular 20 end of support (2026-11-28).
+**Latest Audit** (2026-11-10):
+- **Production dependencies**: 0 vulnerabilities on Angular 22.2 (`npm audit --omit=dev`).
 - **CI gate**: `npm audit --omit=dev --audit-level=high` blocks on any high or critical runtime finding. Dev-only findings are gated by the "Check vulnerability thresholds" step (any critical, or more than 5 high).
 - **Dev-only findings bundled inside `npm`** (pulled in by `@semantic-release/npm`, used only by the release job) cannot be replaced via `overrides`; they are dismissed with a rationale in the Dependabot alerts view and revisited on each npm release.
 
@@ -84,7 +84,8 @@ only after confirming that all dependents have upgraded past the pinned version.
 - ℹ️ Build tools: No runtime impact
 
 **Current Security Measures:**
-- Angular 17+ with built-in XSS protection
+- Angular built-in XSS protection (template sanitization)
+- Firebase App Check (reCAPTCHA v3), activated by setting `FIREBASE_APPCHECK_SITE_KEY`; enforcement is switched on in the Firebase console once its metrics show only verified traffic
 - Material Design components with accessibility features
 - Service Workers for secure offline functionality
 
@@ -193,9 +194,12 @@ Before deploying to production:
 
 ## Security Updates
 
-This document is reviewed and updated regularly. Last review: 2026-10-17
+This document is reviewed and updated regularly. Last review: 2026-11-10
 
 **Recent Updates:**
+- 2026-11-10: Added Firebase App Check (v1.3.0); moved minimatch to 11 to fix a ReDoS advisory (the copy bundled inside `npm` is dismissed as tolerable risk)
+- 2026-10-27: Moved to Node.js 24 LTS
+- 2026-10-22: Upgraded to Angular 22
 - 2026-10-17: Upgraded to Angular 21.2 (supported until 2027-06) ahead of the Angular 20 end of support; production audit clean
 - 2026-09-29: Upgraded to Angular 20.3.32, resolving all `@angular/*` advisories; production audit is a blocking CI gate again
 - 2026-07-09: Refreshed audit — 3 high + 1 moderate in `@angular/*` <=19.2.25, accepted as tracked risk pending isolated Angular 21 migration; CI `npm audit` step relaxed to informational, threshold check remains the real gate
