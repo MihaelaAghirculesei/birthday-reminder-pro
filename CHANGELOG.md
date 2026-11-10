@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.30...v1.3.0) (2026-11-10)
+
+
+### Features
+
+* **security:** add Firebase App Check behind a site key ([a16aaf4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a16aaf4812bdff700938808c27218309fe724c20))
+
 ## [1.2.30](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.2.29...v1.2.30) (2026-10-28)
 
 
