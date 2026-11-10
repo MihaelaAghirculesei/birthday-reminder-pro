@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.1...v1.3.2) (2026-11-10)
+
+
+### Bug Fixes
+
+* **csp:** allow the Google scripts behind sign-in and App Check ([393584a](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/393584a3320582fd72e0a3e96eb5a184477eb1a8))
+
 ## [1.3.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.0...v1.3.1) (2026-11-10)
 
 
