@@ -67,6 +67,11 @@ function buildCsp(nonce: string): string {
       ...(firebaseConfigured ? ['https://firebasestorage.googleapis.com'] : []),
       // App Check token exchange. The reCAPTCHA script itself is covered by 'strict-dynamic'.
       ...(firebaseConfigured && environment.appCheckSiteKey ? ['https://content-firebaseappcheck.googleapis.com'] : []),
+      // Scripts injected at runtime (Firebase Auth gapi loader, reCAPTCHA). 'strict-dynamic'
+      // lets the page run them, but the service worker re-fetches them under connect-src.
+      `https://apis.google.com`,
+      `https://www.google.com/recaptcha/`,
+      `https://www.gstatic.com/recaptcha/`,
       ...(sentryIngestUrl ? [sentryIngestUrl] : []),
     ].join(' '),
     // https://www.google.com required for GIS One Tap / FedCM iframe and the reCAPTCHA iframe
