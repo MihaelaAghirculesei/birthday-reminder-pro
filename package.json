@@ -1,6 +1,6 @@
 {
   "name": "birthday-reminder-pro",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "packageManager": "npm@11.19.1",
   "scripts": {
     "ng": "ng",
