@@ -85,7 +85,7 @@ only after confirming that all dependents have upgraded past the pinned version.
 
 **Current Security Measures:**
 - Angular built-in XSS protection (template sanitization)
-- Firebase App Check (reCAPTCHA v3), activated by setting `FIREBASE_APPCHECK_SITE_KEY`; enforcement is switched on in the Firebase console once its metrics show only verified traffic
+- Firebase App Check (reCAPTCHA Enterprise), activated by setting `FIREBASE_APPCHECK_SITE_KEY`; enforcement is switched on in the Firebase console once its metrics show only verified traffic
 - Material Design components with accessibility features
 - Service Workers for secure offline functionality
 

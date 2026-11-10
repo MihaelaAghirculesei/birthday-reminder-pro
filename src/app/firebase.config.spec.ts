@@ -83,7 +83,7 @@ describe('activateAppCheck', () => {
 
   function createAppCheckModule() {
     return {
-      ReCaptchaV3Provider: vi.fn(function (this: { siteKey: string }, siteKey: string) {
+      ReCaptchaEnterpriseProvider: vi.fn(function (this: { siteKey: string }, siteKey: string) {
         this.siteKey = siteKey;
       }),
       initializeAppCheck: vi.fn().mockReturnValue({ app }),
@@ -94,12 +94,12 @@ describe('activateAppCheck', () => {
     delete globals.FIREBASE_APPCHECK_DEBUG_TOKEN;
   });
 
-  it('initializes App Check with a reCAPTCHA v3 provider and token auto-refresh', () => {
+  it('initializes App Check with a reCAPTCHA Enterprise provider and token auto-refresh', () => {
     const appCheckModule = createAppCheckModule();
 
     activateAppCheck(appCheckModule as unknown as AppCheckModule, app, { siteKey: 'site-key' });
 
-    expect(appCheckModule.ReCaptchaV3Provider).toHaveBeenCalledWith('site-key');
+    expect(appCheckModule.ReCaptchaEnterpriseProvider).toHaveBeenCalledWith('site-key');
     expect(appCheckModule.initializeAppCheck).toHaveBeenCalledWith(app, {
       provider: expect.objectContaining({ siteKey: 'site-key' }),
       isTokenAutoRefreshEnabled: true,

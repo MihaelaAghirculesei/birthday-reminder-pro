@@ -80,9 +80,11 @@ export function resolveAppCheckConfig(env: AppCheckEnvironment = environment): A
 /**
  * Attaches App Check to the app. Must run before Auth, Firestore or Storage are created,
  * so that their first request already carries an App Check token.
+ *
+ * Uses reCAPTCHA Enterprise: Firebase no longer accepts new reCAPTCHA v3 (classic) keys.
  */
 export function activateAppCheck(
-  appCheckModule: Pick<typeof import('firebase/app-check'), 'initializeAppCheck' | 'ReCaptchaV3Provider'>,
+  appCheckModule: Pick<typeof import('firebase/app-check'), 'initializeAppCheck' | 'ReCaptchaEnterpriseProvider'>,
   app: FirebaseApp,
   config: AppCheckConfig
 ): AppCheck {
@@ -90,7 +92,7 @@ export function activateAppCheck(
     (globalThis as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN = config.debugToken;
   }
   return appCheckModule.initializeAppCheck(app, {
-    provider: new appCheckModule.ReCaptchaV3Provider(config.siteKey),
+    provider: new appCheckModule.ReCaptchaEnterpriseProvider(config.siteKey),
     isTokenAutoRefreshEnabled: true,
   });
 }

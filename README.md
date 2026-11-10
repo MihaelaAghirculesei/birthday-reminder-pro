@@ -142,7 +142,7 @@ Core capabilities:
 - IndexedDB (offline-first source of truth)
 - Firebase Auth + Firestore (cloud sync, auth users only)
 - Firebase Storage (photo CDN, lazy-loaded)
-- Firebase App Check (reCAPTCHA v3), enabled through configuration
+- Firebase App Check (reCAPTCHA Enterprise), enabled through configuration
 - LocalStorage for settings
 
 **External APIs**
