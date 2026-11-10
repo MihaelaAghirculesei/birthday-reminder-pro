@@ -46,6 +46,9 @@ jobs:
       - name: TypeScript type check (tests)
         run: npx tsc --noEmit --strict --skipLibCheck -p tsconfig.spec.json
 
+      - name: Check CSP allows external scripts
+        run: npm run ci:csp
+
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
