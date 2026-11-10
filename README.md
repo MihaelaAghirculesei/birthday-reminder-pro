@@ -465,6 +465,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Known Limitations
 
 - **Google Calendar sync** requests a sensitive OAuth scope and the app has not been through Google's verification. Google therefore shows an "unverified app" screen before granting calendar access (continue via *Advanced*), and caps calendar access at 100 users over the project's lifetime. Google sign-in and every other feature are unaffected.
+- **Photos stay on the device in the live demo.** Firebase Storage requires the Blaze (pay-as-you-go) plan, so cloud photo storage is behind the `FIREBASE_STORAGE_ENABLED` flag and off by default. Birthdays still sync through Firestore; photos are kept in IndexedDB and are never written to Firestore.
 
 ## Troubleshooting
 

@@ -36,4 +36,12 @@ describe('FeatureFlagsService', () => {
     environment.featureFlags.calendarSyncEnabled = false;
     expect(service.isCalendarSyncEnabled()).toBe(false);
   });
+
+  it('isPhotoStorageEnabled reflects environment.featureFlags.photoStorageEnabled', () => {
+    environment.featureFlags.photoStorageEnabled = true;
+    expect(service.isPhotoStorageEnabled()).toBe(true);
+
+    environment.featureFlags.photoStorageEnabled = false;
+    expect(service.isPhotoStorageEnabled()).toBe(false);
+  });
 });

@@ -26,7 +26,9 @@ export const environment = {
   // Kill-switches: flip to false + redeploy to stop a sync path during an incident.
   featureFlags: {
     cloudSyncEnabled: true,
-    calendarSyncEnabled: true
+    calendarSyncEnabled: true,
+    // Firebase Storage for photos (requires the Blaze plan). Off = photos stay on the device.
+    photoStorageEnabled: false
   },
   firebase: {
     apiKey: 'YOUR_FIREBASE_API_KEY',
