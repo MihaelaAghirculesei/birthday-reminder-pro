@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.4...v1.4.0) (2026-11-10)
+
+
+### Features
+
+* **photos:** put cloud photo storage behind a feature flag ([edc2cd7](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/edc2cd7c49bdf8ac3127367d6f984b2c2ecbe3ee))
+
 ## [1.3.4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.3...v1.3.4) (2026-11-10)
 
 
