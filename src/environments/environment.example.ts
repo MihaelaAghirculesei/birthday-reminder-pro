@@ -19,7 +19,7 @@ export const environment = {
   googleAuthClientId: '',
   // Sentry DSN — leave empty in dev so local errors never reach the prod project.
   sentryDsn: '',
-  // Firebase App Check (reCAPTCHA v3 site key). Empty = App Check off.
+  // Firebase App Check (reCAPTCHA Enterprise site key). Empty = App Check off.
   appCheckSiteKey: '',
   // Debug token registered in Firebase Console → App Check, for localhost. Dev builds only.
   appCheckDebugToken: '',

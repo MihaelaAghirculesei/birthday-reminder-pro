@@ -19,7 +19,7 @@ export const environment = {
   googleAuthClientId: '',
   // Sentry DSN — Sentry project settings → Client Keys (DSN).
   sentryDsn: 'YOUR_SENTRY_DSN',
-  // Firebase App Check (reCAPTCHA v3 site key). Empty = App Check off.
+  // Firebase App Check (reCAPTCHA Enterprise site key). Empty = App Check off.
   appCheckSiteKey: '',
   // Never used in production builds.
   appCheckDebugToken: '',
