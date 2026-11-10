@@ -52,7 +52,7 @@
     {
       "name": "firebase-storage-photos",
       "urls": [
-        "https://firebasestorage.googleapis.com/**",
+        "https://firebasestorage.googleapis.com/v0/b/*/o/**",
         "https://storage.googleapis.com/**"
       ],
       "cacheConfig": {
