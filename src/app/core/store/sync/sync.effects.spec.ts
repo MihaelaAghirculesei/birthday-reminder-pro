@@ -53,7 +53,7 @@ describe('SyncEffects', () => {
     mergeServiceMock = {
       merge: vi.fn().mockName('BirthdayMergeService.merge')
     } as unknown as MockedObject<BirthdayMergeService>;
-    mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] } as MergeResult);
+    mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] } as MergeResult);
 
     TestBed.configureTestingModule({
       providers: [
@@ -138,13 +138,14 @@ describe('SyncEffects', () => {
       offlineStorageMock.saveBirthdays.mockReturnValue(Promise.resolve());
       mergeServiceMock.merge.mockReturnValue({
         merged: [...cloudBirthdays, ...localBirthdays],
-        toUpload: []
+        toUpload: [],
+        toDelete: []
       });
 
       actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: cloudBirthdays }));
 
       effects.cloudBirthdaysUpdated$.subscribe((action) => {
-        expect(mergeServiceMock.merge).toHaveBeenCalledWith(localBirthdays, cloudBirthdays, { strategy: 'cloud-wins' });
+        expect(mergeServiceMock.merge).toHaveBeenCalledWith(localBirthdays, cloudBirthdays, { strategy: 'cloud-wins', deduplicate: true });
         expect(offlineStorageMock.saveBirthdays).toHaveBeenCalledWith([...cloudBirthdays, ...localBirthdays]);
         expect(action.type).toBe('[Sync] Success');
       });
@@ -163,7 +164,7 @@ describe('SyncEffects', () => {
     it('should dispatch loadBirthdays after saving merged result', async () => {
       offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
       offlineStorageMock.saveBirthdays.mockReturnValue(Promise.resolve());
-      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] });
       const dispatchSpy = vi.spyOn(store, 'dispatch');
 
       actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [] }));
@@ -189,7 +190,7 @@ describe('SyncEffects', () => {
       offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([pendingLocal]));
       offlineStorageMock.saveBirthdays.mockReturnValue(Promise.resolve());
       // Simulate what cloud-wins really returns for a pending local item
-      mergeServiceMock.merge.mockReturnValue({ merged: [pendingLocal], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [pendingLocal], toUpload: [], toDelete: [] });
 
       actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [cloudUpdate] }));
 
@@ -218,7 +219,8 @@ describe('SyncEffects', () => {
       // cloud-wins: synced local → cloud version wins regardless of timestamps
       mergeServiceMock.merge.mockReturnValue({
         merged: [{ ...cloudUpdate, syncStatus: 'synced' as const }],
-        toUpload: []
+        toUpload: [],
+        toDelete: []
       });
 
       actions$ = of(SyncActions.cloudBirthdaysUpdated({ birthdays: [cloudUpdate] }));

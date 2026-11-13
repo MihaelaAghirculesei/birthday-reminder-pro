@@ -66,6 +66,7 @@ describe('CloudSyncService', () => {
       saveBirthdaysBatch: vi.fn().mockName('FirestoreService.saveBirthdaysBatch'),
       saveBirthday: vi.fn().mockName('FirestoreService.saveBirthday'),
       deleteBirthday: vi.fn().mockName('FirestoreService.deleteBirthday'),
+      deleteBirthdaysBatch: vi.fn().mockName('FirestoreService.deleteBirthdaysBatch'),
       saveCategory: vi.fn().mockName('FirestoreService.saveCategory'),
       deleteCategory: vi.fn().mockName('FirestoreService.deleteCategory'),
       birthdays$: new Subject(),
@@ -85,7 +86,7 @@ describe('CloudSyncService', () => {
     mergeServiceMock = {
       merge: vi.fn().mockName('BirthdayMergeService.merge')
     } as unknown as MockedObject<BirthdayMergeService>;
-    mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] } as MergeResult);
+    mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] } as MergeResult);
     photoStorageMock = {
       isBase64: vi.fn().mockName('PhotoStorageService.isBase64'),
       migrateBase64: vi.fn().mockName('PhotoStorageService.migrateBase64'),
@@ -263,7 +264,7 @@ describe('CloudSyncService', () => {
       const cloudBirthdays = [makeBirthday({ id: 'cloud-1', name: 'Cloud Only' })];
       const localBirthdays = [makeBirthday({ id: 'local-1', name: 'Local Only' })];
       offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve(localBirthdays));
-      mergeServiceMock.merge.mockReturnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [...cloudBirthdays, ...localBirthdays], toUpload: [], toDelete: [] });
 
       await service.mergeCloudWithLocal(cloudBirthdays, 'user-123');
 
@@ -273,7 +274,7 @@ describe('CloudSyncService', () => {
     it('should save merged result to IndexedDB', async () => {
       const mergedBirthdays = [makeBirthday({ id: 'b-1', name: 'Merged' })];
       offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([]));
-      mergeServiceMock.merge.mockReturnValue({ merged: mergedBirthdays, toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: mergedBirthdays, toUpload: [], toDelete: [] });
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -282,7 +283,7 @@ describe('CloudSyncService', () => {
 
     it('should upload toUpload items to cloud when online', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
-      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems });
+      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems, toDelete: [] });
       networkServiceMock.isOnline = true;
 
       await service.mergeCloudWithLocal([], 'user-123');
@@ -292,7 +293,7 @@ describe('CloudSyncService', () => {
 
     it('should not upload when offline', async () => {
       const toUploadItems = [makeBirthday({ id: 'local-1' })];
-      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems });
+      mergeServiceMock.merge.mockReturnValue({ merged: toUploadItems, toUpload: toUploadItems, toDelete: [] });
       networkServiceMock.isOnline = false;
 
       await service.mergeCloudWithLocal([], 'user-123');
@@ -300,8 +301,40 @@ describe('CloudSyncService', () => {
       expect(firestoreServiceMock.saveBirthdaysBatch).not.toHaveBeenCalled();
     });
 
+    it('should delete duplicate cloud records after saving the winners', async () => {
+      const winner = makeBirthday({ id: 'local-1' });
+      mergeServiceMock.merge.mockReturnValue({ merged: [winner], toUpload: [winner], toDelete: ['cloud-dup'] });
+      firestoreServiceMock.saveBirthdaysBatch.mockReturnValue(of(undefined));
+      firestoreServiceMock.deleteBirthdaysBatch.mockReturnValue(of(undefined));
+      networkServiceMock.isOnline = true;
+
+      await service.mergeCloudWithLocal([], 'user-123');
+
+      expect(firestoreServiceMock.deleteBirthdaysBatch).toHaveBeenCalledWith('user-123', ['cloud-dup']);
+      const saveOrder = firestoreServiceMock.saveBirthdaysBatch.mock.invocationCallOrder[0];
+      const deleteOrder = firestoreServiceMock.deleteBirthdaysBatch.mock.invocationCallOrder[0];
+      expect(saveOrder).toBeLessThan(deleteOrder);
+    });
+
+    it('should not delete duplicate cloud records when offline', async () => {
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: ['cloud-dup'] });
+      networkServiceMock.isOnline = false;
+
+      await service.mergeCloudWithLocal([], 'user-123');
+
+      expect(firestoreServiceMock.deleteBirthdaysBatch).not.toHaveBeenCalled();
+    });
+
+    it('should not call delete when there are no duplicates', async () => {
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] });
+
+      await service.mergeCloudWithLocal([], 'user-123');
+
+      expect(firestoreServiceMock.deleteBirthdaysBatch).not.toHaveBeenCalled();
+    });
+
     it('should not upload when toUpload is empty', async () => {
-      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] });
 
       await service.mergeCloudWithLocal([], 'user-123');
 
@@ -309,7 +342,7 @@ describe('CloudSyncService', () => {
     });
 
     it('should dispatch syncSuccess after merge', async () => {
-      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [], toUpload: [], toDelete: [] });
       vi.spyOn(store, 'dispatch');
 
       await service.mergeCloudWithLocal([], 'user-123');
@@ -322,7 +355,7 @@ describe('CloudSyncService', () => {
       const storageUrl = 'https://firebasestorage.googleapis.com/v0/b/proj/o/photo.jpg?alt=media';
       const local = makeBirthday({ id: 'local-photo', photo: base64Photo, needsMigration: true });
       offlineStorageMock.getBirthdays.mockReturnValue(Promise.resolve([local]));
-      mergeServiceMock.merge.mockReturnValue({ merged: [local], toUpload: [local] });
+      mergeServiceMock.merge.mockReturnValue({ merged: [local], toUpload: [local], toDelete: [] });
       photoStorageMock.isBase64.mockImplementation((v: string) => v.startsWith('data:image/'));
       photoStorageMock.migrateBase64.mockReturnValue(Promise.resolve(storageUrl));
       networkServiceMock.isOnline = true;

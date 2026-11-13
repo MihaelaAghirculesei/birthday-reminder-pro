@@ -139,8 +139,11 @@ export class SyncEffects {
   private async mergeCloudBirthdays(cloudBirthdays: Birthday[]): Promise<void> {
     const localBirthdays = await this.offlineStorage.getBirthdays();
 
+    // Deduplicate here as well, so copies already in the cloud stay hidden until the
+    // sign-in merge deletes them. This path only reads; it never writes to Firestore.
     const { merged } = this.mergeService.merge(localBirthdays, cloudBirthdays, {
-      strategy: 'cloud-wins'
+      strategy: 'cloud-wins',
+      deduplicate: true
     });
 
     await this.offlineStorage.saveBirthdays(merged);
