@@ -97,6 +97,68 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(local, cloud, { strategy: 'latest-wins', deduplicate: false });
 
       expect(result.merged.length).toBe(2);
+      expect(result.toDelete).toEqual([]);
+    });
+
+    it('should not upload a local copy of a record that already exists in the cloud', () => {
+      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 })];
+      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 2000 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.toUpload).toEqual([]);
+      expect(result.toDelete).toEqual([]);
+    });
+
+    it('should replace the cloud copy when the local copy is newer', () => {
+      const local = [makeBirthday({ id: 'b-local', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 9000 })];
+      const cloud = [makeBirthday({ id: 'b-cloud', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 2000 })];
+
+      const result = service.merge(local, cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged.map((b) => b.id)).toEqual(['b-local']);
+      expect(result.toUpload.map((b) => b.id)).toEqual(['b-local']);
+      expect(result.toDelete).toEqual(['b-cloud']);
+    });
+
+    it('should delete duplicates that already exist in the cloud, keeping the newest', () => {
+      const cloud = [
+        makeBirthday({ id: 'dup-1', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 }),
+        makeBirthday({ id: 'dup-2', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 3000 }),
+        makeBirthday({ id: 'dup-3', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 2000 }),
+        makeBirthday({ id: 'other', name: 'Anna Verdi', birthDate: '2000-01-01' })
+      ];
+
+      const result = service.merge([], cloud, { strategy: 'latest-wins' });
+
+      expect(result.merged.map((b) => b.id).sort()).toEqual(['dup-2', 'other']);
+      expect(result.toDelete.sort()).toEqual(['dup-1', 'dup-3']);
+      expect(result.toUpload).toEqual([]);
+    });
+
+    it('should converge to one copy per person when demo data is loaded on another device', () => {
+      // Same people, fresh ids: what "Show Demo" produces on every new browser.
+      const cloud = [
+        makeBirthday({ id: 'c-1', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 1000 }),
+        makeBirthday({ id: 'c-2', name: 'Anna Verdi', birthDate: '2000-01-01', updatedAt: 1000 })
+      ];
+      const local = [
+        makeBirthday({ id: 'l-1', name: 'Mario Rossi', birthDate: '1990-05-15', updatedAt: 5000 }),
+        makeBirthday({ id: 'l-2', name: 'Anna Verdi', birthDate: '2000-01-01', updatedAt: 5000 })
+      ];
+
+      const first = service.merge(local, cloud, { strategy: 'latest-wins' });
+      const cloudAfterSync = [
+        ...cloud.filter((b) => !first.toDelete.includes(b.id)),
+        ...first.toUpload
+      ];
+
+      expect(cloudAfterSync.length).toBe(2);
+
+      const second = service.merge(first.merged, cloudAfterSync, { strategy: 'latest-wins' });
+      expect(second.merged.length).toBe(2);
+      expect(second.toUpload).toEqual([]);
+      expect(second.toDelete).toEqual([]);
     });
   });
 
@@ -461,6 +523,18 @@ describe('BirthdayMergeService', () => {
       const result = service.merge(local, cloud, { strategy: 'cloud-wins', deduplicate: true });
 
       expect(result.merged.length).toBe(1);
+    });
+
+    it('should never ask to delete cloud records with cloud-wins', () => {
+      const cloud = [
+        makeBirthday({ id: 'dup-1', name: 'Anna Verdi', birthDate: '2000-01-01' }),
+        makeBirthday({ id: 'dup-2', name: 'Anna Verdi', birthDate: '2000-01-01' })
+      ];
+
+      const result = service.merge([], cloud, { strategy: 'cloud-wins', deduplicate: true });
+
+      expect(result.merged.length).toBe(1);
+      expect(result.toDelete).toEqual([]);
     });
   });
 });

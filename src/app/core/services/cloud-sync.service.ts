@@ -143,7 +143,7 @@ export class CloudSyncService {
   async mergeCloudWithLocal(cloudBirthdays: Birthday[], userId: string): Promise<void> {
     const localBirthdays = await this.offlineStorage.getBirthdays();
 
-    const { merged, toUpload } = this.mergeService.merge(localBirthdays, cloudBirthdays, {
+    const { merged, toUpload, toDelete } = this.mergeService.merge(localBirthdays, cloudBirthdays, {
       strategy: 'latest-wins'
     });
 
@@ -158,8 +158,16 @@ export class CloudSyncService {
 
     await this.offlineStorage.saveBirthdays(finalMerged);
 
-    if (migratedToUpload.length > 0 && this.networkService.isOnline) {
-      await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, migratedToUpload));
+    if (this.networkService.isOnline) {
+      if (migratedToUpload.length > 0) {
+        await firstValueFrom(this.firestoreService.saveBirthdaysBatch(userId, migratedToUpload));
+      }
+      // Delete only after the winners are saved, so a failure never leaves fewer
+      // records than the user had. Offline, the next sign-in repeats the cleanup.
+      if (toDelete.length > 0) {
+        await firstValueFrom(this.firestoreService.deleteBirthdaysBatch(userId, toDelete));
+        this.logger.info('[CloudSync] Removed duplicate cloud records:', toDelete.length);
+      }
     }
 
     this.store.dispatch(SyncActions.syncSuccess({ timestamp: Date.now() }));
