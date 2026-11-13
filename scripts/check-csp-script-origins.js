@@ -17,6 +17,9 @@
  * Checked URLs come from two places:
  *  - every `script.src = 'https://…'` assignment in src/ (scripts the app injects);
  *  - SDK_SCRIPTS below (scripts that SDKs inject on our behalf).
+ *
+ * The same service-worker rule applies to images: every https origin in img-src must
+ * also be in connect-src, or the worker answers those images with a synthetic 504.
  */
 
 const fs = require('fs');
@@ -87,5 +90,14 @@ for (const [url, origin] of injected) {
   }
 }
 
+const imageOrigins = directive('img-src').filter((source) => source.startsWith('https://'));
+for (const source of imageOrigins) {
+  const url = new URL(source.endsWith('/') ? source : `${source}/`);
+  if (!directives['connect-src'].some((allowed) => allows(allowed, url))) {
+    console.error(`ERROR: img-src ${source} is missing from connect-src in src/_headers (service worker fetches images)`);
+    failed = true;
+  }
+}
+
 if (failed) process.exit(1);
-console.log(`OK: ${injected.size} external script(s) allowed by the CSP`);
+console.log(`OK: ${injected.size} external script(s) and ${imageOrigins.length} image origin(s) allowed by the CSP`);
