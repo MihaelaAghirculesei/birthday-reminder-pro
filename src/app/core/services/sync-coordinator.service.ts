@@ -4,6 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { Store } from '@ngrx/store';
 
+import { distinctUntilChanged, map } from 'rxjs';
+
 import type { ValidatedBirthday, ValidatedCategory } from '../../shared/schemas/birthday.schema';
 import * as AuthSelectors from '../store/auth/auth.selectors';
 import * as SyncActions from '../store/sync/sync.actions';
@@ -48,12 +50,18 @@ export class SyncCoordinatorService {
         this.store.dispatch(SyncActions.setOnlineStatus({ isOnline }));
       });
 
+    // The user object is replaced on every auth event (sign-in action, onAuthStateChanged,
+    // profile refresh). Key on the uid so one sign-in starts one listener setup and one merge.
     this.store.select(AuthSelectors.selectAuthUser)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        if (user) {
-          this.cloudSync.setupListeners(user.uid);
-          this.cloudSync.checkForMigration(user.uid);
+      .pipe(
+        map((user) => user?.uid ?? null),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((uid) => {
+        if (uid) {
+          this.cloudSync.setupListeners(uid);
+          this.cloudSync.checkForMigration(uid);
         } else {
           this.cloudSync.teardownListeners();
         }
