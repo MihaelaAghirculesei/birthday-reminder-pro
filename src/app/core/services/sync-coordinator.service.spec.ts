@@ -140,6 +140,38 @@ describe('SyncCoordinatorService', () => {
       expect(cloudSyncMock.checkForMigration).toHaveBeenCalledWith('user-123');
     });
 
+    it('should sync once when the same user is emitted again as a new object', async () => {
+      await service.initialize();
+
+      store.setState({
+        ...initialState,
+        auth: { user: mockUser, loading: false, error: null, initialized: true }
+      });
+      store.setState({
+        ...initialState,
+        auth: { user: { ...mockUser }, loading: false, error: null, initialized: true }
+      });
+
+      expect(cloudSyncMock.setupListeners).toHaveBeenCalledTimes(1);
+      expect(cloudSyncMock.checkForMigration).toHaveBeenCalledTimes(1);
+    });
+
+    it('should sync again when a different user signs in', async () => {
+      await service.initialize();
+
+      store.setState({
+        ...initialState,
+        auth: { user: mockUser, loading: false, error: null, initialized: true }
+      });
+      store.setState({
+        ...initialState,
+        auth: { user: { ...mockUser, uid: 'user-456' }, loading: false, error: null, initialized: true }
+      });
+
+      expect(cloudSyncMock.checkForMigration).toHaveBeenNthCalledWith(1, 'user-123');
+      expect(cloudSyncMock.checkForMigration).toHaveBeenNthCalledWith(2, 'user-456');
+    });
+
     it('should call cloudSync.teardownListeners when user signs out', async () => {
       await service.initialize();
 
