@@ -487,6 +487,36 @@ describe('FirestoreService', () => {
       expect(loggerMock.error).toHaveBeenCalledWith('[Firestore] Failed to save birthday:', retryableError);
     });
 
+    it('deleteBirthdaysBatch splits large deletes to stay within the 500-write batch limit', async () => {
+      const batches: { delete: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; commit: ReturnType<typeof vi.fn> }[] = [];
+      vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({
+        writeBatch: vi.fn().mockImplementation(() => {
+          const batch = { delete: vi.fn(), set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+          batches.push(batch);
+          return batch;
+        }),
+        doc: vi.fn().mockReturnValue({}),
+        serverTimestamp: vi.fn().mockReturnValue({}),
+      } as unknown as ReturnType<typeof firebaseConfig.firebaseGetters.getFirestoreModule>);
+
+      const ids = Array.from({ length: 1000 }, (_, i) => `dup-${i}`);
+      await lastValueFrom(service.deleteBirthdaysBatch('user-123', ids), { defaultValue: undefined });
+
+      expect(batches.map((b) => b.delete.mock.calls.length)).toEqual([499, 499, 2]);
+      for (const batch of batches) {
+        expect(batch.delete.mock.calls.length + batch.set.mock.calls.length).toBeLessThanOrEqual(500);
+        expect(batch.commit).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('deleteBirthdaysBatch does nothing for an empty list', async () => {
+      const getModule = vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule');
+
+      await lastValueFrom(service.deleteBirthdaysBatch('user-123', []), { defaultValue: undefined });
+
+      expect(getModule).not.toHaveBeenCalled();
+    });
+
     it('getBirthdays retries on retryable error and succeeds', async () => {
       let callCount = 0;
       vi.spyOn(firebaseConfig.firebaseGetters, 'getFirestoreModule').mockReturnValue({

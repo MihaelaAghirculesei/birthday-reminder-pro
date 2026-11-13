@@ -12,6 +12,8 @@ export interface MergeOptions {
 export interface MergeResult {
   merged: Birthday[];
   toUpload: Birthday[];
+  /** Ids of cloud documents that lost deduplication and must be deleted from Firestore. */
+  toDelete: string[];
 }
 
 /**
@@ -86,9 +88,20 @@ export class BirthdayMergeService {
       }
     }
 
+    if (!deduplicate) {
+      return { merged, toUpload, toDelete: [] };
+    }
+
+    // Deduplication must reach the cloud too: uploading a local copy that lost, or
+    // leaving a losing cloud document in place, brings the duplicate back on the next
+    // snapshot and adds one more copy on every sign-in.
+    const kept = this.deduplicateByNameAndDate(merged);
+    const keptIds = new Set(kept.map((b) => b.id));
+
     return {
-      merged: deduplicate ? this.deduplicateByNameAndDate(merged) : merged,
-      toUpload
+      merged: kept,
+      toUpload: toUpload.filter((b) => keptIds.has(b.id)),
+      toDelete: cloud.filter((b) => !keptIds.has(b.id)).map((b) => b.id)
     };
   }
 
@@ -117,7 +130,8 @@ export class BirthdayMergeService {
 
     return {
       merged: deduplicate ? this.deduplicateByNameAndDate(merged) : merged,
-      toUpload: []
+      toUpload: [],
+      toDelete: []
     };
   }
 

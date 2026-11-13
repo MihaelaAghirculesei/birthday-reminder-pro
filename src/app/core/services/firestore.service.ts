@@ -22,6 +22,8 @@ const BASE_DELAY_MS = 500;
 const RATE_LIMIT_BASE_DELAY_MS = 1000;
 /** Random jitter ceiling added to each delay to avoid thundering-herd retries. */
 const MAX_JITTER_MS = 200;
+/** Maximum number of operations Firestore accepts in a single write batch. */
+const FIRESTORE_BATCH_LIMIT = 500;
 
 export interface FirestoreDocument {
   id: string;
@@ -283,6 +285,40 @@ export class FirestoreService {
       this.logger.info('[Firestore] Batch save completed:', birthdays.length);
     } catch (error) {
       this.logger.error('[Firestore] Batch save failed:', error);
+      throw error;
+    }
+  }
+
+  deleteBirthdaysBatch(userId: string, birthdayIds: string[]): Observable<void> {
+    if (!isPlatformBrowser(this.platformId) || !this.isFirebaseConfigured || birthdayIds.length === 0) {
+      return of(undefined);
+    }
+    return from(this.performBatchDelete(userId, birthdayIds));
+  }
+
+  private async performBatchDelete(userId: string, birthdayIds: string[]): Promise<void> {
+    const db = firebaseGetters.getFirebaseFirestore();
+    const fs = firebaseGetters.getFirestoreModule();
+    if (!db || !fs) return;
+
+    // A write batch holds at most 500 operations; one is taken by the rate-limit marker.
+    const chunkSize = FIRESTORE_BATCH_LIMIT - 1;
+
+    try {
+      for (let start = 0; start < birthdayIds.length; start += chunkSize) {
+        const chunk = birthdayIds.slice(start, start + chunkSize);
+        await this.withRetry(async () => {
+          const batch = fs.writeBatch(db);
+          for (const id of chunk) {
+            batch.delete(fs.doc(db, this.getUserPath(userId), 'birthdays', id));
+          }
+          this.addRateLimitToBatch(batch, userId, fs, db);
+          await batch.commit();
+        }, 'batch delete birthdays');
+      }
+      this.logger.info('[Firestore] Batch delete completed:', birthdayIds.length);
+    } catch (error) {
+      this.logger.error('[Firestore] Batch delete failed:', error);
       throw error;
     }
   }
