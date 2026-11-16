@@ -87,9 +87,12 @@
   width: 100%;
   @include custom-scrollbar;
 
+  // Each row is exactly the itemSize the viewport assumes; the gap is padding inside it.
   app-birthday-item {
     display: block;
-    margin-bottom: 24px;
+    box-sizing: border-box;
+    height: var(--birthday-row-height);
+    padding-bottom: 24px;
   }
 }
 

@@ -340,4 +340,35 @@ describe('BirthdayListComponent', () => {
       expect(component.clearAllData.emit).not.toHaveBeenCalled();
     });
   });
+
+  describe('Virtual scroll row height', () => {
+    const originalWidth = window.innerWidth;
+
+    function resizeTo(width: number): void {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    afterEach(() => resizeTo(originalWidth));
+
+    it.each([
+      [320, 94], [390, 94],
+      [391, 102], [680, 102],
+      [681, 292], [768, 292],
+      [769, 302], [1010, 302],
+      [1011, 314], [1920, 314],
+    ])('uses a %ipx-wide row height of %ipx', (width, expected) => {
+      resizeTo(width);
+      expect(component.virtualScrollItemSize()).toBe(expected);
+    });
+
+    it('passes the row height to CSS so every row matches itemSize', () => {
+      resizeTo(1280);
+      fixture.componentRef.setInput('birthdays', [...mockBirthdays]);
+      fixture.detectChanges();
+
+      const viewport: HTMLElement = fixture.nativeElement.querySelector('.birthday-virtual-scroll');
+      expect(viewport.style.getPropertyValue('--birthday-row-height')).toBe('314px');
+    });
+  });
 });

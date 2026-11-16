@@ -77,8 +77,21 @@ export class BirthdayListComponent implements OnChanges {
       )
     : signal(1200);
 
-  /** itemSize for CdkVirtualScrollViewport: compact (<=680px matches tablet-md CSS breakpoint) vs. full layout */
-  readonly virtualScrollItemSize = computed(() => this.windowWidth() <= 680 ? 100 : 300);
+  /**
+   * Row height (item plus gap) for CdkVirtualScrollViewport's fixed-size strategy.
+   * The template also passes it to CSS, which sizes every row to exactly this value: when
+   * the real height differs from itemSize, the list jumps each time the rendered range moves.
+   * Thresholds follow the CSS breakpoints mobile-sm (390), tablet-md (680), tablet (768)
+   * and desktop-md (1010).
+   */
+  readonly virtualScrollItemSize = computed(() => {
+    const width = this.windowWidth();
+    if (width <= 390) return 94;
+    if (width <= 680) return 102;
+    if (width <= 768) return 292;
+    if (width <= 1010) return 302;
+    return 314;
+  });
 
   private readonly store = inject(Store<AppState>);
   private readonly dialog = inject(MatDialog);
