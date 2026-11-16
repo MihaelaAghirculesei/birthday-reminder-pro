@@ -10,7 +10,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -23,25 +23,28 @@ const BOB = 'uid-bob';
 // Helpers
 // ---------------------------------------------------------------------------
 
+// Same shape as FirestoreService.mapBirthdayToFirestore writes.
 function birthday(userId: string, overrides: Record<string, unknown> = {}) {
   return {
     id: 'b1',
     name: 'Alice',
-    date: '1990-05-15',
-    userId,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
+    birthDate: '1990-05-15',
+    ownerId: userId,
+    updatedAt: Date.now(),
     ...overrides,
   };
 }
 
+// Same shape as FirestoreService.performSaveCategory writes.
 function category(userId: string, overrides: Record<string, unknown> = {}) {
   return {
     id: 'c1',
     name: 'Family',
-    userId,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
+    icon: 'family_restroom',
+    color: '#4CAF50',
+    ownerId: userId,
+    updatedAt: Date.now(),
+    syncStatus: 'synced',
     ...overrides,
   };
 }
@@ -112,14 +115,52 @@ describe('Birthdays — create', () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
     const full = birthday(ALICE, {
       notes: 'Best friend',
-      categoryId: 'cat-1',
-      photoURL: 'https://cdn.example.com/photo.jpg',
-      notificationsEnabled: true,
       reminderDays: 7,
-      isDeleted: false,
-      syncStatus: 'synced',
+      photo: 'https://i.pravatar.cc/300?img=5',
+      rememberPhoto: 'users/uid-alice/photos/abc.jpg',
+      zodiacSign: 'Taurus',
+      googleCalendarEventId: 'evt123',
+      category: 'friends',
+      email: 'alice@example.com',
+      phone: '+49 151 2345678',
+      telegramUsername: 'alice_92',
+      daysUntilBirthday: 42,
+      needsMigration: false,
     });
     await assertSucceeds(setDoc(doc(db, path), full));
+  });
+
+  it('owner saves a birthday and the rate-limit marker in one batch, like the app', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    const batch = writeBatch(db);
+    batch.set(doc(db, path), birthday(ALICE), { merge: true });
+    batch.set(doc(db, `users/${ALICE}/rateLimit/writes`), { lastWrite: serverTimestamp() });
+    await assertSucceeds(batch.commit());
+  });
+
+  it('rejects ownerId that differs from the path user', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { ownerId: BOB })));
+  });
+
+  it('rejects id that differs from the document id', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { id: 'other' })));
+  });
+
+  it('rejects birthDate not in YYYY-MM-DD format', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { birthDate: '15/05/1990' })));
+  });
+
+  it('rejects updatedAt that is not an integer timestamp', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { updatedAt: '2024-01-01' })));
+  });
+
+  it('rejects photo longer than 2048 characters (base64 data never reaches Firestore)', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { photo: 'data:image/png;base64,' + 'a'.repeat(2048) })));
   });
 
   it('unauthenticated user is denied', async () => {
@@ -142,14 +183,11 @@ describe('Birthdays — create', () => {
     await assertFails(setDoc(doc(db, path), birthday(ALICE, { notes: 'x'.repeat(2001) })));
   });
 
-  it('rejects photoURL longer than 500 characters', async () => {
+  it('rejects documents with more than 30 fields', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { photoURL: 'https://x.com/' + 'a'.repeat(490) })));
-  });
-
-  it('rejects unknown extra fields (field-allowlist enforcement)', async () => {
-    const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { injected: '<script>alert(1)</script>' })));
+    const extra: Record<string, number> = {};
+    for (let i = 0; i < 26; i++) extra[`f${i}`] = i; // 5 base fields + 26 = 31
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, extra)));
   });
 
   it('rejects missing required field `name`', async () => {
@@ -159,21 +197,23 @@ describe('Birthdays — create', () => {
     await assertFails(setDoc(doc(db, path), withoutName));
   });
 
-  it('rejects missing required field `date`', async () => {
+  it('rejects missing required field `birthDate`', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { date, ...withoutDate } = birthday(ALICE);
+    const { birthDate, ...withoutDate } = birthday(ALICE);
     await assertFails(setDoc(doc(db, path), withoutDate));
   });
 
-  it('rejects date longer than 20 characters', async () => {
+  it('rejects missing required field `ownerId`', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { date: '1'.repeat(21) })));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { ownerId, ...withoutOwner } = birthday(ALICE);
+    await assertFails(setDoc(doc(db, path), withoutOwner));
   });
 
-  it('rejects non-string date', async () => {
+  it('rejects non-string birthDate', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { date: 19900515 })));
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { birthDate: 19900515 })));
   });
 
   it('rejects non-string name', async () => {
@@ -181,9 +221,9 @@ describe('Birthdays — create', () => {
     await assertFails(setDoc(doc(db, path), birthday(ALICE, { name: 12345 })));
   });
 
-  it('rejects categoryId longer than 100 characters', async () => {
+  it('rejects category longer than 100 characters', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { categoryId: 'c'.repeat(101) })));
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { category: 'c'.repeat(101) })));
   });
 });
 
@@ -202,9 +242,14 @@ describe('Birthdays — update', () => {
     await assertFails(setDoc(doc(db, path), birthday(ALICE, { name: 'Hacked' })));
   });
 
-  it('owner cannot update with invalid data (extra field)', async () => {
+  it('owner updates with a merge write, like the app', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), birthday(ALICE, { evilField: true })));
+    await assertSucceeds(setDoc(doc(db, path), birthday(ALICE, { notes: 'Updated' }), { merge: true }));
+  });
+
+  it('owner cannot update with invalid data (bad birthDate)', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), birthday(ALICE, { birthDate: 'not-a-date' })));
   });
 });
 
@@ -262,9 +307,9 @@ describe('Categories — write', () => {
     await assertSucceeds(setDoc(doc(db, path), category(ALICE)));
   });
 
-  it('owner creates category with optional color and icon', async () => {
+  it('owner creates a custom category', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertSucceeds(setDoc(doc(db, path), category(ALICE, { color: '#ff4081', icon: 'star' })));
+    await assertSucceeds(setDoc(doc(db, path), category(ALICE, { color: '#ff4081', icon: 'star', isCustom: true })));
   });
 
   it('rejects category name longer than 100 characters', async () => {
@@ -272,9 +317,16 @@ describe('Categories — write', () => {
     await assertFails(setDoc(doc(db, path), category(ALICE, { name: 'A'.repeat(101) })));
   });
 
-  it('rejects category with unknown fields', async () => {
+  it('rejects ownerId that differs from the path user', async () => {
     const db = testEnv.authenticatedContext(ALICE).firestore();
-    await assertFails(setDoc(doc(db, path), category(ALICE, { badField: 'x' })));
+    await assertFails(setDoc(doc(db, path), category(ALICE, { ownerId: BOB })));
+  });
+
+  it('rejects categories with more than 15 fields', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    const extra: Record<string, number> = {};
+    for (let i = 0; i < 9; i++) extra[`f${i}`] = i; // 7 base fields + 9 = 16
+    await assertFails(setDoc(doc(db, path), category(ALICE, extra)));
   });
 
   it('rejects missing required field `name`', async () => {
@@ -297,6 +349,45 @@ describe('Categories — write', () => {
   it('other user cannot write to another user\'s categories', async () => {
     const db = testEnv.authenticatedContext(BOB).firestore();
     await assertFails(setDoc(doc(db, path), category(ALICE)));
+  });
+});
+
+// ===========================================================================
+// Rate-limit marker (/users/{userId}/rateLimit/writes)
+// ===========================================================================
+
+describe('Rate-limit marker', () => {
+  const path = `users/${ALICE}/rateLimit/writes`;
+
+  it('owner writes lastWrite as a server timestamp', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(setDoc(doc(db, path), { lastWrite: serverTimestamp() }));
+  });
+
+  it('rejects a client-side timestamp', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), { lastWrite: new Date() }));
+  });
+
+  it('rejects extra fields', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, path), { lastWrite: serverTimestamp(), extra: 1 }));
+  });
+
+  it('rejects any document id other than `writes`', async () => {
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertFails(setDoc(doc(db, `users/${ALICE}/rateLimit/other`), { lastWrite: serverTimestamp() }));
+  });
+
+  it('other user cannot write the marker', async () => {
+    const db = testEnv.authenticatedContext(BOB).firestore();
+    await assertFails(setDoc(doc(db, path), { lastWrite: serverTimestamp() }));
+  });
+
+  it('owner deletes the marker (account deletion)', async () => {
+    await seed(path, { lastWrite: new Date() });
+    const db = testEnv.authenticatedContext(ALICE).firestore();
+    await assertSucceeds(deleteDoc(doc(db, path)));
   });
 });
 
