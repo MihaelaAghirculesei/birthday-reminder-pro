@@ -17,7 +17,7 @@
 
   <div class="dashboard-birthday-content">
     <div class="dashboard-birthday-info">
-      <div class="dashboard-name">
+      <div class="dashboard-name" [title]="birthday.name">
         {{ birthday.name }}
       </div>
       <div class="dashboard-age compact-hide">
@@ -28,12 +28,12 @@
     <div class="dashboard-birthday-details compact-hide">
       <div class="dashboard-birth-date">
         <mat-icon class="small-icon">cake</mat-icon>
-        {{ birthDateDisplay | localeDate : 'EEEE, MMMM dd, yyyy' }}
+        <span class="single-line-text">{{ birthDateDisplay | localeDate : 'EEEE, MMMM dd, yyyy' }}</span>
       </div>
       @if (birthday.notes) {
-        <div class="dashboard-notes">
+        <div class="dashboard-notes" [title]="birthday.notes">
           <mat-icon class="small-icon">note</mat-icon>
-          {{ birthday.notes }}
+          <span class="single-line-text">{{ birthday.notes }}</span>
         </div>
       }
     </div>

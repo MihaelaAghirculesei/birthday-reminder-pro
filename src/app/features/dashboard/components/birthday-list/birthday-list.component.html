@@ -37,6 +37,7 @@
         [minBufferPx]="virtualScrollItemSize() * 2"
         [maxBufferPx]="virtualScrollItemSize() * 5"
         class="birthday-virtual-scroll"
+        [style.--birthday-row-height.px]="virtualScrollItemSize()"
         data-testid="birthday-list"
       >
         <app-birthday-item
