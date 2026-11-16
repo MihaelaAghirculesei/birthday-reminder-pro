@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.2...v1.4.3) (2026-11-16)
+
+
+### Bug Fixes
+
+* **dashboard:** stop the birthday list from jumping while scrolling ([8c63f5d](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/8c63f5d5e890b3f21b621a2451a3ccf1e5816bf6))
+
 ## [1.4.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.1...v1.4.2) (2026-11-16)
 
 
