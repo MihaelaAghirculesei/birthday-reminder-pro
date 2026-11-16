@@ -1,3 +1,10 @@
+## [1.4.4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.3...v1.4.4) (2026-11-16)
+
+
+### Bug Fixes
+
+* **rules:** match Firestore rules to the documents the app writes ([29f8fca](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/29f8fca97ffd8399913e4403b370b138532d29b2))
+
 ## [1.4.3](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.2...v1.4.3) (2026-11-16)
 
 
