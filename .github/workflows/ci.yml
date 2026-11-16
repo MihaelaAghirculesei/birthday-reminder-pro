@@ -499,8 +499,6 @@ jobs:
 
       - name: Run Lighthouse CI
         run: npx --yes "@lhci/cli@${LHCI_CLI_VERSION}" autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
       - name: Upload Lighthouse results
         uses: actions/upload-artifact@v7
