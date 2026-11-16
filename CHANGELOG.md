@@ -1,3 +1,11 @@
+## [1.4.2](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.1...v1.4.2) (2026-11-16)
+
+
+### Bug Fixes
+
+* **sync:** run the sign-in merge once per user ([1d4cb6e](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/1d4cb6e2de93bb6a268f625c4dbc9b2fb0c7c68b))
+* **sync:** stop duplicating birthdays on every sign-in ([decaafd](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/decaafdd0a83b5bf6312e3d6a64946920dbce1f3))
+
 ## [1.4.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.0...v1.4.1) (2026-11-16)
 
 
