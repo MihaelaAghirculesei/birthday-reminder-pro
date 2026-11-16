@@ -94,7 +94,7 @@ Core capabilities:
 **Cloud Sync (Firebase)**
 - Google sign-in with Firebase Auth
 - Real-time sync across devices via Firestore
-- Photos uploaded to Firebase Storage CDN
+- Optional photo upload to Firebase Storage (`FIREBASE_STORAGE_ENABLED`, off in the live demo)
 - Firebase SDK is fully lazy — anonymous users pay zero cost
 - Automatic migration of local-only data on first sign-in
 
@@ -141,7 +141,7 @@ Core capabilities:
 **Storage & Cloud**
 - IndexedDB (offline-first source of truth)
 - Firebase Auth + Firestore (cloud sync, auth users only)
-- Firebase Storage (photo CDN, lazy-loaded)
+- Firebase Storage (photo CDN, lazy-loaded, behind a feature flag)
 - Firebase App Check (reCAPTCHA Enterprise), enabled through configuration
 - LocalStorage for settings
 
@@ -278,6 +278,8 @@ src/app/
    FIREBASE_STORAGE_BUCKET=YOUR_PROJECT_ID.firebasestorage.app
    FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
    FIREBASE_APP_ID=YOUR_APP_ID
+   # Optional: needs a Storage bucket (Blaze plan). Off by default.
+   FIREBASE_STORAGE_ENABLED=false
    ```
    > **Tip**: Leave these unset and the app auto-detects the missing config and runs in offline-only mode — no Firebase account needed to run the app locally. All six `FIREBASE_*` variables are required together for `env:init` to wire up Firebase; partial config falls back to offline mode.
 
@@ -381,7 +383,7 @@ birthday-reminder-pro/
 - Accessibility (NVDA, axe-core)
 - Responsive design (mobile-first, 320px+)
 - Internationalization (English, Italian)
-- Cloud sync with Firebase (Auth, Firestore, Storage)
+- Cloud sync with Firebase (Auth, Firestore; Storage behind a feature flag)
 - Firebase Security Rules with emulator-backed tests
 - CI/CD: GitHub Actions, semantic-release, Cloudflare Pages deploy, Dependabot auto-merge
 
