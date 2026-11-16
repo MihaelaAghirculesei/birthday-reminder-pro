@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.0...v1.4.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **csp:** let the service worker fetch every allowed image host ([e31c2e7](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/e31c2e716a3c9d1d3299e0c2c6c0d8e40b3622e6))
+
 # [1.4.0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.3.4...v1.4.0) (2026-11-10)
 
 
