@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.4...v1.4.5) (2026-11-19)
+
+
+### Bug Fixes
+
+* **sync:** send clear-all and sample data to the cloud ([dc2e12a](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/dc2e12a75ede83990f2edc48044ee27fc80f866f))
+
 ## [1.4.4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.3...v1.4.4) (2026-11-16)
 
 
