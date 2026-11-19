@@ -1,3 +1,10 @@
+## [1.4.6](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.5...v1.4.6) (2026-11-19)
+
+
+### Bug Fixes
+
+* **i18n:** say that clear all keeps the categories ([467beb0](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/467beb0b42555a4403b1126793dfc3e983d52324))
+
 ## [1.4.5](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.4...v1.4.5) (2026-11-19)
 
 
