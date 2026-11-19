@@ -298,7 +298,7 @@ export const it = {
     CANCEL_BTN: 'Annulla',
     CONFIRM_BTN: 'Conferma',
     CLEAR_ALL_TITLE: 'Cancellare Tutti i Dati?',
-    CLEAR_ALL_MESSAGE: 'Questo eliminerà definitivamente tutti i compleanni e le categorie. Questa azione non può essere annullata.',
+    CLEAR_ALL_MESSAGE: 'Questo eliminerà definitivamente tutti i compleanni. Le categorie restano. Questa azione non può essere annullata.',
     CLEAR_ALL_BTN: 'Cancella Tutto',
     DELETE_BIRTHDAY_TITLE: 'Eliminare il Compleanno?',
     DELETE_BIRTHDAY_MESSAGE: 'Sei sicuro di voler eliminare "{{name}}"?',

@@ -298,7 +298,7 @@ export const en = {
     CANCEL_BTN: 'Cancel',
     CONFIRM_BTN: 'Confirm',
     CLEAR_ALL_TITLE: 'Clear All Data?',
-    CLEAR_ALL_MESSAGE: 'This will permanently delete all birthdays and categories. This action cannot be undone.',
+    CLEAR_ALL_MESSAGE: 'This will permanently delete all birthdays. Your categories are kept. This action cannot be undone.',
     CLEAR_ALL_BTN: 'Clear All',
     DELETE_BIRTHDAY_TITLE: 'Delete Birthday?',
     DELETE_BIRTHDAY_MESSAGE: 'Are you sure you want to delete "{{name}}"?',
