@@ -107,6 +107,21 @@ describe('BirthdayService', () => {
       expect(result[0].id).not.toBe(result[1].id);
     });
 
+    it('should derive the same id from the same name and birth date', () => {
+      const input: Birthday[] = [{ id: 'x', name: 'Uwe Müller', birthDate: '1990-03-15' }];
+      const first = service.processTestBirthdays(input);
+      const second = service.processTestBirthdays(input);
+      expect(first[0].id).toBe('sample-uwe-muller-1990-03-15');
+      expect(second[0].id).toBe(first[0].id);
+    });
+
+    it('should mark samples as pending for a signed-in user', () => {
+      const input: Birthday[] = [{ id: '', name: 'A', birthDate: '1990-01-01' }];
+      const [result] = service.processTestBirthdays(input, 'user-1');
+      expect(result.ownerId).toBe('user-1');
+      expect(result.syncStatus).toBe('pending');
+    });
+
     it('should set syncStatus to local-only for all items', () => {
       const input: Birthday[] = [{ id: '', name: 'A', birthDate: '1990-01-01' }];
       const result = service.processTestBirthdays(input);

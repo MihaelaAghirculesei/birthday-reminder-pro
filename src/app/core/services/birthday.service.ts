@@ -24,11 +24,16 @@ export class BirthdayService {
     return this.normalization.normalize({ ...birthday, ...updateSyncMetadata(birthday, userId) });
   }
 
-  processTestBirthdays(birthdays: Birthday[]): Birthday[] {
+  /**
+   * Sample ids are derived from name and birth date, so loading the samples
+   * again, or on another device, produces the same ids and the sign-in merge
+   * keeps one copy instead of adding a second set.
+   */
+  processTestBirthdays(birthdays: Birthday[], userId: string | null = null): Birthday[] {
     return birthdays.map(b => this.normalization.normalize({
       ...b,
-      ...createSyncMetadata(null),
-      id: this.idGenerator.generateId(),
+      ...createSyncMetadata(userId),
+      id: sampleId(b),
       category: b.category || DEFAULT_CATEGORY
     }));
   }
@@ -36,4 +41,14 @@ export class BirthdayService {
   generateId(): string {
     return this.idGenerator.generateId();
   }
+}
+
+function sampleId({ name, birthDate }: Pick<Birthday, 'name' | 'birthDate'>): string {
+  const slug = name
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `sample-${slug}-${birthDate}`;
 }
