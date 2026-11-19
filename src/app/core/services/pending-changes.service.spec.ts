@@ -56,6 +56,13 @@ describe('PendingChangesService', () => {
     expect(service).toBeTruthy();
   });
 
+  it('should keep every change when several are added at once', async () => {
+    await Promise.all(
+      ['a', 'b', 'c', 'd', 'e'].map(id => service.addChange('birthday', id, 'delete', null))
+    );
+    expect(service.pendingCount).toBe(5);
+  });
+
   it('should have 0 pending count after clear', () => {
     expect(service.pendingCount).toBe(0);
   });

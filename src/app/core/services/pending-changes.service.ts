@@ -50,6 +50,19 @@ export class PendingChangesService {
   /** Monotonically increasing; restored from IndexedDB on initialize(). */
   private sequenceCounter = 0;
 
+  /**
+   * Every write reads the current list, awaits the IndexedDB save, then publishes.
+   * Run concurrently, two writes read the same list and the later save drops the
+   * earlier change, so writes go through this chain one at a time.
+   */
+  private writeChain: Promise<unknown> = Promise.resolve();
+
+  private serialize<T>(write: () => Promise<T>): Promise<T> {
+    const next = this.writeChain.then(write, write);
+    this.writeChain = next.catch(() => undefined);
+    return next;
+  }
+
   get pendingCount(): number {
     return this.changesSubject.getValue().length;
   }
@@ -69,7 +82,16 @@ export class PendingChangesService {
     this.logger.info('[PendingChanges] Initialized with', changes.length, 'pending changes');
   }
 
-  async addChange(
+  addChange(
+    entityType: EntityType,
+    entityId: string,
+    changeType: ChangeType,
+    data: SyncPayloadData
+  ): Promise<void> {
+    return this.serialize(() => this.applyChange(entityType, entityId, changeType, data));
+  }
+
+  private async applyChange(
     entityType: EntityType,
     entityId: string,
     changeType: ChangeType,
@@ -191,32 +213,38 @@ export class PendingChangesService {
     }
   }
 
-  async removeChange(changeId: string): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) return;
+  removeChange(changeId: string): Promise<void> {
+    return this.serialize(async () => {
+      if (!isPlatformBrowser(this.platformId)) return;
 
-    const changes = this.changesSubject.getValue();
-    const updated = changes.filter((c) => c.id !== changeId);
-    await this.saveChanges(updated);
-    this.changesSubject.next(updated);
+      const changes = this.changesSubject.getValue();
+      const updated = changes.filter((c) => c.id !== changeId);
+      await this.saveChanges(updated);
+      this.changesSubject.next(updated);
+    });
   }
 
-  async markRetry(changeId: string): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) return;
+  markRetry(changeId: string): Promise<void> {
+    return this.serialize(async () => {
+      if (!isPlatformBrowser(this.platformId)) return;
 
-    const changes = this.changesSubject.getValue();
-    const updated = changes.map((c) =>
-      c.id === changeId ? { ...c, retryCount: c.retryCount + 1 } : c
-    );
-    await this.saveChanges(updated);
-    this.changesSubject.next(updated);
+      const changes = this.changesSubject.getValue();
+      const updated = changes.map((c) =>
+        c.id === changeId ? { ...c, retryCount: c.retryCount + 1 } : c
+      );
+      await this.saveChanges(updated);
+      this.changesSubject.next(updated);
+    });
   }
 
-  async clearAll(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) return;
+  clearAll(): Promise<void> {
+    return this.serialize(async () => {
+      if (!isPlatformBrowser(this.platformId)) return;
 
-    await this.saveChanges([]);
-    this.changesSubject.next([]);
-    this.logger.info('[PendingChanges] Cleared all pending changes');
+      await this.saveChanges([]);
+      this.changesSubject.next([]);
+      this.logger.info('[PendingChanges] Cleared all pending changes');
+    });
   }
 
   getChangesForEntity(entityType: EntityType): PendingChange[] {

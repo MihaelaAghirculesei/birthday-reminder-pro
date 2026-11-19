@@ -143,14 +143,27 @@ export class BirthdayCrudEffects implements OnInitEffects {
   clearAllBirthdays$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.clearAllBirthdays),
-      switchMap(() =>
-        from(this.offlineStorage.clear()).pipe(
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      switchMap(([, userId]) =>
+        from(this.clearAll(userId)).pipe(
           map(() => BirthdayActions.clearAllBirthdaysSuccess()),
           catchError(error => of(BirthdayActions.clearAllBirthdaysFailure({ error: error.message })))
         )
       )
     )
   );
+
+  /**
+   * Signed in, the cloud copies must go too: otherwise the next sign-in merge
+   * downloads every birthday again.
+   */
+  private async clearAll(userId: string | null): Promise<void> {
+    const ids = userId ? (await this.offlineStorage.getBirthdays()).map(b => b.id) : [];
+    await this.offlineStorage.clear();
+    for (const id of ids) {
+      await this.syncCoordinator.queueChange('birthday', id, 'delete');
+    }
+  }
 
   importBirthdays$ = createEffect(() =>
     this.actions$.pipe(
@@ -178,12 +191,13 @@ export class BirthdayCrudEffects implements OnInitEffects {
   loadTestData$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BirthdayActions.loadTestData),
-      switchMap(() =>
+      withLatestFrom(this.store.select(AuthSelectors.selectUserId)),
+      switchMap(([, userId]) =>
         from(import('../../../testing').then(m => m.generateMockBirthdays)).pipe(
           switchMap(generateMockBirthdays => {
             const testBirthdays = generateMockBirthdays(() => this.birthdayService.generateId());
-            const processedBirthdays: Birthday[] = this.birthdayService.processTestBirthdays(testBirthdays);
-            return from(this.offlineStorage.saveBirthdays(processedBirthdays)).pipe(
+            const processedBirthdays: Birthday[] = this.birthdayService.processTestBirthdays(testBirthdays, userId);
+            return from(this.saveTestBirthdays(processedBirthdays, userId)).pipe(
               map(() => BirthdayActions.loadTestDataSuccess({ birthdays: processedBirthdays }))
             );
           }),
@@ -192,4 +206,12 @@ export class BirthdayCrudEffects implements OnInitEffects {
       )
     )
   );
+
+  private async saveTestBirthdays(birthdays: Birthday[], userId: string | null): Promise<void> {
+    await this.offlineStorage.saveBirthdays(birthdays);
+    if (!userId) return;
+    for (const birthday of birthdays) {
+      await this.syncCoordinator.queueChange('birthday', birthday.id, 'create', birthday);
+    }
+  }
 }

@@ -310,6 +310,34 @@ describe('BirthdayCrudEffects', () => {
       const action = await firstValueFrom(effects.clearAllBirthdays$);
       expect(action).toEqual(BirthdayActions.clearAllBirthdaysFailure({ error: 'Clear failed' }));
     });
+
+    it('should not touch the sync queue when signed out', async () => {
+      offlineStorageMock.clear.mockResolvedValue(undefined);
+
+      actions$ = of(BirthdayActions.clearAllBirthdays());
+      await firstValueFrom(effects.clearAllBirthdays$);
+
+      expect(offlineStorageMock.getBirthdays).not.toHaveBeenCalled();
+      expect(syncCoordinatorMock.queueChange).not.toHaveBeenCalled();
+    });
+
+    it('should queue a cloud delete for every birthday when signed in', async () => {
+      store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
+      store.refreshState();
+      offlineStorageMock.getBirthdays.mockResolvedValue([
+        createMockBirthday({ id: 'a' }),
+        createMockBirthday({ id: 'b' })
+      ]);
+      offlineStorageMock.clear.mockResolvedValue(undefined);
+      syncCoordinatorMock.queueChange.mockResolvedValue(undefined);
+
+      actions$ = of(BirthdayActions.clearAllBirthdays());
+      const action = await firstValueFrom(effects.clearAllBirthdays$);
+
+      expect(action).toEqual(BirthdayActions.clearAllBirthdaysSuccess());
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', 'a', 'delete');
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledWith('birthday', 'b', 'delete');
+    });
   });
 
   describe('importBirthdays$', () => {
@@ -360,6 +388,23 @@ describe('BirthdayCrudEffects', () => {
       expect(action.type).toBe(BirthdayActions.loadTestDataSuccess.type);
       const successAction = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
       expect(successAction.birthdays.length).toBeGreaterThan(0);
+      expect(syncCoordinatorMock.queueChange).not.toHaveBeenCalled();
+    });
+
+    it('should queue a cloud create per sample when signed in', async () => {
+      store.overrideSelector(AuthSelectors.selectUserId, 'user-123');
+      store.refreshState();
+      offlineStorageMock.saveBirthdays.mockResolvedValue(undefined);
+      syncCoordinatorMock.queueChange.mockResolvedValue(undefined);
+
+      actions$ = of(BirthdayActions.loadTestData());
+      const action = await firstValueFrom(effects.loadTestData$);
+      const { birthdays } = action as ReturnType<typeof BirthdayActions.loadTestDataSuccess>;
+
+      expect(birthdays.every(b => b.ownerId === 'user-123')).toBe(true);
+      expect(syncCoordinatorMock.queueChange).toHaveBeenCalledTimes(birthdays.length);
+      expect(vi.mocked(syncCoordinatorMock.queueChange).mock.calls[0].slice(0, 3))
+        .toEqual(['birthday', birthdays[0].id, 'create']);
     });
 
     it('should dispatch loadTestDataFailure on storage error', async () => {
