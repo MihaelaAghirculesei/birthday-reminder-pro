@@ -424,7 +424,7 @@ npm run ci:local
 #   ci:quality    → lint + typecheck (app and specs)
 #   test:ci       → unit tests with coverage thresholds
 #   e2e:ci        → boots the app on the ci config, runs the Cypress suite headlessly
-#   ci:build      → production build + ci:bundle (fails if the main bundle exceeds 500 KB)
+#   ci:build      → production build + ci:bundle (fails if the initial JS exceeds 1250 KB)
 ```
 
 Each step can also be run standalone (`npm run ci:quality`, `npm run ci:build`, etc.) when iterating on a single failure instead of the whole chain. `npm run analyze` builds with `--stats-json` and prints the largest output chunks with their top contributing source modules (`scripts/analyze-bundle.js`) — it reads esbuild's own metafile directly rather than `webpack-bundle-analyzer`, which doesn't understand it (Angular 17+ moved off Webpack for production builds).

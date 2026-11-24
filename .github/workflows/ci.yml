@@ -397,28 +397,11 @@ jobs:
           echo "===================="
 
           find dist/birthday-reminder-pro -name "*.js" -type f -exec ls -lh {} \; | awk '{print $9 " - " $5}'
+          echo ""
 
-          MAIN_JS_BYTES=$(find dist/birthday-reminder-pro -name "main*.js" -type f -exec ls -l {} \; | awk '{print $5}' | head -1 || echo "0")
-
-          if [ "$MAIN_JS_BYTES" -gt 0 ]; then
-            MAIN_JS_KB=$((MAIN_JS_BYTES / 1024))
-            echo ""
-            echo "Main bundle size: ${MAIN_JS_KB}KB"
-
-            # Angular 22 merges the shared vendor chunks into main (initial total
-            # unchanged at ~1.6 MB, guarded by the angular.json budget), so main
-            # alone is ~790KB; this limit only catches regressions on top of that.
-            MAX_SIZE_KB=900
-            if [ "$MAIN_JS_KB" -gt "$MAX_SIZE_KB" ]; then
-              echo "❌ Main bundle (${MAIN_JS_KB}KB) exceeds limit (${MAX_SIZE_KB}KB)"
-              echo "Consider code splitting or lazy loading"
-              exit 1
-            fi
-
-            echo "✅ Bundle size is acceptable"
-          else
-            echo "⚠️  Could not determine main bundle size"
-          fi
+          # Measures main plus the chunks it imports statically, so it does not
+          # depend on how the Angular builder splits the initial code.
+          npm run ci:bundle
 
       - name: Comment bundle size on PR
         if: github.event_name == 'pull_request'
