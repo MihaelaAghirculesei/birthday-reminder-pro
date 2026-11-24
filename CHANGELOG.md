@@ -1,3 +1,10 @@
+## [1.4.7](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.6...v1.4.7) (2026-11-24)
+
+
+### Bug Fixes
+
+* **styles:** apply birthday list responsive overrides after base rules ([a80d4c4](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/commit/a80d4c47fbe5edb6613af36c867462cc47bf4ac9))
+
 ## [1.4.6](https://github.com/MihaelaAghirculesei/birthday-reminder-pro/compare/v1.4.5...v1.4.6) (2026-11-19)
 
 
