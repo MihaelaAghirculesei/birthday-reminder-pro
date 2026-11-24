@@ -1,5 +1,5 @@
 @use '../../../../../styles/shared' as *;
-@use 'birthday-list-responsive';
+@use 'birthday-list-responsive' as responsive;
 
 .birthday-list-card {
   @include surface-card;
@@ -177,6 +177,8 @@
   }
 }
 
+@include responsive.birthday-list-responsive;
+
 @include respond-to('tablet') {
   .clear-data-content {
     display: grid;
@@ -242,4 +244,3 @@
     }
   }
 }
-

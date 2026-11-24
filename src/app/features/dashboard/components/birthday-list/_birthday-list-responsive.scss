@@ -1,178 +1,181 @@
 @use '../../../../../styles/shared' as *;
 
-@include respond-between('tablet', 'desktop-sm') {
-  .birthday-list-header {
-    flex-direction: column;
-    align-items: flex-start;
+// Included at the end of the base rules so these overrides win at equal specificity.
+@mixin birthday-list-responsive {
+  @include respond-between('tablet', 'desktop-sm') {
+    .birthday-list-header {
+      flex-direction: column;
+      align-items: flex-start;
 
-    .header-title-section {
-      min-width: auto;
-    }
+      .header-title-section {
+        min-width: auto;
+      }
 
-    .header-search-section {
-      width: 100%;
-
-      .dashboard-search-field {
+      .header-search-section {
         width: 100%;
-        max-width: 400px;
+
+        .dashboard-search-field {
+          width: 100%;
+          max-width: 400px;
+        }
       }
     }
   }
-}
 
-@include respond-to('tablet') {
-  .birthday-list-card,
-  .test-data-card,
-  .clear-data-card {
-    .mat-mdc-card-content {
-      padding: 16px;
-    }
-  }
-
-  .birthday-list-card {
-    .mat-mdc-card-content {
-      min-height: 280px;
-    }
-  }
-
-  .data-management-sections {
-    margin-top: 24px;
-    gap: 24px;
-  }
-
-  .test-data-section,
-  .clear-data-section {
-    padding: 0 8px;
-  }
-
-  .test-data-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
-
-    .test-icon {
-      min-width: 64px;
-      min-height: 64px;
-      font-size: 40px;
-      width: 40px;
-      height: 40px;
-      padding: 12px;
-    }
-
-    .test-info {
-      h3 {
-        font-size: 1.3rem;
-      }
-
-      p {
-        font-size: 0.9rem;
+  @include respond-to('tablet') {
+    .birthday-list-card,
+    .test-data-card,
+    .clear-data-card {
+      .mat-mdc-card-content {
+        padding: 16px;
       }
     }
 
-    .add-test-btn {
-      min-width: 160px;
-      height: 44px;
-    }
-  }
-
-  .birthday-list-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-
-    .header-title-section {
-      min-width: auto;
-      width: 100%;
+    .birthday-list-card {
+      .mat-mdc-card-content {
+        min-height: 280px;
+      }
     }
 
-    .header-search-section {
-      width: 100%;
+    .data-management-sections {
+      margin-top: 24px;
+      gap: 24px;
+    }
 
-      .dashboard-search-field {
+    .test-data-section,
+    .clear-data-section {
+      padding: 0 8px;
+    }
+
+    .test-data-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 16px;
+
+      .test-icon {
+        min-width: 64px;
+        min-height: 64px;
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+        padding: 12px;
+      }
+
+      .test-info {
+        h3 {
+          font-size: 1.3rem;
+        }
+
+        p {
+          font-size: 0.9rem;
+        }
+      }
+
+      .add-test-btn {
+        min-width: 160px;
+        height: 44px;
+      }
+    }
+
+    .birthday-list-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+
+      .header-title-section {
+        min-width: auto;
         width: 100%;
-        max-width: 400px;
       }
-    }
-  }
-}
 
-@include respond-to('mobile-sm') {
-  .birthday-list-header {
-    padding: 16px 12px;
-    gap: 12px;
+      .header-search-section {
+        width: 100%;
 
-    .header-title-section {
-      gap: 10px;
-
-      .mat-mdc-card-title {
-        font-size: 1rem;
+        .dashboard-search-field {
+          width: 100%;
+          max-width: 400px;
+        }
       }
     }
   }
 
-  .birthday-list-card,
-  .test-data-card,
-  .clear-data-card {
-    .mat-mdc-card-content {
-      padding: 10px !important;
-    }
-  }
+  @include respond-to('mobile-sm') {
+    .birthday-list-header {
+      padding: 16px 12px;
+      gap: 12px;
 
-  .data-management-sections {
-    margin-top: 16px;
-    gap: 16px;
-  }
+      .header-title-section {
+        gap: 10px;
 
-  .test-data-section,
-  .clear-data-section {
-    padding: 0;
-  }
-
-  .test-data-content {
-    gap: 12px;
-
-    .test-icon {
-      min-width: 52px;
-      min-height: 52px;
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      padding: 10px;
+        .mat-mdc-card-title {
+          font-size: 1rem;
+        }
+      }
     }
 
-    .test-info {
-      h3 { font-size: 0.95rem; }
-      p { font-size: 0.85rem; }
+    .birthday-list-card,
+    .test-data-card,
+    .clear-data-card {
+      .mat-mdc-card-content {
+        padding: 10px;
+      }
     }
 
-    .add-test-btn {
-      min-width: 140px;
-      height: 40px;
-      font-size: 0.85rem !important;
-      padding: 8px 16px !important;
+    .data-management-sections {
+      margin-top: 16px;
+      gap: 16px;
     }
-  }
 
-  .no-birthdays {
-    padding: 24px 12px;
-
-    p { font-size: 0.9rem; }
-  }
-
-  .clear-data-content {
-    gap: 8px;
-
-    .clear-icon {
-      min-width: 48px;
-      min-height: 48px;
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
-      padding: 10px;
+    .test-data-section,
+    .clear-data-section {
+      padding: 0;
     }
-  }
 
-  .no-data-icon {
-    @include icon-size(48px);
+    .test-data-content {
+      gap: 12px;
+
+      .test-icon {
+        min-width: 52px;
+        min-height: 52px;
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        padding: 10px;
+      }
+
+      .test-info {
+        h3 { font-size: 0.95rem; }
+        p { font-size: 0.85rem; }
+      }
+
+      .add-test-btn {
+        min-width: 140px;
+        height: 40px;
+        font-size: 0.85rem !important;
+        padding: 8px 16px !important;
+      }
+    }
+
+    .no-birthdays {
+      padding: 24px 12px;
+
+      p { font-size: 0.9rem; }
+    }
+
+    .clear-data-content {
+      gap: 8px;
+
+      .clear-icon {
+        min-width: 48px;
+        min-height: 48px;
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        padding: 10px;
+      }
+    }
+
+    .no-data-icon {
+      @include icon-size(48px);
+    }
   }
 }
